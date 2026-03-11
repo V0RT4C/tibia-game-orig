@@ -35,7 +35,7 @@ void LogFileHandler(const char *Text){
 	if(File != NULL){
 		fprintf(File, "%s", Text);
 		if(fclose(File) != 0){
-			error("LogfileHandler: Fehler %d beim Schließen der Datei.\n", errno);
+			error("LogfileHandler: Error %d closing the file.\n", errno);
 		}
 	}
 }
@@ -88,7 +88,7 @@ bool FileExists(const char *FileName){
 	bool Result = true;
 	if(stat(FileName, &Buffer) != 0){
 		if(errno != ENOENT){
-			error("FileExists: Unerwarteter Fehlercode %d.\n", errno);
+			error("FileExists: Unexpected error code %d.\n", errno);
 		}
 		Result = false;
 	}
@@ -248,7 +248,7 @@ uint32 TReadStream::readQuad(void){
 
 void TReadStream::readString(char *Buffer, int MaxLength){
 	if(Buffer == NULL || MaxLength == 0){
-		error("TReadStream::readString: Übergebener Puffer existiert nicht.\n");
+		error("TReadStream::readString: Provided buffer does not exist.\n");
 		throw "internal error";
 	}
 
@@ -273,7 +273,7 @@ void TReadStream::readString(char *Buffer, int MaxLength){
 
 void TReadStream::readBytes(uint8 *Buffer, int Count){
 	if(Buffer == NULL){
-		error("TReadStream::readBytes: Übergebener Puffer existiert nicht.\n");
+		error("TReadStream::readBytes: Provided buffer does not exist.\n");
 		throw "internal error";
 	}
 
@@ -286,10 +286,10 @@ void TReadStream::readBytes(uint8 *Buffer, int Count){
 // =============================================================================
 TReadBuffer::TReadBuffer(const uint8 *Data, int Size){
 	if(Data == NULL){
-		error("TReadBuffer::TReadBuffer: data ist NULL.\n");
+		error("TReadBuffer::TReadBuffer: data is NULL.\n");
 		Size = 0;
 	}else if(Size < 0){
-		error("TReadBuffer::TReadBuffer: Ungültige Datengröße %d.\n", Size);
+		error("TReadBuffer::TReadBuffer: Invalid data size %d.\n", Size);
 		Size = 0;
 	}
 
@@ -335,7 +335,7 @@ uint32 TReadBuffer::readQuad(void){
 
 void TReadBuffer::readBytes(uint8 *Buffer, int Count){
 	if(Buffer == NULL || Count <= 0){
-		error("TReadBuffer::readBytes: Übergebener Puffer existiert nicht.\n");
+		error("TReadBuffer::readBytes: Provided buffer does not exist.\n");
 		throw "buffer not existing";
 	}
 
@@ -399,7 +399,7 @@ void TWriteStream::writeString(const char *String){
 
 void TWriteStream::writeBytes(const uint8 *Buffer, int Count){
 	if(Buffer == NULL){
-		error("TWriteStream::writeBytes: Übergebener Puffer existiert nicht.\n");
+		error("TWriteStream::writeBytes: Provided buffer does not exist.\n");
 		throw "internal error";
 	}
 
@@ -412,10 +412,10 @@ void TWriteStream::writeBytes(const uint8 *Buffer, int Count){
 // =============================================================================
 TWriteBuffer::TWriteBuffer(uint8 *Data, int Size){
 	if(Data == NULL){
-		error("TWriteBuffer::TWriteBuffer: data ist NULL.\n");
+		error("TWriteBuffer::TWriteBuffer: data is NULL.\n");
 		Size = 0;
 	}else if(Size < 0){
-		error("TWriteBuffer::TWriteBuffer: Ungültige Datengröße %d.\n", Size);
+		error("TWriteBuffer::TWriteBuffer: Invalid data size %d.\n", Size);
 		Size = 0;
 	}
 

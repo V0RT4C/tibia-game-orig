@@ -81,7 +81,7 @@ void TConnection::EmergencyPing(void){
 
 pid_t TConnection::GetThreadID(void){
 	if(this->State == CONNECTION_FREE){
-		error("TConnection::GetThreadID: Verbindung ist nicht zugewiesen.\n");
+		error("TConnection::GetThreadID: Connection is not assigned.\n");
 		return 0;
 	}
 
@@ -90,7 +90,7 @@ pid_t TConnection::GetThreadID(void){
 
 bool TConnection::SetLoginTimer(int Timeout){
 	if(this->State == CONNECTION_FREE){
-		error("TConnection::SetLoginTimer: Verbindung ist nicht zugewiesen.\n");
+		error("TConnection::SetLoginTimer: Connection is not assigned.\n");
 		return false;
 	}
 
@@ -122,7 +122,7 @@ bool TConnection::SetLoginTimer(int Timeout){
 
 void TConnection::StopLoginTimer(void){
 	if(this->State == CONNECTION_FREE){
-		error("TConnection::SetLoginTimer: Verbindung ist nicht zugewiesen.\n");
+		error("TConnection::StopLoginTimer: Connection is not assigned.\n");
 		return;
 	}
 
@@ -141,7 +141,7 @@ void TConnection::StopLoginTimer(void){
 
 int TConnection::GetSocket(void){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
-		error("TConnection::GetSocket: Verbindung ist nicht angeschlossen.\n");
+		error("TConnection::GetSocket: Connection is not connected.\n");
 		return -1;
 	}
 
@@ -150,7 +150,7 @@ int TConnection::GetSocket(void){
 
 const char *TConnection::GetIPAddress(void){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
-		error("TConnection::GetIPAddress: Verbindung ist nicht angeschlossen.\n");
+		error("TConnection::GetIPAddress: Connection is not connected.\n");
 		return "Unknown";
 	}
 
@@ -163,7 +163,7 @@ void TConnection::Free(void){
 
 void TConnection::Assign(void){
 	if(this->State != CONNECTION_FREE){
-		error("TConnection::Assign: Verbindung ist nicht frei.\n");
+		error("TConnection::Assign: Connection is not free.\n");
 	}
 
 	this->State = CONNECTION_ASSIGNED;
@@ -173,7 +173,7 @@ void TConnection::Assign(void){
 
 void TConnection::Connect(int Socket){
 	if(this->State != CONNECTION_ASSIGNED){
-		error("TConnection::Connect: Verbindung ist keinem Thread zugewiesen.\n");
+		error("TConnection::Connect: Connection is not assigned to any thread.\n");
 	}
 
 	this->State = CONNECTION_CONNECTED;
@@ -190,7 +190,7 @@ void TConnection::Connect(int Socket){
 
 void TConnection::Login(void){
 	if(this->State != CONNECTION_CONNECTED){
-		error("TConnection::Connect: Ungültiger Verbindungs-Zustand %d.\n", this->State);
+		error("TConnection::Connect: Invalid connection state %d.\n", this->State);
 	}
 
 	this->State = CONNECTION_LOGIN;
@@ -198,7 +198,7 @@ void TConnection::Login(void){
 
 bool TConnection::JoinGame(TReadBuffer *Buffer){
 	if(this->State != CONNECTION_LOGIN){
-		error("TConnection::JoinGame: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::JoinGame: Invalid connection state %d.\n", this->State);
 	}
 
 	this->ClearKnownCreatureTable(false);
@@ -208,11 +208,11 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 		this->TerminalVersion = (int)Buffer->readWord();
 		this->CharacterID = Buffer->readQuad();
 	}catch(const char *str){
-		error("TConnection::JoinGame: Fehler beim Auslesen des Puffers (%s).\n", str);
+		error("TConnection::JoinGame: Error while reading the buffer (%s).\n", str);
 	}
 
 	if(this->TerminalType != 1 && this->TerminalType != 2){
-		error("TConnection::JoinGame: Unbekannter Terminal-Typ %d.\n", this->TerminalType);
+		error("TConnection::JoinGame: Unknown terminal type %d.\n", this->TerminalType);
 		return false;
 	}
 
@@ -230,13 +230,13 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 		}
 	}else{
 		if(Player->IsDead){
-			Log("game", "Spieler %s ist gerade am Sterben - Einloggen gescheitert.\n", Player->Name);
+			Log("game", "Player %s is currently dying - login failed.\n", Player->Name);
 			DecreasePlayerPoolSlotSticky(this->CharacterID);
 			return false;
 		}
 
 		if(Player->LoggingOut && Player->LogoutPossible() == 0){
-			Log("game", "Spieler %s loggt gerade aus - Einloggen gescheitert.\n", Player->Name);
+			Log("game", "Player %s is currently logging out - login failed.\n", Player->Name);
 			DecreasePlayerPoolSlotSticky(this->CharacterID);
 			return false;
 		}
@@ -260,7 +260,7 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 
 void TConnection::EnterGame(void){
 	if(this->State != CONNECTION_LOGIN){
-		error("TConnection::EnterGame: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::EnterGame: Invalid connection state %d.\n", this->State);
 	}
 
 	this->State = CONNECTION_GAME;
@@ -274,7 +274,7 @@ void TConnection::Die(void){
 
 void TConnection::Logout(int Delay, bool StopFight){
 	if(!this->InGame() && this->State != CONNECTION_LOGOUT){
-		error("TConnection::Logout: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::Logout: Invalid connection state %d.\n", this->State);
 	}
 
 	this->State = CONNECTION_LOGOUT;
@@ -297,7 +297,7 @@ void TConnection::Logout(int Delay, bool StopFight){
 
 void TConnection::Close(bool Delay){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
-		error("TConnection::Close: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::Close: Invalid connection state %d.\n", this->State);
 	}
 
 	if(this->State == CONNECTION_CONNECTED){
@@ -310,7 +310,7 @@ void TConnection::Close(bool Delay){
 
 void TConnection::Disconnect(void){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
-		error("TConnection::Close: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::Close: Invalid connection state %d.\n", this->State);
 	}
 
 	this->ClearKnownCreatureTable(true);
@@ -321,7 +321,7 @@ void TConnection::Disconnect(void){
 
 TPlayer *TConnection::GetPlayer(void){
 	if(!this->Live()){
-		error("TConnection::GetPlayer: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::GetPlayer: Invalid connection state %d.\n", this->State);
 		return NULL;
 	}
 
@@ -334,7 +334,7 @@ TPlayer *TConnection::GetPlayer(void){
 
 const char *TConnection::GetName(void){
 	if(!this->Live()){
-		error("TConnection::GetName: Ungültiger Verbindungszustand %d.\n", this->State);
+		error("TConnection::GetName: Invalid connection state %d.\n", this->State);
 		return "";
 	}
 
@@ -431,12 +431,12 @@ uint32 TConnection::NewKnownCreature(uint32 NewID){
 	}
 
 	if(EntryIndex == -1){
-		print(3, "KnownCreatureTable ausgelastet.\n");
+		print(3, "KnownCreatureTable is full.\n");
 		return 0;
 	}
 
 	if(this->KnownCreatureTable[EntryIndex].State != KNOWNCREATURE_FREE){
-		error("TUserCom::NewKnownCreature: Slot ist nicht gelöscht.\n");
+		error("TUserCom::NewKnownCreature: Slot is not cleared.\n");
 	}
 
 	this->KnownCreatureTable[EntryIndex].State = KNOWNCREATURE_UPTODATE;
@@ -447,7 +447,7 @@ uint32 TConnection::NewKnownCreature(uint32 NewID){
 		this->KnownCreatureTable[EntryIndex].Next = Creature->FirstKnowingConnection;
 		Creature->FirstKnowingConnection = &this->KnownCreatureTable[EntryIndex];
 	}else{
-		error("TUserCom::NewKnownCreature: Kreatur %u existiert nicht.\n", NewID);
+		error("TUserCom::NewKnownCreature: Creature %u does not exist.\n", NewID);
 	}
 
 	return OldID;
@@ -467,12 +467,12 @@ void TConnection::ClearKnownCreatureTable(bool Unchain){
 void TConnection::UnchainKnownCreature(uint32 ID){
 	TCreature *Creature = GetCreature(ID);
 	if(Creature == NULL){
-		error("TUserCom::UnchainKnownCreature: Kreatur %u existiert nicht.\n", ID);
+		error("TUserCom::UnchainKnownCreature: Creature %u does not exist.\n", ID);
 		return;
 	}
 
 	if(Creature->FirstKnowingConnection == NULL){
-		error("TUserCom::UnchainKnownCreature: Kreatur %u kennt niemand.\n", ID);
+		error("TUserCom::UnchainKnownCreature: Creature %u is not known by anyone.\n", ID);
 		return;
 	}
 
@@ -487,7 +487,7 @@ void TConnection::UnchainKnownCreature(uint32 ID){
 	}
 
 	if(Cur == NULL){
-		error("TUserCom::UnchainKnownCreature: Kreatur %u ist nicht bekannt.\n", ID);
+		error("TUserCom::UnchainKnownCreature: Creature %u is not known.\n", ID);
 		return;
 	}
 

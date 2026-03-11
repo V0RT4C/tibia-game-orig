@@ -31,7 +31,7 @@ static list<TDynamicStringTableBlock> DynamicStringTable;
 const char *AddStaticString(const char *String){
 	int StringLen = (int)strlen(String);
 	if((StringLen + 1) > StaticBlockSize){
-		error("AddStaticString: String zu lang (%d).\n", StringLen);
+		error("AddStaticString: String too long (%d).\n", StringLen);
 		return NULL;
 	}
 
@@ -66,7 +66,7 @@ uint32 AddDynamicString(const char *String){
 	}
 
 	if((StringLen + 1) > DynamicBlockSize){
-		error("AddDynamicString: String zu lang (%d)\n", StringLen);
+		error("AddDynamicString: String too long (%d).\n", StringLen);
 		return 0;
 	}
 
@@ -98,7 +98,7 @@ uint32 AddDynamicString(const char *String){
 	}
 
 	if(EntryIndex == -1){
-		error("AddDynamicString: Keinen freien Platz gefunden.\n");
+		error("AddDynamicString: No free slot found.\n");
 		return 0;
 	}
 
@@ -126,13 +126,13 @@ const char *GetDynamicString(uint32 Number){
 	}
 
 	if(Node == NULL){
-		error("GetDynamicString: Block für String %u existiert nicht\n", Number);
+		error("GetDynamicString: Block for string %u does not exist.\n", Number);
 		return NULL;
 	}
 
 	TDynamicStringTableBlock *Block = &Node->data;
 	if(Block->EntryType[EntryIndex] != DYNAMIC_STRING_ALLOCATED){
-		error("GetDynamicString: Eintrag für String %u existiert nicht\n", Number);
+		error("GetDynamicString: Entry for string %u does not exist.\n", Number);
 		return NULL;
 	}
 
@@ -154,13 +154,13 @@ void DeleteDynamicString(uint32 Number){
 	}
 
 	if(Node == NULL){
-		error("DeleteDynamicString: Block für String %u existiert nicht\n", Number);
+		error("DeleteDynamicString: Block for string %u does not exist.\n", Number);
 		return;
 	}
 
 	TDynamicStringTableBlock *Block = &Node->data;
 	if(Block->EntryType[EntryIndex] != DYNAMIC_STRING_ALLOCATED){
-		error("DeleteDynamicString: Eintrag für String %u existiert nicht\n", Number);
+		error("DeleteDynamicString: Entry for string %u does not exist.\n", Number);
 		return;
 	}
 
@@ -188,7 +188,7 @@ void CleanupDynamicStrings(void){
 				Block->EntryType[i] = DYNAMIC_STRING_FREE;
 
 				if(StringEnd > DynamicBlockSize){
-					error("CleanupDynamicStrings: Stringende fehlt\n");
+					error("CleanupDynamicStrings: String end is missing.\n");
 					continue;
 				}
 
@@ -235,7 +235,7 @@ const char *Plural(const char *s, int Count){
 
 	ObjectNameString[0] = 0;
 	if(s == NULL){
-		error("Plural: Übergebener String existiert nicht.\n");
+		error("Plural: Provided string does not exist.\n");
 		return ObjectNameString;
 	}
 
@@ -317,12 +317,12 @@ const char *Plural(const char *s, int Count){
 
 const char *SearchForWord(const char *Pattern, const char *Text){
 	if(Pattern == NULL || Pattern[0] == 0){
-		error("SearchForWord: Übergebenes Suchwort existiert nicht.\n");
+		error("SearchForWord: Provided search word does not exist.\n");
 		return NULL;
 	}
 
 	if(Text == NULL){
-		error("SearchForWord: Übergebener Text existiert nicht.\n");
+		error("SearchForWord: Provided text does not exist.\n");
 		return NULL;
 	}
 
@@ -367,12 +367,12 @@ const char *SearchForWord(const char *Pattern, const char *Text){
 
 const char *SearchForNumber(int Count, const char *Text){
 	if(Count < 1){
-		error("SearchForNumber: Illegale Suchnummer %d.\n", Count);
+		error("SearchForNumber: Illegal search number %d.\n", Count);
 		return NULL;
 	}
 
 	if(Text == NULL){
-		error("SearchForNumber: Übergebener Text existiert nicht.\n");
+		error("SearchForNumber: Provided text does not exist.\n");
 		return NULL;
 	}
 
@@ -408,12 +408,12 @@ const char *SearchForNumber(int Count, const char *Text){
 
 bool MatchString(const char *Pattern, const char *String){
 	if(Pattern == NULL){
-		error("MatchString: Pattern ist NULL.\n");
+		error("MatchString: Pattern is NULL.\n");
 		return false;
 	}
 
 	if(String == NULL){
-		error("MatchString: String ist NULL.\n");
+		error("MatchString: String is NULL.\n");
 		return false;
 	}
 
@@ -470,12 +470,12 @@ bool MatchString(const char *Pattern, const char *String){
 // TODO(fusion): This function is unsafe like `strcpy`.
 void AddSlashes(char *Destination, const char *Source){
 	if(Source == NULL){
-		error("AddSlashes: Source ist NULL.\n");
+		error("AddSlashes: Source is NULL.\n");
 		return;
 	}
 
 	if(Destination == NULL){
-		error("AddSlashes: Destination ist NULL.\n");
+		error("AddSlashes: Destination is NULL.\n");
 		return;
 	}
 
@@ -499,7 +499,7 @@ void AddSlashes(char *Destination, const char *Source){
 
 void Trim(char *Text){
 	if(Text == NULL){
-		error("Trim: Text ist NULL.\n");
+		error("Trim: Text is NULL.\n");
 		return;
 	}
 
@@ -533,12 +533,12 @@ void Trim(char *Text){
 // `Destination` instead of modifying the original string. It is unsafe as `strcpy`.
 void Trim(char *Destination, const char *Source){
 	if(Source == NULL){
-		error("Trim: Source ist NULL.\n");
+		error("Trim: Source is NULL.\n");
 		return;
 	}
 
 	if(Destination == NULL){
-		error("Trim: Destination ist NULL.\n");
+		error("Trim: Destination is NULL.\n");
 		return;
 	}
 
@@ -569,7 +569,7 @@ void Trim(char *Destination, const char *Source){
 
 void ChangeWildcards(char *String){
 	if(String == NULL){
-		error("ChangeWildcards: String ist NULL.\n");
+		error("ChangeWildcards: String is NULL.\n");
 		return;
 	}
 

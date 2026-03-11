@@ -124,7 +124,7 @@ bool TImpact::isAggressive(void){
 // =============================================================================
 TDamageImpact::TDamageImpact(TCreature *Actor, int DamageType, int Power, bool AllowDefense){
 	if(Actor == NULL){
-		error("TDamageImpact::TDamageImpact: Actor ist NULL.\n");
+		error("TDamageImpact::TDamageImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -135,7 +135,7 @@ TDamageImpact::TDamageImpact(TCreature *Actor, int DamageType, int Power, bool A
 
 void TDamageImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TDamageImpact::handleCreature: Opfer existiert nicht.\n");
+		error("TDamageImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -157,7 +157,7 @@ void TDamageImpact::handleCreature(TCreature *Victim){
 // =============================================================================
 TFieldImpact::TFieldImpact(TCreature *Actor, int FieldType){
 	if(Actor == NULL){
-		error("TFieldImpact::TFieldImpact: Actor ist NULL.\n");
+		error("TFieldImpact::TFieldImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -176,11 +176,11 @@ void TFieldImpact::handleField(int x, int y, int z){
 // =============================================================================
 THealingImpact::THealingImpact(TCreature *Actor, int Power){
 	if(Actor == NULL){
-		error("THealingImpact::THealingImpact: Actor ist NULL.\n");
+		error("THealingImpact::THealingImpact: Actor is NULL.\n");
 	}
 
 	if(Power < 0){
-		error("THealingImpact::THealingImpact: Power ist negativ (Actor: %s).\n",
+		error("THealingImpact::THealingImpact: Power is negative (Actor: %s).\n",
 				(Actor != NULL ? Actor->Name : "(unknown)"));
 	}
 
@@ -190,7 +190,7 @@ THealingImpact::THealingImpact(TCreature *Actor, int Power){
 
 void THealingImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("THealingImpact::handleCreature: Opfer existiert nicht.\n");
+		error("THealingImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -215,7 +215,7 @@ bool THealingImpact::isAggressive(void){
 // =============================================================================
 TSpeedImpact::TSpeedImpact(TCreature *Actor, int Percent, int Duration){
 	if(Actor == NULL){
-		error("TSpeedImpact::TSpeedImpact: Actor ist NULL.\n");
+		error("TSpeedImpact::TSpeedImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -225,7 +225,7 @@ TSpeedImpact::TSpeedImpact(TCreature *Actor, int Percent, int Duration){
 
 void TSpeedImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TSpeedImpact::handleCreature: Opfer existiert nicht.\n");
+		error("TSpeedImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -254,11 +254,11 @@ void TSpeedImpact::handleCreature(TCreature *Victim){
 // =============================================================================
 TDrunkenImpact::TDrunkenImpact(TCreature *Actor, int Power, int Duration){
 	if(Actor == NULL){
-		error("TDrunkenImpact::TDrunkenImpact: Actor ist NULL.\n");
+		error("TDrunkenImpact::TDrunkenImpact: Actor is NULL.\n");
 	}
 
 	if(Power > 6){
-		error("TDrunkenImpact::TDrunkenImpact: Power ist zu groß (%d).\n", Power);
+		error("TDrunkenImpact::TDrunkenImpact: Power is too large (%d).\n", Power);
 		Power = 6;
 	}
 
@@ -269,7 +269,7 @@ TDrunkenImpact::TDrunkenImpact(TCreature *Actor, int Power, int Duration){
 
 void TDrunkenImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TDrunkenImpact::handleCreature: Opfer existiert nicht.\n");
+		error("TDrunkenImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -290,7 +290,7 @@ void TDrunkenImpact::handleCreature(TCreature *Victim){
 // =============================================================================
 TStrengthImpact::TStrengthImpact(TCreature *Actor, int Skills, int Percent, int Duration){
 	if(Actor == NULL){
-		error("TStrengthImpact::TStrengthImpact: Actor ist NULL.\n");
+		error("TStrengthImpact::TStrengthImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -301,7 +301,7 @@ TStrengthImpact::TStrengthImpact(TCreature *Actor, int Skills, int Percent, int 
 
 void TStrengthImpact::handleCreature(TCreature *Victim){
 	if(Victim  == NULL){
-		error("TStrengthImpact::handleCreature: Opfer existiert nicht.\n");
+		error("TStrengthImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -348,7 +348,7 @@ void TStrengthImpact::handleCreature(TCreature *Victim){
 // =============================================================================
 TOutfitImpact::TOutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration){
 	if(Actor == NULL){
-		error("TOutfitImpact::TOutfitImpact: Actor ist NULL.\n");
+		error("TOutfitImpact::TOutfitImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -358,7 +358,7 @@ TOutfitImpact::TOutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration){
 
 void TOutfitImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TOutfitImpact::handleCreature: Opfer existiert nicht.\n");
+		error("TOutfitImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -370,11 +370,11 @@ void TOutfitImpact::handleCreature(TCreature *Victim){
 // =============================================================================
 TSummonImpact::TSummonImpact(TCreature *Actor, int Race, int Maximum){
 	if(Actor == NULL){
-		error("TSummonImpact::TSummonImpact: Actor ist NULL.\n");
+		error("TSummonImpact::TSummonImpact: Actor is NULL.\n");
 	}
 
 	if(!IsRaceValid(Race)){
-		error("TSummonImpact::TSummonImpact: Ungültige Rassennummer %d.\n", Race);
+		error("TSummonImpact::TSummonImpact: Invalid race number %d.\n", Race);
 	}
 
 	this->Actor = Actor;
@@ -399,7 +399,7 @@ void TSummonImpact::handleField(int x, int y, int z){
 // =============================================================================
 void ActorShapeSpell(TCreature *Actor, TImpact *Impact, int Effect){
 	if(Actor == NULL){
-		error("ActorShapeSpell: Sprecher existiert nicht.\n");
+		error("ActorShapeSpell: Caster does not exist.\n");
 		return;
 	}
 
@@ -416,7 +416,7 @@ void ActorShapeSpell(TCreature *Actor, TImpact *Impact, int Effect){
 void VictimShapeSpell(TCreature *Actor, TCreature *Victim,
 		int Range, int Animation, TImpact *Impact, int Effect){
 	if(Actor == NULL){
-		error("VictimShapeSpell: Sprecher existiert nicht.\n");
+		error("VictimShapeSpell: Caster does not exist.\n");
 		return;
 	}
 
@@ -502,7 +502,7 @@ static void ExecuteCircleSpell(int DestX, int DestY, int DestZ,
 
 void OriginShapeSpell(TCreature *Actor, int Radius, TImpact *Impact, int Effect){
 	if(Actor == NULL){
-		error("OriginShapeSpell: Übergebene Kreatur existiert nicht.\n");
+		error("OriginShapeSpell: Passed creature does not exist.\n");
 		return;
 	}
 
@@ -512,7 +512,7 @@ void OriginShapeSpell(TCreature *Actor, int Radius, TImpact *Impact, int Effect)
 void CircleShapeSpell(TCreature *Actor, int DestX, int DestY, int DestZ,
 		int Range, int Animation, int Radius, TImpact *Impact, int Effect){
 	if(Actor == NULL){
-		error("CircleShapeSpell: Sprecher existiert nicht.\n");
+		error("CircleShapeSpell: Caster does not exist.\n");
 		return;
 	}
 
@@ -537,7 +537,7 @@ void CircleShapeSpell(TCreature *Actor, int DestX, int DestY, int DestZ,
 void DestinationShapeSpell(TCreature *Actor, TCreature *Victim,
 		int Range, int Animation, int Radius, TImpact *Impact, int Effect){
 	if(Actor == NULL){
-		error("DestinationShapeSpell: Sprecher existiert nicht.\n");
+		error("DestinationShapeSpell: Caster does not exist.\n");
 		return;
 	}
 
@@ -549,7 +549,7 @@ void DestinationShapeSpell(TCreature *Actor, TCreature *Victim,
 
 void AngleShapeSpell(TCreature *Actor, int Angle, int Range, TImpact *Impact, int Effect){
 	if(Actor == NULL){
-		error("AngleShapeSpell: Übergebene Kreatur existiert nicht.\n");
+		error("AngleShapeSpell: Passed creature does not exist.\n");
 		return;
 	}
 
@@ -578,7 +578,7 @@ void AngleShapeSpell(TCreature *Actor, int Angle, int Range, TImpact *Impact, in
 				FieldX -= Forward;
 				FieldY -= Across;
 			}else{
-				error("AngleShapeSpell: Ungültige Blickrichtung %d.\n", Direction);
+				error("AngleShapeSpell: Invalid viewing direction %d.\n", Direction);
 				return;
 			}
 
@@ -612,7 +612,7 @@ void AngleShapeSpell(TCreature *Actor, int Angle, int Range, TImpact *Impact, in
 
 void CheckSpellbook(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckSpellbook: Übergebene Kreatur existiert nicht.\n");
+		error("CheckSpellbook: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -624,13 +624,13 @@ void CheckSpellbook(TCreature *Actor, int SpellNr){
 
 void CheckAccount(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckAccount: Übergebene Kreatur existiert nicht.\n");
+		error("CheckAccount: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	// TODO(fusion): Why is this the only function that checks the spell number?
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("CheckAccount: Ungültige Spruchnummer %d.\n", SpellNr);
+		error("CheckAccount: Invalid spell number %d.\n", SpellNr);
 		throw ERROR;
 	}
 
@@ -642,14 +642,14 @@ void CheckAccount(TCreature *Actor, int SpellNr){
 
 void CheckLevel(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckLevel: Übergebene Kreatur existiert nicht.\n");
+		error("CheckLevel: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ALL_SPELLS)){
 		TSkill *Level = Actor->Skills[SKILL_LEVEL];
 		if(Level == NULL){
-			error("CheckLevel: Kein Skill LEVEL.\n");
+			error("CheckLevel: No skill LEVEL.\n");
 			throw ERROR;
 		}
 
@@ -661,14 +661,14 @@ void CheckLevel(TCreature *Actor, int SpellNr){
 
 void CheckRuneLevel(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckRuneLevel: Übergebene Kreatur existiert nicht.\n");
+		error("CheckRuneLevel: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ALL_SPELLS)){
 		TSkill *MagicLevel = Actor->Skills[SKILL_MAGIC_LEVEL];
 		if(MagicLevel == NULL){
-			error("CheckLevel: Kein Skill MAGLEVEL.\n");
+			error("CheckLevel: No skill MAGLEVEL.\n");
 			throw ERROR;
 		}
 
@@ -680,7 +680,7 @@ void CheckRuneLevel(TCreature *Actor, int SpellNr){
 
 void CheckMagicItem(TCreature *Actor, ObjectType Type){
 	if(Actor == NULL){
-		error("CheckMagicObject: Übergebene Kreatur existiert nicht.\n");
+		error("CheckMagicObject: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -692,7 +692,7 @@ void CheckMagicItem(TCreature *Actor, ObjectType Type){
 
 void CheckRing(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckRing: Übergebene Kreatur existiert nicht.\n");
+		error("CheckRing: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -707,7 +707,7 @@ void CheckRing(TCreature *Actor, int SpellNr){
 
 void CheckAffectedPlayers(TCreature *Actor, int x, int y, int z){
 	if(Actor == NULL){
-		error("CheckAffectedPlayers: Übergebene Kreatur existiert nicht.\n");
+		error("CheckAffectedPlayers: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -730,7 +730,7 @@ void CheckAffectedPlayers(TCreature *Actor, int x, int y, int z){
 
 void CheckMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay){
 	if(Actor == NULL){
-		error("CheckMana: Übergebene Kreatur existiert nicht.\n");
+		error("CheckMana: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -740,13 +740,13 @@ void CheckMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay){
 
 	TSkill *Mana = Actor->Skills[SKILL_MANA];
 	if(Mana == NULL){
-		error("CheckMana: Kein Skill MANA!\n");
+		error("CheckMana: No skill MANA!\n");
 		throw ERROR;
 	}
 
 	TSkill *Soul = Actor->Skills[SKILL_SOUL];
 	if(Soul == NULL){
-		error("CheckMana: Kein Skill SOULPOINTS!\n");
+		error("CheckMana: No skill SOULPOINTS!\n");
 		throw ERROR;
 	}
 
@@ -799,7 +799,7 @@ int ComputeDamage(TCreature *Actor, int SpellNr, int Damage, int Variation){
 
 bool IsAggressiveSpell(int SpellNr){
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("IsAggressiveSpell: Ungültige Spruchnummer %d.\n", SpellNr);
+		error("IsAggressiveSpell: Invalid spell number %d.\n", SpellNr);
 		return false;
 	}
 
@@ -809,12 +809,12 @@ bool IsAggressiveSpell(int SpellNr){
 void MassCombat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Radius, int DamageType, int Animation){
 	if(!Target.exists()){
-		error("MassCombat: Übergebenes Ziel existiert nicht.\n");
+		error("MassCombat: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor == NULL){
-		error("MassCombat: Übergebene Kreatur existiert nicht.\n");
+		error("MassCombat: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -837,7 +837,7 @@ void MassCombat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 void AngleCombat(TCreature *Actor, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Range, int Angle, int DamageType){
 	if(Actor == NULL){
-		error("AngleCombat: Übergebene Kreatur existiert nicht.\n");
+		error("AngleCombat: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -854,12 +854,12 @@ void AngleCombat(TCreature *Actor, int ManaPoints, int SoulPoints,
 void Combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Animation, int DamageType){
 	if(!Target.exists()){
-		error("Combat: Übergebenes Ziel existiert nicht.\n");
+		error("Combat: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor == NULL){
-		error("Combat: Übergebene Kreatur existiert nicht.\n");
+		error("Combat: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -928,7 +928,7 @@ int GetDirection(int dx, int dy){
 // =============================================================================
 void KillAllMonsters(TCreature *Actor, int Effect, int Radius){
 	if(Actor == NULL){
-		error("KillAllMonsters: Übergebene Kreatur existiert nicht.\n");
+		error("KillAllMonsters: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -965,9 +965,9 @@ void KillAllMonsters(TCreature *Actor, int Effect, int Radius){
 				if(Obj.getObjectType().isCreatureContainer()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim == NULL){
-						error("KillAllMonsters: Ungültige Kreatur.\n");
+						error("KillAllMonsters: Invalid creature.\n");
 					}else if(Actor != Victim && Victim->Type == MONSTER){
-						print(3, "Töte %s...\n", Victim->Name);
+						print(3, "Killing %s...\n", Victim->Name);
 						Victim->Kill();
 					}
 				}
@@ -1026,7 +1026,7 @@ void CreateField(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful
 		}
 
 		default:{
-			error("CreateField: Ungültiger Feldtyp %d.\n", FieldType);
+			error("CreateField: Invalid field type %d.\n", FieldType);
 			throw ERROR;
 		}
 	}
@@ -1055,12 +1055,12 @@ void CreateField(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful
 
 void CreateField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType){
 	if(Actor == NULL){
-		error("CreateField: Ungültige Kreatur übergeben.\n");
+		error("CreateField: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CreateField: Übergebenes Objekt existiert nicht.\n");
+		error("CreateField: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1097,7 +1097,7 @@ void CreateField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints
 
 void CreateField(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType){
 	if(Actor == NULL){
-		error("CreateField: Ungültige Kreatur übergeben.\n");
+		error("CreateField: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -1124,12 +1124,12 @@ void CreateField(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType
 void MassCreateField(TCreature *Actor, Object Target,
 		int ManaPoints, int SoulPoints, int FieldType, int Radius){
 	if(Actor == NULL){
-		error("MassCreateField: Ungültige Kreatur übergeben.\n");
+		error("MassCreateField: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("MassCreateField: Übergebenes Objekt existiert nicht.\n");
+		error("MassCreateField: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1187,12 +1187,12 @@ void MassCreateField(TCreature *Actor, Object Target,
 void CreateFieldWall(TCreature *Actor, Object Target,
 		int ManaPoints, int SoulPoints, int FieldType, int Width){
 	if(Actor == NULL){
-		error("CreateFieldWall: Ungültige Kreatur übergeben.\n");
+		error("CreateFieldWall: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CreateFieldWall: Übergebenes Objekt existiert nicht.\n");
+		error("CreateFieldWall: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1253,7 +1253,7 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 		}
 
 		default:{
-			error("CreateFieldWall: Ungültige Richtung %d.\n", Direction);
+			error("CreateFieldWall: Invalid direction %d.\n", Direction);
 			throw ERROR;
 		}
 	}
@@ -1315,12 +1315,12 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 
 void DeleteField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("DeleteField: Ungültige Kreatur übergeben.\n");
+		error("DeleteField: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("DeleteField: Übergebenes Objekt existiert nicht.\n");
+		error("DeleteField: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1346,12 +1346,12 @@ void DeleteField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints
 
 void CleanupField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("CleanupField: Ungültige Kreatur übergeben.\n");
+		error("CleanupField: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CleanupField: Übergebenes Objekt existiert nicht.\n");
+		error("CleanupField: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1385,12 +1385,12 @@ void CleanupField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoint
 
 void CleanupField(TCreature *Actor){
 	if(Actor == NULL){
-		error("CleanupField: Ungültige Kreatur übergeben.\n");
+		error("CleanupField: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CleanupField: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("CleanupField: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1415,17 +1415,17 @@ void CleanupField(TCreature *Actor){
 
 void Teleport(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("Teleport: Ungültige Kreatur übergeben.\n");
+		error("Teleport: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("Teleport: Param ist NULL.\n");
+		error("Teleport: Param is NULL.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("Teleport: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("Teleport: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1516,12 +1516,12 @@ void Teleport(TCreature *Actor, const char *Param){
 
 void TeleportToCreature(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("TeleportToCreature: Ungültige Kreatur übergeben.\n");
+		error("TeleportToCreature: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("TeleportToCreature: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("TeleportToCreature: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1541,7 +1541,7 @@ void TeleportToCreature(TCreature *Actor, const char *Name){
 		case -1:	throw PLAYERNOTONLINE;
 		case -2:	throw NAMEAMBIGUOUS;
 		default:{
-			error("TeleportToCreature: Ungültiger Rückgabewert von IdentifyPlayer.\n");
+			error("TeleportToCreature: Invalid return value from IdentifyPlayer.\n");
 			throw ERROR;
 		}
 	}
@@ -1568,17 +1568,17 @@ void TeleportToCreature(TCreature *Actor, const char *Name){
 	Object Dest = GetMapContainer(DestX, DestY, DestZ);
 	Move(0, Actor->CrObject, Dest, -1, false, NONE);
 	GraphicalEffect(DestX, DestY, DestZ, EFFECT_ENERGY);
-	Log("banish", "%s teleportiert sich zu %s.\n", Actor->Name, Player->Name);
+	Log("banish", "%s teleported to %s.\n", Actor->Name, Player->Name);
 }
 
 void TeleportPlayerToMe(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("TeleportPlayerToMe: Ungültige Kreatur übergeben.\n");
+		error("TeleportPlayerToMe: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("TeleportPlayerToMe: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("TeleportPlayerToMe: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1598,7 +1598,7 @@ void TeleportPlayerToMe(TCreature *Actor, const char *Name){
 		case -1:	throw PLAYERNOTONLINE;
 		case -2:	throw NAMEAMBIGUOUS;
 		default:{
-			error("TeleportPlayerToMe: Ungültiger Rückgabewert von IdentifyPlayer.\n");
+			error("TeleportPlayerToMe: Invalid return value from IdentifyPlayer.\n");
 			throw ERROR;
 		}
 	}
@@ -1620,7 +1620,7 @@ void TeleportPlayerToMe(TCreature *Actor, const char *Name){
 
 void MagicRope(TCreature *Actor, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("MagicRope: Ungültige Kreatur übergeben.\n");
+		error("MagicRope: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -1640,12 +1640,12 @@ void MagicRope(TCreature *Actor, int ManaPoints, int SoulPoints){
 
 void MagicClimbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Param){
 	if(Actor == NULL){
-		error("MagicClimbing: Ungültige Kreatur übergeben.\n");
+		error("MagicClimbing: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("MagicClimbing: Ungültige Richtung übergeben.\n");
+		error("MagicClimbing: Invalid direction passed.\n");
 		throw ERROR;
 	}
 
@@ -1692,17 +1692,17 @@ void MagicClimbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char 
 void MagicClimbing(TCreature *Actor, const char *Param){
 	// TODO(fusion): I think this is a version used by GM characters.
 	if(Actor == NULL){
-		error("MagicClimbing: Ungültige Kreatur übergeben.\n");
+		error("MagicClimbing: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("MagicClimbing: Ungültige Richtung übergeben.\n");
+		error("MagicClimbing: Invalid direction passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("MagicClimbing: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("MagicClimbing: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1713,17 +1713,17 @@ void MagicClimbing(TCreature *Actor, const char *Param){
 
 void CreateThing(TCreature *Actor, const char *Param1, const char *Param2){
 	if(Actor == NULL){
-		error("CreateThing: Ungültige Kreatur übergeben.\n");
+		error("CreateThing: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param1 == NULL){
-		error("CreateThing: Ungültiger Parameter \"Param1\".\n");
+		error("CreateThing: Invalid parameter \"Param1\".\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CreateThing: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("CreateThing: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1774,17 +1774,17 @@ void CreateThing(TCreature *Actor, const char *Param1, const char *Param2){
 
 void CreateMoney(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("CreateMoney: Ungültige Kreatur übergeben.\n");
+		error("CreateMoney: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("CreateMoney: Ungültiger Parameter \"Param1\".\n");
+		error("CreateMoney: Invalid parameter \"Param1\".\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CreateMoney: Zauberspruch kann nur von Spieler angewendet werden.\n");
+		error("CreateMoney: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -1820,7 +1820,7 @@ void CreateMoney(TCreature *Actor, const char *Param){
 
 void CreateFood(TCreature *Actor, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("CreateFood: Ungültige Kreatur übergeben.\n");
+		error("CreateFood: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -1847,7 +1847,7 @@ void CreateFood(TCreature *Actor, int ManaPoints, int SoulPoints){
 
 void CreateArrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowType, int Count){
 	if(Actor == NULL){
-		error("CreateArrows: Ungültige Kreatur übergeben.\n");
+		error("CreateArrows: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -1861,7 +1861,7 @@ void CreateArrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowTyp
 		case 3: Number = 0; break;
 		case 4: Number = 4; break;
 		default:{
-			error("CreateArrows: Ungültiger Pfeiltyp %d.\n", ArrowType);
+			error("CreateArrows: Invalid arrow type %d.\n", ArrowType);
 			throw ERROR;
 		}
 	}
@@ -1872,12 +1872,12 @@ void CreateArrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowTyp
 
 void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God){
 	if(Actor == NULL){
-		error("SummonCreature: Ungültige Kreatur übergeben.\n");
+		error("SummonCreature: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!IsRaceValid(Race)){
-		error("SummonCreature: Ungültige Rassennummer %d übergeben.\n", Race);
+		error("SummonCreature: Invalid race number %d passed.\n", Race);
 		throw ERROR;
 	}
 
@@ -1920,12 +1920,12 @@ void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God){
 
 void SummonCreature(TCreature *Actor, int ManaPoints, const char *RaceName, bool God){
 	if(Actor == NULL){
-		error("SummonCreature: Ungültige Kreatur übergeben.\n");
+		error("SummonCreature: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(RaceName == NULL){
-		error("SummonCreature: Ungültiger Rassenname übergeben.\n");
+		error("SummonCreature: Invalid race name passed.\n");
 		throw ERROR;
 	}
 
@@ -1939,12 +1939,12 @@ void SummonCreature(TCreature *Actor, int ManaPoints, const char *RaceName, bool
 
 void StartMonsterraid(TCreature *Actor, const char *RaidName){
 	if(Actor == NULL){
-		error("StartMonsterraid: Ungültige Kreatur übergeben.\n");
+		error("StartMonsterraid: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(RaidName == NULL){
-		error("StartMonsterraid: Ungültiger Raidname übergeben.\n");
+		error("StartMonsterraid: Invalid raid name passed.\n");
 		throw ERROR;
 	}
 
@@ -1970,12 +1970,12 @@ void StartMonsterraid(TCreature *Actor, const char *RaidName){
 
 void RaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("RaiseDead: Ungültige Kreatur übergeben.\n");
+		error("RaiseDead: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("RaiseDead: Übergebenes Objekt existiert nicht.\n");
+		error("RaiseDead: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2021,12 +2021,12 @@ void RaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 
 void MassRaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius){
 	if(Actor == NULL){
-		error("MassRaiseDead: Ungültige Kreatur übergeben.\n");
+		error("MassRaiseDead: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("MassRaiseDead: Übergebenes Objekt existiert nicht.\n");
+		error("MassRaiseDead: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2085,7 +2085,7 @@ void MassRaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoin
 
 void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 	if(Actor == NULL){
-		error("Heal: Ungültige Kreatur übergeben.\n");
+		error("Heal: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2100,7 +2100,7 @@ void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 
 	TSkill *HitPoints = Actor->Skills[SKILL_HITPOINTS];
 	if(HitPoints == NULL){
-		error("Heal: Skill HITPOINTS existiert nicht.\n");
+		error("Heal: Skill HITPOINTS does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2120,12 +2120,12 @@ void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 
 void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Amount, int Radius){
 	if(Actor == NULL){
-		error("MassHeal: Ungültige Kreatur übergeben.\n");
+		error("MassHeal: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("MassHeal: Übergebenes Ziel existiert nicht.\n");
+		error("MassHeal: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2165,14 +2165,14 @@ void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, i
 				if(ObjType.isCreatureContainer()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim == NULL){
-						error("MassHeal: Ungültige Kreatur.\n");
+						error("MassHeal: Invalid creature.\n");
 					}else if(WorldType != NON_PVP || Victim->IsPeaceful()){
 						// TODO(fusion): Do we really want to throw here? If not
 						// having hitpoints is a problem, it should have been
 						// enforced ealier for all creatures.
 						TSkill *HitPoints = Victim->Skills[SKILL_HITPOINTS];
 						if(HitPoints == NULL){
-							error("MassHeal: Skill HITPOINTS existiert nicht.\n");
+							error("MassHeal: Skill HITPOINTS does not exist.\n");
 							throw ERROR;
 						}
 
@@ -2192,12 +2192,12 @@ void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, i
 
 void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int SoulPoints, int Amount){
 	if(Actor == NULL){
-		error("HealFriend: Ungültige Kreatur übergeben.\n");
+		error("HealFriend: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(TargetName == NULL){
-		error("HealFriend: Ungültigen Namen übergeben.\n");
+		error("HealFriend: Invalid name passed.\n");
 		throw ERROR;
 	}
 
@@ -2218,7 +2218,7 @@ void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int So
 
 	TSkill *HitPoints = Target->Skills[SKILL_HITPOINTS];
 	if(HitPoints == NULL){
-		error("HealFriend: Skill HITPOINTS existiert nicht.\n");
+		error("HealFriend: Skill HITPOINTS does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2239,7 +2239,7 @@ void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int So
 
 void RefreshMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 	if(Actor == NULL){
-		error("RefreshMana: Ungültige Kreatur übergeben.\n");
+		error("RefreshMana: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2247,7 +2247,7 @@ void RefreshMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 
 	TSkill *Mana = Actor->Skills[SKILL_MANA];
 	if(Mana == NULL){
-		error("RefreshMana: Skill MANA existiert nicht.\n");
+		error("RefreshMana: Skill MANA does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2257,12 +2257,12 @@ void RefreshMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 
 void MagicGoStrength(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints, int Percent, int Duration){
 	if(Actor == NULL){
-		error("MagicGoStrength: Übergebene Kreatur existiert nicht.\n");
+		error("MagicGoStrength: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Target == NULL){
-		error("MagicGoStrength: Übergebene Ziel Kreatur existiert nicht.\n");
+		error("MagicGoStrength: Passed target creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2300,7 +2300,7 @@ void MagicGoStrength(TCreature *Actor, TCreature *Target, int ManaPoints, int So
 
 void Shielding(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
 	if(Actor == NULL){
-		error("Shielding: Ungültige Kreatur übergeben.\n");
+		error("Shielding: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2311,12 +2311,12 @@ void Shielding(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
 
 void NegatePoison(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("NegatePoison: Ungültige Kreatur übergeben.\n");
+		error("NegatePoison: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Target == NULL){
-		error("NegatePoison: Zielkreatur existiert nicht.\n");
+		error("NegatePoison: Target creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2327,7 +2327,7 @@ void NegatePoison(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulP
 
 void Enlight(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius, int Duration){
 	if(Actor == NULL){
-		error("Enlight: Ungültige Kreatur übergeben.\n");
+		error("Enlight: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2340,7 +2340,7 @@ void Enlight(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius, int D
 
 void Invisibility(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
 	if(Actor == NULL){
-		error("Invisibility: Ungültige Kreatur übergeben.\n");
+		error("Invisibility: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2352,12 +2352,12 @@ void Invisibility(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration
 
 void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius){
 	if(Actor == NULL){
-		error("CancelInvisibility: Ungültige Kreatur übergeben.\n");
+		error("CancelInvisibility: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CancelInvisibility: Übergebenes Ziel existiert nicht.\n");
+		error("CancelInvisibility: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2403,7 +2403,7 @@ void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int Sou
 				if(ObjType.isCreatureContainer()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim == NULL){
-						error("CancelInvisibility: Ungültige Kreatur.\n");
+						error("CancelInvisibility: Invalid creature.\n");
 					}else if(Victim->IsInvisible()
 							&& (WorldType != NON_PVP || !Victim->IsPeaceful())){
 						Victim->SetTimer(SKILL_ILLUSION, 0, 0, 0, -1);
@@ -2451,12 +2451,12 @@ void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int Sou
 
 void CreatureIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, const char *RaceName, int Duration){
 	if(Actor == NULL){
-		error("CreatureIllusion: Ungültige Kreatur übergeben.\n");
+		error("CreatureIllusion: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(RaceName == NULL){
-		error("CreatureIllusion: Ungültiger Rassenname übergeben.\n");
+		error("CreatureIllusion: Invalid race name passed.\n");
 		throw ERROR;
 	}
 
@@ -2480,12 +2480,12 @@ void CreatureIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, const ch
 
 void ObjectIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, Object Target, int Duration){
 	if(Actor == NULL){
-		error("ObjectIllusion: Ungültige Kreatur übergeben.\n");
+		error("ObjectIllusion: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("ObjectIllusion: Übergebenes Objekt existiert nicht.\n");
+		error("ObjectIllusion: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2506,17 +2506,17 @@ void ObjectIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, Object Tar
 
 void ChangeData(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("ChangeData: Ungültige Kreatur übergeben.\n");
+		error("ChangeData: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("ChangeData: Ungültiger Parameter übergeben.\n");
+		error("ChangeData: Invalid parameter passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("ChangeData: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("ChangeData: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2582,7 +2582,7 @@ void ChangeData(TCreature *Actor, const char *Param){
 
 void EnchantObject(TCreature *Actor, int ManaPoints, int SoulPoints, ObjectType OldType, ObjectType NewType){
 	if(Actor == NULL){
-		error("EnchantObject: Ungültige Kreatur übergeben.\n");
+		error("EnchantObject: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2654,7 +2654,7 @@ void Challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius){
 			if(Obj != NONE){
 				TCreature *Victim = GetCreature(Obj);
 				if(Victim == NULL){
-					error("Challenge: Ungültige Kreatur.\n");
+					error("Challenge: Invalid creature.\n");
 				}else if(Victim->Type == MONSTER){
 					ChallengeMonster(Actor, Victim);
 				}
@@ -2666,17 +2666,17 @@ void Challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius){
 void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *TargetName){
 	// TODO(fusion): And we're back.
 	if(Actor == NULL){
-		error("FindPerson: Ungültige Kreatur übergeben.\n");
+		error("FindPerson: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(TargetName == NULL){
-		error("FindPerson: Ungültiger Name übergeben.\n");
+		error("FindPerson: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("FindPerson: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("FindPerson: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2690,7 +2690,7 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 	}
 
 	if(Target == NULL){
-		error("FindPerson: Opp ist NULL.\n");
+		error("FindPerson: Opp is NULL.\n");
 		throw ERROR;
 	}
 
@@ -2719,7 +2719,7 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 			case DIRECTION_NORTHWEST:	Direction = "north-west"; break;
 			case DIRECTION_NORTHEAST:	Direction = "north-east"; break;
 			default:{
-				error("FindPerson: Richtung ist Null.\n");
+				error("FindPerson: Direction is zero.\n");
 				throw ERROR;
 			}
 		}
@@ -2744,12 +2744,12 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 
 void GetPosition(TCreature *Actor){
 	if(Actor == NULL){
-		error("GetPosition: Ungültige Kreatur übergeben.\n");
+		error("GetPosition: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("GetPosition: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("GetPosition: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2762,17 +2762,17 @@ void GetPosition(TCreature *Actor){
 
 void GetQuestValue(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("GetQuestValue: Ungültige Kreatur übergeben.\n");
+		error("GetQuestValue: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("GetQuestValue: Param ist NULL.\n");
+		error("GetQuestValue: Param is NULL.\n");
 		return; // TODO(fusion): Why don't we throw here?
 	}
 
 	if(Actor->Type != PLAYER){
-		error("GetQuestValue: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("GetQuestValue: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2789,22 +2789,22 @@ void GetQuestValue(TCreature *Actor, const char *Param){
 
 void SetQuestValue(TCreature *Actor, const char *Param1, const char *Param2){
 	if(Actor == NULL){
-		error("SetQuestValue: Ungültige Kreatur übergeben.\n");
+		error("SetQuestValue: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param1 == NULL){
-		error("SetQuestValue: Param1 ist NULL.\n");
+		error("SetQuestValue: Param1 is NULL.\n");
 		return; // TODO(fusion): Why don't we throw here?
 	}
 
 	if(Param2 == NULL){
-		error("SetQuestValue: Param2 ist NULL.\n");
+		error("SetQuestValue: Param2 is NULL.\n");
 		return; // TODO(fusion): Why don't we throw here?
 	}
 
 	if(Actor->Type != PLAYER){
-		error("SetQuestValue: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("SetQuestValue: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2823,12 +2823,12 @@ void SetQuestValue(TCreature *Actor, const char *Param1, const char *Param2){
 
 void ClearQuestValues(TCreature *Actor){
 	if(Actor == NULL){
-		error("ClearQuestValues: Ungültige Kreatur übergeben.\n");
+		error("ClearQuestValues: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("ClearQuestValues: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("ClearQuestValues: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2844,17 +2844,17 @@ void ClearQuestValues(TCreature *Actor){
 
 void CreateKnowledge(TCreature *Actor, const char *Param1, const char *Param2){
 	if(Actor == NULL){
-		error("CreateKnowledge: Ungültige Kreatur übergeben.\n");
+		error("CreateKnowledge: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param1 == NULL){
-		error("CreateKnowledge: Ungültiger Parameter 1 übergeben.\n");
+		error("CreateKnowledge: Invalid parameter 1 passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CreateKnowledge: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("CreateKnowledge: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2871,17 +2871,17 @@ void CreateKnowledge(TCreature *Actor, const char *Param1, const char *Param2){
 
 void ChangeProfession(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("ChangeProfession: Ungültige Kreatur übergeben.\n");
+		error("ChangeProfession: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("ChangeProfession: Ungültigen Parameter übergeben.\n");
+		error("ChangeProfession: Invalid parameter passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("ChangeProfession: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("ChangeProfession: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2925,12 +2925,12 @@ void ChangeProfession(TCreature *Actor, const char *Param){
 
 void EditGuests(TCreature *Actor){
 	if(Actor == NULL){
-		error("EditGuests: Ungültige Kreatur übergeben.\n");
+		error("EditGuests: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("EditGuests: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("EditGuests: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2948,12 +2948,12 @@ void EditGuests(TCreature *Actor){
 
 void EditSubowners(TCreature *Actor){
 	if(Actor == NULL){
-		error("EditSubowners: Ungültige Kreatur übergeben.\n");
+		error("EditSubowners: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("EditSubowners: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("EditSubowners: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -2971,12 +2971,12 @@ void EditSubowners(TCreature *Actor){
 
 void EditNameDoor(TCreature *Actor){
 	if(Actor == NULL){
-		error("EditNameDoor: Ungültige Kreatur übergeben.\n");
+		error("EditNameDoor: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("EditNameDoor: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("EditNameDoor: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3012,7 +3012,7 @@ void EditNameDoor(TCreature *Actor){
 	}
 
 	if(Obj == NONE){
-		print(3, "Keine NameDoor gefunden.\n");
+		print(3, "No NameDoor found.\n");
 		throw NOTACCESSIBLE;
 	}
 
@@ -3023,17 +3023,17 @@ void EditNameDoor(TCreature *Actor){
 
 void KickGuest(TCreature *Actor, const char *GuestName){
 	if(Actor == NULL){
-		error("KickGuest(magic): Ungültige Kreatur übergeben.\n");
+		error("KickGuest(magic): Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(GuestName == NULL){
-		error("KickGuest(magic): Ungültigen Gast übergeben.\n");
+		error("KickGuest(magic): Invalid guest passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("KickGuest(magic): Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("KickGuest(magic): Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3056,22 +3056,22 @@ void KickGuest(TCreature *Actor, const char *GuestName){
 
 void Notation(TCreature *Actor, const char *Name, const char *Comment){
 	if(Actor == NULL){
-		error("Notation: Ungültige Kreatur übergeben.\n");
+		error("Notation: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("Notation: Ungültiger Name übergeben.\n");
+		error("Notation: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Comment == NULL){
-		error("Notation: Ungültige Bemerkung übergeben.\n");
+		error("Notation: Invalid remark passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("Notation: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("Notation: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3081,17 +3081,17 @@ void Notation(TCreature *Actor, const char *Name, const char *Comment){
 
 void NameLock(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("NameLock: Ungültige Kreatur übergeben.\n");
+		error("NameLock: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("NameLock: Ungültiger Name übergeben.\n");
+		error("NameLock: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("NameLock: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("NameLock: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3101,22 +3101,22 @@ void NameLock(TCreature *Actor, const char *Name){
 
 void BanishAccount(TCreature *Actor, const char *Name, int Duration, const char *Reason){
 	if(Actor == NULL){
-		error("BanishAccount: Ungültige Kreatur übergeben.\n");
+		error("BanishAccount: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("BanishAccount: Ungültiger Name übergeben.\n");
+		error("BanishAccount: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("BanishAccount: Ungültiger Grund übergeben.\n");
+		error("BanishAccount: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("BanishAccount: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("BanishAccount: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3126,22 +3126,22 @@ void BanishAccount(TCreature *Actor, const char *Name, int Duration, const char 
 
 void DeleteAccount(TCreature *Actor, const char *Name, const char *Reason){
 	if(Actor == NULL){
-		error("DeleteAccount: Ungültige Kreatur übergeben.\n");
+		error("DeleteAccount: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("DeleteAccount: Ungültiger Name übergeben.\n");
+		error("DeleteAccount: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("DeleteAccount: Ungültiger Grund übergeben.\n");
+		error("DeleteAccount: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("DeleteAccount: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("DeleteAccount: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3151,22 +3151,22 @@ void DeleteAccount(TCreature *Actor, const char *Name, const char *Reason){
 
 void BanishCharacter(TCreature *Actor, const char *Name, int Duration, const char *Reason){
 	if(Actor == NULL){
-		error("BanishCharacter: Ungültige Kreatur übergeben.\n");
+		error("BanishCharacter: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("BanishCharacter: Ungültiger Name übergeben.\n");
+		error("BanishCharacter: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("BanishCharacter: Ungültiger Grund übergeben.\n");
+		error("BanishCharacter: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("BanishCharacter: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("BanishCharacter: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3176,22 +3176,22 @@ void BanishCharacter(TCreature *Actor, const char *Name, int Duration, const cha
 
 void DeleteCharacter(TCreature *Actor, const char *Name, const char *Reason){
 	if(Actor == NULL){
-		error("DeleteCharacter: Ungültige Kreatur übergeben.\n");
+		error("DeleteCharacter: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("DeleteCharacter: Ungültiger Name übergeben.\n");
+		error("DeleteCharacter: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("DeleteCharacter: Ungültiger Grund übergeben.\n");
+		error("DeleteCharacter: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("DeleteCharacter: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("DeleteCharacter: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3201,22 +3201,22 @@ void DeleteCharacter(TCreature *Actor, const char *Name, const char *Reason){
 
 void IPBanishment(TCreature *Actor, const char *Name, const char *Reason){
 	if(Actor == NULL){
-		error("IPBanishment: Ungültige Kreatur übergeben.\n");
+		error("IPBanishment: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("IPBanishment: Ungültiger Name übergeben.\n");
+		error("IPBanishment: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("IPBanishment: Ungültiger Grund übergeben.\n");
+		error("IPBanishment: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("IPBanishment: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("IPBanishment: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3226,17 +3226,17 @@ void IPBanishment(TCreature *Actor, const char *Name, const char *Reason){
 
 void SetNameRule(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("SetNameRule: Ungültige Kreatur übergeben.\n");
+		error("SetNameRule: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("SetNameRule: Ungültiger Name übergeben.\n");
+		error("SetNameRule: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("SetNameRule: Zauberspruch kann nur von Spieler angewendet werden.\n");
+		error("SetNameRule: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3246,17 +3246,17 @@ void SetNameRule(TCreature *Actor, const char *Name){
 
 void KickPlayer(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("KickPlayer: Ungültige Kreatur übergeben.\n");
+		error("KickPlayer: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("KickPlayer: Ungültiger Name übergeben.\n");
+		error("KickPlayer: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("KickPlayer: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("KickPlayer: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3277,22 +3277,22 @@ void KickPlayer(TCreature *Actor, const char *Name){
 	Player->StartLogout(true, true);
 	SendMessage(Actor->Connection, TALK_INFO_MESSAGE,
 			"Player %s kicked out of the game.", Player->Name);
-	Log("banish", "%s kickt %s.\n", Actor->Name, Player->Name);
+	Log("banish", "%s kicked %s.\n", Actor->Name, Player->Name);
 }
 
 void HomeTeleport(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("HomeTeleport: Ungültige Kreatur übergeben.\n");
+		error("HomeTeleport: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL || Name[0] == 0){
-		error("HomeTeleport: Name existiert nicht.\n");
+		error("HomeTeleport: Name does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("HomeTeleport: Zauberspruch kann nur von Spielern angewendet werden.\n");
+		error("HomeTeleport: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3316,7 +3316,7 @@ void HomeTeleport(TCreature *Actor, const char *Name){
 
 	SendMessage(Actor->Connection, TALK_INFO_MESSAGE,
 			"Player %s has been moved to the temple.", Player->Name);
-	Log("banish", "%s teleportiert %s zum Tempel.\n", Actor->Name, Player->Name);
+	Log("banish", "%s teleported %s to the temple.\n", Actor->Name, Player->Name);
 }
 
 // Spell Casting
@@ -3324,7 +3324,7 @@ void HomeTeleport(TCreature *Actor, const char *Name){
 static void CharacterRightSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512]){
 	TCreature *Actor = GetCreature(CreatureID);
 	if(Actor == NULL){
-		error("CharacterRightSpell: Kreatur existiert nicht.\n");
+		error("CharacterRightSpell: Creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -3362,7 +3362,7 @@ static void CharacterRightSpell(uint32 CreatureID, int SpellNr, const char (*Spe
 static void AccountRightSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512]){
 	TCreature *Actor = GetCreature(CreatureID);
 	if(Actor == NULL){
-		error("AccountRightSpell: Kreatur existiert nicht.\n");
+		error("AccountRightSpell: Creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -3387,7 +3387,7 @@ static void AccountRightSpell(uint32 CreatureID, int SpellNr, const char (*Spell
 static void CastSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512]){
 	TCreature *Actor = GetCreature(CreatureID);
 	if(Actor == NULL){
-		error("CastSpell: Kreatur existiert nicht.\n");
+		error("CastSpell: Creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -3641,7 +3641,7 @@ static void CastSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512
 static void RuneSpell(uint32 CreatureID, int SpellNr){
 	TCreature *Actor = GetCreature(CreatureID);
 	if(Actor == NULL){
-		error("RuneSpell: Kreatur existiert nicht.\n");
+		error("RuneSpell: Creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -3652,7 +3652,7 @@ static void RuneSpell(uint32 CreatureID, int SpellNr){
 	int Amount = SpellList[SpellNr].Amount;
 
 	if(RuneGr == 0){
-		error("RuneSpell: Spell %d ist Runenspruch, hat aber keine Rune.\n", SpellNr);
+		error("RuneSpell: Spell %d is a rune spell but has no rune.\n", SpellNr);
 		throw ERROR;
 	}
 
@@ -3753,13 +3753,13 @@ static int FindSpell(const uint8 *Syllable){
 
 static int FindSpell(Object Obj){
 	if(!Obj.exists()){
-		error("FindSpell: Übergebenes Objekt existiert nicht.\n");
+		error("FindSpell: Passed object does not exist.\n");
 		return 0;
 	}
 
 	ObjectType ObjType = Obj.getObjectType();
 	if(!ObjType.getFlag(RUNE)){
-		error("FindSpell: Übergebenes Objekt ist nicht magisch.\n");
+		error("FindSpell: Passed object is not magical.\n");
 		return 0;
 	}
 
@@ -3781,7 +3781,7 @@ static void GetSpellString(int SpellNr, char *Text){
 	Text[0] = 0;
 
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("GetSpellString: Ungültige Zauberspruchnummer %d.\n", SpellNr);
+		error("GetSpellString: Invalid spell number %d.\n", SpellNr);
 		return;
 	}
 
@@ -3807,19 +3807,19 @@ void GetMagicItemDescription(Object Obj, char *SpellString, int *MagicLevel){
 	*MagicLevel = 0;
 
 	if(!Obj.exists()){
-		error("GetMagicItemDescription: Übergebenes Objekt existiert nicht.\n");
+		error("GetMagicItemDescription: Passed object does not exist.\n");
 		return;
 	}
 
 	ObjectType ObjType = Obj.getObjectType();
 	if(!ObjType.getFlag(RUNE)){
-		error("GetMagicItemDescription: Übergebenes Objekt ist nicht magisch.\n");
+		error("GetMagicItemDescription: Passed object is not magical.\n");
 		return;
 	}
 
 	int SpellNr = FindSpell(Obj);
 	if(SpellNr == 0){
-		error("GetMagicItemDescription: Objekt %d hat keinen Zauberspruch.\n", ObjType.TypeID);
+		error("GetMagicItemDescription: Object %d has no spell.\n", ObjType.TypeID);
 		return;
 	}
 
@@ -3830,12 +3830,12 @@ void GetMagicItemDescription(Object Obj, char *SpellString, int *MagicLevel){
 void GetSpellbook(uint32 CharacterID, char *Buffer){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("GetSpellbook: Spieler existiert nicht.\n");
+		error("GetSpellbook: Player does not exist.\n");
 		return;
 	}
 
 	if(Buffer == NULL){
-		error("GetSpellbook: Übergebener Puffer existiert nicht.\n");
+		error("GetSpellbook: Passed buffer does not exist.\n");
 		return;
 	}
 
@@ -3874,7 +3874,7 @@ void GetSpellbook(uint32 CharacterID, char *Buffer){
 
 			GetSpellString(SpellNr, Help);
 			if(Help[0] == 0){
-				error("GetSpellbook: Zauberspruch %d hat keine Zauberformel.\n", SpellNr);
+				error("GetSpellbook: Spell %d has no spell formula.\n", SpellNr);
 				continue;
 			}
 
@@ -3903,7 +3903,7 @@ void GetSpellbook(uint32 CharacterID, char *Buffer){
 
 int GetSpellLevel(int SpellNr){
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("GetSpellLevel: Ungültige Spruchnummer %d.\n", SpellNr);
+		error("GetSpellLevel: Invalid spell number %d.\n", SpellNr);
 		return 1;
 	}
 
@@ -3985,7 +3985,7 @@ int CheckForSpell(uint32 CreatureID, const char *Text){
 			case 4: CastSpell(CreatureID, SpellNr, SpellStr); break;
 			case 5: AccountRightSpell(CreatureID, SpellNr, SpellStr); break;
 			default:{
-				error("CheckForSpell: Spruchklasse %d existiert nicht.\n", SpellType);
+				error("CheckForSpell: Spell class %d does not exist.\n", SpellType);
 				break;
 			}
 		}
@@ -3996,7 +3996,7 @@ int CheckForSpell(uint32 CreatureID, const char *Text){
 		// cleaner to keep it this way.
 		TCreature *Actor = GetCreature(CreatureID);
 		if(Actor == NULL){
-			error("SpellFailed: Kreatur existiert nicht.\n");
+			error("SpellFailed: Creature does not exist.\n");
 		}else{
 			if(r != ERROR){
 				GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
@@ -4013,7 +4013,7 @@ int CheckForSpell(uint32 CreatureID, const char *Text){
 
 static void DeleteRune(Object Obj){
 	if(!Obj.exists()){
-		error("DeleteRune: Übergebenes Objekt existiert nicht.\n");
+		error("DeleteRune: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -4029,17 +4029,17 @@ static void DeleteRune(Object Obj){
 void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 	TPlayer *Actor = GetPlayer(CreatureID);
 	if(Actor == NULL){
-		error("UseMagicItem: Kreatur existiert nicht.\n");
+		error("UseMagicItem: Creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Obj.exists()){
-		error("UseMagicItem: Übergebenes Objekt existiert nicht.\n");
+		error("UseMagicItem: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Dest.exists()){
-		error("UseMagicItem: Übergebenes Ziel existiert nicht (Objekt %d).\n",
+		error("UseMagicItem: Passed target does not exist (object %d).\n",
 				Obj.getObjectType().TypeID);
 		throw ERROR;
 	}
@@ -4050,7 +4050,7 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 
 	int SpellNr = FindSpell(Obj);
 	if(SpellNr == 0){
-		error("UseMagicItem: Für Objekt %d existiert kein Spruch.\n",
+		error("UseMagicItem: No spell exists for object %d.\n",
 				Obj.getObjectType().TypeID);
 		throw ERROR;
 	}
@@ -4284,7 +4284,7 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 			}
 
 			default:{
-				error("UseMagicItem: Spell %d noch nicht implementiert.\n", SpellNr);
+				error("UseMagicItem: Spell %d not yet implemented.\n", SpellNr);
 				throw ERROR;
 			}
 		}
@@ -4309,18 +4309,18 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 void DrinkPotion(uint32 CreatureID, Object Obj){
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("DrinkPotion: Kreatur existiert nicht.\n");
+		error("DrinkPotion: Creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Obj.exists()){
-		error("DrinkPotion: Übergebenes Objekt existiert nicht.\n");
+		error("DrinkPotion: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	ObjectType ObjType = Obj.getObjectType();
 	if(!ObjType.getFlag(LIQUIDCONTAINER)){
-		error("DrinkPotion: Übergebenes Objekt ist kein Flüssigkeitscontainer.\n");
+		error("DrinkPotion: Passed object is not a liquid container.\n");
 		throw ERROR;
 	}
 
@@ -4332,7 +4332,7 @@ void DrinkPotion(uint32 CreatureID, Object Obj){
 		int Amount = ComputeDamage(NULL, 0, 50, 25);
 		Heal(Player, 0, 0, Amount);
 	}else{
-		error("DrinkPotion: Objekt enthält keinen Zaubertrank.\n");
+		error("DrinkPotion: Object does not contain a potion.\n");
 		throw ERROR;
 	}
 
@@ -4346,7 +4346,7 @@ static void InitCircles(void){
 	snprintf(FileName, sizeof(FileName), "%s/circles.dat", DATAPATH);
 	std::ifstream IN(FileName, std::ios_base::in);
 	if(IN.fail()){
-		error("InitCircles: Kann Datei %s nicht öffnen.\n", FileName);
+		error("InitCircles: Cannot open file %s.\n", FileName);
 		throw "Cannot open \"circles.dat\"";
 	}
 
@@ -4356,7 +4356,7 @@ static void InitCircles(void){
 	IN >> Width >> Height >> Center;
 
 	if(Width < 0 || Width > 21 || Height < 0 || Height > 21){
-		error("InitCircles: Ungültiges Dateiformat.\n");
+		error("InitCircles: Invalid file format.\n");
 		throw "Cannot process \"circles.dat\"";
 	}
 
@@ -4399,7 +4399,7 @@ static TSpellList *CreateSpell(int SpellNr, ...){
 				// TODO(fusion): I'm not sure it is a good idea to throw an
 				// exception between `va_start` and `va_end`.
 				if(SyllableCount > NARRAY(Spell->Syllable)){
-					error("CreateSpell: Silbenzahl überschritten bei Spell %d.\n", SpellNr);
+					error("CreateSpell: Syllable count exceeded for spell %d.\n", SpellNr);
 					throw "Spell has too many syllables";
 				}
 

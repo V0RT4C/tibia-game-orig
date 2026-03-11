@@ -176,7 +176,7 @@ struct priority_queue{
 
 	void deleteMin(void){
 		if(this->Entries < 1){
-			error("priority_queue::deleteMin: Warteschlange ist leer.\n");
+			error("priority_queue::deleteMin: Queue is empty.\n");
 			return;
 		}
 
@@ -410,7 +410,7 @@ struct list{
 
 	void remove(listnode<T> *node){
 		if(node == NULL){
-			error("list::remove: node ist NULL.\n");
+			error("list::remove: node is NULL.\n");
 			return;
 		}
 
@@ -483,7 +483,7 @@ struct fifo{
 
 	void remove(void){
 		if(this->Tail > this->Head){
-			error("fifo::remove: Fifo ist leer.\n");
+			error("fifo::remove: Fifo is empty.\n");
 			return;
 		}
 

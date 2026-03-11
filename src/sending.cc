@@ -26,7 +26,7 @@ void SendAll(void){
 				tgkill(GetGameProcessID(), Connection->GetThreadID(), SIGUSR2);
 			}
 		}else{
-			error("SendAll: Verbindung ist nicht sendewillig.\n");
+			error("SendAll: Connection is not willing to send.\n");
 		}
 		Connection = Connection->NextSendingConnection;
 	}
@@ -42,7 +42,7 @@ bool BeginSendData(TConnection *Connection){
 			Connection->Overflow = false;
 			Result = true;
 		}else{
-			print(2, "BeginSendData: Puffer von Verbindung %d ist voll.\n", Connection->GetSocket());
+			print(2, "BeginSendData: Buffer of connection %d is full.\n", Connection->GetSocket());
 		}
 	}
 	return Result;
@@ -50,17 +50,17 @@ bool BeginSendData(TConnection *Connection){
 
 void FinishSendData(TConnection *Connection){
 	if(Connection == NULL){
-		error("FinishSendData: Verbindung ist NULL.\n");
+		error("FinishSendData: Connection is NULL.\n");
 		return;
 	}
 
 	if(!Connection->Live()){
-		error("FinishSendData: Verbindung ist nicht online.\n");
+		error("FinishSendData: Connection is not online.\n");
 		return;
 	}
 
 	if(Connection->Overflow){
-		print(2, "FinishSendData: Puffer ist voll. Paket wird nicht versandt.\n");
+		print(2, "FinishSendData: Buffer is full. Packet will not be sent.\n");
 		return;
 	}
 
@@ -116,12 +116,12 @@ static void SendQuad(TConnection *Connection, uint32 Value){
 // were inlined, I just renamed it to something that made more sense.
 static void SendBytes(TConnection *Connection, const uint8 *Buffer, int Count){
 	if(Buffer == NULL){
-		error("SendText: Text ist NULL.\n");
+		error("SendText: Text is NULL.\n");
 		return;
 	}
 
 	if(Count <= 0){
-		error("SendText: ungültige Textlänge %d.\n", Count);
+		error("SendText: invalid text length %d.\n", Count);
 		return;
 	}
 
@@ -148,7 +148,7 @@ static void SendBytes(TConnection *Connection, const uint8 *Buffer, int Count){
 
 static void SendString(TConnection *Connection, const char *String){
 	if(String == NULL){
-		error("SendString: String ist NULL.\n");
+		error("SendString: String is NULL.\n");
 		return;
 	}
 
@@ -198,7 +198,7 @@ void SkipFlush(TConnection *Connection){
 
 void SendMapObject(TConnection *Connection, Object Obj){
 	if(!Obj.exists()){
-		error("SendMapObject: Übergebenes Objekt existiert nicht.\n");
+		error("SendMapObject: Passed object does not exist.\n");
 		return;
 	}
 
@@ -210,7 +210,7 @@ void SendMapObject(TConnection *Connection, Object Obj){
 	// TODO(fusion): This might also be contained in its own `SendCreature` function?
 	TCreature *Creature = GetCreature(Obj);
 	if(Creature == NULL){
-		error("SendMapObject: Kreatur hat kein Kreatur-Objekt\n");
+		error("SendMapObject: Creature has no creature object\n");
 		return;
 	}
 
@@ -497,7 +497,7 @@ void SendRow(TConnection *Connection, int Direction){
 		SendByte(Connection, SV_CMD_ROW_WEST);
 		MaxX = MinX;
 	}else{
-		error("SendRow: Ungültige Richtungsangabe %d.\n", Direction);
+		error("SendRow: Invalid direction %d.\n", Direction);
 		return;
 	}
 
@@ -600,7 +600,7 @@ void SendAddField(TConnection *Connection, int x, int y, int z, Object Obj){
 	}
 
 	if(!Obj.exists()){
-		error("SendAddField: Übergebenes Objekt existiert nicht.\n");
+		error("SendAddField: Passed object does not exist.\n");
 		return;
 	}
 
@@ -618,7 +618,7 @@ void SendChangeField(TConnection *Connection, int x, int y, int z, Object Obj){
 	}
 
 	if(!Obj.exists()){
-		error("SendChangeField: Übergebenes Objekt existiert nicht.\n");
+		error("SendChangeField: Passed object does not exist.\n");
 		return;
 	}
 
@@ -640,7 +640,7 @@ void SendDeleteField(TConnection *Connection, int x, int y, int z, Object Obj){
 	}
 
 	if(!Obj.exists()){
-		error("SendDeleteField: Übergebenes Objekt existiert nicht.\n");
+		error("SendDeleteField: Passed object does not exist.\n");
 		return;
 	}
 
@@ -663,7 +663,7 @@ void SendMoveCreature(TConnection *Connection,
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("SendMoveCreature: Kreatur existiert nicht.\n");
+		error("SendMoveCreature: Creature does not exist.\n");
 		return;
 	}
 
@@ -700,13 +700,13 @@ void SendContainer(TConnection *Connection, int ContainerNr){
 
 	TPlayer *Player = Connection->GetPlayer();
 	if(Player == NULL){
-		error("SendContainer: Zu dieser Verbindung gehört kein Spieler.\n");
+		error("SendContainer: No player belongs to this connection.\n");
 		return;
 	}
 
 	Object Con = Player->GetOpenContainer(ContainerNr);
 	if(!Con.exists()){
-		error("SendContainer: Container %d existiert nicht.\n", ContainerNr);
+		error("SendContainer: Container %d does not exist.\n", ContainerNr);
 		return;
 	}
 
@@ -764,7 +764,7 @@ void SendChangeInContainer(TConnection *Connection, int ContainerNr, Object Obj)
 	}
 
 	if(!Obj.exists()){
-		error("SendChangeInContainer: Übergebenes Objekt existiert nicht.\n");
+		error("SendChangeInContainer: Passed object does not exist.\n");
 		return;
 	}
 
@@ -784,7 +784,7 @@ void SendDeleteInContainer(TConnection *Connection, int ContainerNr, Object Obj)
 	}
 
 	if(!Obj.exists()){
-		error("SendDeleteInContainer: Übergebenes Objekt existiert nicht.\n");
+		error("SendDeleteInContainer: Passed object does not exist.\n");
 		return;
 	}
 
@@ -814,7 +814,7 @@ void SendSetInventory(TConnection *Connection, int Position, Object Obj){
 	}
 
 	if(!Obj.exists()){
-		error("SendSetInventory: Objekt existiert nicht.\n");
+		error("SendSetInventory: Object does not exist.\n");
 		return;
 	}
 
@@ -855,12 +855,12 @@ void SendTradeOffer(TConnection *Connection, const char *Name, bool OwnOffer, Ob
 	}
 
 	if(Name == NULL){
-		error("SendTradeOffer: Name ist NULL.\n");
+		error("SendTradeOffer: Name is NULL.\n");
 		return;
 	}
 
 	if(!Obj.exists()){
-		error("SendTradeOffer: Objekt existiert nicht.\n");
+		error("SendTradeOffer: Object does not exist.\n");
 		return;
 	}
 
@@ -920,12 +920,12 @@ void SendGraphicalEffect(TConnection *Connection, int x, int y, int z, int Type)
 
 void SendTextualEffect(TConnection *Connection, int x, int y, int z, int Color, const char *Text){
 	if(Text == NULL){
-		error("SendTextualEffect: Text ist NULL.\n");
+		error("SendTextualEffect: Text is NULL.\n");
 		return;
 	}
 
 	if(Text[0] == 0){
-		error("SendTextualEffect: Text ist leer.\n");
+		error("SendTextualEffect: Text is empty.\n");
 		return;
 	}
 
@@ -977,7 +977,7 @@ void SendCreatureHealth(TConnection *Connection, uint32 CreatureID){
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("SendCreatureHealth: Kreatur %u existiert nicht.\n", CreatureID);
+		error("SendCreatureHealth: Creature %u does not exist.\n", CreatureID);
 		return;
 	}
 
@@ -994,7 +994,7 @@ void SendCreatureLight(TConnection *Connection, uint32 CreatureID){
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("SendCreatureLight: Kreatur %u existiert nicht.\n", CreatureID);
+		error("SendCreatureLight: Creature %u does not exist.\n", CreatureID);
 		return;
 	}
 
@@ -1015,7 +1015,7 @@ void SendCreatureOutfit(TConnection *Connection, uint32 CreatureID){
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("SendCreatureOutfit: Kreatur %u existiert nicht.\n", CreatureID);
+		error("SendCreatureOutfit: Creature %u does not exist.\n", CreatureID);
 		return;
 	}
 
@@ -1032,7 +1032,7 @@ void SendCreatureSpeed(TConnection *Connection, uint32 CreatureID){
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("SendCreatureSpeed: Kreatur %u existiert nicht.\n", CreatureID);
+		error("SendCreatureSpeed: Creature %u does not exist.\n", CreatureID);
 		return;
 	}
 
@@ -1049,7 +1049,7 @@ void SendCreatureSkull(TConnection *Connection, uint32 CreatureID){
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("SendCreatureSkull: Kreatur %u existiert nicht.\n", CreatureID);
+		error("SendCreatureSkull: Creature %u does not exist.\n", CreatureID);
 		return;
 	}
 
@@ -1066,7 +1066,7 @@ void SendCreatureParty(TConnection *Connection, uint32 CreatureID){
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("SendCreatureParty: Kreatur %u existiert nicht.\n", CreatureID);
+		error("SendCreatureParty: Creature %u does not exist.\n", CreatureID);
 		return;
 	}
 
@@ -1082,7 +1082,7 @@ void SendEditText(TConnection *Connection, Object Obj){
 	}
 
 	if(!Obj.exists()){
-		error("SendEditText: Übergebenes Objekt existiert nicht.\n");
+		error("SendEditText: Passed object does not exist.\n");
 		return;
 	}
 
@@ -1103,7 +1103,7 @@ void SendEditText(TConnection *Connection, Object Obj){
 			&& ObjType.getAttribute(INFORMATIONTYPE) == 4){ // INFORMATION_SPELLBOOK ?
 		TPlayer *Player = Connection->GetPlayer();
 		if(Player == NULL){
-			error("SendEditText: Zu dieser Verbindung gehört kein Spieler.\n");
+			error("SendEditText: No player belongs to this connection.\n");
 			return;
 		}
 
@@ -1139,12 +1139,12 @@ void SendEditList(TConnection *Connection, uint8 Type, uint32 ID, const char *Te
 	}
 
 	if(Text == NULL){
-		error("SendEditList: Text ist NULL.\n");
+		error("SendEditList: Text is NULL.\n");
 		return;
 	}
 
 	if(strlen(Text) >= 4000){
-		error("SendEditList: Text ist zu lang.\n");
+		error("SendEditList: Text is too long.\n");
 		return;
 	}
 
@@ -1162,7 +1162,7 @@ void SendPlayerData(TConnection *Connection){
 
 	TPlayer *Player = Connection->GetPlayer();
 	if(Player == NULL){
-		error("SendStatus: Zu dieser Verbindung gehört kein Spieler.\n");
+		error("SendStatus: No player belongs to this connection.\n");
 		return;
 	}
 
@@ -1233,7 +1233,7 @@ void SendPlayerSkills(TConnection *Connection){
 
 	TPlayer *Player = Connection->GetPlayer();
 	if(Player == NULL){
-		error("SendPlayerSkills: Zu dieser Verbindung gehört kein Spieler.\n");
+		error("SendPlayerSkills: No player belongs to this connection.\n");
 		return;
 	}
 
@@ -1333,17 +1333,17 @@ void SendTalk(TConnection *Connection, uint32 StatementID,
 			&& Mode != TALK_PLAYER_ANSWER
 			&& Mode != TALK_GAMEMASTER_BROADCAST
 			&& Mode != TALK_GAMEMASTER_MESSAGE){
-		error("SendTalk (-): Ungültiger Modus %d.\n", Mode);
+		error("SendTalk (-): Invalid mode %d.\n", Mode);
 		return;
 	}
 
 	if(Sender == NULL){
-		error("SendTalk (-): Sender ist NULL.\n");
+		error("SendTalk (-): Sender is NULL.\n");
 		return;
 	}
 
 	if(Text == NULL){
-		error("SendTalk (-): Text ist NULL.\n");
+		error("SendTalk (-): Text is NULL.\n");
 		return;
 	}
 
@@ -1368,17 +1368,17 @@ void SendTalk(TConnection *Connection, uint32 StatementID,
 			&& Mode != TALK_GAMEMASTER_CHANNELCALL
 			&& Mode != TALK_HIGHLIGHT_CHANNELCALL
 			&& Mode != TALK_ANONYMOUS_CHANNELCALL){
-		error("SendTalk (C): Ungültiger Modus %d.\n", Mode);
+		error("SendTalk (C): Invalid mode %d.\n", Mode);
 		return;
 	}
 
 	if(Sender == NULL){
-		error("SendTalk (C): Sender ist NULL.\n");
+		error("SendTalk (C): Sender is NULL.\n");
 		return;
 	}
 
 	if(Text == NULL){
-		error("SendTalk (C): Text ist NULL.\n");
+		error("SendTalk (C): Text is NULL.\n");
 		return;
 	}
 
@@ -1406,17 +1406,17 @@ void SendTalk(TConnection *Connection, uint32 StatementID,
 			&& Mode != TALK_YELL
 			&& Mode != TALK_ANIMAL_LOW
 			&& Mode != TALK_ANIMAL_LOUD){
-		error("SendTalk: Ungültiger Modus %d.\n", Mode);
+		error("SendTalk: Invalid mode %d.\n", Mode);
 		return;
 	}
 
 	if(Sender == NULL){
-		error("SendTalk (K): Sender ist NULL.\n");
+		error("SendTalk (K): Sender is NULL.\n");
 		return;
 	}
 
 	if(Text == NULL){
-		error("SendTalk (K): Text ist NULL.\n");
+		error("SendTalk (K): Text is NULL.\n");
 		return;
 	}
 
@@ -1500,12 +1500,12 @@ void SendOpenChannel(TConnection *Connection, int Channel){
 	}
 
 	if(Channel == CHANNEL_RULEVIOLATIONS){
-		error("SendOpenChannel: Kanal ist GM-Request-Queue.\n");
+		error("SendOpenChannel: Channel is GM request queue.\n");
 		return;
 	}
 
 	if(Channel < 0 || Channel >= GetNumberOfChannels()){
-		error("SendOpenChannel: Ungültiger Kanal %d.\n", Channel);
+		error("SendOpenChannel: Invalid channel %d.\n", Channel);
 		return;
 	}
 
@@ -1526,7 +1526,7 @@ void SendPrivateChannel(TConnection *Connection, const char *Name){
 	}
 
 	if(Name == NULL){
-		error("SendPrivateChannel: Name ist NULL.\n");
+		error("SendPrivateChannel: Name is NULL.\n");
 		return;
 	}
 
@@ -1551,7 +1551,7 @@ void SendDeleteRequest(TConnection *Connection, const char *Name){
 	}
 
 	if(Name == NULL){
-		error("SendDeleteRequest: Name ist NULL.\n");
+		error("SendDeleteRequest: Name is NULL.\n");
 		return;
 	}
 
@@ -1566,7 +1566,7 @@ void SendFinishRequest(TConnection *Connection, const char *Name){
 	}
 
 	if(Name == NULL){
-		error("SendFinishRequest: Name ist NULL.\n");
+		error("SendFinishRequest: Name is NULL.\n");
 		return;
 	}
 
@@ -1590,7 +1590,7 @@ void SendOpenOwnChannel(TConnection *Connection, int Channel){
 	}
 
 	if(Channel < 0 || Channel >= GetNumberOfChannels()){
-		error("SendOpenOwnChannel: Ungültiger Kanal %d.\n", Channel);
+		error("SendOpenOwnChannel: Invalid channel %d.\n", Channel);
 		return;
 	}
 
@@ -1622,7 +1622,7 @@ void SendMessage(TConnection *Connection, int Mode, const char *Text, ...){
 			&& Mode != TALK_STATUS_MESSAGE
 			&& Mode != TALK_INFO_MESSAGE
 			&& Mode != TALK_FAILURE_MESSAGE){
-		error("SendMessage: Ungültiger Modus %d.\n", Mode);
+		error("SendMessage: Invalid mode %d.\n", Mode);
 		return;
 	}
 
@@ -1729,12 +1729,12 @@ void BroadcastMessage(int Mode, const char *Text, ...){
 
 void CreateGamemasterRequest(const char *Name, const char *Text){
 	if(Name == NULL){
-		error("CreateGamemasterRequest: Name ist NULL.\n");
+		error("CreateGamemasterRequest: Name is NULL.\n");
 		return;
 	}
 
 	if(Text == NULL){
-		error("CreateGamemasterRequest: Name ist NULL.\n");
+		error("CreateGamemasterRequest: Text is NULL.\n");
 		return;
 	}
 
@@ -1752,7 +1752,7 @@ void CreateGamemasterRequest(const char *Name, const char *Text){
 
 void DeleteGamemasterRequest(const char *Name){
 	if(Name == NULL){
-		error("DeleteGamemasterRequest: Name ist NULL.\n");
+		error("DeleteGamemasterRequest: Name is NULL.\n");
 		return;
 	}
 

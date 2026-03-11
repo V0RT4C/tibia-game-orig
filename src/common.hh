@@ -203,7 +203,7 @@ void ClearBit(uint8 *BitSet, int Index);
 template<typename T>
 void RandomShuffle(T *Buffer, int Size){
 	if(Buffer == NULL){
-		error("RandomShuffle: Buffer ist NULL.\n");
+		error("RandomShuffle: Buffer is NULL.\n");
 		return;
 	}
 
