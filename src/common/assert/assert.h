@@ -39,7 +39,7 @@
 #   define TRAP() abort()
 #endif
 
-#define ASSERT_ALWAYS(expr) if(!(expr)) { TRAP(); }
+#define ASSERT_ALWAYS(expr) do { if(!(expr)) { TRAP(); } } while(0)
 #if ENABLE_ASSERTIONS
 #   define ASSERT(expr) ASSERT_ALWAYS(expr)
 #else
