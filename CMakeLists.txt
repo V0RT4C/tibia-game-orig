@@ -36,7 +36,7 @@ set(SOURCES
     src/script.cpp
     src/sending.cpp
     src/shm.cpp
-    src/strings.cpp
+    src/common/strings/strings.cpp
     src/threads.cpp
     src/time.cpp
     src/common/read_stream/read_stream.cpp
