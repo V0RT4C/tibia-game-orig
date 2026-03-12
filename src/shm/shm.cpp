@@ -1,9 +1,14 @@
-#include "common.h"
-#include "config.h"
-#include "enums.h"
-#include "threads.h"
+#include "shm/shm.h"
+#include "config/config.h"
+#include "enums/enums.h"
+#include "logging/logging.h"
+#include "threads/semaphore/semaphore.h"
 #include "writer.h"
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/shm.h>
 
 // NOTE(fusion): This looks like an interface to external tools. Looking at the

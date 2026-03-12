@@ -36,7 +36,7 @@ set(SOURCES
     src/receiving.cpp
     src/script.cpp
     src/sending.cpp
-    src/shm.cpp
+    src/shm/shm.cpp
     src/common/strings/strings.cpp
     src/threads/threads.cpp
     src/threads/semaphore/semaphore.cpp
