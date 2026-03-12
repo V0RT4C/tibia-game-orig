@@ -31,7 +31,8 @@ set(SOURCES
     src/moveuse.cpp
     src/objects.cpp
     src/operate.cpp
-    src/query.cpp
+    src/query/query_client/query_client.cpp
+    src/query/query_connection_pool/query_connection_pool.cpp
     src/reader.cpp
     src/receiving.cpp
     src/script.cpp

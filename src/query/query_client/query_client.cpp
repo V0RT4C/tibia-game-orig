@@ -1,12 +1,22 @@
-#include "query.h"
-#include "config.h"
+#include "query/query_client/query_client.h"
+#include "config/config.h"
+#include "common/assert/assert.h"
+#include "common/utils/utils.h"
+#include "logging/logging.h"
+#include "enums/enums.h"
+#include "threads/threads.h"
+#include "time/time_utils.h"
 
+#include <algorithm>
 #include <arpa/inet.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 static int ApplicationType;
 static char LoginData[30];
@@ -21,12 +31,12 @@ void SetQueryManagerLoginData(int Type, const char *Data){
 	}
 }
 
-// TQueryManagerConnection
+// QueryClient
 // =============================================================================
 // TODO(fusion): An initializer list executes in the same order fields are
 // declared. This initialization should work as long as `BufferSize` is the
-// first field declared in `TQueryManagerConnection`, which it is.
-TQueryManagerConnection::TQueryManagerConnection(int QueryBufferSize) :
+// first field declared in `QueryClient`, which it is.
+QueryClient::QueryClient(int QueryBufferSize) :
 		BufferSize(std::max<int>(QueryBufferSize, kb(16))),
 		Buffer(new uint8[this->BufferSize]),
 		ReadBuffer(this->Buffer, this->BufferSize),
@@ -37,7 +47,7 @@ TQueryManagerConnection::TQueryManagerConnection(int QueryBufferSize) :
 	this->connect();
 }
 
-TQueryManagerConnection::~TQueryManagerConnection(void){
+QueryClient::~QueryClient(void){
 	this->disconnect();
 	delete[] this->Buffer;
 }
@@ -64,17 +74,17 @@ bool ResolveHostNameAddress(const char *HostName, in_addr_t *OutAddr){
 	return true;
 }
 
-void TQueryManagerConnection::connect(void){
+void QueryClient::connect(void){
 	for(int i = 0; i < NumberOfQueryManagers; i += 1){
 		in_addr_t Addr = inet_addr(QUERY_MANAGER[i].Host);
 		if(Addr == INADDR_NONE && !ResolveHostNameAddress(QUERY_MANAGER[i].Host, &Addr)){
-			print(2, "TQueryManagerConnection::connect: Cannot resolve hostname.\n");
+			print(2, "QueryClient::connect: Cannot resolve hostname.\n");
 			continue;
 		}
 
 		this->Socket = socket(AF_INET, SOCK_STREAM, 0);
 		if(this->Socket == -1){
-			print(2, "TQueryManagerConnection::connect: Cannot open socket.\n");
+			print(2, "QueryClient::connect: Cannot open socket.\n");
 			continue;
 		}
 
@@ -83,18 +93,18 @@ void TQueryManagerConnection::connect(void){
 		QueryManagerAddress.sin_port = htons(QUERY_MANAGER[i].Port);
 		QueryManagerAddress.sin_addr.s_addr = Addr;
 		if(::connect(this->Socket, (struct sockaddr*)&QueryManagerAddress, sizeof(QueryManagerAddress)) == -1){
-			print(2, "TQueryManagerConnection::connect: Cannot establish connection.\n");
+			print(2, "QueryClient::connect: Cannot establish connection.\n");
 			this->disconnect();
 			continue;
 		}
 
 		// NOTE(fusion): Make socket non-blocking AFTER connecting. This is to
-		// better align the behaviour of both TQueryManagerConnection::read and
-		// TQueryManagerConnection::write.
+		// better align the behaviour of both QueryClient::read and
+		// QueryClient::write.
 		{
 			int SocketFlags = fcntl(this->Socket, F_GETFL);
 			if(SocketFlags == -1 || fcntl(this->Socket, F_SETFL, (SocketFlags | O_NONBLOCK)) == -1){
-				error("TQueryManagerConnection::connect: Failed to set socket as non-blocking: (%d) %s\n",
+				error("QueryClient::connect: Failed to set socket as non-blocking: (%d) %s\n",
 						errno, strerror(errno));
 				this->disconnect();
 				continue;
@@ -110,7 +120,7 @@ void TQueryManagerConnection::connect(void){
 
 		int Status = this->executeQuery(30, false);
 		if(Status != QUERY_STATUS_OK){
-			print(2, "TQueryManagerConnection::connect: Login failed (%d).\n", Status);
+			print(2, "QueryClient::connect: Login failed (%d).\n", Status);
 			this->disconnect();
 			continue;
 		}
@@ -119,20 +129,20 @@ void TQueryManagerConnection::connect(void){
 	}
 
 	if(!this->isConnected()){
-		print(2, "TQueryManagerConnection::connect: No query manager available.\n");
+		print(2, "QueryClient::connect: No query manager available.\n");
 	}
 }
 
-void TQueryManagerConnection::disconnect(void){
+void QueryClient::disconnect(void){
 	if(this->Socket != -1){
 		if(close(this->Socket) == -1){
-			error("TQueryManagerConnection::disconnect: Error %d closing socket.\n", errno);
+			error("QueryClient::disconnect: Error %d closing socket.\n", errno);
 		}
 		this->Socket = -1;
 	}
 }
 
-int TQueryManagerConnection::write(const uint8 *Buffer, int Size){
+int QueryClient::write(const uint8 *Buffer, int Size){
 	int Attempts = 50;
 	int BytesToWrite = Size;
 	const uint8 *WritePtr = Buffer;
@@ -157,7 +167,7 @@ int TQueryManagerConnection::write(const uint8 *Buffer, int Size){
 	return Size - BytesToWrite;
 }
 
-int TQueryManagerConnection::read(uint8 *Buffer, int Size, int Timeout){
+int QueryClient::read(uint8 *Buffer, int Size, int Timeout){
 	// NOTE(fusion): Wait until there is any inbound data then read everything
 	// in one go. Data from the query manager is sent in a burst so we don't need
 	// to be polling every step along the way.
@@ -205,7 +215,7 @@ int TQueryManagerConnection::read(uint8 *Buffer, int Size, int Timeout){
 	return Size - BytesToRead;
 }
 
-void TQueryManagerConnection::prepareQuery(int QueryType){
+void QueryClient::prepareQuery(int QueryType){
 	this->QueryOk = true;
 	this->WriteBuffer.Position = 0;
 
@@ -213,114 +223,114 @@ void TQueryManagerConnection::prepareQuery(int QueryType){
 		this->WriteBuffer.writeWord(0);
 		this->WriteBuffer.writeByte((uint8)QueryType);
 	}catch(const char *str){
-		error("TQueryManagerConnection::prepareQuery: %s.\n", str);
+		error("QueryClient::prepareQuery: %s.\n", str);
 		this->QueryOk = false;
 	}
 }
 
-void TQueryManagerConnection::sendFlag(bool Flag){
+void QueryClient::sendFlag(bool Flag){
 	this->sendByte(Flag ? 0x01 : 0x00);
 }
 
-void TQueryManagerConnection::sendByte(uint8 Byte){
+void QueryClient::sendByte(uint8 Byte){
 	try{
 		this->WriteBuffer.writeByte(Byte);
 	}catch(const char *str){
-		error("TQueryManagerConnection::sendByte: %s.\n", str);
+		error("QueryClient::sendByte: %s.\n", str);
 		this->QueryOk = false;
 	}
 }
 
-void TQueryManagerConnection::sendWord(uint16 Word){
+void QueryClient::sendWord(uint16 Word){
 	try{
 		this->WriteBuffer.writeWord(Word);
 	}catch(const char *str){
-		error("TQueryManagerConnection::sendWord: %s.\n", str);
+		error("QueryClient::sendWord: %s.\n", str);
 		this->QueryOk = false;
 	}
 }
 
-void TQueryManagerConnection::sendQuad(uint32 Quad){
+void QueryClient::sendQuad(uint32 Quad){
 	try{
 		this->WriteBuffer.writeQuad(Quad);
 	}catch(const char *str){
-		error("TQueryManagerConnection::sendQuad: %s.\n", str);
+		error("QueryClient::sendQuad: %s.\n", str);
 		this->QueryOk = false;
 	}
 }
 
-void TQueryManagerConnection::sendString(const char *String){
+void QueryClient::sendString(const char *String){
 	try{
 		this->WriteBuffer.writeString(String);
 	}catch(const char *str){
-		error("TQueryManagerConnection::sendString: %s.\n", str);
+		error("QueryClient::sendString: %s.\n", str);
 		this->QueryOk = false;
 	}
 }
 
-void TQueryManagerConnection::sendBytes(const uint8 *Buffer, int Count){
+void QueryClient::sendBytes(const uint8 *Buffer, int Count){
 	try{
 		this->WriteBuffer.writeBytes(Buffer, Count);
 	}catch(const char *str){
-		error("TQueryManagerConnection::sendBytes: %s.\n", str);
+		error("QueryClient::sendBytes: %s.\n", str);
 		this->QueryOk = false;
 	}
 }
 
-bool TQueryManagerConnection::getFlag(void){
+bool QueryClient::getFlag(void){
 	return this->getByte() != 0;
 }
 
-uint8 TQueryManagerConnection::getByte(void){
+uint8 QueryClient::getByte(void){
 	uint8 Result = 0;
 	try{
 		Result = this->ReadBuffer.readByte();
 	}catch(const char *str){
-		error("TQueryManagerConnection::getByte: %s.\n", str);
+		error("QueryClient::getByte: %s.\n", str);
 	}
 	return Result;
 }
 
-uint16 TQueryManagerConnection::getWord(void){
+uint16 QueryClient::getWord(void){
 	uint16 Result = 0;
 	try{
 		Result = this->ReadBuffer.readWord();
 	}catch(const char *str){
-		error("TQueryManagerConnection::getWord: %s.\n", str);
+		error("QueryClient::getWord: %s.\n", str);
 	}
 	return Result;
 }
 
-uint32 TQueryManagerConnection::getQuad(void){
+uint32 QueryClient::getQuad(void){
 	uint32 Result = 0;
 	try{
 		Result = this->ReadBuffer.readQuad();
 	}catch(const char *str){
-		error("TQueryManagerConnection::getQuad: %s.\n", str);
+		error("QueryClient::getQuad: %s.\n", str);
 	}
 	return Result;
 }
 
-void TQueryManagerConnection::getString(char *Buffer, int MaxLength){
+void QueryClient::getString(char *Buffer, int MaxLength){
 	try{
 		this->ReadBuffer.readString(Buffer, MaxLength);
 	}catch(const char *str){
-		error("TQueryManagerConnection::getString: %s.\n", str);
+		error("QueryClient::getString: %s.\n", str);
 		if(MaxLength > 0){
 			Buffer[0] = 0;
 		}
 	}
 }
 
-void TQueryManagerConnection::getBytes(uint8 *Buffer, int Count){
+void QueryClient::getBytes(uint8 *Buffer, int Count){
 	try{
 		this->ReadBuffer.readBytes(Buffer, Count);
 	}catch(const char *str){
-		error("TQueryManagerConnection::getBytes: %s.\n", str);
+		error("QueryClient::getBytes: %s.\n", str);
 	}
 }
 
-int TQueryManagerConnection::executeQuery(int Timeout, bool AutoReconnect){
+int QueryClient::executeQuery(int Timeout, bool AutoReconnect){
 	// NOTE(fusion): `prepareQuery` will already leave two extra bytes at the
 	// beginning of the buffer for writing the request's length.
 	int PacketSize = this->WriteBuffer.Position;
@@ -331,7 +341,7 @@ int TQueryManagerConnection::executeQuery(int Timeout, bool AutoReconnect){
 	}else{
 		PacketSize += 4;
 		if(PacketSize > this->BufferSize){
-			error("TQueryManagerConnection::executeQuery: Buffer too small.\n");
+			error("QueryClient::executeQuery: Buffer too small.\n");
 			return QUERY_STATUS_FAILED;
 		}
 
@@ -341,7 +351,7 @@ int TQueryManagerConnection::executeQuery(int Timeout, bool AutoReconnect){
 	}
 
 	if(!this->QueryOk){
-		error("TQueryManagerConnection::executeQuery: Error assembling the request.\n");
+		error("QueryClient::executeQuery: Error assembling the request.\n");
 		return QUERY_STATUS_FAILED;
 	}
 
@@ -370,7 +380,7 @@ int TQueryManagerConnection::executeQuery(int Timeout, bool AutoReconnect){
 		if(this->write(this->Buffer, PacketSize) != PacketSize){
 			this->disconnect();
 			if(Attempt >= MaxAttempts){
-				error("TQueryManagerConnection::executeQuery: Error sending the request.\n");
+				error("QueryClient::executeQuery: Error sending the request.\n");
 				return QUERY_STATUS_FAILED;
 			}
 			continue;
@@ -399,13 +409,13 @@ int TQueryManagerConnection::executeQuery(int Timeout, bool AutoReconnect){
 
 		if(ResponseSize <= 0 || ResponseSize > this->BufferSize){
 			this->disconnect();
-			error("TQueryManagerConnection::executeQuery: Invalid data size %d.\n", ResponseSize);
+			error("QueryClient::executeQuery: Invalid data size %d.\n", ResponseSize);
 			return QUERY_STATUS_FAILED;
 		}
 
 		if(this->read(this->Buffer, ResponseSize, Timeout) != ResponseSize){
 			this->disconnect();
-			error("TQueryManagerConnection::executeQuery: Error reading the data.\n");
+			error("QueryClient::executeQuery: Error reading the data.\n");
 			return QUERY_STATUS_FAILED;
 		}
 
@@ -413,14 +423,14 @@ int TQueryManagerConnection::executeQuery(int Timeout, bool AutoReconnect){
 		this->ReadBuffer.Position = 0;
 		int Status = this->getByte();
 		if(Status == QUERY_STATUS_FAILED){
-			error("TQueryManagerConnection::executeQuery: Request failed.\n");
+			error("QueryClient::executeQuery: Request failed.\n");
 		}
 
 		return Status;
 	}
 }
 
-int TQueryManagerConnection::checkAccountPassword(uint32 AccountID,
+int QueryClient::checkAccountPassword(uint32 AccountID,
 		const char *Password, const char *IPAddress){
 	this->prepareQuery(10);
 	this->sendQuad(AccountID);
@@ -433,13 +443,13 @@ int TQueryManagerConnection::checkAccountPassword(uint32 AccountID,
 		if(ErrorCode >= 1 && ErrorCode <= 4){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::checkAccountPassword: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::checkAccountPassword: Invalid error code %d.\n", ErrorCode);
 		}
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::loginAdmin(uint32 AccountID, bool PrivateWorld,
+int QueryClient::loginAdmin(uint32 AccountID, bool PrivateWorld,
 		int *NumberOfCharacters, char (*Characters)[30], char (*Worlds)[30],
 		uint8 (*IPAddresses)[4], uint16 *Ports, uint16 *PremiumDaysLeft){
 	this->prepareQuery(12);
@@ -461,13 +471,13 @@ int TQueryManagerConnection::loginAdmin(uint32 AccountID, bool PrivateWorld,
 		if(ErrorCode == 1){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::loginAdmin: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::loginAdmin: Invalid error code %d.\n", ErrorCode);
 		}
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::loadWorldConfig(int *WorldType, int *RebootTime,
+int QueryClient::loadWorldConfig(int *WorldType, int *RebootTime,
 		int *IPAddress, int *Port, int *MaxPlayers, int *PremiumPlayerBuffer,
 		int *MaxNewbies, int *PremiumNewbieBuffer){
 	this->prepareQuery(53);
@@ -698,7 +708,7 @@ static bool IsAdministrativeRight(const char *RightName){
 // NOTE(fusion): `PlayerName` is an input and output parameter. It will contain
 // the correct player name with upper and lower case letters if the operation is
 // successful.
-int TQueryManagerConnection::loginGame(uint32 AccountID, char *PlayerName,
+int QueryClient::loginGame(uint32 AccountID, char *PlayerName,
 		const char *Password, const char *IPAddress, bool PrivateWorld,
 		bool PremiumAccountRequired, bool GamemasterRequired, uint32 *CharacterID,
 		int *Sex, char *Guild, char *Rank, char *Title, int *NumberOfBuddies,
@@ -725,7 +735,7 @@ int TQueryManagerConnection::loginGame(uint32 AccountID, char *PlayerName,
 
 		int SkipBuddies = 0;
 		if(*NumberOfBuddies > 100){ // MAX_BUDDIES
-			error("TQueryManagerConnection::loginGame: too many buddies (%d) for %s.\n",
+			error("QueryClient::loginGame: too many buddies (%d) for %s.\n",
 					*NumberOfBuddies, PlayerName);
 			SkipBuddies = *NumberOfBuddies - 100;
 			*NumberOfBuddies = 100;
@@ -753,7 +763,7 @@ int TQueryManagerConnection::loginGame(uint32 AccountID, char *PlayerName,
 			if(Right != -1){
 				SetBit(Rights, Right);
 			}else if(!IsAdministrativeRight(RightName)){
-				error("TQueryManagerConnection::loginGame: Unknown right %s.\n", RightName);
+				error("QueryClient::loginGame: Unknown right %s.\n", RightName);
 			}
 		}
 
@@ -763,13 +773,13 @@ int TQueryManagerConnection::loginGame(uint32 AccountID, char *PlayerName,
 		if(ErrorCode >= 1 && ErrorCode <= 15){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::loginGame: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::loginGame: Invalid error code %d.\n", ErrorCode);
 		}
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::logoutGame(uint32 CharacterID, int Level, const char *Profession,
+int QueryClient::logoutGame(uint32 CharacterID, int Level, const char *Profession,
 		const char *Residence, time_t LastLoginTime, int TutorActivities){
 	this->prepareQuery(21);
 	this->sendQuad(CharacterID);
@@ -782,7 +792,7 @@ int TQueryManagerConnection::logoutGame(uint32 CharacterID, int Level, const cha
 	return (Status == QUERY_STATUS_OK ? 0 : -1);
 }
 
-int TQueryManagerConnection::setNotation(uint32 GamemasterID, const char *PlayerName,
+int QueryClient::setNotation(uint32 GamemasterID, const char *PlayerName,
 		const char *IPAddress, const char *Reason, const char *Comment, uint32 *BanishmentID){
 	this->prepareQuery(26);
 	this->sendQuad(GamemasterID);
@@ -799,15 +809,15 @@ int TQueryManagerConnection::setNotation(uint32 GamemasterID, const char *Player
 		if(ErrorCode >= 1 && ErrorCode <= 2){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::setNotation: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::setNotation: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::setNotation: Request failed.\n");
+		error("QueryClient::setNotation: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::setNamelock(uint32 GamemasterID, const char *PlayerName,
+int QueryClient::setNamelock(uint32 GamemasterID, const char *PlayerName,
 		const char *IPAddress, const char *Reason, const char *Comment){
 	this->prepareQuery(23);
 	this->sendQuad(GamemasterID);
@@ -822,15 +832,15 @@ int TQueryManagerConnection::setNamelock(uint32 GamemasterID, const char *Player
 		if(ErrorCode >= 1 && ErrorCode <= 4){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::setNamelock: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::setNamelock: Invalid error code %d.\n", ErrorCode);
 		}
 	}else if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::setNamelock: Request failed.\n");
+		error("QueryClient::setNamelock: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::banishAccount(uint32 GamemasterID, const char *PlayerName,
+int QueryClient::banishAccount(uint32 GamemasterID, const char *PlayerName,
 		const char *IPAddress, const char *Reason, const char *Comment, bool *FinalWarning,
 		int *Days, uint32 *BanishmentID){
 	this->prepareQuery(25);
@@ -854,15 +864,15 @@ int TQueryManagerConnection::banishAccount(uint32 GamemasterID, const char *Play
 		if(ErrorCode >= 1 && ErrorCode <= 3){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::banishAccount: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::banishAccount: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::banishAccount: Request failed.\n");
+		error("QueryClient::banishAccount: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::reportStatement(uint32 ReporterID, const char *PlayerName,
+int QueryClient::reportStatement(uint32 ReporterID, const char *PlayerName,
 		const char *Reason, const char *Comment, uint32 BanishmentID, uint32 StatementID,
 		int NumberOfStatements, uint32 *StatementIDs, int *TimeStamps, uint32 *CharacterIDs,
 		const char (*Channels)[30], const char (*Texts)[256]){
@@ -899,15 +909,15 @@ int TQueryManagerConnection::reportStatement(uint32 ReporterID, const char *Play
 		if(ErrorCode >= 1 && ErrorCode <= 2){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::reportStatement: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::reportStatement: Invalid error code %d.\n", ErrorCode);
 		}
 	}else if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::reportStatement: Request failed.\n");
+		error("QueryClient::reportStatement: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::banishIPAddress(uint32 GamemasterID, const char *PlayerName,
+int QueryClient::banishIPAddress(uint32 GamemasterID, const char *PlayerName,
 		const char *IPAddress, const char *Reason, const char *Comment){
 	this->prepareQuery(28);
 	this->sendQuad(GamemasterID);
@@ -922,15 +932,15 @@ int TQueryManagerConnection::banishIPAddress(uint32 GamemasterID, const char *Pl
 		if(ErrorCode >= 1 && ErrorCode <= 2){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::banishIPAddress: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::banishIPAddress: Invalid error code %d.\n", ErrorCode);
 		}
 	}else if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::banishIPAddress: Request failed.\n");
+		error("QueryClient::banishIPAddress: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::logCharacterDeath(uint32 CharacterID, int Level,
+int QueryClient::logCharacterDeath(uint32 CharacterID, int Level,
 		uint32 Offender, const char *Remark, bool Unjustified, time_t Time){
 	this->prepareQuery(29);
 	this->sendQuad(CharacterID);
@@ -942,47 +952,47 @@ int TQueryManagerConnection::logCharacterDeath(uint32 CharacterID, int Level,
 	int Status = this->executeQuery(90, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::logCharacterDeath: Request failed.\n");
+		error("QueryClient::logCharacterDeath: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::addBuddy(uint32 AccountID, uint32 Buddy){
+int QueryClient::addBuddy(uint32 AccountID, uint32 Buddy){
 	this->prepareQuery(30);
 	this->sendQuad(AccountID);
 	this->sendQuad(Buddy);
 	int Status = this->executeQuery(90, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::addBuddy: Request failed.\n");
+		error("QueryClient::addBuddy: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::removeBuddy(uint32 AccountID, uint32 Buddy){
+int QueryClient::removeBuddy(uint32 AccountID, uint32 Buddy){
 	this->prepareQuery(31);
 	this->sendQuad(AccountID);
 	this->sendQuad(Buddy);
 	int Status = this->executeQuery(90, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::removeBuddy: Request failed.\n");
+		error("QueryClient::removeBuddy: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::decrementIsOnline(uint32 CharacterID){
+int QueryClient::decrementIsOnline(uint32 CharacterID){
 	this->prepareQuery(32);
 	this->sendQuad(CharacterID);
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::decrementIsOnline: Request failed.\n");
+		error("QueryClient::decrementIsOnline: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::finishAuctions(int *NumberOfAuctions, uint16 *HouseIDs,
+int QueryClient::finishAuctions(int *NumberOfAuctions, uint16 *HouseIDs,
 		uint32 *CharacterIDs, char (*CharacterNames)[30], int *Bids){
 	this->prepareQuery(33);
 	int Status = this->executeQuery(60, true);
@@ -991,7 +1001,7 @@ int TQueryManagerConnection::finishAuctions(int *NumberOfAuctions, uint16 *House
 		int MaxNumberOfAuctions = *NumberOfAuctions;
 		*NumberOfAuctions = this->getWord();
 		if(*NumberOfAuctions > MaxNumberOfAuctions){
-			error("TQueryManagerConnection::finishAuctions: too many auctions (%d>%d).\n",
+			error("QueryClient::finishAuctions: too many auctions (%d>%d).\n",
 					*NumberOfAuctions, MaxNumberOfAuctions);
 			return -1;
 		}
@@ -1003,24 +1013,24 @@ int TQueryManagerConnection::finishAuctions(int *NumberOfAuctions, uint16 *House
 			Bids[i] = (int)this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::finishAuctions: Request failed.\n");
+		error("QueryClient::finishAuctions: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::excludeFromAuctions(uint32 CharacterID, bool Banish){
+int QueryClient::excludeFromAuctions(uint32 CharacterID, bool Banish){
 	this->prepareQuery(51);
 	this->sendQuad(CharacterID);
 	this->sendFlag(Banish);
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::excludeFromAuctions: Request failed.\n");
+		error("QueryClient::excludeFromAuctions: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::transferHouses(int *NumberOfTransfers, uint16 *HouseIDs,
+int QueryClient::transferHouses(int *NumberOfTransfers, uint16 *HouseIDs,
 		uint32 *NewOwnerIDs, char (*NewOwnerNames)[30], int *Prices){
 	this->prepareQuery(35);
 	int Status = this->executeQuery(60, true);
@@ -1029,7 +1039,7 @@ int TQueryManagerConnection::transferHouses(int *NumberOfTransfers, uint16 *Hous
 		int MaxNumberOfTransfers = *NumberOfTransfers;
 		*NumberOfTransfers = this->getWord();
 		if(*NumberOfTransfers > MaxNumberOfTransfers){
-			error("TQueryManagerConnection::transferHouses: too many transfers (%d>%d).\n",
+			error("QueryClient::transferHouses: too many transfers (%d>%d).\n",
 					*NumberOfTransfers, MaxNumberOfTransfers);
 			return -1;
 		}
@@ -1041,23 +1051,23 @@ int TQueryManagerConnection::transferHouses(int *NumberOfTransfers, uint16 *Hous
 			Prices[i] = (int)this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::transferHouses: Request failed.\n");
+		error("QueryClient::transferHouses: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::cancelHouseTransfer(uint16 HouseID){
+int QueryClient::cancelHouseTransfer(uint16 HouseID){
 	this->prepareQuery(52);
 	this->sendWord(HouseID);
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::cancelHouseTransfer: Request failed.\n");
+		error("QueryClient::cancelHouseTransfer: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::evictFreeAccounts(int *NumberOfEvictions,
+int QueryClient::evictFreeAccounts(int *NumberOfEvictions,
 		uint16 *HouseIDs, uint32 *OwnerIDs){
 	this->prepareQuery(36);
 	int Status = this->executeQuery(60, true);
@@ -1066,7 +1076,7 @@ int TQueryManagerConnection::evictFreeAccounts(int *NumberOfEvictions,
 		int MaxNumberOfEvictions = *NumberOfEvictions;
 		*NumberOfEvictions = this->getWord();
 		if(*NumberOfEvictions > MaxNumberOfEvictions){
-			error("TQueryManagerConnection::evictFreeAccounts: too many evictions (%d>%d).\n",
+			error("QueryClient::evictFreeAccounts: too many evictions (%d>%d).\n",
 					*NumberOfEvictions, MaxNumberOfEvictions);
 			return -1;
 		}
@@ -1076,12 +1086,12 @@ int TQueryManagerConnection::evictFreeAccounts(int *NumberOfEvictions,
 			OwnerIDs[i] = this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::evictFreeAccounts: Request failed.\n");
+		error("QueryClient::evictFreeAccounts: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::evictDeletedCharacters(int *NumberOfEvictions, uint16 *HouseIDs){
+int QueryClient::evictDeletedCharacters(int *NumberOfEvictions, uint16 *HouseIDs){
 	this->prepareQuery(37);
 	int Status = this->executeQuery(60, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
@@ -1089,7 +1099,7 @@ int TQueryManagerConnection::evictDeletedCharacters(int *NumberOfEvictions, uint
 		int MaxNumberOfEvictions = *NumberOfEvictions;
 		*NumberOfEvictions = this->getWord();
 		if(*NumberOfEvictions > MaxNumberOfEvictions){
-			error("TQueryManagerConnection::evictDeletedCharacters: too many evictions (%d>%d).\n",
+			error("QueryClient::evictDeletedCharacters: too many evictions (%d>%d).\n",
 					*NumberOfEvictions, MaxNumberOfEvictions);
 			return -1;
 		}
@@ -1098,12 +1108,12 @@ int TQueryManagerConnection::evictDeletedCharacters(int *NumberOfEvictions, uint
 			HouseIDs[i] = this->getWord();
 		}
 	}else{
-		error("TQueryManagerConnection::evictDeletedCharacters: Request failed.\n");
+		error("QueryClient::evictDeletedCharacters: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::evictExGuildleaders(int NumberOfGuildhouses,
+int QueryClient::evictExGuildleaders(int NumberOfGuildhouses,
 		int *NumberOfEvictions, uint16 *HouseIDs, uint32 *Guildleaders){
 	this->prepareQuery(38);
 
@@ -1121,12 +1131,12 @@ int TQueryManagerConnection::evictExGuildleaders(int NumberOfGuildhouses,
 			HouseIDs[i] = this->getWord();
 		}
 	}else{
-		error("TQueryManagerConnection::evictExGuildleaders: Request failed.\n");
+		error("QueryClient::evictExGuildleaders: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::insertHouseOwner(uint16 HouseID, uint32 OwnerID, int PaidUntil){
+int QueryClient::insertHouseOwner(uint16 HouseID, uint32 OwnerID, int PaidUntil){
 	this->prepareQuery(39);
 	this->sendWord(HouseID);
 	this->sendQuad(OwnerID);
@@ -1134,12 +1144,12 @@ int TQueryManagerConnection::insertHouseOwner(uint16 HouseID, uint32 OwnerID, in
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::insertHouseOwner: Request failed.\n");
+		error("QueryClient::insertHouseOwner: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::updateHouseOwner(uint16 HouseID, uint32 OwnerID, int PaidUntil){
+int QueryClient::updateHouseOwner(uint16 HouseID, uint32 OwnerID, int PaidUntil){
 	this->prepareQuery(40);
 	this->sendWord(HouseID);
 	this->sendQuad(OwnerID);
@@ -1147,23 +1157,23 @@ int TQueryManagerConnection::updateHouseOwner(uint16 HouseID, uint32 OwnerID, in
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::updateHouseOwner: Request failed.\n");
+		error("QueryClient::updateHouseOwner: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::deleteHouseOwner(uint16 HouseID){
+int QueryClient::deleteHouseOwner(uint16 HouseID){
 	this->prepareQuery(41);
 	this->sendWord(HouseID);
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::deleteHouseOwner: Request failed.\n");
+		error("QueryClient::deleteHouseOwner: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getHouseOwners(int *NumberOfOwners, uint16 *HouseIDs,
+int QueryClient::getHouseOwners(int *NumberOfOwners, uint16 *HouseIDs,
 		uint32 *OwnerIDs, char (*OwnerNames)[30], int *PaidUntils){
 	this->prepareQuery(42);
 	int Status = this->executeQuery(60, true);
@@ -1172,7 +1182,7 @@ int TQueryManagerConnection::getHouseOwners(int *NumberOfOwners, uint16 *HouseID
 		int MaxNumberOfOwners = *NumberOfOwners;
 		*NumberOfOwners = this->getWord();
 		if(*NumberOfOwners > MaxNumberOfOwners){
-			error("TQueryManagerConnection::getHouseOwners: too many houses (%d>%d).\n",
+			error("QueryClient::getHouseOwners: too many houses (%d>%d).\n",
 					*NumberOfOwners, MaxNumberOfOwners);
 			return -1;
 		}
@@ -1184,12 +1194,12 @@ int TQueryManagerConnection::getHouseOwners(int *NumberOfOwners, uint16 *HouseID
 			PaidUntils[i] = (int)this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::getHouseOwners: Request failed.\n");
+		error("QueryClient::getHouseOwners: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getAuctions(int *NumberOfAuctions, uint16 *HouseIDs){
+int QueryClient::getAuctions(int *NumberOfAuctions, uint16 *HouseIDs){
 	this->prepareQuery(43);
 	int Status = this->executeQuery(120, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
@@ -1197,7 +1207,7 @@ int TQueryManagerConnection::getAuctions(int *NumberOfAuctions, uint16 *HouseIDs
 		int MaxNumberOfAuctions = *NumberOfAuctions;
 		*NumberOfAuctions = this->getWord();
 		if(*NumberOfAuctions > MaxNumberOfAuctions){
-			error("TQueryManagerConnection::getAuctions: too many auctions (%d>%d).\n",
+			error("QueryClient::getAuctions: too many auctions (%d>%d).\n",
 					*NumberOfAuctions, MaxNumberOfAuctions);
 			return -1;
 		}
@@ -1206,23 +1216,23 @@ int TQueryManagerConnection::getAuctions(int *NumberOfAuctions, uint16 *HouseIDs
 			HouseIDs[i] = this->getWord();
 		}
 	}else{
-		error("TQueryManagerConnection::getAuctions: Request failed.\n");
+		error("QueryClient::getAuctions: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::startAuction(uint16 HouseID){
+int QueryClient::startAuction(uint16 HouseID){
 	this->prepareQuery(44);
 	this->sendWord(HouseID);
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::startAuction: Request failed.\n");
+		error("QueryClient::startAuction: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::insertHouses(int NumberOfHouses, uint16 *HouseIDs,
+int QueryClient::insertHouses(int NumberOfHouses, uint16 *HouseIDs,
 		const char **Names, int *Rents, const char **Descriptions, int *Sizes,
 		int *PositionsX,int *PositionsY,int *PositionsZ, char (*Towns)[30],
 		bool *Guildhouses){
@@ -1245,24 +1255,24 @@ int TQueryManagerConnection::insertHouses(int NumberOfHouses, uint16 *HouseIDs,
 	int Status = this->executeQuery(60, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::insertHouses: Request failed.\n");
+		error("QueryClient::insertHouses: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::clearIsOnline(int *NumberOfAffectedPlayers){
+int QueryClient::clearIsOnline(int *NumberOfAffectedPlayers){
 	this->prepareQuery(46);
 	int Status = this->executeQuery(120, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status == QUERY_STATUS_OK){
 		*NumberOfAffectedPlayers = this->getWord();
 	}else{
-		error("TQueryManagerConnection::clearIsOnline: Request failed.\n");
+		error("QueryClient::clearIsOnline: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::createPlayerlist(int NumberOfPlayers, const char **Names,
+int QueryClient::createPlayerlist(int NumberOfPlayers, const char **Names,
 		int *Levels, const char (*Professions)[30], bool *NewRecord){
 	this->prepareQuery(47);
 
@@ -1282,12 +1292,12 @@ int TQueryManagerConnection::createPlayerlist(int NumberOfPlayers, const char **
 	if(Status == QUERY_STATUS_OK){
 		*NewRecord = this->getFlag();
 	}else{
-		error("TQueryManagerConnection::createPlayerlist: Request failed.\n");
+		error("QueryClient::createPlayerlist: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::logKilledCreatures(int NumberOfRaces, const char **Names,
+int QueryClient::logKilledCreatures(int NumberOfRaces, const char **Names,
 		int *KilledPlayers, int *KilledCreatures){
 	this->prepareQuery(48);
 
@@ -1301,12 +1311,12 @@ int TQueryManagerConnection::logKilledCreatures(int NumberOfRaces, const char **
 	int Status = this->executeQuery(240, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::logKilledCreatures: Request failed.\n");
+		error("QueryClient::logKilledCreatures: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::loadPlayers(uint32 MinimumCharacterID, int *NumberOfPlayers,
+int QueryClient::loadPlayers(uint32 MinimumCharacterID, int *NumberOfPlayers,
 		char (*Names)[30], uint32 *CharacterIDs){
 	this->prepareQuery(50);
 	this->sendQuad(MinimumCharacterID);
@@ -1322,12 +1332,12 @@ int TQueryManagerConnection::loadPlayers(uint32 MinimumCharacterID, int *NumberO
 			CharacterIDs[i] = this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::loadPlayers: Request failed.\n");
+		error("QueryClient::loadPlayers: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getKeptCharacters(uint32 MinimumCharacterID,
+int QueryClient::getKeptCharacters(uint32 MinimumCharacterID,
 		int *NumberOfPlayers, uint32 *CharacterIDs){
 	this->prepareQuery(200);
 	this->sendQuad(MinimumCharacterID);
@@ -1340,12 +1350,12 @@ int TQueryManagerConnection::getKeptCharacters(uint32 MinimumCharacterID,
 			CharacterIDs[i] = this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::getKeptCharacters: Request failed.\n");
+		error("QueryClient::getKeptCharacters: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getDeletedCharacters(uint32 MinimumCharacterID,
+int QueryClient::getDeletedCharacters(uint32 MinimumCharacterID,
 		int *NumberOfPlayers, uint32 *CharacterIDs){
 	this->prepareQuery(201);
 	this->sendQuad(MinimumCharacterID);
@@ -1358,23 +1368,23 @@ int TQueryManagerConnection::getDeletedCharacters(uint32 MinimumCharacterID,
 			CharacterIDs[i] = this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::getKeptCharacters: Request failed.\n");
+		error("QueryClient::getKeptCharacters: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::deleteOldCharacter(uint32 CharacterID){
+int QueryClient::deleteOldCharacter(uint32 CharacterID){
 	this->prepareQuery(202);
 	this->sendQuad(CharacterID);
 	int Status = this->executeQuery(30, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::deleteOldCharacter: Request failed.\n");
+		error("QueryClient::deleteOldCharacter: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getHiddenCharacters(uint32 MinimumCharacterID,
+int QueryClient::getHiddenCharacters(uint32 MinimumCharacterID,
 		int *NumberOfPlayers, uint32 *CharacterIDs){
 	this->prepareQuery(203);
 	this->sendQuad(MinimumCharacterID);
@@ -1387,12 +1397,12 @@ int TQueryManagerConnection::getHiddenCharacters(uint32 MinimumCharacterID,
 			CharacterIDs[i] = this->getQuad();
 		}
 	}else{
-		error("TQueryManagerConnection::getHiddenCharacters: Request failed.\n");
+		error("QueryClient::getHiddenCharacters: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::createHighscores(int NumberOfPlayers, uint32 *CharacterIDs,
+int QueryClient::createHighscores(int NumberOfPlayers, uint32 *CharacterIDs,
 		int *ExpPoints, int *ExpLevel, int *Fist, int *Club, int *Axe,
 		int *Sword, int *Distance, int *Shielding, int *Magic, int *Fishing){
 	this->prepareQuery(204);
@@ -1415,32 +1425,32 @@ int TQueryManagerConnection::createHighscores(int NumberOfPlayers, uint32 *Chara
 	int Status = this->executeQuery(120, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::createHighscores: Request failed.\n");
+		error("QueryClient::createHighscores: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::createCensus(void){
+int QueryClient::createCensus(void){
 	this->prepareQuery(205);
 	int Status = this->executeQuery(600, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::createCensus: Request failed.\n");
+		error("QueryClient::createCensus: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::createKillStatistics(void){
+int QueryClient::createKillStatistics(void){
 	this->prepareQuery(206);
 	int Status = this->executeQuery(300, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status != QUERY_STATUS_OK){
-		error("TQueryManagerConnection::createKillStatistics: Request failed.\n");
+		error("QueryClient::createKillStatistics: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getPlayersOnline(int *NumberOfWorlds, char (*Names)[30], uint16 *Players){
+int QueryClient::getPlayersOnline(int *NumberOfWorlds, char (*Names)[30], uint16 *Players){
 	this->prepareQuery(207);
 	int Status = this->executeQuery(120, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
@@ -1451,12 +1461,12 @@ int TQueryManagerConnection::getPlayersOnline(int *NumberOfWorlds, char (*Names)
 			Players[i] = this->getWord();
 		}
 	}else{
-		error("TQueryManagerConnection::getPlayersOnline: Request failed.\n");
+		error("QueryClient::getPlayersOnline: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getWorlds(int *NumberOfWorlds, char (*Names)[30]){
+int QueryClient::getWorlds(int *NumberOfWorlds, char (*Names)[30]){
 	this->prepareQuery(208);
 	int Status = this->executeQuery(120, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
@@ -1466,12 +1476,12 @@ int TQueryManagerConnection::getWorlds(int *NumberOfWorlds, char (*Names)[30]){
 			this->getString(Names[i], 30);
 		}
 	}else{
-		error("TQueryManagerConnection::getWorlds: Request failed.\n");
+		error("QueryClient::getWorlds: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::getServerLoad(const char *World, int Period, int *Data){
+int QueryClient::getServerLoad(const char *World, int Period, int *Data){
 	this->prepareQuery(209);
 	this->sendString(World);
 	this->sendByte((uint8)Period);
@@ -1486,12 +1496,12 @@ int TQueryManagerConnection::getServerLoad(const char *World, int Period, int *D
 			}
 		}
 	}else{
-		error("TQueryManagerConnection::getServerLoad: Request failed.\n");
+		error("QueryClient::getServerLoad: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::insertPaymentDataOld(uint32 PurchaseNr, uint32 ReferenceNr,
+int QueryClient::insertPaymentDataOld(uint32 PurchaseNr, uint32 ReferenceNr,
 		const char *FirstName, const char *LastName, const char *Company,
 		const char *Street, const char *Zip, const char *City, const char *Country,
 		const char *State, const char *Phone, const char *Fax, const char *EMail,
@@ -1524,15 +1534,15 @@ int TQueryManagerConnection::insertPaymentDataOld(uint32 PurchaseNr, uint32 Refe
 		if(ErrorCode == 1){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::insertPaymentDataOld: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::insertPaymentDataOld: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::insertPaymentDataOld: Request failed.\n");
+		error("QueryClient::insertPaymentDataOld: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::addPaymentOld(uint32 AccountID, const char *Description,
+int QueryClient::addPaymentOld(uint32 AccountID, const char *Description,
 		uint32 PaymentID, int Days, int *ActionTaken){
 	this->prepareQuery(211);
 	this->sendQuad(AccountID);
@@ -1548,15 +1558,15 @@ int TQueryManagerConnection::addPaymentOld(uint32 AccountID, const char *Descrip
 		if(ErrorCode >= 1 && ErrorCode <= 2){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::addPaymentOld: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::addPaymentOld: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::addPaymentOld: Request failed.\n");
+		error("QueryClient::addPaymentOld: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::cancelPaymentOld(uint32 PurchaseNr, uint32 ReferenceNr,
+int QueryClient::cancelPaymentOld(uint32 PurchaseNr, uint32 ReferenceNr,
 		uint32 AccountID, bool *IllegalUse, char *EMailAddress){
 	this->prepareQuery(212);
 	this->sendQuad(PurchaseNr);
@@ -1572,15 +1582,15 @@ int TQueryManagerConnection::cancelPaymentOld(uint32 PurchaseNr, uint32 Referenc
 		if(ErrorCode >= 1 && ErrorCode <= 2){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::cancelPaymentOld: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::cancelPaymentOld: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::cancelPaymentOld: Request failed.\n");
+		error("QueryClient::cancelPaymentOld: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::insertPaymentDataNew(uint32 PurchaseNr, uint32 ReferenceNr,
+int QueryClient::insertPaymentDataNew(uint32 PurchaseNr, uint32 ReferenceNr,
 		const char *FirstName, const char *LastName, const char *Company,
 		const char *Street, const char *Zip, const char *City, const char *Country,
 		const char *State, const char *Phone, const char *Fax, const char *EMail,
@@ -1613,15 +1623,15 @@ int TQueryManagerConnection::insertPaymentDataNew(uint32 PurchaseNr, uint32 Refe
 		if(ErrorCode == 1){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::insertPaymentDataNew: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::insertPaymentDataNew: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::insertPaymentDataNew: Request failed.\n");
+		error("QueryClient::insertPaymentDataNew: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::addPaymentNew(const char *PaymentKey, uint32 PaymentID,
+int QueryClient::addPaymentNew(const char *PaymentKey, uint32 PaymentID,
 		int *ActionTaken, char *EMailReceiver){
 	this->prepareQuery(214);
 	this->sendString(PaymentKey);
@@ -1638,15 +1648,15 @@ int TQueryManagerConnection::addPaymentNew(const char *PaymentKey, uint32 Paymen
 		if(ErrorCode >= 1 && ErrorCode <= 3){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::addPaymentNew: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::addPaymentNew: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::addPaymentNew: Request failed.\n");
+		error("QueryClient::addPaymentNew: Request failed.\n");
 	}
 	return Result;
 }
 
-int TQueryManagerConnection::cancelPaymentNew(uint32 PurchaseNr, uint32 ReferenceNr,
+int QueryClient::cancelPaymentNew(uint32 PurchaseNr, uint32 ReferenceNr,
 		const char *PaymentKey, bool *IllegalUse, bool *Present, char *EMailAddress){
 	this->prepareQuery(215);
 	this->sendQuad(PurchaseNr);
@@ -1663,108 +1673,10 @@ int TQueryManagerConnection::cancelPaymentNew(uint32 PurchaseNr, uint32 Referenc
 		if(ErrorCode == 1){
 			Result = ErrorCode;
 		}else{
-			error("TQueryManagerConnection::cancelPaymentNew: Invalid error code %d.\n", ErrorCode);
+			error("QueryClient::cancelPaymentNew: Invalid error code %d.\n", ErrorCode);
 		}
 	}else{
-		error("TQueryManagerConnection::cancelPaymentNew: Request failed.\n");
+		error("QueryClient::cancelPaymentNew: Request failed.\n");
 	}
 	return Result;
-}
-
-// TQueryManagerConnectionPool
-// =============================================================================
-// TODO(fusion): Same as `TQueryManagerConnection::TQueryManagerConnection`.
-TQueryManagerConnectionPool::TQueryManagerConnectionPool(int Connections) :
-		NumberOfConnections(std::max<int>(Connections, 1)),
-		QueryManagerConnection(NULL),
-		QueryManagerConnectionFree(NULL),
-		FreeQueryManagerConnections(this->NumberOfConnections),
-		QueryManagerConnectionMutex(1)
-{
-	if(Connections <= 0){
-		error("TQueryManagerConnectionPool::TQueryManagerConnectionPool:"
-				" Invalid connection count %d.\n", Connections);
-	}
-}
-
-void TQueryManagerConnectionPool::init(void){
-	this->QueryManagerConnection = new TQueryManagerConnection[this->NumberOfConnections];
-	this->QueryManagerConnectionFree = new bool[this->NumberOfConnections];
-	for(int i = 0; i < this->NumberOfConnections; i += 1){
-		if(!this->QueryManagerConnection[i].isConnected()){
-			error("TQueryManagerConnectionPool::init: Cannot connect to query manager.\n");
-			throw "cannot connect to query manager";
-		}
-
-		this->QueryManagerConnectionFree[i] = true;
-	}
-}
-
-void TQueryManagerConnectionPool::exit(void){
-	for(int i = 0; i < this->NumberOfConnections; i += 1){
-		this->FreeQueryManagerConnections.down();
-	}
-
-	delete[] this->QueryManagerConnection;
-	delete[] this->QueryManagerConnectionFree;
-}
-
-TQueryManagerConnection *TQueryManagerConnectionPool::getConnection(void){
-	int ConnectionIndex = -1;
-	this->FreeQueryManagerConnections.down();
-	this->QueryManagerConnectionMutex.down();
-	for(int i = 0; i < this->NumberOfConnections; i += 1){
-		if(this->QueryManagerConnectionFree[i]){
-			this->QueryManagerConnectionFree[i] = false;
-			ConnectionIndex = i;
-			break;
-		}
-	}
-	this->QueryManagerConnectionMutex.up();
-
-	if(ConnectionIndex == -1){
-		error("TQueryManagerConnectionPool::getConnection: No free connection found.\n");
-		return NULL;
-	}
-
-	return &this->QueryManagerConnection[ConnectionIndex];
-}
-
-void TQueryManagerConnectionPool::releaseConnection(TQueryManagerConnection *Connection){
-	int ConnectionIndex = -1;
-	for(int i = 0; i < this->NumberOfConnections; i += 1){
-		if(&this->QueryManagerConnection[i] == Connection){
-			ConnectionIndex = i;
-			break;
-		}
-	}
-
-	if(ConnectionIndex == -1){
-		error("TQueryManagerConnectionPool::releaseConnection: Connection not found.\n");
-		return;
-	}
-
-	this->QueryManagerConnectionFree[ConnectionIndex] = true;
-	this->FreeQueryManagerConnections.up();
-}
-
-// TQueryManagerPoolConnection
-// =============================================================================
-TQueryManagerPoolConnection::TQueryManagerPoolConnection(TQueryManagerConnectionPool *Pool) :
-		QueryManagerConnectionPool(Pool),
-		QueryManagerConnection(NULL)
-{
-	if(this->QueryManagerConnectionPool == NULL){
-		error("TQueryManagerPoolConnection::TQueryManagerPoolConnection: Pool is NULL.\n");
-		return;
-	}
-
-	this->QueryManagerConnection = this->QueryManagerConnectionPool->getConnection();
-}
-
-TQueryManagerPoolConnection::~TQueryManagerPoolConnection(void){
-	if(this->QueryManagerConnection != NULL){
-		ASSERT(this->QueryManagerConnectionPool != NULL);
-		this->QueryManagerConnectionPool->releaseConnection(this->QueryManagerConnection);
-	}
 }
