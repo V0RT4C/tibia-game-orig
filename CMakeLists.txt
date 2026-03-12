@@ -40,7 +40,7 @@ set(SOURCES
     src/common/strings/strings.cpp
     src/threads/threads.cpp
     src/threads/semaphore/semaphore.cpp
-    src/time.cpp
+    src/time/time_utils.cpp
     src/common/read_stream/read_stream.cpp
     src/common/write_stream/write_stream.cpp
     src/common/dynamic_buffer/dynamic_buffer.cpp

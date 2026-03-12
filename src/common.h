@@ -69,18 +69,9 @@ void ExitSHM(void);
 void InitSHMExtern(bool Verbose);
 void ExitSHMExtern(void);
 
-// time.cc
+// time/time_utils.h
 // =============================================================================
-extern uint32 RoundNr;
-extern uint32 ServerMilliseconds;
-struct tm GetLocalTimeTM(time_t t);
-int64 GetClockMonotonicMS(void);
-void GetRealTime(int *Hour, int *Minute);
-void GetTime(int *Hour, int *Minute);
-void GetDate(int *Year, int *Cycle, int *Day);
-void GetAmbiente(int *Brightness, int *Color);
-uint32 GetRoundAtTime(int Hour, int Minute);
-uint32 GetRoundForNextMinute(void);
+#include "time/time_utils.h"
 
 // Stream classes (extracted to common/ modules)
 #include "common/read_stream/read_stream.h"
