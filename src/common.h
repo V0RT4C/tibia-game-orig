@@ -101,84 +101,9 @@ void GetAmbiente(int *Brightness, int *Color);
 uint32 GetRoundAtTime(int Hour, int Minute);
 uint32 GetRoundForNextMinute(void);
 
-// utils.cc
-// =============================================================================
-struct TReadStream {
-	// VIRTUAL FUNCTIONS
-	// =================
-	virtual bool readFlag(void);														// VTABLE[0]
-	virtual uint8 readByte(void) = 0;													// VTABLE[1]
-	virtual uint16 readWord(void);														// VTABLE[2]
-	virtual uint32 readQuad(void);														// VTABLE[3]
-	virtual void readString(char *Buffer, int MaxLength);								// VTABLE[4]
-	virtual void readBytes(uint8 *Buffer, int Count);									// VTABLE[5]
-	virtual bool eof(void) = 0;															// VTABLE[6]
-	virtual void skip(int Count) = 0;													// VTABLE[7]
-};
-
-struct TReadBuffer: TReadStream {
-	TReadBuffer(const uint8 *Data, int Size);
-
-	// VIRTUAL FUNCTIONS
-	// =================
-	uint8 readByte(void) override;
-	uint16 readWord(void) override;
-	uint32 readQuad(void) override;
-	void readBytes(uint8 *Buffer, int Count) override;
-	bool eof(void) override;
-	void skip(int Count) override;
-
-	// DATA
-	// =================
-	const uint8 *Data;
-	int Size;
-	int Position;
-};
-
-struct TWriteStream {
-	// VIRTUAL FUNCTIONS
-	// =================
-	virtual void writeFlag(bool Flag);													// VTABLE[0]
-	virtual void writeByte(uint8 Byte) = 0;												// VTABLE[1]
-	virtual void writeWord(uint16 Word);												// VTABLE[2]
-	virtual void writeQuad(uint32 Quad);												// VTABLE[3]
-	virtual void writeString(const char *String);										// VTABLE[4]
-	virtual void writeBytes(const uint8 *Buffer, int Count);							// VTABLE[5]
-};
-
-struct TWriteBuffer: TWriteStream {
-	TWriteBuffer(uint8 *Data, int Size);
-
-	// VIRTUAL FUNCTIONS
-	// =================
-	void writeByte(uint8 Byte) override;
-	void writeWord(uint16 Word) override;
-	void writeQuad(uint32 Quad) override;
-	void writeBytes(const uint8 *Buffer, int Count) override;
-
-	// DATA
-	// =================
-	uint8 *Data;
-	int Size;
-	int Position;
-};
-
-struct TDynamicWriteBuffer: TWriteBuffer {
-	TDynamicWriteBuffer(int InitialSize);
-	void resizeBuffer(void);
-
-	// VIRTUAL FUNCTIONS
-	// =================
-	void writeByte(uint8 Byte) override;
-	void writeWord(uint16 Word) override;
-	void writeQuad(uint32 Quad) override;
-	void writeBytes(const uint8 *Buffer, int Count) override;
-
-	// TODO(fusion): Appended virtual functions. These are not in the base class
-	// VTABLE which can be problematic if we intend to use polymorphism, although
-	// that doesn't seem to be case.
-	virtual ~TDynamicWriteBuffer(void);													// VTABLE[6]
-	// Duplicate destructor that also calls operator delete.							// VTABLE[7]
-};
+// Stream classes (extracted to common/ modules)
+#include "common/read_stream/read_stream.h"
+#include "common/write_stream/write_stream.h"
+#include "common/dynamic_buffer/dynamic_buffer.h"
 
 #endif //TIBIA_COMMON_H_

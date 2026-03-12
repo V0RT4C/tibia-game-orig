@@ -39,7 +39,9 @@ set(SOURCES
     src/strings.cpp
     src/threads.cpp
     src/time.cpp
-    src/utils.cpp
+    src/common/read_stream/read_stream.cpp
+    src/common/write_stream/write_stream.cpp
+    src/common/dynamic_buffer/dynamic_buffer.cpp
     src/writer.cpp
 )
 
