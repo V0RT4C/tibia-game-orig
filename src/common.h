@@ -3,6 +3,7 @@
 
 #include "common/types/types.h"
 #include "common/assert/assert.h"
+#include "common/utils/utils.h"
 
 #include <ctype.h>
 #include <float.h>
@@ -111,26 +112,6 @@ void LogFileHandler(const char *Text);
 void LogFileHandler(int Level, const char *Text);
 void error(const char *Text, ...) ATTR_PRINTF(1, 2);
 void print(int Level, const char *Text, ...) ATTR_PRINTF(2, 3);
-int random(int Min, int Max);
-bool FileExists(const char *FileName);
-
-bool isSpace(int c);
-bool isAlpha(int c);
-bool isEngAlpha(int c);
-bool isDigit(int c);
-int toLower(int c);
-int toUpper(int c);
-char *strLower(char *s);
-char *strUpper(char *s);
-int stricmp(const char *s1, const char *s2, int Max = INT_MAX);
-char *findFirst(char *s, char c);
-char *findLast(char *s, char c);
-
-bool CheckBitIndex(int BitSetBytes, int Index);
-bool CheckBit(uint8 *BitSet, int Index);
-void SetBit(uint8 *BitSet, int Index);
-void ClearBit(uint8 *BitSet, int Index);
-
 template<typename T>
 void RandomShuffle(T *Buffer, int Size){
 	if(Buffer == NULL){
