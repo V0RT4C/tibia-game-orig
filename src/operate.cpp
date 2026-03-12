@@ -2882,7 +2882,7 @@ void RefreshSector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int
 }
 
 void RefreshMap(void){
-	TDynamicWriteBuffer HelpBuffer(KB(64));
+	TDynamicWriteBuffer HelpBuffer(kb(64));
 	for(int SectorZ = SectorZMin; SectorZ <= SectorZMax; SectorZ += 1)
 	for(int SectorY = SectorYMin; SectorY <= SectorYMax; SectorY += 1)
 	for(int SectorX = SectorXMin; SectorX <= SectorXMax; SectorX += 1){
@@ -3252,7 +3252,7 @@ int GetCommunicationContext(uint32 CharacterID, uint32 StatementID,
 	// statements into the database so it may be related to that.
 
 	bool StatementContained = false;
-	int FreeSpace = KB(16);
+	int FreeSpace = kb(16);
 	*NumberOfStatements = 0;
 	*ReportedStatements = new vector<TReportedStatement>(0, 100, 100);
 	StatementsIter = Statements.iterLast();

@@ -26,7 +26,7 @@ struct TOutfit{
 		// if all members of the union have the same size. This is not true
 		// otherwise when smaller active fields leave trailing bytes of the
 		// union filled with whatever data was there before.
-		STATIC_ASSERT(sizeof(this->ObjectType) == sizeof(this->Colors));
+		static_assert(sizeof(this->ObjectType) == sizeof(this->Colors));
 		return this->OutfitID == Other.OutfitID
 			&& this->ObjectType == Other.ObjectType;
 	}

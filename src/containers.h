@@ -534,7 +534,7 @@ union storeitem{
 	// IMPORTANT(fusion): This will only work properly with POD structures. We
 	// could also manually handle `data` construction and destruction but I don't
 	// think we need it.
-	STATIC_ASSERT(std::is_trivially_default_constructible<T>::value
+	static_assert(std::is_trivially_default_constructible<T>::value
 			&& std::is_trivially_destructible<T>::value
 			&& std::is_trivially_copyable<T>::value);
 	storeitem<T> *next;
@@ -543,7 +543,7 @@ union storeitem{
 
 template<typename T, usize N>
 struct storeunit{
-	STATIC_ASSERT(N > 0);
+	static_assert(N > 0);
 	storeitem<T> item[N];
 };
 

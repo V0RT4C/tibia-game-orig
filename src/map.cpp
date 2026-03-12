@@ -40,7 +40,7 @@ static vector<TDepotInfo> DepotInfo(0, 4, 5);
 static vector<TMark> Mark(0, 4, 5);
 static int Marks;
 
-static TDynamicWriteBuffer HelpBuffer(KB(64));
+static TDynamicWriteBuffer HelpBuffer(kb(64));
 
 // Object
 // =============================================================================
@@ -494,7 +494,7 @@ static void ReadMapConfig(void){
 		throw "illegal value for Objects";
 	}
 
-	if(!ISPOW2(HashTableSize)){
+	if(!is_pow2(HashTableSize)){
 		throw "Objects must be a power of 2";
 	}
 
@@ -510,7 +510,7 @@ static void ReadMapConfig(void){
 static void ResizeHashTable(void){
 	uint32 OldSize = HashTableSize;
 	uint32 NewSize = OldSize * 2;
-	ASSERT(ISPOW2(OldSize));
+	ASSERT(is_pow2(OldSize));
 	ASSERT(NewSize > OldSize);
 
 	// TODO(fusion): See note below.
@@ -1742,7 +1742,7 @@ void InitMap(void){
 	FirstFreeObject = &ObjectBlock[0]->Object[0];
 
 	// NOTE(fusion): Initialize object hash table.
-	ASSERT(ISPOW2(HashTableSize));
+	ASSERT(is_pow2(HashTableSize));
 	HashTableMask = HashTableSize - 1;
 	HashTableData = (TObject**)malloc(HashTableSize * sizeof(TObject*));
 	HashTableType = (uint8*)malloc(HashTableSize * sizeof(uint8));

@@ -16,7 +16,7 @@ static TReaderThreadReply ReplyBuffer[200];
 static int ReplyPointerWrite;
 static int ReplyPointerRead;
 
-static TDynamicWriteBuffer HelpBuffer(KB(64));
+static TDynamicWriteBuffer HelpBuffer(kb(64));
 
 // Reader Orders
 // =============================================================================

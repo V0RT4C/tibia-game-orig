@@ -27,7 +27,7 @@ void SetQueryManagerLoginData(int Type, const char *Data){
 // declared. This initialization should work as long as `BufferSize` is the
 // first field declared in `TQueryManagerConnection`, which it is.
 TQueryManagerConnection::TQueryManagerConnection(int QueryBufferSize) :
-		BufferSize(std::max<int>(QueryBufferSize, KB(16))),
+		BufferSize(std::max<int>(QueryBufferSize, kb(16))),
 		Buffer(new uint8[this->BufferSize]),
 		ReadBuffer(this->Buffer, this->BufferSize),
 		WriteBuffer(this->Buffer, this->BufferSize),

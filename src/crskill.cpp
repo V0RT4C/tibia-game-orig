@@ -1107,7 +1107,7 @@ void TSkillEnergy::Event(int Range){
 // TSkillBase
 //==============================================================================
 TSkillBase::TSkillBase(void){
-	STATIC_ASSERT(NARRAY(this->Skills) == NARRAY(this->TimerList));
+	static_assert(NARRAY(this->Skills) == NARRAY(this->TimerList));
 	for(int i = 0; i < NARRAY(this->Skills); i += 1){
 		this->Skills[i] = NULL;
 		this->TimerList[i] = NULL;

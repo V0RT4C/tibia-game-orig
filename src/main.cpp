@@ -218,7 +218,7 @@ static void LockGame(void){
 }
 
 void LoadWorldConfig(void){
-	TQueryManagerConnection Connection(KB(16));
+	TQueryManagerConnection Connection(kb(16));
 	if(!Connection.isConnected()){
 		error("LoadWorldConfig: Cannot connect to query manager.\n");
 		throw "cannot connect to querymanager";

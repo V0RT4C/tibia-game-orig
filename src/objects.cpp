@@ -560,7 +560,7 @@ static void LoadObjects(void){
 }
 
 static void LoadConversionList(void){
-	STATIC_ASSERT(NARRAY(OldGroup) == NARRAY(OldNumber));
+	static_assert(NARRAY(OldGroup) == NARRAY(OldNumber));
 
 	for(int i = 0; i < NARRAY(OldGroup); i += 1){
 		OldGroup[i] = 0;

@@ -997,7 +997,7 @@ void ClearPlayers(void){
 
 void InitWriter(void){
 	// TODO(fusion): No idea what's this about.
-	int QueryBufferSize = std::max<int>(KB(16), MaxPlayers * 66 + 2);
+	int QueryBufferSize = std::max<int>(kb(16), MaxPlayers * 66 + 2);
 	QueryManagerConnection = new TQueryManagerConnection(QueryBufferSize);
 	if(!QueryManagerConnection->isConnected()){
 		throw "cannot connect to query manager";

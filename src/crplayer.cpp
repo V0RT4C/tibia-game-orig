@@ -78,7 +78,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 		this->OpenContainer[ContainerNr] = NONE;
 	}
 
-	STATIC_ASSERT(NARRAY(this->Addressees) == NARRAY(this->AddresseesTimes));
+	static_assert(NARRAY(this->Addressees) == NARRAY(this->AddresseesTimes));
 	for(int AddresseeNr = 0;
 			AddresseeNr < NARRAY(this->Addressees);
 			AddresseeNr += 1){
@@ -109,7 +109,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 	this->AccountID = PlayerData->AccountID;
 	strcpy(this->IPAddress, Connection->GetIPAddress());
 
-	STATIC_ASSERT(sizeof(this->Rights) == sizeof(PlayerData->Rights));
+	static_assert(sizeof(this->Rights) == sizeof(PlayerData->Rights));
 	memcpy(this->Rights, PlayerData->Rights, sizeof(this->Rights));
 
 	this->Sex = PlayerData->Sex;
@@ -510,14 +510,14 @@ void TPlayer::LoadData(void){
 	this->NumberOfMutings = PlayerData->NumberOfMutings;
 
 
-	STATIC_ASSERT(NARRAY(this->SpellList) == NARRAY(PlayerData->SpellList));
+	static_assert(NARRAY(this->SpellList) == NARRAY(PlayerData->SpellList));
 	for(int SpellNr = 0;
 			SpellNr < NARRAY(this->SpellList);
 			SpellNr += 1){
 		this->SpellList[SpellNr] = PlayerData->SpellList[SpellNr];
 	}
 
-	STATIC_ASSERT(NARRAY(this->QuestValues) == NARRAY(PlayerData->QuestValues));
+	static_assert(NARRAY(this->QuestValues) == NARRAY(PlayerData->QuestValues));
 	for(int QuestNr = 0;
 			QuestNr < NARRAY(this->QuestValues);
 			QuestNr += 1){
@@ -527,7 +527,7 @@ void TPlayer::LoadData(void){
 	// NOTE(fusion): `Minimum` is set to `INT_MIN` to skip loading a skill, and
 	// stick with the race's default.
 	this->SetSkills(PlayerData->Race);
-	STATIC_ASSERT(NARRAY(this->Skills) == NARRAY(PlayerData->Actual));
+	static_assert(NARRAY(this->Skills) == NARRAY(PlayerData->Actual));
 	for(int SkillNr = 0;
 			SkillNr < NARRAY(this->Skills);
 			SkillNr += 1){
@@ -579,21 +579,21 @@ void TPlayer::SaveData(void){
 	PlayerData->MutingEndRound = this->MutingEndRound;
 	PlayerData->NumberOfMutings = this->NumberOfMutings;
 
-	STATIC_ASSERT(NARRAY(this->SpellList) == NARRAY(PlayerData->SpellList));
+	static_assert(NARRAY(this->SpellList) == NARRAY(PlayerData->SpellList));
 	for(int SpellNr = 0;
 			SpellNr < NARRAY(this->SpellList);
 			SpellNr += 1){
 		PlayerData->SpellList[SpellNr] = this->SpellList[SpellNr];
 	}
 
-	STATIC_ASSERT(NARRAY(this->QuestValues) == NARRAY(PlayerData->QuestValues));
+	static_assert(NARRAY(this->QuestValues) == NARRAY(PlayerData->QuestValues));
 	for(int QuestNr = 0;
 			QuestNr < NARRAY(this->QuestValues);
 			QuestNr += 1){
 		PlayerData->QuestValues[QuestNr] = this->QuestValues[QuestNr];
 	}
 
-	STATIC_ASSERT(NARRAY(this->Skills) == NARRAY(PlayerData->Actual));
+	static_assert(NARRAY(this->Skills) == NARRAY(PlayerData->Actual));
 	for(int SkillNr = 0;
 			SkillNr < NARRAY(this->Skills);
 			SkillNr += 1){
@@ -689,7 +689,7 @@ void TPlayer::SaveInventory(void){
 	}
 
 	try{
-		TDynamicWriteBuffer HelpBuffer(KB(16));
+		TDynamicWriteBuffer HelpBuffer(kb(16));
 		for(int Position = INVENTORY_FIRST;
 				Position <= INVENTORY_LAST;
 				Position += 1){
@@ -1746,7 +1746,7 @@ int TPlayer::RecordTalk(void){
 }
 
 int TPlayer::RecordMessage(uint32 AddresseeID){
-	STATIC_ASSERT(NARRAY(this->Addressees) == NARRAY(this->AddresseesTimes));
+	static_assert(NARRAY(this->Addressees) == NARRAY(this->AddresseesTimes));
 	int AddresseeNr = -1;
 	for(int i = 0; i < NARRAY(this->Addressees); i += 1){
 		if(this->Addressees[i] == AddresseeID){
@@ -2033,7 +2033,7 @@ void SaveDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 	PlayerData->DepotSize[DepotNr] = 0;
 
 	try{
-		TDynamicWriteBuffer HelpBuffer(KB(16));
+		TDynamicWriteBuffer HelpBuffer(kb(16));
 		SaveObjects(GetFirstContainerObject(Con), &HelpBuffer, false);
 
 		if(HelpBuffer.Position > 0){
@@ -2172,7 +2172,7 @@ bool LoadPlayerData(TPlayerData *Slot){
 	try{
 		// TODO(fusion): Same thing as house loaders. Data is expected to be in
 		// an exact order and we don't check identifiers
-		TDynamicWriteBuffer HelpBuffer(KB(16));
+		TDynamicWriteBuffer HelpBuffer(kb(16));
 		TReadScriptFile Script;
 		Script.open(FileName);
 

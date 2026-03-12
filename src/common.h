@@ -1,6 +1,9 @@
 #ifndef TIBIA_COMMON_H_
 #define TIBIA_COMMON_H_ 1
 
+#include "common/types/types.h"
+#include "common/assert/assert.h"
+
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
@@ -14,83 +17,11 @@
 
 #include <algorithm>
 
-typedef uint8_t uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
-typedef int64_t int64;
-typedef uint64_t uint64;
-typedef uintptr_t uintptr;
-typedef size_t usize;
-
-#define STATIC_ASSERT(expr) static_assert((expr), #expr)
-#define NARRAY(arr) (int)(sizeof(arr) / sizeof(arr[0]))
-#define ISPOW2(x) ((x) != 0 && ((x) & ((x) - 1)) == 0)
-#define KB(x) ((usize)(x) << 10)
-#define MB(x) ((usize)(x) << 20)
-#define GB(x) ((usize)(x) << 30)
-
-#if !OS_WINDOWS && !OS_LINUX
-#	if defined(_WIN32)
-#		define OS_WINDOWS 1
-#	elif defined(__linux__) || defined(__gnu_linux__)
-#		define OS_LINUX 1
-#	else
-#		error "Operating system not supported."
-#	endif
-#endif
-
-#if !COMPILER_MSVC && !COMPILER_GCC && !COMPILER_CLANG
-#	if defined(_MSC_VER)
-#		define COMPILER_MSVC 1
-#	elif defined(__GNUC__)
-#		define COMPILER_GCC 1
-#	elif defined(__clang__)
-#		define COMPILER_CLANG 1
-#	endif
-#endif
-
-#if COMPILER_GCC || COMPILER_CLANG
-#	define ATTR_FALLTHROUGH __attribute__((fallthrough))
-#	define ATTR_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#else
-#	define ATTR_FALLTHROUGH
-#	define ATTR_PRINTF(x, y)
-#endif
-
-#if COMPILER_MSVC
-#	define TRAP() __debugbreak()
-#elif COMPILER_GCC || COMPILER_CLANG
-#	define TRAP() __builtin_trap()
-#else
-#	define TRAP() abort()
-#endif
-
-#define ASSERT_ALWAYS(expr) if(!(expr)) { TRAP(); }
-#if ENABLE_ASSERTIONS
-#	define ASSERT(expr) ASSERT_ALWAYS(expr)
-#else
-#	define ASSERT(expr) ((void)(expr))
-#endif
-
-// NOTE(fusion): The server will only compile on Linux due to a few Linux specific
-// features being used. Making it compile on Windows shouldn't be too difficult but
-// would require a few design changes.
-STATIC_ASSERT(OS_LINUX);
-#include <errno.h>
-#include <unistd.h>
-
-// NOTE(fusion): This is the member name for the thread id in `struct sigevent`
-// when `sigev_notify` is `SIGEV_THREAD_ID` but for whatever reason glibc doesn't
-// define it.
-#ifndef sigev_notify_thread_id
-#	define sigev_notify_thread_id _sigev_un._tid
-#endif
-
 // Constants
 // =============================================================================
 // TODO(fusion): There are many constants that are hardcoded as decompilation
 // artifacts. We should define them here and use when appropriate. It is not
-// as simple because I've been using `NARRAY` in some cases and they're used
+// as simple because `std::size` is used in some cases and they're used
 // essentially everywhere.
 
 //#define MAX_NAME 30 // used with most short strings (should replace MAX_IDENT_LENGTH too)

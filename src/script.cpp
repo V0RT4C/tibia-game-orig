@@ -45,7 +45,7 @@ static void SaveFile(const char *Filename){
 	// file in one go. It's probably not a good idea to mimic that here so we'll
 	// do it gradually.
 
-	char Buffer[KB(16)];
+	char Buffer[kb(16)];
 	while(true){
 		usize n = fread(Buffer, 1, sizeof(Buffer), Source);
 		if(n == 0){

@@ -1714,8 +1714,8 @@ void LoadHouses(void){
 	}
 
 	int QueryBufferSize = Houses * 600;
-	if(QueryBufferSize < (int)KB(16)){
-		QueryBufferSize = (int)KB(16);
+	if(QueryBufferSize < (int)kb(16)){
+		QueryBufferSize = (int)kb(16);
 	}
 
 	QueryManagerConnection = new TQueryManagerConnection(QueryBufferSize);

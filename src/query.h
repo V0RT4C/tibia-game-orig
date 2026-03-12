@@ -11,7 +11,7 @@ enum : int {
 };
 
 struct TQueryManagerConnection{
-	TQueryManagerConnection(void) : TQueryManagerConnection(KB(16)) {}
+	TQueryManagerConnection(void) : TQueryManagerConnection(kb(16)) {}
 	TQueryManagerConnection(int QueryBufferSize);
 	~TQueryManagerConnection(void);
 
