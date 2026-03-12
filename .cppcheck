@@ -1,0 +1,3 @@
+// Suppress warnings for legacy code patterns preserved intentionally
+missingInclude
+unmatchedSuppression

@@ -1,0 +1,11 @@
+Checks: >
+    -*,
+    bugprone-*,
+    -bugprone-easily-swappable-parameters,
+    modernize-use-nullptr,
+    modernize-use-override,
+    modernize-use-using,
+    readability-braces-around-statements,
+    performance-*
+WarningsAsErrors: ''
+HeaderFilterRegex: 'src/.*\.h'
