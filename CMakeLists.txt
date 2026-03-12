@@ -38,7 +38,8 @@ set(SOURCES
     src/sending.cpp
     src/shm.cpp
     src/common/strings/strings.cpp
-    src/threads.cpp
+    src/threads/threads.cpp
+    src/threads/semaphore/semaphore.cpp
     src/time.cpp
     src/common/read_stream/read_stream.cpp
     src/common/write_stream/write_stream.cpp

@@ -84,3 +84,12 @@ target_include_directories(test_xtea PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CUR
 target_compile_features(test_xtea PRIVATE cxx_std_17)
 target_compile_definitions(test_xtea PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_xtea COMMAND test_xtea)
+
+add_executable(test_semaphore test_semaphore.cpp
+    ${CMAKE_SOURCE_DIR}/src/threads/semaphore/semaphore.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_semaphore PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_semaphore PRIVATE cxx_std_17)
+target_compile_definitions(test_semaphore PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+target_link_libraries(test_semaphore PRIVATE pthread)
+add_test(NAME test_semaphore COMMAND test_semaphore)
