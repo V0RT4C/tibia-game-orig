@@ -17,3 +17,9 @@ target_include_directories(test_logging PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_
 target_compile_features(test_logging PRIVATE cxx_std_17)
 target_compile_definitions(test_logging PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_logging COMMAND test_logging)
+
+add_executable(test_containers test_containers.cpp ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_containers PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_containers PRIVATE cxx_std_17)
+target_compile_definitions(test_containers PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_containers COMMAND test_containers)
