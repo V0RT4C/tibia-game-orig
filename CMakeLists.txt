@@ -11,6 +11,7 @@ option(TIBIA772 "Target Tibia 7.72 protocol" OFF)
 # All source files (flat structure for now — will be reorganized in later tasks)
 set(SOURCES
     src/common/utils/utils.cpp
+    src/logging/logging.cpp
     src/communication.cpp
     src/config.cpp
     src/connections.cpp

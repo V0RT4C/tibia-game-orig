@@ -3,6 +3,7 @@
 
 #include "common/types/types.h"
 #include "common/assert/assert.h"
+#include "logging/logging.h"
 #include "common/utils/utils.h"
 
 #include <ctype.h>
@@ -102,32 +103,6 @@ uint32 GetRoundForNextMinute(void);
 
 // utils.cc
 // =============================================================================
-typedef void TErrorFunction(const char *Text);
-typedef void TPrintFunction(int Level, const char *Text);
-void SetErrorFunction(TErrorFunction *Function);
-void SetPrintFunction(TPrintFunction *Function);
-void SilentHandler(const char *Text);
-void SilentHandler(int Level, const char *Text);
-void LogFileHandler(const char *Text);
-void LogFileHandler(int Level, const char *Text);
-void error(const char *Text, ...) ATTR_PRINTF(1, 2);
-void print(int Level, const char *Text, ...) ATTR_PRINTF(2, 3);
-template<typename T>
-void RandomShuffle(T *Buffer, int Size){
-	if(Buffer == NULL){
-		error("RandomShuffle: Buffer is NULL.\n");
-		return;
-	}
-
-	int Max = Size - 1;
-	for(int Min = 0; Min < Max; Min += 1){
-		int Swap = random(Min, Max);
-		if(Swap != Min){
-			std::swap(Buffer[Min], Buffer[Swap]);
-		}
-	}
-}
-
 struct TReadStream {
 	// VIRTUAL FUNCTIONS
 	// =================

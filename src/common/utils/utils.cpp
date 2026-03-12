@@ -5,10 +5,6 @@
 #include <cstring>
 #include <sys/stat.h>
 
-// NOTE: FileExists calls error() — we forward-declare it here temporarily.
-// This cross-dependency will be cleaned up when logging is extracted in Task 5.
-extern void error(const char *Text, ...) __attribute__((format(printf, 1, 2)));
-
 int random(int Min, int Max){
 	int Range = (Max - Min) + 1;
 	int Result = Min;
