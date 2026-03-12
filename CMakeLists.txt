@@ -21,7 +21,8 @@ set(SOURCES
     src/crnonpl.cpp
     src/crplayer.cpp
     src/crskill.cpp
-    src/crypto.cpp
+    src/crypto/xtea/xtea.cpp
+    src/crypto/rsa/rsa.cpp
     src/houses.cpp
     src/info.cpp
     src/magic.cpp
@@ -76,7 +77,7 @@ else()
 endif()
 
 # Suppress OpenSSL deprecated API warnings for the RSA compilation unit only
-set_source_files_properties(src/crypto.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+set_source_files_properties(src/crypto/rsa/rsa.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(game PRIVATE OpenSSL::Crypto pthread)
