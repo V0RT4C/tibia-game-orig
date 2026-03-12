@@ -67,3 +67,11 @@ target_include_directories(test_strings PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_
 target_compile_features(test_strings PRIVATE cxx_std_17)
 target_compile_definitions(test_strings PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_strings COMMAND test_strings)
+
+# test_config: struct layout and buffer size checks only (compile-time sizeof, no
+# runtime calls into config parsing machinery).
+add_executable(test_config test_config.cpp)
+target_include_directories(test_config PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_config PRIVATE cxx_std_17)
+target_compile_definitions(test_config PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_config COMMAND test_config)

@@ -13,7 +13,7 @@ set(SOURCES
     src/common/utils/utils.cpp
     src/logging/logging.cpp
     src/communication.cpp
-    src/config.cpp
+    src/config/config.cpp
     src/connections.cpp
     src/cract.cpp
     src/crcombat.cpp
