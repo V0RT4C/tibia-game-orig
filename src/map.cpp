@@ -677,7 +677,10 @@ void SwapSector(void){
 
 	TWriteBinaryFile File;
 	try{
-		File.open(FileName);
+		if(!File.open(FileName)){
+			error("FATAL ERROR in SwapSector: Cannot create file \"%s\".\n", FileName);
+			abort();
+		}
 		print(2, "Swapping out sector %d/%d/%d...\n", OldestSectorX, OldestSectorY, OldestSectorZ);
 		File.writeQuad((uint32)OldestSectorX);
 		File.writeQuad((uint32)OldestSectorY);
@@ -702,7 +705,10 @@ void UnswapSector(uintptr FileNumber){
 
 	TReadBinaryFile File;
 	try{
-		File.open(FileName);
+		if(!File.open(FileName)){
+			error("FATAL ERROR in UnswapSector: Cannot open file \"%s\".\n", FileName);
+			abort();
+		}
 		int SectorX = (int)File.readQuad();
 		int SectorY = (int)File.readQuad();
 		int SectorZ = (int)File.readQuad();

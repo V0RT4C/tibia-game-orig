@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "enums.h"
+#include "common/binary_file/binary_file.h"
 
 #define MAX_IDENT_LENGTH 30
 
@@ -97,57 +98,6 @@ struct TWriteScriptFile {
 	FILE *File;
 	char Filename[4096];
 	int Line;
-};
-
-struct TReadBinaryFile: TReadStream {
-	TReadBinaryFile(void);
-	void open(const char *FileName);
-	void close(void);
-	void error(const char *Text);
-	int getPosition(void);
-	int getSize(void);
-	void seek(int Offset);
-
-	// VIRTUAL FUNCTIONS
-	// =================
-	uint8 readByte(void) override;
-	void readBytes(uint8 *Buffer, int Count) override;
-	bool eof(void) override;
-	void skip(int Count) override;
-
-	// TODO(fusion): Appended virtual functions. These are not in the base class
-	// VTABLE which can be problematic if we intend to use polymorphism, although
-	// that doesn't seem to be case.
-	virtual ~TReadBinaryFile(void);														// VTABLE[8]
-	// Duplicate destructor that also calls operator delete.							// VTABLE[9]
-
-	// DATA
-	// =================
-	FILE *File;
-	char Filename[4096];
-	int FileSize;
-};
-
-struct TWriteBinaryFile: TWriteStream {
-	TWriteBinaryFile(void);
-	void open(const char *FileName);
-	void close(void);
-	void error(const char *Text);
-
-	// VIRTUAL FUNCTIONS
-	// =================
-	void writeByte(uint8 Byte) override;
-	void writeBytes(const uint8 *Buffer, int Count) override;
-
-	// TODO(fusion): Appended virtual functions. These are not in the base class
-	// VTABLE which can be problematic if we intend to use polymorphism, although
-	// that doesn't seem to be case.
-	virtual ~TWriteBinaryFile(void);
-
-	// DATA
-	// =================
-	FILE *File;
-	char Filename[4096];
 };
 
 #endif //TIBIA_SCRIPT_H_

@@ -42,6 +42,7 @@ set(SOURCES
     src/common/read_stream/read_stream.cpp
     src/common/write_stream/write_stream.cpp
     src/common/dynamic_buffer/dynamic_buffer.cpp
+    src/common/binary_file/binary_file.cpp
     src/writer.cpp
 )
 

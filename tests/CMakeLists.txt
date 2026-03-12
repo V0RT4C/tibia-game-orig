@@ -48,3 +48,13 @@ target_include_directories(test_dynamic_buffer PRIVATE ${CMAKE_SOURCE_DIR}/src $
 target_compile_features(test_dynamic_buffer PRIVATE cxx_std_17)
 target_compile_definitions(test_dynamic_buffer PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_dynamic_buffer COMMAND test_dynamic_buffer)
+
+add_executable(test_binary_file test_binary_file.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/binary_file/binary_file.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/read_stream/read_stream.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/write_stream/write_stream.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_binary_file PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_binary_file PRIVATE cxx_std_17)
+target_compile_definitions(test_binary_file PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_binary_file COMMAND test_binary_file)
