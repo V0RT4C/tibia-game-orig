@@ -19,6 +19,7 @@ set(SOURCES
     src/creature/combat/combat.cpp
     src/creature/creature/creature.cpp
     src/crmain.cpp
+    src/creature/nonplayer/nonplayer.cpp
     src/crnonpl.cpp
     src/crplayer.cpp
     src/creature/skill/skill.cpp

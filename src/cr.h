@@ -169,19 +169,7 @@ struct TAttackWave {
 	vector<TItemData> ExtraItem;
 };
 
-// TNonPlayer
-// =============================================================================
-struct TNonplayer: TCreature {
-	TNonplayer(void);
-	~TNonplayer(void) override;
-	void SetInList(void);
-	void DelInList(void);
-
-	// DATA
-	// =================
-	//TCreature super_TCreature;	// IMPLICIT
-	STATE State;
-};
+#include "creature/nonplayer/nonplayer.h"
 
 // TNPC
 // =============================================================================
@@ -511,8 +499,6 @@ void ConvinceMonster(TCreature *Master, TCreature *Slave);
 void ChallengeMonster(TCreature *Challenger, TCreature *Monster);
 
 void InitNPCs(void);
-void InitNonplayer(void);
-void ExitNonplayer(void);
 
 // crplayer.cc
 // =============================================================================
