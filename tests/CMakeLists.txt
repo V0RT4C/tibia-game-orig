@@ -251,3 +251,16 @@ target_compile_features(test_spsc_ring_buffer PRIVATE cxx_std_17)
 target_compile_definitions(test_spsc_ring_buffer PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 target_link_libraries(test_spsc_ring_buffer PRIVATE pthread)
 add_test(NAME test_spsc_ring_buffer COMMAND test_spsc_ring_buffer)
+
+add_executable(test_websocket_transport test_websocket_transport.cpp
+    ${CMAKE_SOURCE_DIR}/src/network/transport/websocket_transport/websocket_transport.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_websocket_transport PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/third_party/uWebSockets/src
+    ${CMAKE_SOURCE_DIR}/third_party/uSockets/src
+    ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_websocket_transport PRIVATE cxx_std_17)
+target_compile_definitions(test_websocket_transport PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1 LIBUS_NO_SSL=1)
+target_link_libraries(test_websocket_transport PRIVATE uSockets pthread z)
+add_test(NAME test_websocket_transport COMMAND test_websocket_transport)
