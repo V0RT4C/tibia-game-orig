@@ -4,6 +4,7 @@
 #include "containers.h"
 #include "cr.h"
 #include "crypto.h"
+#include "network/transport/tcp_transport/tcp_transport.h"
 #include "query.h"
 #include "threads.h"
 #include "writer.h"
@@ -1257,7 +1258,17 @@ void CommunicationThread(int Socket){
 	}
 
 	ASSERT(Connection->ThreadID == gettid());
-	Connection->Connect(Socket);
+
+	// Resolve remote address before creating transport
+	struct sockaddr_in RemoteAddr;
+	socklen_t RemoteAddrLen = sizeof(RemoteAddr);
+	char RemoteIP[16] = "Unknown";
+	if(getpeername(Socket, (struct sockaddr*)&RemoteAddr, &RemoteAddrLen) == 0){
+		strcpy(RemoteIP, inet_ntoa(RemoteAddr.sin_addr));
+	}
+
+	TcpTransport *Transport = new TcpTransport(Socket, RemoteIP);
+	Connection->Connect(Socket, Transport);
 	Connection->WaitingForACK = false;
 
 	{
@@ -1266,6 +1277,8 @@ void CommunicationThread(int Socket){
 		FOwnerEx.pid = Connection->ThreadID;
 		if(fcntl(Socket, F_SETOWN_EX, &FOwnerEx) == -1){
 			error("CommunicationThread: F_SETOWN_EX failed for socket %d.\n", Socket);
+			delete Connection->Transport;
+			Connection->Transport = nullptr;
 			if(close(Socket) == -1){
 				error("CommunicationThread: Error %d while closing socket (2).\n", errno);
 			}
@@ -1278,6 +1291,8 @@ void CommunicationThread(int Socket){
 		int SocketFlags = fcntl(Socket, F_GETFL);
 		if(SocketFlags == -1 || fcntl(Socket, F_SETFL, (SocketFlags | O_NONBLOCK | O_ASYNC)) == -1){
 			error("ConnectionThread: F_SETFL failed for socket %d.\n", Socket);
+			delete Connection->Transport;
+			Connection->Transport = nullptr;
 			if(close(Socket) == -1){
 				error("CommunicationThread: Error %d while closing socket (3).\n", errno);
 			}
@@ -1293,6 +1308,8 @@ void CommunicationThread(int Socket){
 		int NoDelay = 1;
 		if(setsockopt(Socket, IPPROTO_TCP, TCP_NODELAY, &NoDelay, sizeof(NoDelay)) == -1){
 			error("ConnectionThread: Failed to set TCP_NODELAY=1 on socket %d.\n", Socket);
+			delete Connection->Transport;
+			Connection->Transport = nullptr;
 			if(close(Socket) == -1){
 				error("CommunicationThread: Error %d while closing socket (3.5).\n", errno);
 			}
@@ -1306,6 +1323,8 @@ void CommunicationThread(int Socket){
 	sigprocmask(SIG_SETMASK, &SignalSet, NULL);
 	if(!Connection->SetLoginTimer(5)){
 		error("CommunicationThread: Failed to set login timer.\n");
+		delete Connection->Transport;
+		Connection->Transport = nullptr;
 		if(close(Socket) == -1){
 			error("CommunicationThread: Error %d while closing socket (4).\n", errno);
 		}
@@ -1376,6 +1395,9 @@ void CommunicationThread(int Socket){
 	if(Connection->ClosingIsDelayed){
 		DelayThread(2, 0);
 	}
+
+	delete Connection->Transport;
+	Connection->Transport = nullptr;
 
 	if(close(Socket) == -1){
 		error("CommunicationThread: Error %d while closing socket (4).\n", errno);

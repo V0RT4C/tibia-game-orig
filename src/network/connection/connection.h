@@ -4,6 +4,7 @@
 #include "common.h"
 #include "crypto.h"
 #include "enums.h"
+#include "network/transport/transport.h"
 
 struct TConnection;
 struct TPlayer;
@@ -27,7 +28,7 @@ struct TConnection {
 	const char *GetIPAddress(void);
 	void Free(void);
 	void Assign(void);
-	void Connect(int Socket);
+	void Connect(int Socket, ITransport *Transport);
 	void Login(void);
 	bool JoinGame(TReadBuffer *Buffer);
 	void EnterGame(void);
@@ -74,6 +75,7 @@ struct TConnection {
 	pid_t ThreadID;
 	timer_t LoginTimer;
 	int Socket;
+	ITransport *Transport;
 	char IPAddress[16];
 	TXTEASymmetricKey SymmetricKey;
 	bool ConnectionIsOk;

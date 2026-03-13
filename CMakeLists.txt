@@ -52,6 +52,7 @@ set(SOURCES
     src/common/dynamic_buffer/dynamic_buffer.cpp
     src/common/binary_file/binary_file.cpp
     src/game_data/writer/writer.cpp
+    src/network/transport/tcp_transport/tcp_transport.cpp
 )
 
 add_executable(game ${SOURCES})

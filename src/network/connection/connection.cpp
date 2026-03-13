@@ -13,6 +13,7 @@
 // =============================================================================
 TConnection::TConnection(void){
 	this->State = CONNECTION_FREE;
+	this->Transport = nullptr;
 }
 
 void TConnection::Process(void){
@@ -168,21 +169,20 @@ void TConnection::Assign(void){
 	this->LoginTimer = 0;
 }
 
-void TConnection::Connect(int Socket){
+void TConnection::Connect(int Socket, ITransport *Transport){
 	if(this->State != CONNECTION_ASSIGNED){
 		error("TConnection::Connect: Connection is not assigned to any thread.\n");
 	}
 
 	this->State = CONNECTION_CONNECTED;
 	this->Socket = Socket;
+	this->Transport = Transport;
 	this->ConnectionIsOk = true;
 	this->ClosingIsDelayed = true;
 	this->RandomSeed = rand();
 
-	struct sockaddr_in RemoteAddr;
-	socklen_t RemoteAddrLen = sizeof(RemoteAddr);
-	getpeername(Socket, (struct sockaddr*)&RemoteAddr, &RemoteAddrLen);
-	strcpy(this->IPAddress, inet_ntoa(RemoteAddr.sin_addr));
+	// Use transport's address instead of getpeername
+	strcpy(this->IPAddress, Transport->get_remote_address());
 }
 
 void TConnection::Login(void){
