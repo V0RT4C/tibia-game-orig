@@ -110,9 +110,9 @@ static const char FlagNames[66][30] = {
 	"ForceUse",           // FORCEUSE
 	"MultiUse",           // MULTIUSE
 	"DistUse",            // DISTUSE
-	"movement_event",     // MOVEMENTEVENT
-	"collision_event",    // COLLISIONEVENT
-	"separation_event",   // SEPARATIONEVENT
+	"MovementEvent",      // MOVEMENTEVENT
+	"CollisionEvent",     // COLLISIONEVENT
+	"SeparationEvent",    // SEPARATIONEVENT
 	"Key",                // KEY
 	"KeyDoor",            // KEYDOOR
 	"NameDoor",           // NAMEDOOR
