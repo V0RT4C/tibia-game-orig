@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(tibia-gameserver LANGUAGES CXX)
+project(tibia-gameserver LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,6 +7,23 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(ENABLE_ASSERTIONS "Enable runtime assertions" OFF)
 option(TIBIA772 "Target Tibia 7.72 protocol" OFF)
+
+# uSockets — lightweight C networking library (dependency of uWebSockets)
+# Explicit file list — do NOT glob. Exclude crypto/openssl.c (we use LIBUS_NO_SSL)
+# and quic.c (has extra dependencies we don't need).
+set(USOCKETS_SOURCES
+    third_party/uSockets/src/bsd.c
+    third_party/uSockets/src/context.c
+    third_party/uSockets/src/loop.c
+    third_party/uSockets/src/socket.c
+    third_party/uSockets/src/udp.c
+    third_party/uSockets/src/eventing/epoll_kqueue.c
+    third_party/uSockets/src/crypto/sni_tree.cpp
+)
+add_library(uSockets STATIC ${USOCKETS_SOURCES})
+target_include_directories(uSockets PUBLIC third_party/uSockets/src)
+target_compile_definitions(uSockets PRIVATE LIBUS_NO_SSL=1)
+target_compile_options(uSockets PRIVATE -Wno-unused-parameter -Wno-pedantic)
 
 # All source files (flat structure for now — will be reorganized in later tasks)
 set(SOURCES
@@ -58,6 +75,7 @@ set(SOURCES
 add_executable(game ${SOURCES})
 
 target_include_directories(game PRIVATE src)
+target_include_directories(game PRIVATE third_party/uWebSockets/src)
 
 target_compile_options(game PRIVATE
     -m64
@@ -88,7 +106,7 @@ endif()
 set_source_files_properties(src/crypto/rsa/rsa.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 find_package(OpenSSL REQUIRED)
-target_link_libraries(game PRIVATE OpenSSL::Crypto pthread)
+target_link_libraries(game PRIVATE OpenSSL::Crypto pthread uSockets)
 
 # Tests
 enable_testing()
