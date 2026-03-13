@@ -20,8 +20,8 @@ set(SOURCES
     src/creature/creature/creature.cpp
     src/crmain.cpp
     src/creature/monster/monster.cpp
+    src/creature/npc/npc.cpp
     src/creature/nonplayer/nonplayer.cpp
-    src/crnonpl.cpp
     src/crplayer.cpp
     src/creature/skill/skill.cpp
     src/crypto/xtea/xtea.cpp
