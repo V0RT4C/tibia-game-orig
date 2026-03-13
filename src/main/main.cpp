@@ -224,11 +224,18 @@ void LoadWorldConfig(void) {
 
 	int HelpWorldType;
 	int HelpGameAddress[4];
+	int ConfigGamePort = GamePort; // Preserve value from .tibia config (0 if not set)
 	int Ret = Connection.loadWorldConfig(&HelpWorldType, &RebootTime, HelpGameAddress, &GamePort, &MaxPlayers,
 										 &PremiumPlayerBuffer, &MaxNewbies, &PremiumNewbieBuffer);
 	if (Ret != 0) {
 		error("LoadWorldConfig: Cannot retrieve configuration data.\n");
 		throw "cannot load world config";
+	}
+
+	// If GamePort was explicitly set in .tibia config, use that instead of the
+	// database value. The database port is only for the login character list.
+	if (ConfigGamePort != 0) {
+		GamePort = ConfigGamePort;
 	}
 
 	WorldType = (TWorldType)HelpWorldType;

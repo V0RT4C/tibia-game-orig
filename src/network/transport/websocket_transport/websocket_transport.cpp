@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <cstring>
 #include <cerrno>
+#include <signal.h>
+#include <sys/syscall.h>
 
 #include "protocol/websocket_acceptor/websocket_types.h"
 
@@ -107,9 +109,16 @@ bool WebSocketTransport::push_inbound(const uint8 *data, int len) {
         return false;
     }
 
-    // Signal the connection thread via eventfd — triggers SIGIO.
+    // Signal the connection thread via eventfd (for poll/select compatibility)
+    // AND via tgkill SIGIO (because eventfd O_ASYNC does not reliably generate
+    // SIGIO on all kernels).
     uint64_t val = 1;
-    ssize_t ignored __attribute__((unused)) = ::write(event_fd_, &val, sizeof(val));
+    ::write(event_fd_, &val, sizeof(val));
+
+    pid_t tid = thread_id_.load(std::memory_order_acquire);
+    if (tid != 0) {
+        tgkill(getpid(), tid, SIGIO);
+    }
     return true;
 }
 

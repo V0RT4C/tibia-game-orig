@@ -279,7 +279,9 @@ void ReadConfig(void){
 				Script.read_symbol(')');
 				NumberOfQueryManagers += 1;
 			}while(Script.read_special() != '}');
-		}else if(strcmp(Identifier, "transportmode") == 0){
+		}else if(strcmp(Identifier, "gameport") == 0){
+		GamePort = Script.read_number();
+	}else if(strcmp(Identifier, "transportmode") == 0){
 			const char *Mode = Script.read_identifier();
 			if(strcmp(Mode, "tcp") == 0){
 				TransportMode = TRANSPORT_TCP;
