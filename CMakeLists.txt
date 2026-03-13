@@ -28,7 +28,7 @@ set(SOURCES
     src/magic.cpp
     src/main.cpp
     src/game_data/map/map.cpp
-    src/moveuse.cpp
+    src/game_data/moveuse/moveuse.cpp
     src/game_data/objects/objects.cpp
     src/game_data/operate/operate.cpp
     src/query/query_client/query_client.cpp
