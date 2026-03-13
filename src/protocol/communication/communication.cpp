@@ -1,4 +1,4 @@
-#include "communication.h"
+#include "protocol/communication/communication.h"
 #include "config.h"
 #include "connections.h"
 #include "containers.h"

@@ -12,7 +12,7 @@ option(TIBIA772 "Target Tibia 7.72 protocol" OFF)
 set(SOURCES
     src/common/utils/utils.cpp
     src/logging/logging.cpp
-    src/communication.cpp
+    src/protocol/communication/communication.cpp
     src/config/config.cpp
     src/network/connection_pool/connection_pool.cpp
     src/network/connection/connection.cpp
