@@ -1,4 +1,5 @@
 #include "protocol/communication/communication.h"
+#include "protocol/websocket_acceptor/websocket_acceptor.h"
 #include "config.h"
 #include "connections.h"
 #include "containers.h"
@@ -1639,13 +1640,19 @@ void init_communication(void) {
 		throw "cannot load RSA key";
 	}
 
-	if (!open_socket()) {
-		throw "cannot open socket";
+	if (TransportMode == TRANSPORT_TCP || TransportMode == TRANSPORT_BOTH) {
+		if (!open_socket()) {
+			throw "cannot open socket";
+		}
+
+		AcceptorThread = StartThread(acceptor_thread_loop, NULL, false);
+		if (AcceptorThread == INVALID_THREAD_HANDLE) {
+			throw "cannot start acceptor thread";
+		}
 	}
 
-	AcceptorThread = StartThread(acceptor_thread_loop, NULL, false);
-	if (AcceptorThread == INVALID_THREAD_HANDLE) {
-		throw "cannot start acceptor thread";
+	if (TransportMode == TRANSPORT_WEBSOCKET || TransportMode == TRANSPORT_BOTH) {
+		start_websocket_thread();
 	}
 }
 
@@ -1675,6 +1682,10 @@ void exit_communication(void) {
 		}
 		JoinThread(AcceptorThread);
 		AcceptorThread = INVALID_THREAD_HANDLE;
+	}
+
+	if (TransportMode == TRANSPORT_WEBSOCKET || TransportMode == TRANSPORT_BOTH) {
+		stop_websocket_thread();
 	}
 
 	QueryManagerConnectionPool.exit();
