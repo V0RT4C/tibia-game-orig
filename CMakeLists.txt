@@ -15,7 +15,7 @@ set(SOURCES
     src/communication.cpp
     src/config/config.cpp
     src/connections.cpp
-    src/cract.cpp
+    src/creature/actions/actions.cpp
     src/creature/combat/combat.cpp
     src/creature/creature/creature.cpp
     src/crmain.cpp
