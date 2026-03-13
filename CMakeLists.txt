@@ -41,7 +41,7 @@ set(SOURCES
     src/game_data/reader/reader.cpp
     src/receiving.cpp
     src/game_data/script/script.cpp
-    src/sending.cpp
+    src/protocol/sending/sending.cpp
     src/shm/shm.cpp
     src/common/strings/strings.cpp
     src/threads/threads.cpp
