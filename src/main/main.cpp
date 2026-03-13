@@ -3,8 +3,8 @@
 #include "config.h"
 #include "houses.h"
 #include "info.h"
-#include "map.h"
 #include "magic.h"
+#include "map.h"
 #include "moveuse.h"
 #include "objects.h"
 #include "operate.h"
@@ -12,9 +12,9 @@
 #include "reader.h"
 #include "writer.h"
 
+#include <fstream>
 #include <signal.h>
 #include <sys/stat.h>
-#include <fstream>
 
 static bool BeADaemon = false;
 static bool Reboot = false;
@@ -24,7 +24,7 @@ static timer_t BeatTimer;
 static int SigAlarmCounter = 0;
 static int SigUsr1Counter = 0;
 
-static sighandler_t SigHandler(int SigNr, sighandler_t Handler){
+static sighandler_t SigHandler(int SigNr, sighandler_t Handler) {
 	struct sigaction Action;
 	struct sigaction OldAction;
 
@@ -34,50 +34,48 @@ static sighandler_t SigHandler(int SigNr, sighandler_t Handler){
 	// signals that share the same handler.
 	sigemptyset(&Action.sa_mask);
 
-	if(SigNr == SIGALRM){
+	if (SigNr == SIGALRM) {
 		// SA_INTERRUPT is a glibc extension (absent on musl). The default
 		// behavior without SA_RESTART is to not restart syscalls, which
 		// is exactly what SA_INTERRUPT requests — so 0 is equivalent.
 		Action.sa_flags = 0;
-	}else{
+	} else {
 		Action.sa_flags = SA_RESTART;
 	}
 
-	if(sigaction(SigNr, &Action, &OldAction) == 0){
+	if (sigaction(SigNr, &Action, &OldAction) == 0) {
 		return OldAction.sa_handler;
-	}else{
+	} else {
 		return SIG_ERR;
 	}
 }
 
-static void SigBlock(int SigNr){
+static void SigBlock(int SigNr) {
 	sigset_t Set;
 	sigemptyset(&Set);
 	sigaddset(&Set, SigNr);
-	if(sigprocmask(SIG_BLOCK, &Set, NULL) == -1){
-		error("SigBlock: Failed to block signal %d (%s): (%d) %s\n",
-				SigNr, strsignal(SigNr), errno, strerror(errno));
+	if (sigprocmask(SIG_BLOCK, &Set, NULL) == -1) {
+		error("SigBlock: Failed to block signal %d (%s): (%d) %s\n", SigNr, strsignal(SigNr), errno, strerror(errno));
 	}
 }
 
-static void SigWaitAny(void){
+static void SigWaitAny(void) {
 	sigset_t Set;
 	sigemptyset(&Set);
 	sigsuspend(&Set);
 }
 
-static void SigHupHandler(int signr){
+static void SigHupHandler(int signr) {
 	// no-op (?)
 }
 
-static void SigAbortHandler(int signr){
+static void SigAbortHandler(int signr) {
 	print(1, "SigAbortHandler: shutting down writer thread.\n");
 	abort_writer();
 }
 
-static void DefaultHandler(int signr){
-	print(1, "DefaultHandler: Shutting down game server (SigNr. %d: %s).\n",
-			signr, strsignal(signr));
+static void DefaultHandler(int signr) {
+	print(1, "DefaultHandler: Shutting down game server (SigNr. %d: %s).\n", signr, strsignal(signr));
 
 	SigHandler(SIGINT, SIG_IGN);
 	SigHandler(SIGQUIT, SIG_IGN);
@@ -87,12 +85,12 @@ static void DefaultHandler(int signr){
 	SigHandler(SIGPWR, SIG_IGN);
 
 	SaveMapOn = (signr == SIGQUIT) || (signr == SIGTERM) || (signr == SIGPWR);
-	if(signr == SIGTERM){
+	if (signr == SIGTERM) {
 		int Hour, Minute;
 		GetRealTime(&Hour, &Minute);
 		RebootTime = (Hour * 60 + Minute + 6) % 1440;
 		CloseGame();
-	}else{
+	} else {
 		EndGame();
 	}
 
@@ -109,7 +107,7 @@ static void ErrorHandler(int signr){
 }
 #endif
 
-static void InitSignalHandler(void){
+static void InitSignalHandler(void) {
 	int Count = 0;
 	Count += (SigHandler(SIGHUP, SigHupHandler) != SIG_ERR);
 	Count += (SigHandler(SIGINT, DefaultHandler) != SIG_ERR);
@@ -135,15 +133,15 @@ static void InitSignalHandler(void){
 	print(1, "InitSignalHandler: %d signal handlers registered (expected=%d).\n", Count, 0x1c);
 }
 
-static void ExitSignalHandler(void){
+static void ExitSignalHandler(void) {
 	// no-op
 }
 
-static void SigAlarmHandler(int SigNr){
+static void SigAlarmHandler(int SigNr) {
 	SigAlarmCounter += (1 + timer_getoverrun(BeatTimer));
 }
 
-static void InitTime(void){
+static void InitTime(void) {
 	ASSERT(Beat > 0);
 	SigAlarmCounter = 0;
 	SigHandler(SIGALRM, SigAlarmHandler);
@@ -152,9 +150,8 @@ static void InitTime(void){
 	SigEvent.sigev_notify = SIGEV_THREAD_ID;
 	SigEvent.sigev_signo = SIGALRM;
 	SigEvent.sigev_notify_thread_id = gettid();
-	if(timer_create(CLOCK_MONOTONIC, &SigEvent, &BeatTimer) == -1){
-		error("InitTime: Failed to create beat timer: (%d) %s\n",
-				errno, strerror(errno));
+	if (timer_create(CLOCK_MONOTONIC, &SigEvent, &BeatTimer) == -1) {
+		error("InitTime: Failed to create beat timer: (%d) %s\n", errno, strerror(errno));
 		throw "cannot create beat timer";
 	}
 
@@ -162,40 +159,38 @@ static void InitTime(void){
 	TimerSpec.it_interval.tv_sec = Beat / 1000;
 	TimerSpec.it_interval.tv_nsec = (Beat % 1000) * 1000000;
 	TimerSpec.it_value = TimerSpec.it_interval;
-	if(timer_settime(BeatTimer, 0, &TimerSpec, NULL) == -1){
-		error("InitTime: Failed to start beat timer: (%d) %s\n",
-				errno, strerror(errno));
+	if (timer_settime(BeatTimer, 0, &TimerSpec, NULL) == -1) {
+		error("InitTime: Failed to start beat timer: (%d) %s\n", errno, strerror(errno));
 		throw "cannot start beat timer";
 	}
 }
 
-static void ExitTime(void){
-	if(timer_delete(BeatTimer) == -1){
-		error("ExitTime: Failed to delete beat timer: (%d) %s\n",
-				errno, strerror(errno));
+static void ExitTime(void) {
+	if (timer_delete(BeatTimer) == -1) {
+		error("ExitTime: Failed to delete beat timer: (%d) %s\n", errno, strerror(errno));
 	}
 
 	SigHandler(SIGALRM, SIG_IGN);
 }
 
-static void UnlockGame(void){
+static void UnlockGame(void) {
 	// TODO(fusion): Probably use snprintf to format file name?
 	char FileName[4096];
 	strcpy(FileName, SAVEPATH);
 	strcat(FileName, "/game.pid");
 
 	std::ifstream InputFile(FileName, std::ios_base::in);
-	if(!InputFile.fail()){
+	if (!InputFile.fail()) {
 		int Pid;
 		InputFile >> Pid;
 
-		if(Pid == getpid()){
+		if (Pid == getpid()) {
 			unlink(FileName);
 		}
 	}
 }
 
-static void LockGame(void){
+static void LockGame(void) {
 	// TODO(fusion): Probably use snprintf to format file name?
 	char FileName[4096];
 	strcpy(FileName, SAVEPATH);
@@ -203,10 +198,10 @@ static void LockGame(void){
 
 	{
 		std::ifstream InputFile(FileName, std::ios_base::in);
-		if(!InputFile.fail()){
+		if (!InputFile.fail()) {
 			int Pid;
 			InputFile >> Pid;
-			if(Pid != 0){
+			if (Pid != 0) {
 				throw "Game-Server is already running, PID file exists.";
 			}
 		}
@@ -220,32 +215,29 @@ static void LockGame(void){
 	atexit(UnlockGame);
 }
 
-void LoadWorldConfig(void){
+void LoadWorldConfig(void) {
 	TQueryManagerConnection Connection(kb(16));
-	if(!Connection.isConnected()){
+	if (!Connection.isConnected()) {
 		error("LoadWorldConfig: Cannot connect to query manager.\n");
 		throw "cannot connect to querymanager";
 	}
 
 	int HelpWorldType;
 	int HelpGameAddress[4];
-	int Ret = Connection.loadWorldConfig(&HelpWorldType, &RebootTime,
-			HelpGameAddress, &GamePort,
-			&MaxPlayers, &PremiumPlayerBuffer,
-			&MaxNewbies, &PremiumNewbieBuffer);
-	if(Ret != 0){
+	int Ret = Connection.loadWorldConfig(&HelpWorldType, &RebootTime, HelpGameAddress, &GamePort, &MaxPlayers,
+										 &PremiumPlayerBuffer, &MaxNewbies, &PremiumNewbieBuffer);
+	if (Ret != 0) {
 		error("LoadWorldConfig: Cannot retrieve configuration data.\n");
 		throw "cannot load world config";
 	}
 
 	WorldType = (TWorldType)HelpWorldType;
-	snprintf(GameAddress, sizeof(GameAddress), "%d.%d.%d.%d",
-			HelpGameAddress[0], HelpGameAddress[1],
-			HelpGameAddress[2], HelpGameAddress[3]);
+	snprintf(GameAddress, sizeof(GameAddress), "%d.%d.%d.%d", HelpGameAddress[0], HelpGameAddress[1],
+			 HelpGameAddress[2], HelpGameAddress[3]);
 }
 
-static void InitAll(void){
-	try{
+static void InitAll(void) {
+	try {
 		ReadConfig();
 		SetQueryManagerLoginData(1, WorldName);
 		LoadWorldConfig();
@@ -268,13 +260,13 @@ static void InitAll(void){
 		init_houses();
 		InitTime();
 		apply_patches();
-	}catch(const char *str){
+	} catch (const char *str) {
 		error("Initialization error: %s\n", str);
 		exit(EXIT_FAILURE);
 	}
 }
 
-static void ExitAll(void){
+static void ExitAll(void) {
 	EndGame();
 	ExitTime();
 	exit_cr();
@@ -293,17 +285,17 @@ static void ExitAll(void){
 	ExitSHM();
 }
 
-static void ProcessCommand(void){
+static void ProcessCommand(void) {
 	int Command = GetCommand();
-	if(Command != 0){
+	if (Command != 0) {
 		char *Buffer = GetCommandBuffer();
-		if(Command == 1){
-			if(Buffer != NULL){
+		if (Command == 1) {
+			if (Buffer != NULL) {
 				broadcast_message(TALK_ADMIN_MESSAGE, "%s", Buffer);
-			}else{
+			} else {
 				error("ProcessCommand: Text for broadcast is NULL.\n");
 			}
-		}else{
+		} else {
 			error("ProcessCommand: Unknown command %d.\n", Command);
 		}
 
@@ -311,7 +303,7 @@ static void ProcessCommand(void){
 	}
 }
 
-static void AdvanceGame(int Delay){
+static void AdvanceGame(int Delay) {
 	static int CreatureTimeCounter = 0;
 	static int CronTimeCounter = 0;
 	static int SkillTimeCounter = 0;
@@ -325,22 +317,22 @@ static void AdvanceGame(int Delay){
 	SkillTimeCounter += Delay;
 	OtherTimeCounter += Delay;
 
-	if(CreatureTimeCounter >= 1750){
+	if (CreatureTimeCounter >= 1750) {
 		CreatureTimeCounter -= 1000;
 		process_creatures();
 	}
 
-	if(CronTimeCounter >= 1500){
+	if (CronTimeCounter >= 1500) {
 		CronTimeCounter -= 1000;
 		process_cron_system();
 	}
 
-	if(SkillTimeCounter >= 1250){
+	if (SkillTimeCounter >= 1250) {
 		SkillTimeCounter -= 1000;
 		process_skills();
 	}
 
-	if(OtherTimeCounter >= 1000){
+	if (OtherTimeCounter >= 1000) {
 		OtherTimeCounter -= 1000;
 
 		RoundNr += 1;
@@ -357,70 +349,66 @@ static void AdvanceGame(int Delay){
 		// TODO(fusion): Shouldn't we be checking both brightness and color?
 		int Brightness, Color;
 		GetAmbiente(&Brightness, &Color);
-		if(OldAmbiente != Brightness){
+		if (OldAmbiente != Brightness) {
 			OldAmbiente = Brightness;
 			TConnection *Connection = get_first_connection();
-			while(Connection != NULL){
-				if(Connection->live()){
+			while (Connection != NULL) {
+				if (Connection->live()) {
 					send_ambiente(Connection);
 				}
 				Connection = get_next_connection();
 			}
 		}
 
-		if(RoundNr % 10 == 0){
+		if (RoundNr % 10 == 0) {
 			net_load_check();
 		}
 
-		if(RoundNr >= NextMinute){
+		if (RoundNr >= NextMinute) {
 			int Hour, Minute;
 			GetRealTime(&Hour, &Minute);
 
 			refresh_cylinders();
-			if(Minute % 5 == 0){
+			if (Minute % 5 == 0) {
 				create_player_list(true);
 			}
-			if(Minute % 15 == 0){
+			if (Minute % 15 == 0) {
 				save_player_data_order();
 			}
-			if(Minute == 0){
+			if (Minute == 0) {
 				net_load_summary();
 			}
-			if(Minute == 55){
+			if (Minute == 55) {
 				write_kill_statistics();
 			}
 
 			int RealTime = Minute + Hour * 60;
-			if((RealTime + 5) % 1440 == RebootTime){
-				if(Reboot){
+			if ((RealTime + 5) % 1440 == RebootTime) {
+				if (Reboot) {
 					broadcast_message(TALK_ADMIN_MESSAGE,
-						"Server is saving game in 5 minutes.\nPlease come back in 10 minutes.");
-				}else{
-					broadcast_message(TALK_ADMIN_MESSAGE,
-						"Server is going down in 5 minutes.\nPlease log out.");
+									  "Server is saving game in 5 minutes.\nPlease come back in 10 minutes.");
+				} else {
+					broadcast_message(TALK_ADMIN_MESSAGE, "Server is going down in 5 minutes.\nPlease log out.");
 				}
 				CloseGame();
-			}else if((RealTime + 3) % 1440 == RebootTime){
-				if(Reboot){
+			} else if ((RealTime + 3) % 1440 == RebootTime) {
+				if (Reboot) {
 					broadcast_message(TALK_ADMIN_MESSAGE,
-						"Server is saving game in 3 minutes.\nPlease come back in 10 minutes.");
-				}else{
-					broadcast_message(TALK_ADMIN_MESSAGE,
-						"Server is going down in 3 minutes.\nPlease log out.");
+									  "Server is saving game in 3 minutes.\nPlease come back in 10 minutes.");
+				} else {
+					broadcast_message(TALK_ADMIN_MESSAGE, "Server is going down in 3 minutes.\nPlease log out.");
 				}
-			}else if((RealTime + 1) % 1440 == RebootTime){
-				if(Reboot){
-					broadcast_message(TALK_ADMIN_MESSAGE,
-						"Server is saving game in one minute.\nPlease log out.");
-				}else{
-					broadcast_message(TALK_ADMIN_MESSAGE,
-						"Server is going down in one minute.\nPlease log out.");
+			} else if ((RealTime + 1) % 1440 == RebootTime) {
+				if (Reboot) {
+					broadcast_message(TALK_ADMIN_MESSAGE, "Server is saving game in one minute.\nPlease log out.");
+				} else {
+					broadcast_message(TALK_ADMIN_MESSAGE, "Server is going down in one minute.\nPlease log out.");
 				}
-			}else if(RealTime == RebootTime){
+			} else if (RealTime == RebootTime) {
 				CloseGame();
 				logout_all_players();
 				send_all();
-				if(Reboot){
+				if (Reboot) {
 					refresh_map();
 				}
 				save_map();
@@ -433,16 +421,16 @@ static void AdvanceGame(int Delay){
 		CleanupDynamicStrings();
 	}
 
-	if(Delay > Beat){
+	if (Delay > Beat) {
 		log_message("lag", "Delay %d msec.\n", Delay);
 	}
 
 	// TODO(fusion): Why would we delay creature movement yet another beat?
-	if(Delay < 1000){
+	if (Delay < 1000) {
 		move_creatures(Delay);
 		Lag = false;
-	}else{
-		if(!Lag && RoundNr > 10){
+	} else {
+		if (!Lag && RoundNr > 10) {
 			error("AdvanceGame: No creature movement due to lag (delay: %d msec).\n", Delay);
 		}
 		Lag = true;
@@ -451,11 +439,11 @@ static void AdvanceGame(int Delay){
 	send_all();
 }
 
-static void SigUsr1Handler(int signr){
+static void SigUsr1Handler(int signr) {
 	SigUsr1Counter += 1;
 }
 
-static void LaunchGame(void){
+static void LaunchGame(void) {
 	SaveMapOn = true;
 	SigUsr1Counter = 0;
 	SigAlarmCounter = 0;
@@ -476,18 +464,18 @@ static void LaunchGame(void){
 	//	This is to say, there should be no problem with reading from `SigUsr1Counter`,
 	// `SigAlarmCounter`, or `SaveMapOn`, which may be modified from signal handlers.
 
-	while(GameRunning()){
-		while(SigUsr1Counter == 0 && SigAlarmCounter == 0){
+	while (GameRunning()) {
+		while (SigUsr1Counter == 0 && SigAlarmCounter == 0) {
 			SigWaitAny();
 		}
 
-		if(SigUsr1Counter > 0){
+		if (SigUsr1Counter > 0) {
 			SigUsr1Counter = 0;
 			receive_data();
 		}
 
 		int NumBeats = SigAlarmCounter;
-		if(NumBeats > 0){
+		if (NumBeats > 0) {
 			SigAlarmCounter = 0;
 			AdvanceGame(NumBeats * Beat);
 		}
@@ -496,14 +484,14 @@ static void LaunchGame(void){
 	logout_all_players();
 }
 
-static bool DaemonInit(bool NoFork){
-	if(!NoFork){
+static bool DaemonInit(bool NoFork) {
+	if (!NoFork) {
 		pid_t Pid = fork();
-		if(Pid < 0){
+		if (Pid < 0) {
 			return true;
 		}
 
-		if(Pid != 0){
+		if (Pid != 0) {
 			exit(EXIT_SUCCESS);
 		}
 
@@ -514,33 +502,33 @@ static bool DaemonInit(bool NoFork){
 	chdir(SAVEPATH);
 
 	int OpenMax = sysconf(_SC_OPEN_MAX);
-	if(OpenMax < 0){
+	if (OpenMax < 0) {
 		OpenMax = 1024;
 	}
 
-	for(int fd = 0; fd < OpenMax; fd += 1){
+	for (int fd = 0; fd < OpenMax; fd += 1) {
 		close(fd);
 	}
 
 	return false;
 }
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 	bool NoFork = false;
 	BeADaemon = false;
 	Reboot = true;
 
-	for(int i = 1; i < argc; i += 1){
-		if(strcmp(argv[i], "daemon") == 0){
+	for (int i = 1; i < argc; i += 1) {
+		if (strcmp(argv[i], "daemon") == 0) {
 			BeADaemon = true;
-		}else if(strcmp(argv[i], "nofork") == 0){
+		} else if (strcmp(argv[i], "nofork") == 0) {
 			NoFork = true;
 		}
 	}
 
 	// TODO(fusion): It doesn't make sense for `DaemonInit` to even return here.
 	// It either exits the parent or child process, or let it run.
-	if(BeADaemon && DaemonInit(NoFork)){
+	if (BeADaemon && DaemonInit(NoFork)) {
 		return 2;
 	}
 
@@ -553,30 +541,30 @@ int main(int argc, char **argv){
 	// try..catch blocks are not as straightforward as throw statements. I'll
 	// leave this one at the top level but we should come back to this problem
 	// once we identify all throw statements and how to roughly handle them.
-	try{
+	try {
 		LaunchGame();
-	}catch(RESULT r){
+	} catch (RESULT r) {
 		error("main: Uncaught exception %d.\n", r);
-	}catch(const char *str){
+	} catch (const char *str) {
 		error("main: Uncaught exception \"%s\".\n", str);
-	}catch(const std::exception &e){
+	} catch (const std::exception &e) {
 		error("main: Uncaught exception %s.\n", e.what());
-	}catch(...){
+	} catch (...) {
 		error("main: Uncaught exception of unknown type.\n");
 	}
 
-	if(!Reboot){
+	if (!Reboot) {
 		print(1, "Shutting down game server...\n");
-	}else{
+	} else {
 		UnlockGame();
 
 		char FileName[4096];
 		snprintf(FileName, sizeof(FileName), "%s/reboot-daily", BINPATH);
-		if(FileExists(FileName)){
+		if (FileExists(FileName)) {
 			ExitAll();
 			print(1, "Restarting game server...\n");
 			execv(FileName, argv);
-		}else{
+		} else {
 			print(1, "Reboot script does not exist.\n");
 		}
 	}

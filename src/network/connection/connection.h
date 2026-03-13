@@ -45,16 +45,11 @@ struct TConnection {
 	void clear_known_creature_table(bool Unchain);
 	void unchain_known_creature(uint32 ID);
 
-	bool in_game(void) const {
-		return this->State == CONNECTION_GAME
-			|| this->State == CONNECTION_DEAD;
-	}
+	bool in_game(void) const { return this->State == CONNECTION_GAME || this->State == CONNECTION_DEAD; }
 
 	bool live(void) const {
-		return this->State == CONNECTION_LOGIN
-			|| this->State == CONNECTION_GAME
-			|| this->State == CONNECTION_DEAD
-			|| this->State == CONNECTION_LOGOUT;
+		return this->State == CONNECTION_LOGIN || this->State == CONNECTION_GAME || this->State == CONNECTION_DEAD ||
+			   this->State == CONNECTION_LOGOUT;
 	}
 
 	// DATA

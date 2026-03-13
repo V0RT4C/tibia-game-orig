@@ -7,12 +7,12 @@
 struct TPlayerData;
 
 struct TWaitinglistEntry {
-    TWaitinglistEntry *Next;
-    char Name[30];
-    uint32 NextTry;
-    bool FreeAccount;
-    bool Newbie;
-    bool Sleeping;
+	TWaitinglistEntry *Next;
+	char Name[30];
+	uint32 NextTry;
+	bool FreeAccount;
+	bool Newbie;
+	bool Sleeping;
 };
 
 void get_communication_thread_stack(int *StackNumber, void **Stack);
@@ -41,8 +41,8 @@ int check_waiting_time(const char *Name, TConnection *Connection, bool FreeAccou
 int read_from_socket(TConnection *Connection, uint8 *Buffer, int Size);
 bool call_game_thread(TConnection *Connection);
 bool check_connection(TConnection *Connection);
-TPlayerData *perform_registration(TConnection *Connection, char *PlayerName,
-		uint32 AccountID, const char *PlayerPassword, bool GamemasterClient);
+TPlayerData *perform_registration(TConnection *Connection, char *PlayerName, uint32 AccountID,
+								  const char *PlayerPassword, bool GamemasterClient);
 bool handle_login(TConnection *Connection);
 bool receive_command(TConnection *Connection);
 

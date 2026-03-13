@@ -2,9 +2,9 @@
 #ifndef TIBIA_PROTOCOL_SENDING_H_
 #define TIBIA_PROTOCOL_SENDING_H_ 1
 
+#include "map.h" // for Object type used in Send* signatures
 #include "network/connection/connection.h"
 #include "protocol/protocol_enums.h"
-#include "map.h"  // for Object type used in Send* signatures
 
 void send_all(void);
 bool begin_send_data(TConnection *Connection);
@@ -24,8 +24,7 @@ void send_field_data(TConnection *Connection, int x, int y, int z);
 void send_add_field(TConnection *Connection, int x, int y, int z, Object Obj);
 void send_change_field(TConnection *Connection, int x, int y, int z, Object Obj);
 void send_delete_field(TConnection *Connection, int x, int y, int z, Object Obj);
-void send_move_creature(TConnection *Connection,
-		uint32 CreatureID, int DestX, int DestY, int DestZ);
+void send_move_creature(TConnection *Connection, uint32 CreatureID, int DestX, int DestY, int DestZ);
 void send_container(TConnection *Connection, int ContainerNr);
 void send_close_container(TConnection *Connection, int ContainerNr);
 void send_create_in_container(TConnection *Connection, int ContainerNr, Object Obj);
@@ -39,8 +38,8 @@ void send_close_trade(TConnection *Connection);
 void send_ambiente(TConnection *Connection);
 void send_graphical_effect(TConnection *Connection, int x, int y, int z, int Type);
 void send_textual_effect(TConnection *Connection, int x, int y, int z, int Color, const char *Text);
-void send_missile_effect(TConnection *Connection, int OrigX, int OrigY, int OrigZ,
-		int DestX, int DestY, int DestZ, int Type);
+void send_missile_effect(TConnection *Connection, int OrigX, int OrigY, int OrigZ, int DestX, int DestY, int DestZ,
+						 int Type);
 void send_mark_creature(TConnection *Connection, uint32 CreatureID, int Color);
 void send_creature_health(TConnection *Connection, uint32 CreatureID);
 void send_creature_light(TConnection *Connection, uint32 CreatureID);
@@ -54,12 +53,11 @@ void send_player_data(TConnection *Connection);
 void send_player_skills(TConnection *Connection);
 void send_player_state(TConnection *Connection, uint8 State);
 void send_clear_target(TConnection *Connection);
-void send_talk(TConnection *Connection, uint32 StatementID,
-		const char *Sender, int Mode, const char *Text, int Data);
-void send_talk(TConnection *Connection, uint32 StatementID,
-		const char *Sender, int Mode, int Channel, const char *Text);
-void send_talk(TConnection *Connection, uint32 StatementID,
-		const char *Sender, int Mode, int x, int y, int z, const char *Text);
+void send_talk(TConnection *Connection, uint32 StatementID, const char *Sender, int Mode, const char *Text, int Data);
+void send_talk(TConnection *Connection, uint32 StatementID, const char *Sender, int Mode, int Channel,
+			   const char *Text);
+void send_talk(TConnection *Connection, uint32 StatementID, const char *Sender, int Mode, int x, int y, int z,
+			   const char *Text);
 void send_channels(TConnection *Connection);
 void send_open_channel(TConnection *Connection, int Channel);
 void send_private_channel(TConnection *Connection, const char *Name);
