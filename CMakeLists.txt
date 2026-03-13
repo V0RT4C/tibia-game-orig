@@ -30,7 +30,7 @@ set(SOURCES
     src/game_data/map/map.cpp
     src/moveuse.cpp
     src/game_data/objects/objects.cpp
-    src/operate.cpp
+    src/game_data/operate/operate.cpp
     src/query/query_client/query_client.cpp
     src/query/query_connection_pool/query_connection_pool.cpp
     src/reader.cpp
