@@ -24,6 +24,7 @@ add_library(uSockets STATIC ${USOCKETS_SOURCES})
 target_include_directories(uSockets PUBLIC third_party/uSockets/src)
 target_compile_definitions(uSockets PRIVATE LIBUS_NO_SSL=1)
 target_compile_options(uSockets PRIVATE -Wno-unused-parameter -Wno-pedantic)
+target_link_libraries(uSockets PRIVATE z)
 
 # All source files (flat structure for now — will be reorganized in later tasks)
 set(SOURCES
@@ -107,7 +108,7 @@ endif()
 set_source_files_properties(src/crypto/rsa/rsa.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 find_package(OpenSSL REQUIRED)
-target_link_libraries(game PRIVATE OpenSSL::Crypto pthread uSockets z)
+target_link_libraries(game PRIVATE OpenSSL::Crypto pthread uSockets)
 
 # Tests
 enable_testing()

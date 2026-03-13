@@ -1,4 +1,5 @@
 #include "network/transport/websocket_transport/websocket_transport.h"
+#include "common/types/types.h"
 #include "logging/logging.h"
 
 #include <sys/eventfd.h>
@@ -26,6 +27,9 @@ WebSocketTransport::WebSocketTransport(void *ws, void *event_loop, const char *r
     }
 }
 
+// NOTE: The caller must ensure this transport outlives all pending Loop::defer()
+// callbacks queued by write(). The acceptor layer handles this by closing the
+// WebSocket (which flushes/cancels deferred work) before destroying the transport.
 WebSocketTransport::~WebSocketTransport() {
     if (event_fd_ != -1) {
         ::close(event_fd_);
