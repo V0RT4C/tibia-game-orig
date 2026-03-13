@@ -29,7 +29,7 @@ set(SOURCES
     src/main.cpp
     src/map.cpp
     src/moveuse.cpp
-    src/objects.cpp
+    src/game_data/objects/objects.cpp
     src/operate.cpp
     src/query/query_client/query_client.cpp
     src/query/query_connection_pool/query_connection_pool.cpp

@@ -1,4 +1,4 @@
-#include "objects.h"
+#include "game_data/objects/objects.h"
 #include "config.h"
 #include "containers.h"
 #include "script.h"
