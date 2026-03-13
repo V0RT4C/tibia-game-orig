@@ -72,6 +72,7 @@ set(SOURCES
     src/game_data/writer/writer.cpp
     src/network/transport/tcp_transport/tcp_transport.cpp
     src/network/transport/websocket_transport/websocket_transport.cpp
+    src/protocol/websocket_acceptor/websocket_acceptor.cpp
 )
 
 add_executable(game ${SOURCES})
@@ -106,6 +107,9 @@ endif()
 
 # Suppress OpenSSL deprecated API warnings for the RSA compilation unit only
 set_source_files_properties(src/crypto/rsa/rsa.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+
+# Suppress C++20 designated initializer warnings for the WebSocket acceptor (uses uWS API style)
+set_source_files_properties(src/protocol/websocket_acceptor/websocket_acceptor.cpp PROPERTIES COMPILE_FLAGS "-Wno-pedantic")
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(game PRIVATE OpenSSL::Crypto pthread uSockets)

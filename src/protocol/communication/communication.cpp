@@ -24,8 +24,7 @@
 // coming from.
 #define PACKET_AVERAGE_SIZE_OVERHEAD 48
 
-#define MAX_COMMUNICATION_THREADS 1100
-#define COMMUNICATION_THREAD_STACK_SIZE ((int)kb(64))
+// MAX_COMMUNICATION_THREADS and COMMUNICATION_THREAD_STACK_SIZE are defined in communication.h
 
 #if TIBIA772
 static const int TERMINALVERSION[] = {772, 772, 772};
@@ -1209,6 +1208,13 @@ bool receive_command(TConnection *Connection) {
 
 // Communication Thread
 // =============================================================================
+int get_active_connections(void) {
+	CommunicationThreadMutex.down();
+	int Result = ActiveConnections;
+	CommunicationThreadMutex.up();
+	return Result;
+}
+
 void increment_active_connections(void) {
 	CommunicationThreadMutex.down();
 	ActiveConnections += 1;

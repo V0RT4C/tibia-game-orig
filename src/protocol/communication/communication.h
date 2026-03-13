@@ -4,6 +4,9 @@
 #include "network/connection/connection.h"
 #include "protocol/protocol_enums.h"
 
+#define MAX_COMMUNICATION_THREADS 1100
+#define COMMUNICATION_THREAD_STACK_SIZE ((int)kb(64))
+
 struct TPlayerData;
 
 struct TWaitinglistEntry {
@@ -46,6 +49,7 @@ TPlayerData *perform_registration(TConnection *Connection, char *PlayerName, uin
 bool handle_login(TConnection *Connection);
 bool receive_command(TConnection *Connection);
 
+int get_active_connections(void);
 void increment_active_connections(void);
 void decrement_active_connections(void);
 void communication_thread(int Socket);
