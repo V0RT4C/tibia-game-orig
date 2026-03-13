@@ -657,11 +657,28 @@ bool call_game_thread(TConnection *Connection) {
 }
 
 bool check_connection(TConnection *Connection) {
-	// TODO(fusion): Check if there is no input data?
+	// For WebSocket: eventfd POLLIN means "data waiting", not "peer closed".
+	// Use the transport's connected state instead.
+	if (!Connection->Transport->is_connected()) {
+		return false;
+	}
+
+	// For TCP: poll to check if the peer closed the connection.
+	// For WebSocket: the is_connected() check above is sufficient;
+	// poll on eventfd would give false negatives when data is queued.
 	struct pollfd pollfd = {};
 	pollfd.fd = Connection->Transport->get_fd();
 	pollfd.events = POLLIN;
-	return poll(&pollfd, 1, 0) >= 0 && (pollfd.revents & POLLIN) == 0;
+	int ret = poll(&pollfd, 1, 0);
+	if (ret < 0) return false;
+
+	// For eventfd (WebSocket), POLLIN just means data is ready — not disconnect.
+	// Only treat POLLIN as disconnect for real sockets (when POLLHUP is also set).
+	if ((pollfd.revents & POLLIN) && (pollfd.revents & POLLHUP)) {
+		return false;
+	}
+
+	return true;
 }
 
 // NOTE(fusion): `PlayerName` is an input and output parameter. It will contain
@@ -1296,7 +1313,14 @@ static void communication_thread_common(TConnection *Connection, bool OwnsRawSoc
 	}
 
 cleanup:
-	delete Connection->Transport;
+	if (OwnsRawSocket) {
+		delete Connection->Transport;
+	} else {
+		// WebSocket: defer deletion to the event loop thread to ensure all
+		// previously queued defer() callbacks have completed first.
+		WebSocketTransport::deferred_delete(
+			static_cast<WebSocketTransport *>(Connection->Transport));
+	}
 	Connection->Transport = nullptr;
 
 	if (OwnsRawSocket && RawSocket >= 0) {

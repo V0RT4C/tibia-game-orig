@@ -40,6 +40,11 @@ public:
     void set_thread_id(pid_t tid);
     pid_t get_thread_id() const;
 
+    // Schedule this transport for deletion on the event loop thread, ensuring
+    // all previously queued defer() callbacks have completed first. If no
+    // event loop is available, deletes immediately.
+    static void deferred_delete(WebSocketTransport *transport);
+
 private:
     void *ws_;               // uWS::WebSocket<...>* — opaque to avoid header dep
     void *event_loop_;       // uWS::Loop* — for defer() calls

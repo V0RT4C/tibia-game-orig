@@ -1,4 +1,5 @@
 #include "protocol/websocket_acceptor/websocket_acceptor.h"
+#include "protocol/websocket_acceptor/websocket_types.h"
 #include "protocol/communication/communication.h"
 #include "network/transport/websocket_transport/websocket_transport.h"
 #include "config/config.h"
@@ -10,10 +11,6 @@
 #include <signal.h>
 #include <cstring>
 #include <atomic>
-
-struct PerSocketData {
-    WebSocketTransport *Transport;
-};
 
 static us_listen_socket_t *ListenSocket = nullptr;
 static ThreadHandle WebSocketThread = INVALID_THREAD_HANDLE;
@@ -27,6 +24,8 @@ static int websocket_thread_loop(void *Unused) {
     AppInstance = &app;
     EventLoop.store(uWS::Loop::get(), std::memory_order_release);
 
+    // All uWS callbacks (.open, .message, .close) execute on this single event
+    // loop thread, so PerSocketData access is safe without synchronization.
     app.ws<PerSocketData>("/*", {
         .compression = uWS::DISABLED,
         .maxPayloadLength = 16 * 1024,

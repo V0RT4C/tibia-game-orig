@@ -293,7 +293,8 @@ void ReadConfig(void){
 		}else if(strcmp(Identifier, "websocketport") == 0){
 			WebSocketPort = Script.read_number();
 		}else if(strcmp(Identifier, "websocketaddress") == 0){
-			strcpy(WebSocketAddress, Script.read_string());
+			strncpy(WebSocketAddress, Script.read_string(), sizeof(WebSocketAddress) - 1);
+			WebSocketAddress[sizeof(WebSocketAddress) - 1] = '\0';
 		}else{
 			// TODO(fusion):
 			//error("Unknown configuration key \"%s\"", Identifier);

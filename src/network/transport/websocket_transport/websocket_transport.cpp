@@ -7,12 +7,9 @@
 #include <cstring>
 #include <cerrno>
 
-#include <App.h>
+#include "protocol/websocket_acceptor/websocket_types.h"
 
-// NOTE: PerSocketData is defined in websocket_acceptor.cpp. We don't need the
-// full type here — the ws_ pointer is cast to a generic uWS::WebSocket type
-// using a minimal local struct for the template parameter.
-struct WsPerSocketData {};
+#include <App.h>
 
 WebSocketTransport::WebSocketTransport(void *ws, void *event_loop, const char *remote_address)
     : ws_(ws), event_loop_(event_loop), event_fd_(-1), connected_(true), thread_id_(0) {
@@ -58,9 +55,9 @@ int WebSocketTransport::write(const uint8 *buffer, int size) {
             uint8 drain_buf[16384];
             int n = out_buffer_.read(drain_buf, sizeof(drain_buf));
             while (n > 0) {
-                auto *ws = (uWS::WebSocket<false, true, WsPerSocketData> *)ws_;
+                auto *ws = (uWS::WebSocket<false, true, PerSocketData> *)ws_;
                 auto status = ws->send(std::string_view((char *)drain_buf, n), uWS::OpCode::BINARY);
-                if (status == uWS::WebSocket<false, true, WsPerSocketData>::DROPPED) {
+                if (status == uWS::WebSocket<false, true, PerSocketData>::DROPPED) {
                     error("WebSocketTransport: Send dropped by uWS (backpressure)\n");
                     break;
                 }
@@ -134,4 +131,16 @@ void WebSocketTransport::set_thread_id(pid_t tid) {
 
 pid_t WebSocketTransport::get_thread_id() const {
     return thread_id_.load(std::memory_order_acquire);
+}
+
+void WebSocketTransport::deferred_delete(WebSocketTransport *transport) {
+    if (!transport) return;
+    void *loop = transport->get_event_loop();
+    if (loop) {
+        ((uWS::Loop *)loop)->defer([transport]() {
+            delete transport;
+        });
+    } else {
+        delete transport;
+    }
 }
