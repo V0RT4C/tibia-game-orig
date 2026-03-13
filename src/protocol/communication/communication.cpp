@@ -297,7 +297,7 @@ bool write_to_socket(TConnection *Connection, uint8 *Buffer, int Size, int MaxSi
 	int BytesToWrite = Size;
 	uint8 *WritePtr = Buffer;
 	while (BytesToWrite > 0) {
-		int BytesWritten = (int)write(Connection->get_socket(), WritePtr, BytesToWrite);
+		int BytesWritten = Connection->Transport->write(WritePtr, BytesToWrite);
 		if (BytesWritten > 0) {
 			BytesToWrite -= BytesWritten;
 			WritePtr += BytesWritten;
@@ -616,7 +616,7 @@ int read_from_socket(TConnection *Connection, uint8 *Buffer, int Size) {
 	int BytesToRead = Size;
 	uint8 *ReadPtr = Buffer;
 	while (BytesToRead > 0) {
-		int BytesRead = (int)read(Connection->get_socket(), ReadPtr, BytesToRead);
+		int BytesRead = Connection->Transport->read(ReadPtr, BytesToRead);
 		if (BytesRead > 0) {
 			BytesToRead -= BytesRead;
 			ReadPtr += BytesRead;
@@ -658,7 +658,7 @@ bool call_game_thread(TConnection *Connection) {
 bool check_connection(TConnection *Connection) {
 	// TODO(fusion): Check if there is no input data?
 	struct pollfd pollfd = {};
-	pollfd.fd = Connection->get_socket();
+	pollfd.fd = Connection->Transport->get_fd();
 	pollfd.events = POLLIN;
 	return poll(&pollfd, 1, 0) >= 0 && (pollfd.revents & POLLIN) == 0;
 }
