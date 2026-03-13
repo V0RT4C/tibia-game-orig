@@ -1,4 +1,4 @@
-#include "reader.h"
+#include "game_data/reader/reader.h"
 #include "config.h"
 #include "cr.h"
 #include "map.h"

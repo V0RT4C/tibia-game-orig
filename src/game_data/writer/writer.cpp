@@ -1,4 +1,5 @@
-#include "writer.h"
+#include "game_data/writer/writer.h"
+#include "game_data/operate/operate.h"
 #include "config.h"
 #include "cr.h"
 #include "info.h"

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "connections.h"
 #include "containers.h"
+#include "cr.h"
 #include "crypto.h"
 #include "query.h"
 #include "threads.h"

@@ -4,6 +4,7 @@
 #include "info.h"
 #include "magic.h"
 #include "map.h"
+#include "game_data/operate/operate.h"
 #include "writer.h"
 
 #include <signal.h>

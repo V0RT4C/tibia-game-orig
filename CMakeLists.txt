@@ -33,7 +33,7 @@ set(SOURCES
     src/game_data/operate/operate.cpp
     src/query/query_client/query_client.cpp
     src/query/query_connection_pool/query_connection_pool.cpp
-    src/reader.cpp
+    src/game_data/reader/reader.cpp
     src/receiving.cpp
     src/game_data/script/script.cpp
     src/sending.cpp
@@ -46,7 +46,7 @@ set(SOURCES
     src/common/write_stream/write_stream.cpp
     src/common/dynamic_buffer/dynamic_buffer.cpp
     src/common/binary_file/binary_file.cpp
-    src/writer.cpp
+    src/game_data/writer/writer.cpp
 )
 
 add_executable(game ${SOURCES})

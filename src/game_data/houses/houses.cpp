@@ -3,6 +3,7 @@
 #include "cr.h"
 #include "info.h"
 #include "moveuse.h"
+#include "game_data/operate/operate.h"
 #include "query.h"
 #include "writer.h"
 

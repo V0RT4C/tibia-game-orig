@@ -1,6 +1,8 @@
 #include "connections.h"
+#include "cr.h"
 #include "houses.h"
 #include "info.h"
+#include "game_data/operate/operate.h"
 #include "writer.h"
 
 #include <signal.h>
