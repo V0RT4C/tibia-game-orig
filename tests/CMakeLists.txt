@@ -233,3 +233,14 @@ target_include_directories(test_tcp_transport PRIVATE ${CMAKE_SOURCE_DIR}/src ${
 target_compile_features(test_tcp_transport PRIVATE cxx_std_17)
 target_compile_definitions(test_tcp_transport PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_tcp_transport COMMAND test_tcp_transport)
+
+add_executable(test_char_connection test_char_connection.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_char_connection PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_char_connection PRIVATE cxx_std_17)
+target_compile_definitions(test_char_connection PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+find_package(OpenSSL QUIET)
+if(OPENSSL_FOUND)
+    target_include_directories(test_char_connection SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
+endif()
+add_test(NAME test_char_connection COMMAND test_char_connection)
