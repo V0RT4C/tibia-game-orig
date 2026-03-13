@@ -70,6 +70,7 @@ set(SOURCES
     src/common/binary_file/binary_file.cpp
     src/game_data/writer/writer.cpp
     src/network/transport/tcp_transport/tcp_transport.cpp
+    src/network/transport/websocket_transport/websocket_transport.cpp
 )
 
 add_executable(game ${SOURCES})
@@ -106,7 +107,7 @@ endif()
 set_source_files_properties(src/crypto/rsa/rsa.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 find_package(OpenSSL REQUIRED)
-target_link_libraries(game PRIVATE OpenSSL::Crypto pthread uSockets)
+target_link_libraries(game PRIVATE OpenSSL::Crypto pthread uSockets z)
 
 # Tests
 enable_testing()
