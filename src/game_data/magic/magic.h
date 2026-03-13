@@ -13,26 +13,26 @@ enum : int {
 	FIELD_TYPE_WILDGROWTH = 5,
 };
 
-struct Impact{
+struct Impact {
 	// VIRTUAL FUNCTIONS
 	// =========================================================================
-	virtual void handleField(int x, int y, int z);										// VTABLE[0]
-	virtual void handleCreature(TCreature *Victim);										// VTABLE[1]
-	virtual bool isAggressive(void);													// VTABLE[2]
+	virtual void handleField(int x, int y, int z);  // VTABLE[0]
+	virtual void handleCreature(TCreature *Victim); // VTABLE[1]
+	virtual bool isAggressive(void);                // VTABLE[2]
 
 	// NOTE(fusion): I don't think the original version had a destructor declared
 	// here but the compiler complains when calling delete (which seems to only be
 	// used in `TMonster::IdleStimulus`).
-	virtual ~Impact(void){
+	virtual ~Impact(void) {
 		// no-op
 	}
 
 	// DATA
 	// =========================================================================
-	//void *VTABLE;	// IMPLICIT
+	// void *VTABLE;	// IMPLICIT
 };
 
-struct DamageImpact: Impact {
+struct DamageImpact : Impact {
 	DamageImpact(TCreature *Actor, int DamageType, int Power, bool AllowDefense);
 	void handleCreature(TCreature *Victim) override;
 
@@ -42,7 +42,7 @@ struct DamageImpact: Impact {
 	bool AllowDefense;
 };
 
-struct FieldImpact: Impact {
+struct FieldImpact : Impact {
 	FieldImpact(TCreature *Actor, int FieldType);
 	void handleField(int x, int y, int z) override;
 
@@ -50,7 +50,7 @@ struct FieldImpact: Impact {
 	int FieldType;
 };
 
-struct HealingImpact: Impact {
+struct HealingImpact : Impact {
 	HealingImpact(TCreature *Actor, int Power);
 	void handleCreature(TCreature *Victim) override;
 	bool isAggressive(void) override;
@@ -59,7 +59,7 @@ struct HealingImpact: Impact {
 	int Power;
 };
 
-struct SpeedImpact: Impact {
+struct SpeedImpact : Impact {
 	SpeedImpact(TCreature *Actor, int Percent, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
@@ -68,7 +68,7 @@ struct SpeedImpact: Impact {
 	int Duration;
 };
 
-struct DrunkenImpact: Impact {
+struct DrunkenImpact : Impact {
 	DrunkenImpact(TCreature *Actor, int Power, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
@@ -77,7 +77,7 @@ struct DrunkenImpact: Impact {
 	int Duration;
 };
 
-struct StrengthImpact: Impact {
+struct StrengthImpact : Impact {
 	StrengthImpact(TCreature *Actor, int Skills, int Percent, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
@@ -87,7 +87,7 @@ struct StrengthImpact: Impact {
 	int Duration;
 };
 
-struct OutfitImpact: Impact {
+struct OutfitImpact : Impact {
 	OutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
@@ -96,7 +96,7 @@ struct OutfitImpact: Impact {
 	int Duration;
 };
 
-struct SummonImpact: Impact {
+struct SummonImpact : Impact {
 	SummonImpact(TCreature *Actor, int Race, int Maximum);
 	void handleField(int x, int y, int z) override;
 
@@ -106,13 +106,12 @@ struct SummonImpact: Impact {
 };
 
 void actor_shape_spell(TCreature *Actor, Impact *Impact, int Effect);
-void victim_shape_spell(TCreature *Actor, TCreature *Victim,
-		int Range, int Animation, Impact *Impact, int Effect);
+void victim_shape_spell(TCreature *Actor, TCreature *Victim, int Range, int Animation, Impact *Impact, int Effect);
 void origin_shape_spell(TCreature *Actor, int Radius, Impact *Impact, int Effect);
-void circle_shape_spell(TCreature *Actor, int DestX, int DestY, int DestZ,
-		int Range, int Animation, int Radius, Impact *Impact, int Effect);
-void destination_shape_spell(TCreature *Actor, TCreature *Victim,
-		int Range, int Animation, int Radius, Impact *Impact, int Effect);
+void circle_shape_spell(TCreature *Actor, int DestX, int DestY, int DestZ, int Range, int Animation, int Radius,
+						Impact *Impact, int Effect);
+void destination_shape_spell(TCreature *Actor, TCreature *Victim, int Range, int Animation, int Radius, Impact *Impact,
+							 int Effect);
 void angle_shape_spell(TCreature *Actor, int Angle, int Range, Impact *Impact, int Effect);
 void check_spellbook(TCreature *Actor, int SpellNr);
 void check_account(TCreature *Actor, int SpellNr);
@@ -124,21 +123,19 @@ void check_affected_players(TCreature *Actor, int x, int y, int z);
 void check_mana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay);
 int compute_damage(TCreature *Actor, int SpellNr, int Damage, int Variation);
 bool is_aggressive_spell(int SpellNr);
-void mass_combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
-		int Damage, int Effect, int Radius, int DamageType, int Animation);
-void angle_combat(TCreature *Actor, int ManaPoints, int SoulPoints,
-		int Damage, int Effect, int Range, int Angle, int DamageType);
-void combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
-		int Damage, int Effect, int Animation, int DamageType);
+void mass_combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Damage, int Effect, int Radius,
+				 int DamageType, int Animation);
+void angle_combat(TCreature *Actor, int ManaPoints, int SoulPoints, int Damage, int Effect, int Range, int Angle,
+				  int DamageType);
+void combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Damage, int Effect, int Animation,
+			int DamageType);
 int get_direction(int dx, int dy); // TODO(fusion): Move this one elsewhere? Maybe `info.cc`.
 void kill_all_monsters(TCreature *Actor, int Effect, int Radius);
 void create_field(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful);
 void create_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType);
 void create_field(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType);
-void mass_create_field(TCreature *Actor, Object Target,
-		int ManaPoints, int SoulPoints, int FieldType, int Radius);
-void create_field_wall(TCreature *Actor, Object Target,
-		int ManaPoints, int SoulPoints, int FieldType, int Width);
+void mass_create_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType, int Radius);
+void create_field_wall(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType, int Width);
 void delete_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
 void cleanup_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
 void cleanup_field(TCreature *Actor);
@@ -208,4 +205,4 @@ void drink_potion(uint32 CreatureID, Object Obj);
 void init_magic(void);
 void exit_magic(void);
 
-#endif //TIBIA_MAGIC_H_
+#endif // TIBIA_MAGIC_H_

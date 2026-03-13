@@ -31,7 +31,7 @@ enum : int {
 
 struct Object {
 	constexpr Object(void) : ObjectID(0) {}
-	constexpr explicit Object(uint32 ObjectID): ObjectID(ObjectID) {}
+	constexpr explicit Object(uint32 ObjectID) : ObjectID(ObjectID) {}
 
 	bool exists(void);
 	ObjectType get_object_type(void);
@@ -44,13 +44,9 @@ struct Object {
 	uint32 get_attribute(INSTANCEATTRIBUTE Attribute);
 	void set_attribute(INSTANCEATTRIBUTE Attribute, uint32 Value);
 
-	constexpr bool operator==(const Object &Other) const {
-		return this->ObjectID == Other.ObjectID;
-	}
+	constexpr bool operator==(const Object &Other) const { return this->ObjectID == Other.ObjectID; }
 
-	constexpr bool operator!=(const Object &Other) const {
-		return this->ObjectID != Other.ObjectID;
-	}
+	constexpr bool operator!=(const Object &Other) const { return this->ObjectID != Other.ObjectID; }
 
 	// DATA
 	// =================
@@ -134,8 +130,7 @@ void save_objects(TReadStream *Stream, WriteScriptFile *Script);
 void save_sector(char *FileName, int SectorX, int SectorY, int SectorZ);
 void save_map(void);
 void refresh_sector(int SectorX, int SectorY, int SectorZ, TReadStream *Stream);
-void patch_sector(int SectorX, int SectorY, int SectorZ, bool FullSector,
-		ReadScriptFile *Script, bool SaveHouses);
+void patch_sector(int SectorX, int SectorY, int SectorZ, bool FullSector, ReadScriptFile *Script, bool SaveHouses);
 void init_map(void);
 void exit_map(bool Save);
 
@@ -176,4 +171,4 @@ int get_depot_size(int DepotNumber, bool PremiumAccount);
 bool get_mark_position(const char *Name, int *x, int *y, int *z);
 void get_start_position(int *x, int *y, int *z, bool Newbie);
 
-#endif //TIBIA_MAP_H_
+#endif // TIBIA_MAP_H_

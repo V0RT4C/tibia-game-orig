@@ -103,4 +103,4 @@ void process_houses(void);
 void init_houses(void);
 void exit_houses(void);
 
-#endif //TIBIA_HOUSES_H_
+#endif // TIBIA_HOUSES_H_

@@ -7,34 +7,34 @@
 #include "map.h"
 
 enum : int {
-	CREATURE_HEALTH_CHANGED		= 1,
-	CREATURE_LIGHT_CHANGED		= 2,
-	CREATURE_OUTFIT_CHANGED		= 3,
-	CREATURE_SPEED_CHANGED		= 4,
-	CREATURE_SKULL_CHANGED		= 5,
-	CREATURE_PARTY_CHANGED		= 6,
+	CREATURE_HEALTH_CHANGED = 1,
+	CREATURE_LIGHT_CHANGED = 2,
+	CREATURE_OUTFIT_CHANGED = 3,
+	CREATURE_SPEED_CHANGED = 4,
+	CREATURE_SKULL_CHANGED = 5,
+	CREATURE_PARTY_CHANGED = 6,
 };
 
 enum : int {
-	OBJECT_DELETED				= 0,
-	OBJECT_CREATED				= 1,
-	OBJECT_CHANGED				= 2,
-	OBJECT_MOVED				= 3,
+	OBJECT_DELETED = 0,
+	OBJECT_CREATED = 1,
+	OBJECT_CHANGED = 2,
+	OBJECT_MOVED = 3,
 };
 
 enum : int {
-	CHANNEL_GUILD				= 0,
-	CHANNEL_GAMEMASTER			= 1,
-	CHANNEL_TUTOR				= 2,
-	CHANNEL_RULEVIOLATIONS		= 3,
-	CHANNEL_GAMECHAT			= 4,
-	CHANNEL_TRADE				= 5,
-	CHANNEL_RLCHAT				= 6,
-	CHANNEL_HELP				= 7,
+	CHANNEL_GUILD = 0,
+	CHANNEL_GAMEMASTER = 1,
+	CHANNEL_TUTOR = 2,
+	CHANNEL_RULEVIOLATIONS = 3,
+	CHANNEL_GAMECHAT = 4,
+	CHANNEL_TRADE = 5,
+	CHANNEL_RLCHAT = 6,
+	CHANNEL_HELP = 7,
 
-	PUBLIC_CHANNELS				= 8,
-	FIRST_PRIVATE_CHANNEL		= PUBLIC_CHANNELS,
-	MAX_CHANNELS				= 0xFFFF,
+	PUBLIC_CHANNELS = 8,
+	FIRST_PRIVATE_CHANNEL = PUBLIC_CHANNELS,
+	MAX_CHANNELS = 0xFFFF,
 };
 
 struct Channel {
@@ -113,8 +113,7 @@ void announce_changed_inventory(Object Obj, int Type);
 void announce_changed_object(Object Obj, int Type);
 void announce_graphical_effect(int x, int y, int z, int Type);
 void announce_textual_effect(int x, int y, int z, int Color, const char *Text);
-void announce_missile(int OrigX, int OrigY, int OrigZ,
-		int DestX, int DestY, int DestZ, int Type);
+void announce_missile(int OrigX, int OrigY, int OrigZ, int DestX, int DestY, int DestZ, int Type);
 void check_top_move_object(uint32 CreatureID, Object Obj, Object Ignore);
 void check_top_use_object(uint32 CreatureID, Object Obj);
 void check_top_multiuse_object(uint32 CreatureID, Object Obj);
@@ -160,15 +159,14 @@ bool sector_refreshable(int SectorX, int SectorY, int SectorZ);
 void refresh_sector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int Count);
 void refresh_map(void);
 void refresh_cylinders(void);
-void apply_patch(int SectorX, int SectorY, int SectorZ,
-		bool FullSector, ReadScriptFile *Script, bool SaveHouses);
+void apply_patch(int SectorX, int SectorY, int SectorZ, bool FullSector, ReadScriptFile *Script, bool SaveHouses);
 void apply_patches(void);
 
 uint32 log_communication(uint32 CreatureID, int Mode, int Channel, const char *Text);
 uint32 log_listener(uint32 StatementID, TPlayer *Player);
 void process_communication_control(void);
-int get_communication_context(uint32 CharacterID, uint32 StatementID,
-		int *NumberOfStatements, vector<ReportedStatement> **ReportedStatements);
+int get_communication_context(uint32 CharacterID, uint32 StatementID, int *NumberOfStatements,
+							  vector<ReportedStatement> **ReportedStatements);
 
 int get_number_of_channels(void);
 bool channel_active(int ChannelID);
@@ -195,4 +193,4 @@ void join_party(uint32 GuestID, uint32 HostID);
 void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID);
 void leave_party(uint32 MemberID, bool Forced);
 
-#endif //TIBIA_OPERATE_H_
+#endif // TIBIA_OPERATE_H_

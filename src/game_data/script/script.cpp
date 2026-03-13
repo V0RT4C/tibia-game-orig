@@ -12,17 +12,17 @@ static char ErrorString[100];
 
 // ReadScriptFile
 //==============================================================================
-ReadScriptFile::ReadScriptFile(void){
+ReadScriptFile::ReadScriptFile(void) {
 	this->RecursionDepth = -1;
-	this->Bytes = (uint8*)this->String;
+	this->Bytes = (uint8 *)this->String;
 }
 
-ReadScriptFile::~ReadScriptFile(void){
-	if(this->RecursionDepth != -1){
+ReadScriptFile::~ReadScriptFile(void) {
+	if (this->RecursionDepth != -1) {
 		::error("ReadScriptFile::~ReadScriptFile: File is still open.\n");
-		for(int Depth = this->RecursionDepth; Depth >= 0; Depth -= 1){
+		for (int Depth = this->RecursionDepth; Depth >= 0; Depth -= 1) {
 			// TODO(fusion): Probably `ReadScriptFile::close` inlined?
-			if(fclose(this->File[Depth]) != 0){
+			if (fclose(this->File[Depth]) != 0) {
 				::error("ReadScriptFile::close: Error %d closing file.\n", errno);
 			}
 		}
@@ -30,9 +30,9 @@ ReadScriptFile::~ReadScriptFile(void){
 	}
 }
 
-void ReadScriptFile::open(const char *FileName){
+void ReadScriptFile::open(const char *FileName) {
 	int Depth = this->RecursionDepth + 1;
-	if((Depth + 1) >= NARRAY(this->File)){
+	if ((Depth + 1) >= NARRAY(this->File)) {
 		::error("ReadScriptFile::open: Recursion depth too large.\n");
 		throw "Recursion depth too high";
 	}
@@ -40,19 +40,19 @@ void ReadScriptFile::open(const char *FileName){
 	ASSERT(Depth >= 0);
 
 	// TODO(fusion): More `strcpy`s...
-	if(Depth > 0 && FileName[0] != '/'){
+	if (Depth > 0 && FileName[0] != '/') {
 		strcpy(this->Filename[Depth], this->Filename[Depth - 1]);
-		if(char *Slash = findLast(this->Filename[Depth], '/')){
+		if (char *Slash = findLast(this->Filename[Depth], '/')) {
 			strcpy(Slash + 1, FileName);
-		}else{
+		} else {
 			strcpy(this->Filename[Depth], FileName);
 		}
-	}else{
+	} else {
 		strcpy(this->Filename[Depth], FileName);
 	}
 
 	this->File[Depth] = fopen(this->Filename[Depth], "rb");
-	if(this->File[Depth] == NULL){
+	if (this->File[Depth] == NULL) {
 		int ErrCode = errno;
 		::error("ReadScriptFile::open: Cannot open file %s.\n", this->Filename[Depth]);
 		::error("Error %d: %s.\n", ErrCode, strerror(ErrCode));
@@ -63,36 +63,35 @@ void ReadScriptFile::open(const char *FileName){
 	this->RecursionDepth = Depth;
 }
 
-void ReadScriptFile::close(void){
+void ReadScriptFile::close(void) {
 	int Depth = this->RecursionDepth;
-	if(Depth <= -1){
+	if (Depth <= -1) {
 		::error("ReadScriptFile::close: No file open.\n");
 		return;
 	}
 
 	ASSERT(Depth < NARRAY(this->File));
-	if(fclose(this->File[Depth]) != 0){
+	if (fclose(this->File[Depth]) != 0) {
 		::error("ReadScriptFile::close: Error %d closing file.\n", errno);
 	}
 	this->RecursionDepth -= 1;
 }
 
-void ReadScriptFile::error(const char *Text){
+void ReadScriptFile::error(const char *Text) {
 	int Depth = this->RecursionDepth;
 	ASSERT(Depth >= 0 && Depth <= NARRAY(this->File));
 
 	const char *Filename = this->Filename[Depth];
-	if(const char *Slash = findLast(this->Filename[Depth], '/')){
+	if (const char *Slash = findLast(this->Filename[Depth], '/')) {
 		Filename = Slash + 1;
 	}
 
-	snprintf(ErrorString, sizeof(ErrorString),
-			"error in script-file \"%s\", line %d: %s",
-			Filename, this->Line[Depth], Text);
+	snprintf(ErrorString, sizeof(ErrorString), "error in script-file \"%s\", line %d: %s", Filename, this->Line[Depth],
+			 Text);
 
 	// TODO(fusion): Reset? Also seems like `ReadScriptFile::close` was inlined.
-	for(; Depth >= 0; Depth -= 1){
-		if(fclose(this->File[Depth]) != 0){
+	for (; Depth >= 0; Depth -= 1) {
+		if (fclose(this->File[Depth]) != 0) {
 			::error("ReadScriptFile::close: Error %d closing file.\n", errno);
 		}
 	}
@@ -107,8 +106,8 @@ void ReadScriptFile::error(const char *Text){
 // parsing strings and numbers multiple times here, whereas a simple lexer and
 // parser would simplify the work tremendously.
 // TODO(fusion): This needs to be tested to make sure it behaves like the original.
-void ReadScriptFile::next_token(void){
-	if(this->RecursionDepth == -1){
+void ReadScriptFile::next_token(void) {
+	if (this->RecursionDepth == -1) {
 		::error("ReadScriptFile::next_token: No script open for reading.\n");
 		this->Token = ENDOFFILE;
 		return;
@@ -126,21 +125,21 @@ void ReadScriptFile::next_token(void){
 	// string that must be handled up the call stack. It must be considered
 	// an exit point for parsing errors in this function.
 
-	while(true){
+	while (true) {
 		int Depth = this->RecursionDepth;
 		ASSERT(Depth >= 0 && Depth < NARRAY(this->File));
 		FILE *File = this->File[Depth];
 
 		int c;
-		do{
+		do {
 			c = getc(File);
-			if(c == '\n'){
+			if (c == '\n') {
 				this->Line[Depth] += 1;
 			}
-		}while(isSpace(c));
+		} while (isSpace(c));
 
-		if(c == EOF){
-			if(Depth == 0){
+		if (c == EOF) {
+			if (Depth == 0) {
 				this->Token = ENDOFFILE;
 				return;
 			}
@@ -149,337 +148,337 @@ void ReadScriptFile::next_token(void){
 			continue;
 		}
 
-		switch(c){
-			case '#':{ // COMMENT
-				while(true){
-					int next = getc(File);
-					if(next == '\n' || next == EOF){
-						if(next == '\n'){
-							this->Line[Depth] += 1;
-						}
-						break;
-					}
-				}
-				break;
-			}
-
-			case '@':{ // INCLUDE
+		switch (c) {
+		case '#': { // COMMENT
+			while (true) {
 				int next = getc(File);
-				if(next == EOF){
-					this->error("unexpected end of file");
-				}else if(next != '"'){
-					this->error("syntax error");
-				}
-
-				int StringLength = 0;
-				while(true){
-					// TODO(fusion): I don't think new lines are even allowed in
-					// file names but we should keep track of the line number even
-					// if they happen here.
-					next = getc(File);
-					if(next == EOF){
-						this->error("unexpected end of file");
-					}else if(next == '"'){
-						break;
-					}
-
-					if(StringLength >= (NARRAY(this->String) - 1)){
-						this->error("string too long");
-					}
-					this->String[StringLength] = (char)next;
-					StringLength += 1;
-				}
-
-				// TODO(fusion): Maybe check if the path is empty?
-				this->open(this->String);
-
-				// NOTE(fusion): This is the only place we parse a string without
-				// returning it as a token. We need to reset it to make sure any
-				// subsequent string-like token will be properly parsed.
-				memset(this->String, 0, sizeof(this->String));
-
-				break;
-			}
-
-			case '"':{ // STRING
-				int StringLength = 0;
-				while(true){
-					int next = getc(File);
-					if(next == EOF){
-						this->error("unexpected end of file");
-					}else if(next == '\\'){
-						next = getc(File);
-						if(next == EOF){
-							this->error("unexpected end of file");
-						}else if(next == 'n'){
-							next = '\n';
-						}
-					}else if(next == '\n'){
-						// TODO(fusion): Shouldn't we prevent non-escaped new
-						// lines inside strings?
+				if (next == '\n' || next == EOF) {
+					if (next == '\n') {
 						this->Line[Depth] += 1;
-					}else if(next == '"'){
-						break;
 					}
-
-					if(StringLength >= (NARRAY(this->String) - 1)){
-						this->error("string too long");
-					}
-					this->String[StringLength] = (char)next;
-					StringLength += 1;
+					break;
 				}
-				this->Token = STRING;
+			}
+			break;
+		}
+
+		case '@': { // INCLUDE
+			int next = getc(File);
+			if (next == EOF) {
+				this->error("unexpected end of file");
+			} else if (next != '"') {
+				this->error("syntax error");
+			}
+
+			int StringLength = 0;
+			while (true) {
+				// TODO(fusion): I don't think new lines are even allowed in
+				// file names but we should keep track of the line number even
+				// if they happen here.
+				next = getc(File);
+				if (next == EOF) {
+					this->error("unexpected end of file");
+				} else if (next == '"') {
+					break;
+				}
+
+				if (StringLength >= (NARRAY(this->String) - 1)) {
+					this->error("string too long");
+				}
+				this->String[StringLength] = (char)next;
+				StringLength += 1;
+			}
+
+			// TODO(fusion): Maybe check if the path is empty?
+			this->open(this->String);
+
+			// NOTE(fusion): This is the only place we parse a string without
+			// returning it as a token. We need to reset it to make sure any
+			// subsequent string-like token will be properly parsed.
+			memset(this->String, 0, sizeof(this->String));
+
+			break;
+		}
+
+		case '"': { // STRING
+			int StringLength = 0;
+			while (true) {
+				int next = getc(File);
+				if (next == EOF) {
+					this->error("unexpected end of file");
+				} else if (next == '\\') {
+					next = getc(File);
+					if (next == EOF) {
+						this->error("unexpected end of file");
+					} else if (next == 'n') {
+						next = '\n';
+					}
+				} else if (next == '\n') {
+					// TODO(fusion): Shouldn't we prevent non-escaped new
+					// lines inside strings?
+					this->Line[Depth] += 1;
+				} else if (next == '"') {
+					break;
+				}
+
+				if (StringLength >= (NARRAY(this->String) - 1)) {
+					this->error("string too long");
+				}
+				this->String[StringLength] = (char)next;
+				StringLength += 1;
+			}
+			this->Token = STRING;
+			return;
+		}
+
+		case '[': { // COORDINATE
+			// NOTE(fusion): X-Coordinate or SPECIAL '['.
+			int Sign = -1;
+			int Coord = 0;
+			int next = getc(File);
+			if (isDigit(next)) {
+				Sign = 1;
+				Coord = next - '0';
+			} else if (next != '-') {
+				this->Token = SPECIAL;
+				this->Special = '[';
+				if (next != EOF) {
+					ungetc(next, File);
+				}
 				return;
 			}
 
-			case '[':{ // COORDINATE
-				// NOTE(fusion): X-Coordinate or SPECIAL '['.
-				int Sign = -1;
-				int Coord = 0;
-				int next = getc(File);
-				if(isDigit(next)){
-					Sign = 1;
-					Coord = next - '0';
-				}else if(next != '-'){
-					this->Token = SPECIAL;
-					this->Special = '[';
-					if(next != EOF){
-						ungetc(next, File);
-					}
-					return;
-				}
-
-				while(true){
-					next = getc(File);
-					if(next == EOF){
-						this->error("unexpected end of file");
-					}else if(isDigit(next)){
-						Coord *= 10;
-						Coord += next - '0';
-					}else if(next == ','){
-						break;
-					}else{
-						this->error("syntax error");
-					}
-				}
-
-				this->CoordX = Sign * Coord;
-
-				// NOTE(fusion): Y-Coordinate.
-				Sign = -1;
-				Coord = 0;
+			while (true) {
 				next = getc(File);
-				if(isDigit(next)){
-					Sign = 1;
-					Coord = next - '0';
-				}else if(next != '-'){
+				if (next == EOF) {
+					this->error("unexpected end of file");
+				} else if (isDigit(next)) {
+					Coord *= 10;
+					Coord += next - '0';
+				} else if (next == ',') {
+					break;
+				} else {
 					this->error("syntax error");
 				}
+			}
 
-				while(true){
-					next = getc(File);
-					if(next == EOF){
-						this->error("unexpected end of file");
-					}else if(isDigit(next)){
-						Coord *= 10;
-						Coord += next - '0';
-					}else if(next == ','){
-						break;
-					}else{
-						this->error("syntax error");
-					}
-				}
+			this->CoordX = Sign * Coord;
 
-				this->CoordY = Sign * Coord;
+			// NOTE(fusion): Y-Coordinate.
+			Sign = -1;
+			Coord = 0;
+			next = getc(File);
+			if (isDigit(next)) {
+				Sign = 1;
+				Coord = next - '0';
+			} else if (next != '-') {
+				this->error("syntax error");
+			}
 
-				// NOTE(fusion): Z-Coordinate.
-				Sign = -1;
-				Coord = 0;
+			while (true) {
 				next = getc(File);
-				if(isDigit(next)){
-					Sign = 1;
-					Coord = next - '0';
-				}else if(next != '-'){
+				if (next == EOF) {
+					this->error("unexpected end of file");
+				} else if (isDigit(next)) {
+					Coord *= 10;
+					Coord += next - '0';
+				} else if (next == ',') {
+					break;
+				} else {
 					this->error("syntax error");
 				}
-
-				while(true){
-					next = getc(File);
-					if(next == EOF){
-						this->error("unexpected end of file");
-					}else if(isDigit(next)){
-						Coord *= 10;
-						Coord += next - '0';
-					}else if(next == ']'){
-						break;
-					}else{
-						this->error("syntax error");
-					}
-				}
-
-				this->CoordZ = Sign * Coord;
-				this->Token = COORDINATE;
-				return;
 			}
 
-			case '<':{
-				int next = getc(File);
-				if(next == '='){
-					this->Special = 'L';
-				}else if(next == '>'){
-					this->Special = 'N';
-				}else{
-					this->Special = '<';
-					if(next != EOF){
-						ungetc(next, File);
-					}
-				}
-				this->Token = SPECIAL;
-				return;
+			this->CoordY = Sign * Coord;
+
+			// NOTE(fusion): Z-Coordinate.
+			Sign = -1;
+			Coord = 0;
+			next = getc(File);
+			if (isDigit(next)) {
+				Sign = 1;
+				Coord = next - '0';
+			} else if (next != '-') {
+				this->error("syntax error");
 			}
 
-			case '>':{
-				int next = getc(File);
-				if(next == '='){
-					this->Special = 'G';
-				}else{
-					this->Special = '>';
-					if(next != EOF){
-						ungetc(next, File);
-					}
+			while (true) {
+				next = getc(File);
+				if (next == EOF) {
+					this->error("unexpected end of file");
+				} else if (isDigit(next)) {
+					Coord *= 10;
+					Coord += next - '0';
+				} else if (next == ']') {
+					break;
+				} else {
+					this->error("syntax error");
 				}
-				this->Token = SPECIAL;
-				return;
 			}
 
-			case '-':{
-				int next = getc(File);
-				if(next == '>'){
-					this->Special = 'I';
-				}else{
-					this->Special = '-';
-					if(next != EOF){
-						ungetc(next, File);
-					}
-				}
-				this->Token = SPECIAL;
-				return;
-			}
+			this->CoordZ = Sign * Coord;
+			this->Token = COORDINATE;
+			return;
+		}
 
-			default:{
-				if(isAlpha(c)){
-					int IdentLength = 1;
-					this->String[0] = (char)c;
-					while(true){
-						int next = getc(File);
-						if(isAlpha(next) || isDigit(next) || next == '_'){
-							if(IdentLength >= (MAX_IDENT_LENGTH - 1)){
-								this->error("identifier too long");
-							}
-							this->String[IdentLength] = (char)next;
-							IdentLength += 1;
-						}else{
-							if(next != EOF){
-								ungetc(next, File);
-							}
-							break;
+		case '<': {
+			int next = getc(File);
+			if (next == '=') {
+				this->Special = 'L';
+			} else if (next == '>') {
+				this->Special = 'N';
+			} else {
+				this->Special = '<';
+				if (next != EOF) {
+					ungetc(next, File);
+				}
+			}
+			this->Token = SPECIAL;
+			return;
+		}
+
+		case '>': {
+			int next = getc(File);
+			if (next == '=') {
+				this->Special = 'G';
+			} else {
+				this->Special = '>';
+				if (next != EOF) {
+					ungetc(next, File);
+				}
+			}
+			this->Token = SPECIAL;
+			return;
+		}
+
+		case '-': {
+			int next = getc(File);
+			if (next == '>') {
+				this->Special = 'I';
+			} else {
+				this->Special = '-';
+				if (next != EOF) {
+					ungetc(next, File);
+				}
+			}
+			this->Token = SPECIAL;
+			return;
+		}
+
+		default: {
+			if (isAlpha(c)) {
+				int IdentLength = 1;
+				this->String[0] = (char)c;
+				while (true) {
+					int next = getc(File);
+					if (isAlpha(next) || isDigit(next) || next == '_') {
+						if (IdentLength >= (MAX_IDENT_LENGTH - 1)) {
+							this->error("identifier too long");
 						}
+						this->String[IdentLength] = (char)next;
+						IdentLength += 1;
+					} else {
+						if (next != EOF) {
+							ungetc(next, File);
+						}
+						break;
 					}
-					this->Token = IDENTIFIER;
-				}else if(isDigit(c)){
-					// NOTE(fusion): `this->Bytes` points to `this->String` (set
-					// in the constructor) which is why we check against the size
-					// of the `this->String` array. It doesn't seem to store the
-					// number of bytes but I've only seen it used with fixed size
-					// arrays like outfit colors or sector offsets.
-					//	Also, it doesn't make sense to have a null terminator in
-					// a byte string so the capacity check doesn't include it as
-					// in the case of regular strings.
+				}
+				this->Token = IDENTIFIER;
+			} else if (isDigit(c)) {
+				// NOTE(fusion): `this->Bytes` points to `this->String` (set
+				// in the constructor) which is why we check against the size
+				// of the `this->String` array. It doesn't seem to store the
+				// number of bytes but I've only seen it used with fixed size
+				// arrays like outfit colors or sector offsets.
+				//	Also, it doesn't make sense to have a null terminator in
+				// a byte string so the capacity check doesn't include it as
+				// in the case of regular strings.
 
-					// TODO(fusion): We're not checking for integer overflow at all.
-					int BytesLength = 0;
-					int Number = c - '0';
-					while(true){
-						int next = getc(File);
-						if(isDigit(next)){
-							Number *= 10;
-							Number += next - '0';
-						}else if(next == '-'){
-							if(BytesLength >= NARRAY(this->String)){
+				// TODO(fusion): We're not checking for integer overflow at all.
+				int BytesLength = 0;
+				int Number = c - '0';
+				while (true) {
+					int next = getc(File);
+					if (isDigit(next)) {
+						Number *= 10;
+						Number += next - '0';
+					} else if (next == '-') {
+						if (BytesLength >= NARRAY(this->String)) {
+							this->error("too many bytes");
+						}
+						this->Bytes[BytesLength] = (uint8)Number;
+						BytesLength += 1;
+
+						// NOTE(fusion): If there is a '-' after a number, there
+						// better be a second number.
+						next = getc(File);
+						if (next == EOF) {
+							this->error("unexpected end of file");
+						} else if (!isDigit(next)) {
+							this->error("syntax error");
+						}
+						Number = next - '0';
+					} else {
+						if (next != EOF) {
+							ungetc(next, File);
+						}
+
+						if (BytesLength <= 0) {
+							this->Token = NUMBER;
+							this->Number = Number;
+						} else {
+							if (BytesLength >= NARRAY(this->String)) {
 								this->error("too many bytes");
 							}
+							this->Token = BYTES;
 							this->Bytes[BytesLength] = (uint8)Number;
 							BytesLength += 1;
-
-							// NOTE(fusion): If there is a '-' after a number, there
-							// better be a second number.
-							next = getc(File);
-							if(next == EOF){
-								this->error("unexpected end of file");
-							}else if(!isDigit(next)){
-								this->error("syntax error");
-							}
-							Number = next - '0';
-						}else{
-							if(next != EOF){
-								ungetc(next, File);
-							}
-
-							if(BytesLength <= 0){
-								this->Token = NUMBER;
-								this->Number = Number;
-							}else{
-								if(BytesLength >= NARRAY(this->String)){
-									this->error("too many bytes");
-								}
-								this->Token = BYTES;
-								this->Bytes[BytesLength] = (uint8)Number;
-								BytesLength += 1;
-							}
-							break;
 						}
+						break;
 					}
-				}else{
-					this->Token = SPECIAL;
-					this->Special = (char)c;
 				}
-				return;
+			} else {
+				this->Token = SPECIAL;
+				this->Special = (char)c;
 			}
+			return;
+		}
 		}
 	}
 }
 
-char *ReadScriptFile::get_identifier(void){
-	if(this->Token != IDENTIFIER){
+char *ReadScriptFile::get_identifier(void) {
+	if (this->Token != IDENTIFIER) {
 		this->error("identifier expected");
 	}
 	strLower(this->String);
 	return this->String;
 }
 
-int ReadScriptFile::get_number(void){
-	if(this->Token != NUMBER){
+int ReadScriptFile::get_number(void) {
+	if (this->Token != NUMBER) {
 		this->error("number expected");
 	}
 	return this->Number;
 }
 
-char *ReadScriptFile::get_string(void){
-	if(this->Token != STRING){
+char *ReadScriptFile::get_string(void) {
+	if (this->Token != STRING) {
 		this->error("string expected");
 	}
 	return this->String;
 }
 
-uint8 *ReadScriptFile::get_bytesequence(void){
-	if(this->Token != BYTES){
+uint8 *ReadScriptFile::get_bytesequence(void) {
+	if (this->Token != BYTES) {
 		this->error("byte-sequence expected");
 	}
 	return this->Bytes;
 }
 
-void ReadScriptFile::get_coordinate(int *x, int *y, int *z){
-	if(this->Token != COORDINATE){
+void ReadScriptFile::get_coordinate(int *x, int *y, int *z) {
+	if (this->Token != COORDINATE) {
 		this->error("coordinates expected");
 	}
 	*x = this->CoordX;
@@ -487,8 +486,8 @@ void ReadScriptFile::get_coordinate(int *x, int *y, int *z){
 	*z = this->CoordZ;
 }
 
-char ReadScriptFile::get_special(void){
-	if(this->Token != SPECIAL){
+char ReadScriptFile::get_special(void) {
+	if (this->Token != SPECIAL) {
 		this->error("special-char expected");
 	}
 	return this->Special;
@@ -496,30 +495,30 @@ char ReadScriptFile::get_special(void){
 
 // WriteScriptFile
 //==============================================================================
-WriteScriptFile::WriteScriptFile(void){
+WriteScriptFile::WriteScriptFile(void) {
 	this->File = NULL;
 }
 
-WriteScriptFile::~WriteScriptFile(void){
-	if(this->File != NULL){
+WriteScriptFile::~WriteScriptFile(void) {
+	if (this->File != NULL) {
 		::error("WriteScriptFile::~WriteScriptFile: File %s is still open.\n", this->Filename);
-		if(fclose(this->File) != 0){
+		if (fclose(this->File) != 0) {
 			::error("WriteScriptFile::~WriteScriptFile: Error %d closing file.\n", errno);
 		}
 	}
 }
 
-void WriteScriptFile::open(const char *FileName){
-	if(this->File != NULL){
+void WriteScriptFile::open(const char *FileName) {
+	if (this->File != NULL) {
 		::error("WriteScriptFile::open: Old script is still open.\n");
-		if(fclose(this->File) != 0){
+		if (fclose(this->File) != 0) {
 			::error("WriteScriptFile::open: Error %d closing file.\n", errno);
 		}
 		this->File = NULL;
 	}
 
 	this->File = fopen(FileName, "wb");
-	if(this->File == NULL){
+	if (this->File == NULL) {
 		int ErrCode = errno;
 		::error("WriteScriptFile: Cannot create file %s.\n", FileName);
 		::error("Error %d: %s.\n", ErrCode, strerror(ErrCode));
@@ -530,35 +529,34 @@ void WriteScriptFile::open(const char *FileName){
 	this->Line = 0;
 }
 
-void WriteScriptFile::close(void){
-	if(this->File == NULL){
+void WriteScriptFile::close(void) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::close: No script open.\n");
 		return;
 	}
 
-	if(fclose(this->File) != 0){
+	if (fclose(this->File) != 0) {
 		::error("WriteScriptFile::close: Error %d closing file.\n", errno);
 	}
 	this->File = NULL;
 }
 
-void WriteScriptFile::error(const char *Text){
-	if(this->File != NULL){
-		if(fclose(this->File) != 0){
+void WriteScriptFile::error(const char *Text) {
+	if (this->File != NULL) {
+		if (fclose(this->File) != 0) {
 			::error("WriteScriptFile::error: Error %d closing file.\n", errno);
 		}
 		this->File = NULL;
 	}
 
-	snprintf(ErrorString, sizeof(ErrorString),
-			"error in script-file \"%s\", line %d: %s",
-			this->Filename, this->Line, Text);
+	snprintf(ErrorString, sizeof(ErrorString), "error in script-file \"%s\", line %d: %s", this->Filename, this->Line,
+			 Text);
 
 	throw ErrorString;
 }
 
-void WriteScriptFile::write_ln(void){
-	if(this->File == NULL){
+void WriteScriptFile::write_ln(void) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::write_ln: No script open for writing.\n");
 		throw "Cannot write linefeed";
 	}
@@ -566,24 +564,24 @@ void WriteScriptFile::write_ln(void){
 	putc('\n', this->File);
 }
 
-void WriteScriptFile::write_text(const char *Text){
-	if(this->File == NULL){
+void WriteScriptFile::write_text(const char *Text) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::write_text: No script open for writing.\n");
 		throw "Cannot write text";
 	}
 
-	if(Text == NULL){
+	if (Text == NULL) {
 		::error("WriteScriptFile::write_text: Text is NULL.\n");
 		throw "Cannot write text";
 	}
 
-	for(int i = 0; Text[i] != 0; i += 1){
+	for (int i = 0; Text[i] != 0; i += 1) {
 		putc(Text[i], this->File);
 	}
 }
 
-void WriteScriptFile::write_number(int Number){
-	if(this->File == NULL){
+void WriteScriptFile::write_number(int Number) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::write_number: No script open for writing.\n");
 		throw "Cannot write number";
 	}
@@ -593,40 +591,40 @@ void WriteScriptFile::write_number(int Number){
 	this->write_text(s);
 }
 
-void WriteScriptFile::write_string(const char *Text){
-	if(this->File == NULL){
+void WriteScriptFile::write_string(const char *Text) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::write_string: No script open for writing.\n");
 		throw "Cannot write string";
 	}
 
-	if(Text == NULL){
+	if (Text == NULL) {
 		::error("WriteScriptFile::write_string: Text is NULL.\n");
 		throw "Cannot write string";
 	}
 
 	putc('"', this->File);
-	for(int i = 0; Text[i] != 0; i += 1){
-		if(Text[i] == '\"' || Text[i] == '\\'){
+	for (int i = 0; Text[i] != 0; i += 1) {
+		if (Text[i] == '\"' || Text[i] == '\\') {
 			putc('\\', this->File);
 			putc(Text[i], this->File);
-		}else if(Text[i] == '\n'){
+		} else if (Text[i] == '\n') {
 			putc('\\', this->File);
 			putc('n', this->File);
-		}else{
+		} else {
 			putc(Text[i], this->File);
 		}
 	}
 	putc('"', this->File);
 }
 
-void WriteScriptFile::write_coordinate(int x ,int y ,int z){
-	if(this->File == NULL){
+void WriteScriptFile::write_coordinate(int x, int y, int z) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::write_coordinate: No script open for writing.\n");
 		throw "Cannot write coordinate";
 	}
 
 	// TODO(fusion): This is weird because we support loading negative coordinates values.
-	if(x < 0 || y < 0 || z < 0){
+	if (x < 0 || y < 0 || z < 0) {
 		::error("WriteScriptFile::write_coordinate: Invalid coordinates [%d,%d,%d].\n", x, y, z);
 		throw "Invalid coordinates";
 	}
@@ -636,24 +634,24 @@ void WriteScriptFile::write_coordinate(int x ,int y ,int z){
 	this->write_text(s);
 }
 
-void WriteScriptFile::write_bytesequence(const uint8 *Sequence, int Length){
-	if(this->File == NULL){
+void WriteScriptFile::write_bytesequence(const uint8 *Sequence, int Length) {
+	if (this->File == NULL) {
 		::error("WriteScriptFile::write_bytesequence: No script open for writing.\n");
 		throw "Cannot write bytesequence";
 	}
 
-	if(Sequence == NULL){
+	if (Sequence == NULL) {
 		::error("WriteScriptFile::write_bytesequence: Sequence is NULL.\n");
 		throw "Cannot write bytesequence";
 	}
 
-	if(Length <= 0){
+	if (Length <= 0) {
 		::error("WriteScriptFile::write_bytesequence: Invalid sequence length.\n");
 		throw "Cannot write bytesequence";
 	}
 
-	for(int i = 0; i < Length; i += 1){
-		if(i > 0){
+	for (int i = 0; i < Length; i += 1) {
+		if (i > 0) {
 			putc('-', this->File);
 		}
 
@@ -662,4 +660,3 @@ void WriteScriptFile::write_bytesequence(const uint8 *Sequence, int Length){
 		this->write_text(s);
 	}
 }
-

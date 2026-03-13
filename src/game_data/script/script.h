@@ -2,8 +2,8 @@
 #define TIBIA_SCRIPT_H_ 1
 
 #include "common.h"
-#include "enums.h"
 #include "common/binary_file/binary_file.h"
+#include "enums.h"
 
 #define MAX_IDENT_LENGTH 30
 
@@ -21,16 +21,16 @@ struct ReadScriptFile {
 	void get_coordinate(int *x, int *y, int *z);
 	char get_special(void);
 
-	char *read_identifier(void){
+	char *read_identifier(void) {
 		this->next_token();
 		return this->get_identifier();
 	}
 
-	int read_number(void){
+	int read_number(void) {
 		this->next_token();
 
 		int Sign = 1;
-		if(this->Token == SPECIAL && this->Special == '-'){
+		if (this->Token == SPECIAL && this->Special == '-') {
 			Sign = -1;
 			this->next_token();
 		}
@@ -38,28 +38,28 @@ struct ReadScriptFile {
 		return Sign * this->get_number();
 	}
 
-	char *read_string(void){
+	char *read_string(void) {
 		this->next_token();
 		return this->get_string();
 	}
 
-	uint8 *read_bytesequence(void){
+	uint8 *read_bytesequence(void) {
 		this->next_token();
 		return this->get_bytesequence();
 	}
 
-	void read_coordinate(int *x, int *y, int *z){
+	void read_coordinate(int *x, int *y, int *z) {
 		this->next_token();
 		this->get_coordinate(x, y, z);
 	}
 
-	char read_special(void){
+	char read_special(void) {
 		this->next_token();
 		return this->get_special();
 	}
 
-	void read_symbol(char Symbol){
-		if(this->read_special() != Symbol){
+	void read_symbol(char Symbol) {
+		if (this->read_special() != Symbol) {
 			this->error("symbol mismatch");
 		}
 	}
@@ -90,7 +90,7 @@ struct WriteScriptFile {
 	void write_text(const char *Text);
 	void write_number(int Number);
 	void write_string(const char *Text);
-	void write_coordinate(int x ,int y ,int z);
+	void write_coordinate(int x, int y, int z);
 	void write_bytesequence(const uint8 *Sequence, int Length);
 
 	// DATA
@@ -100,4 +100,4 @@ struct WriteScriptFile {
 	int Line;
 };
 
-#endif //TIBIA_SCRIPT_H_
+#endif // TIBIA_SCRIPT_H_

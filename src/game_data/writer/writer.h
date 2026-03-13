@@ -8,36 +8,36 @@ struct TCreature;
 struct TPlayer;
 struct ReportedStatement;
 
-enum WriterThreadOrderType: int {
-	WRITER_ORDER_TERMINATE			= 0,
-	WRITER_ORDER_LOGOUT				= 1,
-	WRITER_ORDER_PLAYERLIST			= 2,
-	WRITER_ORDER_KILLSTATISTICS		= 3,
-	WRITER_ORDER_PUNISHMENT			= 4,
-	WRITER_ORDER_CHARACTERDEATH		= 5,
-	WRITER_ORDER_ADDBUDDY			= 6,
-	WRITER_ORDER_REMOVEBUDDY		= 7,
-	WRITER_ORDER_DECREMENTISONLINE	= 8,
-	WRITER_ORDER_SAVEPLAYERDATA		= 9,
+enum WriterThreadOrderType : int {
+	WRITER_ORDER_TERMINATE = 0,
+	WRITER_ORDER_LOGOUT = 1,
+	WRITER_ORDER_PLAYERLIST = 2,
+	WRITER_ORDER_KILLSTATISTICS = 3,
+	WRITER_ORDER_PUNISHMENT = 4,
+	WRITER_ORDER_CHARACTERDEATH = 5,
+	WRITER_ORDER_ADDBUDDY = 6,
+	WRITER_ORDER_REMOVEBUDDY = 7,
+	WRITER_ORDER_DECREMENTISONLINE = 8,
+	WRITER_ORDER_SAVEPLAYERDATA = 9,
 };
 
-enum WriterThreadReplyType: int {
-	WRITER_REPLY_BROADCAST			= 0,
-	WRITER_REPLY_DIRECT				= 1,
-	WRITER_REPLY_LOGOUT				= 2,
+enum WriterThreadReplyType : int {
+	WRITER_REPLY_BROADCAST = 0,
+	WRITER_REPLY_DIRECT = 1,
+	WRITER_REPLY_LOGOUT = 2,
 };
 
-struct ProtocolThreadOrder{
+struct ProtocolThreadOrder {
 	char ProtocolName[20];
 	char Text[256];
 };
 
-struct WriterThreadOrder{
+struct WriterThreadOrder {
 	WriterThreadOrderType OrderType;
 	const void *Data;
 };
 
-struct LogoutOrderData{
+struct LogoutOrderData {
 	uint32 CharacterID;
 	int Level;
 	int Profession;
@@ -46,21 +46,21 @@ struct LogoutOrderData{
 	char Residence[30];
 };
 
-struct PlayerlistOrderData{
+struct PlayerlistOrderData {
 	int NumberOfPlayers;
 	const char *PlayerNames;
 	int *PlayerLevels;
 	int *PlayerProfessions;
 };
 
-struct KillStatisticsOrderData{
+struct KillStatisticsOrderData {
 	int NumberOfRaces;
 	const char *RaceNames;
 	int *KilledPlayers;
 	int *KilledCreatures;
 };
 
-struct PunishmentOrderData{
+struct PunishmentOrderData {
 	uint32 GamemasterID;
 	char GamemasterName[30];
 	char CriminalName[30];
@@ -74,7 +74,7 @@ struct PunishmentOrderData{
 	bool ip_banishment;
 };
 
-struct CharacterDeathOrderData{
+struct CharacterDeathOrderData {
 	uint32 CharacterID;
 	int Level;
 	uint32 Offender;
@@ -83,21 +83,21 @@ struct CharacterDeathOrderData{
 	time_t Time;
 };
 
-struct BuddyOrderData{
+struct BuddyOrderData {
 	uint32 AccountID;
 	uint32 Buddy;
 };
 
-struct WriterThreadReply{
+struct WriterThreadReply {
 	WriterThreadReplyType ReplyType;
 	const void *Data;
 };
 
-struct BroadcastReplyData{
+struct BroadcastReplyData {
 	char Message[100];
 };
 
-struct DirectReplyData{
+struct DirectReplyData {
 	uint32 CharacterID;
 	char Message[100];
 };
@@ -116,16 +116,12 @@ void insert_order(WriterThreadOrderType OrderType, const void *Data);
 void get_order(WriterThreadOrder *Order);
 void terminate_writer_order(void);
 void logout_order(TPlayer *Player);
-void playerlist_order(int NumberOfPlayers, const char *PlayerNames,
-		int *PlayerLevels, int *PlayerProfessions);
-void kill_statistics_order(int NumberOfRaces, const char *RaceNames,
-		int *KilledPlayers, int *KilledCreatures);
-void punishment_order(TCreature *Gamemaster, const char *Name, const char *IPAddress,
-		int Reason, int Action, const char *Comment, int NumberOfStatements,
-		vector<ReportedStatement> *ReportedStatements, uint32 StatementID,
-		bool ip_banishment);
-void character_death_order(TCreature *Creature, int OldLevel,
-		uint32 OffenderID, const char *Remark, bool Unjustified);
+void playerlist_order(int NumberOfPlayers, const char *PlayerNames, int *PlayerLevels, int *PlayerProfessions);
+void kill_statistics_order(int NumberOfRaces, const char *RaceNames, int *KilledPlayers, int *KilledCreatures);
+void punishment_order(TCreature *Gamemaster, const char *Name, const char *IPAddress, int Reason, int Action,
+					  const char *Comment, int NumberOfStatements, vector<ReportedStatement> *ReportedStatements,
+					  uint32 StatementID, bool ip_banishment);
+void character_death_order(TCreature *Creature, int OldLevel, uint32 OffenderID, const char *Remark, bool Unjustified);
 void add_buddy_order(TCreature *Creature, uint32 BuddyID);
 void remove_buddy_order(TCreature *Creature, uint32 BuddyID);
 void decrement_is_online_order(uint32 CharacterID);
@@ -155,4 +151,4 @@ void init_writer(void);
 void abort_writer(void);
 void exit_writer(void);
 
-#endif //TIBIA_WRITER_H_
+#endif // TIBIA_WRITER_H_

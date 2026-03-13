@@ -4,19 +4,19 @@
 #include "common.h"
 #include "enums.h"
 
-enum : int{
-	TYPEID_MAP_CONTAINER		= 0,
-	TYPEID_HEAD_CONTAINER		= 1,
-	TYPEID_NECK_CONTAINER		= 2,
-	TYPEID_BAG_CONTAINER		= 3,
-	TYPEID_TORSO_CONTAINER		= 4,
-	TYPEID_RIGHTHAND_CONTAINER	= 5,
-	TYPEID_LEFTHAND_CONTAINER	= 6,
-	TYPEID_LEGS_CONTAINER		= 7,
-	TYPEID_FEET_CONTAINER		= 8,
-	TYPEID_FINGER_CONTAINER		= 9,
-	TYPEID_AMMO_CONTAINER		= 10,
-	TYPEID_CREATURE_CONTAINER	= 99,
+enum : int {
+	TYPEID_MAP_CONTAINER = 0,
+	TYPEID_HEAD_CONTAINER = 1,
+	TYPEID_NECK_CONTAINER = 2,
+	TYPEID_BAG_CONTAINER = 3,
+	TYPEID_TORSO_CONTAINER = 4,
+	TYPEID_RIGHTHAND_CONTAINER = 5,
+	TYPEID_LEFTHAND_CONTAINER = 6,
+	TYPEID_LEGS_CONTAINER = 7,
+	TYPEID_FEET_CONTAINER = 8,
+	TYPEID_FINGER_CONTAINER = 9,
+	TYPEID_AMMO_CONTAINER = 10,
+	TYPEID_CREATURE_CONTAINER = 99,
 };
 
 struct ObjectType {
@@ -29,65 +29,44 @@ struct ObjectType {
 	const char *get_name(int Count);
 	const char *get_description(void);
 
-	bool is_map_container(void){
-		return this->TypeID == TYPEID_MAP_CONTAINER;
+	bool is_map_container(void) { return this->TypeID == TYPEID_MAP_CONTAINER; }
+
+	bool is_body_container(void) {
+		return this->TypeID == TYPEID_HEAD_CONTAINER || this->TypeID == TYPEID_NECK_CONTAINER ||
+			   this->TypeID == TYPEID_BAG_CONTAINER || this->TypeID == TYPEID_TORSO_CONTAINER ||
+			   this->TypeID == TYPEID_RIGHTHAND_CONTAINER || this->TypeID == TYPEID_LEFTHAND_CONTAINER ||
+			   this->TypeID == TYPEID_LEGS_CONTAINER || this->TypeID == TYPEID_FEET_CONTAINER ||
+			   this->TypeID == TYPEID_FINGER_CONTAINER || this->TypeID == TYPEID_AMMO_CONTAINER;
 	}
 
-	bool is_body_container(void){
-		return this->TypeID == TYPEID_HEAD_CONTAINER
-			|| this->TypeID == TYPEID_NECK_CONTAINER
-			|| this->TypeID == TYPEID_BAG_CONTAINER
-			|| this->TypeID == TYPEID_TORSO_CONTAINER
-			|| this->TypeID == TYPEID_RIGHTHAND_CONTAINER
-			|| this->TypeID == TYPEID_LEFTHAND_CONTAINER
-			|| this->TypeID == TYPEID_LEGS_CONTAINER
-			|| this->TypeID == TYPEID_FEET_CONTAINER
-			|| this->TypeID == TYPEID_FINGER_CONTAINER
-			|| this->TypeID == TYPEID_AMMO_CONTAINER;
+	bool is_creature_container(void) { return this->TypeID == TYPEID_CREATURE_CONTAINER; }
+
+	bool is_two_handed(void) { return this->get_flag(CLOTHES) && this->get_attribute(BODYPOSITION) == 0; }
+
+	bool is_weapon(void) {
+		return this->get_flag(WEAPON) || this->get_flag(BOW) || this->get_flag(THROW) || this->get_flag(WAND);
 	}
 
-	bool is_creature_container(void){
-		return this->TypeID == TYPEID_CREATURE_CONTAINER;
-	}
-
-	bool is_two_handed(void){
-		return this->get_flag(CLOTHES)
-			&& this->get_attribute(BODYPOSITION) == 0;
-	}
-
-	bool is_weapon(void){
-		return this->get_flag(WEAPON)
-			|| this->get_flag(BOW)
-			|| this->get_flag(THROW)
-			|| this->get_flag(WAND);
-	}
-
-	bool is_close_weapon(void){
-		if(!this->get_flag(WEAPON)){
+	bool is_close_weapon(void) {
+		if (!this->get_flag(WEAPON)) {
 			return false;
 		}
 
 		int WeaponType = this->get_attribute(WEAPONTYPE);
-		return WeaponType == WEAPON_SWORD
-			|| WeaponType == WEAPON_CLUB
-			|| WeaponType == WEAPON_AXE;
+		return WeaponType == WEAPON_SWORD || WeaponType == WEAPON_CLUB || WeaponType == WEAPON_AXE;
 	}
 
-	ObjectType get_disguise(void){
-		if(this->get_flag(DISGUISE)){
+	ObjectType get_disguise(void) {
+		if (this->get_flag(DISGUISE)) {
 			return (int)this->get_attribute(DISGUISETARGET);
-		}else{
+		} else {
 			return *this;
 		}
 	}
 
-	bool operator==(const ObjectType &Other) const {
-		return this->TypeID == Other.TypeID;
-	}
+	bool operator==(const ObjectType &Other) const { return this->TypeID == Other.TypeID; }
 
-	bool operator!=(const ObjectType &Other) const {
-		return this->TypeID != Other.TypeID;
-	}
+	bool operator!=(const ObjectType &Other) const { return this->TypeID != Other.TypeID; }
 
 	// DATA
 	// =================
@@ -117,4 +96,4 @@ ObjectType get_object_type_by_name(const char *SearchName, bool Movable);
 void init_objects(void);
 void exit_objects(void);
 
-#endif //TIBIA_OBJECTS_H_
+#endif // TIBIA_OBJECTS_H_

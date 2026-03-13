@@ -40,8 +40,7 @@ bool search_login_field(int *x, int *y, int *z, int Distance, bool Player);
 bool search_spawn_field(int *x, int *y, int *z, int Distance, bool Player);
 bool search_flight_field(uint32 FugitiveID, uint32 PursuerID, int *x, int *y, int *z);
 bool search_summon_field(int *x, int *y, int *z, int Distance);
-bool throw_possible(int OrigX, int OrigY, int OrigZ,
-			int DestX, int DestY, int DestZ, int Power);
+bool throw_possible(int OrigX, int OrigY, int OrigZ, int DestX, int DestY, int DestZ, int Power);
 void get_creature_light(uint32 CreatureID, int *Brightness, int *Color);
 int get_inventory_weight(uint32 CreatureID);
 bool check_right(uint32 CharacterID, RIGHT Right);
@@ -50,4 +49,4 @@ const char *get_banishment_reason(int Reason);
 void init_info(void);
 void exit_info(void);
 
-#endif //TIBIA_INFO_H_
+#endif // TIBIA_INFO_H_
