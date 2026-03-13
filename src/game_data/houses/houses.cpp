@@ -1,4 +1,4 @@
-#include "houses.h"
+#include "game_data/houses/houses.h"
 #include "config.h"
 #include "cr.h"
 #include "info.h"

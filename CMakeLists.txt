@@ -23,7 +23,7 @@ set(SOURCES
     src/crskill.cpp
     src/crypto/xtea/xtea.cpp
     src/crypto/rsa/rsa.cpp
-    src/houses.cpp
+    src/game_data/houses/houses.cpp
     src/info.cpp
     src/magic.cpp
     src/main.cpp
