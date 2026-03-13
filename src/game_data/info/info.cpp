@@ -1,4 +1,4 @@
-#include "info.h"
+#include "game_data/info/info.h"
 #include "cr.h"
 #include "magic.h"
 
