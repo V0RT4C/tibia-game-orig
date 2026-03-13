@@ -16,7 +16,7 @@ set(SOURCES
     src/config/config.cpp
     src/connections.cpp
     src/cract.cpp
-    src/crcombat.cpp
+    src/creature/combat/combat.cpp
     src/crmain.cpp
     src/crnonpl.cpp
     src/crplayer.cpp
