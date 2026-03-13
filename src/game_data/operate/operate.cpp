@@ -22,14 +22,14 @@ static int Parties;
 // World Operations
 // =============================================================================
 
-// TODO(fusion): The radii parameters for `TFindCreatures` are commonly around
+// TODO(fusion): The radii parameters for `FindCreatures` are commonly around
 // 16 and 14 for x and y respectively so there is probably some constant involved.
 //	Also, since we're talking about radii, these values are quite large when you
 // consider the regular client's viewport dimensions of 15x11 visible fields or
 // 18x14 total fields.
 
 void announce_moving_creature(uint32 CreatureID, Object Con) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("announce_moving_creature: Creature %d does not exist.\n", CreatureID);
 		return;
@@ -42,14 +42,14 @@ void announce_moving_creature(uint32 CreatureID, Object Con) {
 	int SearchRadiusY = 14 + (std::abs(Creature->posy - ConY) / 2) + 1;
 	int SearchCenterX = (Creature->posx + ConX) / 2;
 	int SearchCenterY = (Creature->posy + ConY) / 2;
-	TFindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_PLAYERS);
+	FindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -59,7 +59,7 @@ void announce_moving_creature(uint32 CreatureID, Object Con) {
 }
 
 void announce_changed_creature(uint32 CreatureID, int Type) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("announce_changed_creature: Creature %d does not exist (Type=%d).\n", CreatureID, Type);
 		return;
@@ -107,14 +107,14 @@ void announce_changed_field(Object Obj, int Type) {
 
 	int ObjX, ObjY, ObjZ;
 	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
-	TFindCreatures Search(16, 14, ObjX, ObjY, FIND_PLAYERS);
+	FindCreatures Search(16, 14, ObjX, ObjY, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -148,14 +148,14 @@ void announce_changed_container(Object Obj, int Type) {
 	}
 
 	Object Con = Obj.get_container();
-	TFindCreatures Search(1, 1, Obj, FIND_PLAYERS);
+	FindCreatures Search(1, 1, Obj, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -191,7 +191,7 @@ void announce_changed_inventory(Object Obj, int Type) {
 	}
 
 	uint32 OwnerID = get_object_creature_id(Obj);
-	TCreature *Creature = GetCreature(OwnerID);
+	TCreature *Creature = get_creature(OwnerID);
 	if (Creature == NULL) {
 		error("announce_changed_inventory: Object is not in any inventory.\n");
 		return;
@@ -241,14 +241,14 @@ void announce_graphical_effect(int x, int y, int z, int Type) {
 		return;
 	}
 
-	TFindCreatures Search(16, 14, x, y, FIND_PLAYERS);
+	FindCreatures Search(16, 14, x, y, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -266,14 +266,14 @@ void announce_textual_effect(int x, int y, int z, int Color, const char *Text) {
 		return;
 	}
 
-	TFindCreatures Search(16, 14, x, y, FIND_PLAYERS);
+	FindCreatures Search(16, 14, x, y, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -295,14 +295,14 @@ void announce_missile(int OrigX, int OrigY, int OrigZ, int DestX, int DestY, int
 	int SearchRadiusY = 14 + (std::abs(OrigY - DestY) / 2) + 1;
 	int SearchCenterX = (OrigX + DestX) / 2;
 	int SearchCenterY = (OrigY + DestY) / 2;
-	TFindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_PLAYERS);
+	FindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -322,7 +322,7 @@ void check_top_move_object(uint32 CreatureID, Object Obj, Object Ignore) {
 		throw ERROR;
 	}
 
-	if (CreatureID == 0 || !IsCreaturePlayer(CreatureID)) {
+	if (CreatureID == 0 || !is_creature_player(CreatureID)) {
 		return;
 	}
 
@@ -371,7 +371,7 @@ void check_top_use_object(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	if (CreatureID == 0 || !IsCreaturePlayer(CreatureID)) {
+	if (CreatureID == 0 || !is_creature_player(CreatureID)) {
 		return;
 	}
 
@@ -407,7 +407,7 @@ void check_top_multiuse_object(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	if (CreatureID == 0 || !IsCreaturePlayer(CreatureID)) {
+	if (CreatureID == 0 || !is_creature_player(CreatureID)) {
 		return;
 	}
 
@@ -453,13 +453,13 @@ void check_move_object(uint32 CreatureID, Object Obj, bool Take) {
 	}
 
 	if (ObjType.is_creature_container() && Obj.get_creature_id() != CreatureID) {
-		TCreature *MovingCreature = GetCreature(Obj);
+		TCreature *MovingCreature = get_creature(Obj);
 		if (MovingCreature == NULL) {
 			error("check_move_object: Creature does not exist.\n");
 			throw ERROR;
 		}
 
-		if (GetRaceUnpushable(MovingCreature->Race) && (WorldType != NON_PVP || !MovingCreature->IsPeaceful())) {
+		if (get_race_unpushable(MovingCreature->Race) && (WorldType != NON_PVP || !MovingCreature->IsPeaceful())) {
 			throw NOTMOVABLE;
 		}
 	}
@@ -527,7 +527,7 @@ void check_map_destination(uint32 CreatureID, Object Obj, Object MapCon) {
 			}
 		}
 
-		TCreature *MovingCreature = GetCreature(Obj);
+		TCreature *MovingCreature = get_creature(Obj);
 		if (MovingCreature == NULL) {
 			error("check_map_destination: Moving creature is NULL.");
 			throw ERROR;
@@ -560,7 +560,7 @@ void check_map_destination(uint32 CreatureID, Object Obj, Object MapCon) {
 		bool HookSouth = coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH);
 		bool HookEast = coordinate_flag(DestX, DestY, DestZ, HOOKEAST);
 		if (HookSouth || HookEast) {
-			TCreature *Creature = GetCreature(CreatureID);
+			TCreature *Creature = get_creature(CreatureID);
 			if (Creature == NULL) {
 				error("check_map_destination: Executing creature does not exist.\n");
 				throw ERROR;
@@ -664,7 +664,7 @@ void check_depot_space(uint32 CreatureID, Object Source, Object Destination, int
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("check_depot_space: Creature %u does not exist.\n", CreatureID);
 		throw ERROR;
@@ -804,7 +804,7 @@ void check_weight(uint32 CreatureID, Object Obj, int Count) {
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("check_weight: Creature %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -846,7 +846,7 @@ void check_weight(uint32 CreatureID, Object Obj, int Count) {
 }
 
 void check_weight(uint32 CreatureID, ObjectType Type, uint32 Value, int OldWeight) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("check_weight: Creature %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -893,7 +893,7 @@ void notify_creature(uint32 CreatureID, Object Obj, bool Inventory) {
 
 	ObjectType ObjType = Obj.get_object_type();
 	if (!ObjType.is_creature_container()) {
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if (Creature == NULL) {
 			error("notify_creature: Creature does not exist.\n");
 			return;
@@ -914,7 +914,7 @@ void notify_creature(uint32 CreatureID, ObjectType Type, bool Inventory) {
 
 	// TODO(fusion): Shouldn't we check if `Type` is creature container too?
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("notify_creature: Creature does not exist.\n");
 		return;
@@ -963,7 +963,7 @@ void notify_all_creatures(Object Obj, int Type, Object OldCon) {
 		int DistanceX = std::abs(ObjX - OldX);
 		int DistanceY = std::abs(ObjY - OldY);
 		if (DistanceX > (StimulusRadius * 2) || DistanceY > (StimulusRadius * 2)) {
-			TFindCreatures Search(StimulusRadius, StimulusRadius, OldX, OldY, FIND_ALL);
+			FindCreatures Search(StimulusRadius, StimulusRadius, OldX, OldY, FIND_ALL);
 			while (true) {
 				uint32 SpectatorID = Search.getNext();
 				if (SpectatorID == 0) {
@@ -971,7 +971,7 @@ void notify_all_creatures(Object Obj, int Type, Object OldCon) {
 				}
 
 				// TODO(fusion): Check if the spectator is NULL?
-				TCreature *Spectator = GetCreature(SpectatorID);
+				TCreature *Spectator = get_creature(SpectatorID);
 				Spectator->CreatureMoveStimulus(CreatureID, Type);
 			}
 		} else {
@@ -982,7 +982,7 @@ void notify_all_creatures(Object Obj, int Type, Object OldCon) {
 		}
 	}
 
-	TFindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_ALL);
+	FindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_ALL);
 	while (true) {
 		uint32 SpectatorID = Search.getNext();
 		if (SpectatorID == 0) {
@@ -990,7 +990,7 @@ void notify_all_creatures(Object Obj, int Type, Object OldCon) {
 		}
 
 		// TODO(fusion): Check if the spectator is NULL?
-		TCreature *Spectator = GetCreature(SpectatorID);
+		TCreature *Spectator = get_creature(SpectatorID);
 		Spectator->CreatureMoveStimulus(CreatureID, Type);
 	}
 }
@@ -1009,14 +1009,14 @@ void notify_trades(Object Obj) {
 	// TODO(fusion): These radii seem to be correct but I'm skeptical because
 	// you're required to be close to the trade object to even start the trade.
 	// Maybe you can walk around after a trade is started?
-	TFindCreatures Search(12, 10, Obj, FIND_PLAYERS);
+	FindCreatures Search(12, 10, Obj, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL) {
 			error("NotifyTrade: Player does not exist.\n");
 			continue;
@@ -1038,7 +1038,7 @@ void notify_depot(uint32 CreatureID, Object Obj, int Count) {
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("notify_depot: Creature %u does not exist.\n", CreatureID);
 		// TODO(fusion): We should probably also throw here.
@@ -1076,14 +1076,14 @@ void close_container(Object Con, bool Force) {
 	}
 
 	// TODO(fusion): Similar to `notify_trades`.
-	TFindCreatures Search(12, 10, Con, FIND_PLAYERS);
+	FindCreatures Search(12, 10, Con, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL) {
 			error("close_container: Player does not exist.\n");
 			continue;
@@ -1189,7 +1189,7 @@ Object create(Object Con, ObjectType Type, uint32 Value) {
 		// BUG(fusion): We should just check this before creating the object.
 		// Also, using `delete_op` instead of `delete_object` here is problematic
 		// because the object's placement wasn't yet broadcasted.
-		TCreature *Creature = GetCreature(Value);
+		TCreature *Creature = get_creature(Value);
 		if (Creature == NULL) {
 			error("create: Invalid creature ID %u\n", Value);
 			delete_op(Obj, -1);
@@ -1402,7 +1402,7 @@ void move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Ob
 
 	if (ObjType.is_creature_container()) {
 		uint32 MovingCreatureID = Obj.get_creature_id();
-		TCreature *Creature = GetCreature(MovingCreatureID);
+		TCreature *Creature = get_creature(MovingCreatureID);
 		if (Creature != NULL) {
 			Creature->NotifyTurn(Con);
 		} else {
@@ -1426,7 +1426,7 @@ void move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Ob
 
 	if (ObjType.is_creature_container()) {
 		uint32 MovingCreatureID = Obj.get_creature_id();
-		TCreature *Creature = GetCreature(MovingCreatureID);
+		TCreature *Creature = get_creature(MovingCreatureID);
 		if (Creature != NULL) {
 			Creature->NotifyGo();
 		} else {
@@ -1711,7 +1711,7 @@ void delete_op(Object Obj, int Count) {
 
 		notify_all_creatures(Obj, OBJECT_DELETED, NONE);
 		if (ObjType.is_creature_container()) {
-			TCreature *Creature = GetCreature(ObjOwnerID);
+			TCreature *Creature = get_creature(ObjOwnerID);
 			if (Creature != NULL) {
 				Creature->NotifyDelete();
 			} else {
@@ -1816,7 +1816,7 @@ void look(uint32 CreatureID, Object Obj) {
 	// the server is running, is to implement a small stack buffer writer/formatter
 	// to retire `strcpy`, `strcat`, and `sprintf`.
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("look: Creature does not exist.\n");
 		throw ERROR;
@@ -1829,7 +1829,7 @@ void look(uint32 CreatureID, Object Obj) {
 
 	ObjectType ObjType = Obj.get_object_type();
 	if (ObjType.is_creature_container()) {
-		TCreature *Target = GetCreature(Obj);
+		TCreature *Target = get_creature(Obj);
 		if (Target == NULL) {
 			error("look: Object %d has no creature!\n", ObjType.TypeID);
 			return;
@@ -1854,7 +1854,7 @@ void look(uint32 CreatureID, Object Obj) {
 
 				if (Profession != PROFESSION_NONE) {
 					char Help[30];
-					GetProfessionName(Help, Profession, true, false);
+					get_profession_name(Help, Profession, true, false);
 					snprintf(Vocation, sizeof(Vocation), "You are %s", Help);
 				} else {
 					strcpy(Vocation, "You have no vocation");
@@ -1868,7 +1868,7 @@ void look(uint32 CreatureID, Object Obj) {
 
 				if (Profession != PROFESSION_NONE) {
 					char Help[30];
-					GetProfessionName(Help, Profession, true, false);
+					get_profession_name(Help, Profession, true, false);
 					snprintf(Vocation, sizeof(Vocation), "%s is %s", Pronoun, Help);
 				} else {
 					snprintf(Vocation, sizeof(Vocation), "%s has no vocation", Pronoun);
@@ -2150,7 +2150,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 	// afterwards, we need to get this right from the beginning.
 	char YellBuffer[256];
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("talk: Passed creature %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -2257,7 +2257,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		TPlayer *Player = (TPlayer *)Creature;
 		TPlayer *Receiver;
 		bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
-		switch (IdentifyPlayer(Addressee, false, IgnoreGamemasters, &Receiver)) {
+		switch (identify_player(Addressee, false, IgnoreGamemasters, &Receiver)) {
 		case 0:
 			break; // PLAYERFOUND ?
 		case -1:
@@ -2265,7 +2265,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		case -2:
 			throw NAMEAMBIGUOUS;
 		default: {
-			error("talk: Invalid return value from IdentifyPlayer.\n");
+			error("talk: Invalid return value from identify_player.\n");
 			throw ERROR;
 		}
 		}
@@ -2308,14 +2308,14 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			Radius = 7; // RANGE_SAY ?
 		}
 
-		TFindCreatures Search(Radius, Radius, Creature->posx, Creature->posy, FIND_PLAYERS);
+		FindCreatures Search(Radius, Radius, Creature->posx, Creature->posy, FIND_PLAYERS);
 		while (true) {
 			uint32 SpectatorID = Search.getNext();
 			if (SpectatorID == 0) {
 				break;
 			}
 
-			TPlayer *Spectator = GetPlayer(SpectatorID);
+			TPlayer *Spectator = get_player(SpectatorID);
 			if (Spectator == NULL || Spectator->Connection == NULL) {
 				continue;
 			}
@@ -2357,7 +2357,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		TConnection *Connection = GetFirstConnection();
 		while (Connection != NULL) {
 			if (Connection->Live()) {
-				SendTalk(Connection, log_listener(StatementID, Connection->GetPlayer()), Creature->Name, Mode, Text, 0);
+				SendTalk(Connection, log_listener(StatementID, Connection->get_player()), Creature->Name, Mode, Text, 0);
 			}
 
 			Connection = GetNextConnection();
@@ -2381,7 +2381,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		// TODO(fusion): We should probably cleanup these global iterators.
 		for (uint32 SubscriberID = get_first_subscriber(Channel); SubscriberID != 0;
 			 SubscriberID = get_next_subscriber()) {
-			TPlayer *Subscriber = GetPlayer(SubscriberID);
+			TPlayer *Subscriber = get_player(SubscriberID);
 			if (Subscriber == NULL) {
 				continue;
 			}
@@ -2405,14 +2405,14 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 	}
 
 	if (Mode == TALK_SAY && Creature->Type == PLAYER) {
-		TFindCreatures Search(3, 3, CreatureID, FIND_NPCS);
+		FindCreatures Search(3, 3, CreatureID, FIND_NPCS);
 		while (true) {
 			uint32 SpectatorID = Search.getNext();
 			if (SpectatorID == 0) {
 				break;
 			}
 
-			TCreature *Spectator = GetCreature(SpectatorID);
+			TCreature *Spectator = get_creature(SpectatorID);
 			if (Spectator == NULL) {
 				error("talk: Creature does not exist.\n");
 				continue;
@@ -2453,7 +2453,7 @@ void use(uint32 CreatureID, Object Obj1, Object Obj2, uint8 Info) {
 				throw NOTACCESSIBLE;
 			}
 
-			TCreature *Creature = GetCreature(CreatureID);
+			TCreature *Creature = get_creature(CreatureID);
 			if (Creature == NULL) {
 				error("use: Causing creature does not exist.\n");
 				throw ERROR;
@@ -2583,7 +2583,7 @@ void edit_text(uint32 CreatureID, Object Obj, const char *Text) {
 		throw ERROR;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("edit_text: Creature does not exist.\n");
 		throw ERROR;
@@ -2619,7 +2619,7 @@ void edit_text(uint32 CreatureID, Object Obj, const char *Text) {
 Object create_at_creature(uint32 CreatureID, ObjectType Type, uint32 Value) {
 	// TODO(fusion): Bruhh...
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		// TODO(fusion): Different function name?
 		error("GiveObjectToCreature: Cannot find creature.\n");
@@ -2737,14 +2737,14 @@ bool sector_refreshable(int SectorX, int SectorY, int SectorZ) {
 	int SearchRadiusY = 32 - 1;
 	int SearchCenterX = SectorX * 32 + (32 / 2);
 	int SearchCenterY = SectorY * 32 + (32 / 2);
-	TFindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_PLAYERS);
+	FindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL) {
 			error("sector_refreshable: Creature does not exist.\n");
 			continue;
@@ -2771,14 +2771,14 @@ void refresh_sector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, in
 	int SearchRadiusY = 32 / 2;
 	int SearchCenterX = SectorX * 32 + (32 / 2);
 	int SearchCenterY = SectorY * 32 + (32 / 2);
-	TFindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_ALL);
+	FindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_ALL);
 	while (true) {
 		uint32 CreatureID = Search.getNext();
 		if (CreatureID == 0) {
 			break;
 		}
 
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if (Creature == NULL) {
 			error("refresh_sector: Creature does not exist.\n");
 			continue;
@@ -2938,14 +2938,14 @@ void apply_patch(int SectorX, int SectorY, int SectorZ, bool FullSector, ReadScr
 	int SearchRadiusY = 32 / 2;
 	int SearchCenterX = SectorX * 32 + (32 / 2);
 	int SearchCenterY = SectorY * 32 + (32 / 2);
-	TFindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_ALL);
+	FindCreatures Search(SearchRadiusX, SearchRadiusY, SearchCenterX, SearchCenterY, FIND_ALL);
 	while (true) {
 		uint32 CreatureID = Search.getNext();
 		if (CreatureID == 0) {
 			break;
 		}
 
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if (Creature == NULL) {
 			error("apply_patch: Creature does not exist.\n");
 			continue;
@@ -3326,7 +3326,7 @@ bool channel_available(int ChannelID, uint32 CharacterID) {
 		return false;
 	}
 
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("channel_available: Player does not exist.\n");
 		return false;
@@ -3374,7 +3374,7 @@ const char *get_channel_name(int ChannelID, uint32 CharacterID) {
 		return "Unknown";
 	}
 
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("get_channel_name: Player does not exist.\n");
 		return "Unknown";
@@ -3466,7 +3466,7 @@ bool may_open_channel(uint32 CharacterID) {
 }
 
 void open_channel(uint32 CharacterID) {
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("open_channel: Creature %u does not exist.\n", CharacterID);
 		throw ERROR;
@@ -3528,7 +3528,7 @@ void close_channel(int ChannelID) {
 }
 
 void invite_to_channel(uint32 CharacterID, const char *Name) {
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("invite_to_channel: Creature %u does not exist.\n", CharacterID);
 		return;
@@ -3549,7 +3549,7 @@ void invite_to_channel(uint32 CharacterID, const char *Name) {
 	TPlayer *Other = NULL;
 	uint32 OtherID = 0;
 	bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(Name, false, IgnoreGamemasters, &Other)) {
+	switch (identify_player(Name, false, IgnoreGamemasters, &Other)) {
 	case 0: { // PLAYERFOUND ?
 		OtherID = Other->ID;
 		Name = Other->Name;
@@ -3557,29 +3557,29 @@ void invite_to_channel(uint32 CharacterID, const char *Name) {
 	}
 
 	case -1: { // PLAYERNOTONLINE ?
-		OtherID = GetCharacterID(Name);
+		OtherID = get_character_id(Name);
 		if (OtherID == 0) {
 			throw PLAYERNOTEXISTING;
 		}
 
-		Name = GetCharacterName(Name);
+		Name = get_character_name(Name);
 		break;
 	}
 
 	case -2: { // NAMEAMBIGUOUS ?
-		OtherID = GetCharacterID(Name);
+		OtherID = get_character_id(Name);
 		if (OtherID == 0) {
 			throw NAMEAMBIGUOUS;
 		}
 
-		Name = GetCharacterName(Name);
+		Name = get_character_name(Name);
 		break;
 	}
 
 	default: {
-		// TODO(fusion): This wasn't here but I don't think `IdentifyPlayer`
+		// TODO(fusion): This wasn't here but I don't think `identify_player`
 		// can return anything else than 0, -1, and -2 anyways.
-		error("invite_to_channel: Invalid return value from IdentifyPlayer.\n");
+		error("invite_to_channel: Invalid return value from identify_player.\n");
 		throw ERROR;
 	}
 	}
@@ -3607,7 +3607,7 @@ void invite_to_channel(uint32 CharacterID, const char *Name) {
 }
 
 void exclude_from_channel(uint32 CharacterID, const char *Name) {
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("exclude_from_channel: Creature %u does not exist.\n", CharacterID);
 		return;
@@ -3625,12 +3625,12 @@ void exclude_from_channel(uint32 CharacterID, const char *Name) {
 		return;
 	}
 
-	// TODO(fusion): Why don't we call `GetCharacterName` as we do in
+	// TODO(fusion): Why don't we call `get_character_name` as we do in
 	// `invite_to_channel`, when the player is not found?
 	TPlayer *Other = NULL;
 	uint32 OtherID = 0;
 	bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(Name, false, IgnoreGamemasters, &Other)) {
+	switch (identify_player(Name, false, IgnoreGamemasters, &Other)) {
 	case 0: { // PLAYERFOUND ?
 		OtherID = Other->ID;
 		Name = Other->Name;
@@ -3638,7 +3638,7 @@ void exclude_from_channel(uint32 CharacterID, const char *Name) {
 	}
 
 	case -1: { // PLAYERNOTONLINE ?
-		OtherID = GetCharacterID(Name);
+		OtherID = get_character_id(Name);
 		if (OtherID == 0) {
 			throw PLAYERNOTEXISTING;
 		}
@@ -3646,7 +3646,7 @@ void exclude_from_channel(uint32 CharacterID, const char *Name) {
 	}
 
 	case -2: { // NAMEAMBIGUOUS ?
-		OtherID = GetCharacterID(Name);
+		OtherID = get_character_id(Name);
 		if (OtherID == 0) {
 			throw NAMEAMBIGUOUS;
 		}
@@ -3655,7 +3655,7 @@ void exclude_from_channel(uint32 CharacterID, const char *Name) {
 
 	default: {
 		// TODO(fusion): Same as `invite_to_channel`.
-		error("exclude_from_channel: Invalid return value from IdentifyPlayer.\n");
+		error("exclude_from_channel: Invalid return value from identify_player.\n");
 		throw ERROR;
 	}
 	}
@@ -3730,7 +3730,7 @@ void leave_channel(int ChannelID, uint32 CharacterID, bool Close) {
 	if (Close && CharacterID == Chan->Moderator) {
 		for (int i = 0; i < Chan->Subscribers; i += 1) {
 			uint32 SubscriberID = *Chan->Subscriber.at(i);
-			TPlayer *Subscriber = GetPlayer(SubscriberID);
+			TPlayer *Subscriber = get_player(SubscriberID);
 			if (Subscriber != NULL) {
 				SendCloseChannel(Subscriber->Connection, ChannelID);
 			}
@@ -3814,7 +3814,7 @@ void disband_party(uint32 LeaderID) {
 
 	for (int i = 0; i < P->Members; i += 1) {
 		uint32 MemberID = *P->Member.at(i);
-		TPlayer *Member = GetPlayer(MemberID);
+		TPlayer *Member = get_player(MemberID);
 		if (Member != NULL) {
 			Member->LeaveParty();
 		}
@@ -3824,7 +3824,7 @@ void disband_party(uint32 LeaderID) {
 
 	for (int i = 0; i < P->Members; i += 1) {
 		uint32 MemberID = *P->Member.at(i);
-		TPlayer *Member = GetPlayer(MemberID);
+		TPlayer *Member = get_player(MemberID);
 		if (Member != NULL && Member->Connection != NULL) {
 			SendMessage(Member->Connection, TALK_INFO_MESSAGE, "Your party has been disbanded.");
 			for (int j = 0; j < P->Members; j += 1) {
@@ -3835,11 +3835,11 @@ void disband_party(uint32 LeaderID) {
 		}
 	}
 
-	TPlayer *Leader = GetPlayer(LeaderID);
+	TPlayer *Leader = get_player(LeaderID);
 	if (Leader != NULL) {
 		for (int i = 0; i < P->InvitedPlayers; i += 1) {
 			uint32 GuestID = *P->InvitedPlayer.at(i);
-			TPlayer *Guest = GetPlayer(GuestID);
+			TPlayer *Guest = get_player(GuestID);
 			if (Guest != NULL) {
 				SendCreatureParty(Guest->Connection, LeaderID);
 				SendCreatureParty(Leader->Connection, GuestID);
@@ -3853,13 +3853,13 @@ void invite_to_party(uint32 HostID, uint32 GuestID) {
 		return;
 	}
 
-	TPlayer *Host = GetPlayer(HostID);
+	TPlayer *Host = get_player(HostID);
 	if (Host == NULL) {
 		error("invite_to_party: Inviting player %u does not exist.\n", HostID);
 		return;
 	}
 
-	TPlayer *Guest = GetPlayer(GuestID);
+	TPlayer *Guest = get_player(GuestID);
 	if (Guest == NULL) {
 		SendResult(Host->Connection, PLAYERNOTONLINE);
 		return;
@@ -3925,7 +3925,7 @@ void invite_to_party(uint32 HostID, uint32 GuestID) {
 }
 
 void revoke_invitation(uint32 HostID, uint32 GuestID) {
-	TPlayer *Host = GetPlayer(HostID);
+	TPlayer *Host = get_player(HostID);
 	if (Host == NULL) {
 		error("revoke_invitation: Inviting player %u does not exist.\n", HostID);
 		return;
@@ -3950,7 +3950,7 @@ void revoke_invitation(uint32 HostID, uint32 GuestID) {
 		InviteIndex += 1;
 	}
 
-	TPlayer *Guest = GetPlayer(GuestID);
+	TPlayer *Guest = get_player(GuestID);
 	if (InviteIndex >= P->InvitedPlayers) {
 		if (Guest != NULL) {
 			SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s has not been invited.", Guest->Name);
@@ -3987,13 +3987,13 @@ void join_party(uint32 GuestID, uint32 HostID) {
 		return;
 	}
 
-	TPlayer *Guest = GetPlayer(GuestID);
+	TPlayer *Guest = get_player(GuestID);
 	if (Guest == NULL) {
 		error("join_party: Invited player %u does not exist.\n", GuestID);
 		return;
 	}
 
-	TPlayer *Host = GetPlayer(HostID);
+	TPlayer *Host = get_player(HostID);
 	if (Host == NULL) {
 		SendResult(Guest->Connection, PLAYERNOTONLINE);
 		return;
@@ -4038,7 +4038,7 @@ void join_party(uint32 GuestID, uint32 HostID) {
 		SendCreatureParty(Guest->Connection, MemberID);
 		SendCreatureSkull(Guest->Connection, MemberID);
 		if (MemberID != GuestID) {
-			TPlayer *Member = GetPlayer(MemberID);
+			TPlayer *Member = get_player(MemberID);
 			if (Member != NULL) {
 				SendMessage(Member->Connection, TALK_INFO_MESSAGE, "%s has joined the party.", Guest->Name);
 				SendCreatureParty(Member->Connection, GuestID);
@@ -4053,13 +4053,13 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 		return;
 	}
 
-	TPlayer *OldLeader = GetPlayer(OldLeaderID);
+	TPlayer *OldLeader = get_player(OldLeaderID);
 	if (OldLeader == NULL) {
 		error("pass_leadership: Old leader %u does not exist.\n", OldLeaderID);
 		return;
 	}
 
-	TPlayer *NewLeader = GetPlayer(NewLeaderID);
+	TPlayer *NewLeader = get_player(NewLeaderID);
 	if (NewLeader == NULL) {
 		SendResult(OldLeader->Connection, PLAYERNOTONLINE);
 		return;
@@ -4086,7 +4086,7 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 	// NOTE(fusion): Same as `disband_party`.
 	for (int i = 0; i < P->Members; i += 1) {
 		uint32 MemberID = *P->Member.at(i);
-		TPlayer *Member = GetPlayer(MemberID);
+		TPlayer *Member = get_player(MemberID);
 		if (Member != NULL) {
 			Member->JoinParty(NewLeaderID);
 		}
@@ -4094,7 +4094,7 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 
 	for (int i = 0; i < P->Members; i += 1) {
 		uint32 MemberID = *P->Member.at(i);
-		TPlayer *Member = GetPlayer(MemberID);
+		TPlayer *Member = get_player(MemberID);
 		if (Member != NULL) {
 			if (MemberID == NewLeaderID) {
 				SendMessage(Member->Connection, TALK_INFO_MESSAGE, "You are now leader of your party.");
@@ -4112,7 +4112,7 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 
 	for (int i = 0; i < InvitedPlayers; i += 1) {
 		uint32 GuestID = *P->InvitedPlayer.at(i);
-		TPlayer *Guest = GetPlayer(GuestID);
+		TPlayer *Guest = get_player(GuestID);
 		if (Guest != NULL) {
 			SendCreatureParty(Guest->Connection, OldLeaderID);
 			SendCreatureParty(OldLeader->Connection, GuestID);
@@ -4121,7 +4121,7 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 }
 
 void leave_party(uint32 MemberID, bool Forced) {
-	TPlayer *Member = GetPlayer(MemberID);
+	TPlayer *Member = get_player(MemberID);
 	if (Member == NULL) {
 		error("leave_party: Member does not exist.\n");
 		return;
@@ -4191,7 +4191,7 @@ void leave_party(uint32 MemberID, bool Forced) {
 		SendCreatureParty(Member->Connection, OtherID);
 		SendCreatureSkull(Member->Connection, OtherID);
 
-		TPlayer *Other = GetPlayer(OtherID);
+		TPlayer *Other = get_player(OtherID);
 		if (Other != NULL) {
 			SendMessage(Other->Connection, TALK_INFO_MESSAGE, "%s has left the party.", Member->Name);
 			SendCreatureParty(Other->Connection, MemberID);

@@ -33,7 +33,7 @@ struct TOutfit{
 	}
 };
 
-// TFindCreatures
+// FindCreatures
 // =============================================================================
 enum : int {
 	FIND_PLAYERS	= 0x01,
@@ -42,10 +42,10 @@ enum : int {
 	FIND_ALL		= FIND_PLAYERS | FIND_NPCS | FIND_MONSTERS,
 };
 
-struct TFindCreatures {
-	TFindCreatures(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask);
-	TFindCreatures(int RadiusX, int RadiusY, uint32 CreatureID, int Mask);
-	TFindCreatures(int RadiusX, int RadiusY, Object Obj, int Mask);
+struct FindCreatures {
+	FindCreatures(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask);
+	FindCreatures(int RadiusX, int RadiusY, uint32 CreatureID, int Mask);
+	FindCreatures(int RadiusX, int RadiusY, Object Obj, int Mask);
 	void initSearch(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask);
 	uint32 getNext(void);
 
@@ -71,7 +71,7 @@ enum : int {
 	LOSE_INVENTORY_ALL		= 2,
 };
 
-struct TToDoEntry {
+struct ToDoEntry {
 	ToDoType Code;
 	union{
 		struct{
@@ -124,7 +124,7 @@ struct TToDoEntry {
 	};
 };
 
-struct TCreature: TSkillBase {
+struct TCreature: SkillBase {
 	// crmain.cc
 	TCreature(void);
 	void SetID(uint32 CharacterID);
@@ -152,7 +152,7 @@ struct TCreature: TSkillBase {
 	void Execute(void);
 	uint32 CalculateDelay(void);
 	bool ToDoClear(void);
-	void ToDoAdd(TToDoEntry TD);
+	void ToDoAdd(ToDoEntry TD);
 	void ToDoStop(void);
 	void ToDoStart(void);
 	void ToDoYield(void);
@@ -212,7 +212,7 @@ struct TCreature: TSkillBase {
 	// DATA
 	// =================
 	//void *VTABLE;					// IMPLICIT
-	//TSkillBase super_TSkillBase;	// IMPLICIT
+	//SkillBase super_TSkillBase;	// IMPLICIT
 	TCombat Combat;
 	uint32 ID;
 	TCreature *NextHashEntry;
@@ -250,7 +250,7 @@ struct TCreature: TSkillBase {
 	uint32 PoisonDamageOrigin;
 	uint32 EnergyDamageOrigin;
 	Object CrObject;
-	vector<TToDoEntry> ToDoList;
+	vector<ToDoEntry> ToDoList;
 	int ActToDo;
 	int NrToDo;
 	uint32 NextWakeup;
@@ -260,8 +260,8 @@ struct TCreature: TSkillBase {
 	TConnection *Connection;
 };
 
-bool IsCreaturePlayer(uint32 CreatureID);
-TCreature *GetCreature(uint32 CreatureID);
-TCreature *GetCreature(Object Obj);
+bool is_creature_player(uint32 CreatureID);
+TCreature *get_creature(uint32 CreatureID);
+TCreature *get_creature(Object Obj);
 
 #endif // TIBIA_CREATURE_CREATURE_H_

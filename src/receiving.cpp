@@ -81,7 +81,7 @@ ObjectType GetObjectType(int Command, int TypeID){
 }
 
 void CQuitGame(TConnection *Connection, TReadBuffer *Buffer){
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		Connection->Logout(0, true);
 		return;
@@ -128,7 +128,7 @@ void CGoPath(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -138,7 +138,7 @@ void CGoPath(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	int Steps = (int)Buffer->readByte();
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDGo;
 	TD.Go.x = Player->posx;
 	TD.Go.y = Player->posy;
@@ -177,7 +177,7 @@ void CGoDirection(TConnection *Connection, int OffsetX, int OffsetY){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -187,7 +187,7 @@ void CGoDirection(TConnection *Connection, int OffsetX, int OffsetY){
 			SendSnapback(Connection);
 		}
 
-		TToDoEntry TD = {};
+		ToDoEntry TD = {};
 		TD.Code = TDGo;
 		TD.Go.x = Player->posx + OffsetX;
 		TD.Go.y = Player->posy + OffsetY;
@@ -206,7 +206,7 @@ void CGoStop(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player != NULL){
 		Player->ToDoStop();
 	}
@@ -218,7 +218,7 @@ void CRotate(TConnection *Connection, int Direction){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -241,7 +241,7 @@ void CMoveObject(TConnection *Connection, TReadBuffer *Buffer){
 	// TODO(fusion): I'm just following the convention being used. There is a
 	// comment in `ReceiveData` but the fact that there is only one command in
 	// a packet makes it unnecessary to "consume" all command's parameters.
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -295,7 +295,7 @@ void CTradeObject(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -342,7 +342,7 @@ void CInspectTrade(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -365,7 +365,7 @@ void CAcceptTrade(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player != NULL){
 		Player->AcceptTrade();
 	}
@@ -377,7 +377,7 @@ void CRejectTrade(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player != NULL){
 		Player->RejectTrade();
 	}
@@ -389,7 +389,7 @@ void CUseObject(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -435,7 +435,7 @@ void CUseTwoObjects(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -485,7 +485,7 @@ void CUseOnCreature(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -511,7 +511,7 @@ void CUseOnCreature(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TCreature *Target = GetCreature(TargetID);
+	TCreature *Target = get_creature(TargetID);
 	if(Target == NULL || Target->Type == PLAYER){
 		return;
 	}
@@ -554,7 +554,7 @@ void CTurnObject(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -596,7 +596,7 @@ void CCloseContainer(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -614,7 +614,7 @@ void CUpContainer(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -642,7 +642,7 @@ void CEditText(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -684,7 +684,7 @@ void CEditList(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -722,7 +722,7 @@ void CLookAtPoint(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -755,7 +755,7 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		print(3, "CTalk: No player is assigned to this connection.\n");
 		return;
@@ -877,7 +877,7 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 			return;
 		}
 
-		TPlayer *Gamemaster = GetPlayer(Player->RequestProcessingGamemaster);
+		TPlayer *Gamemaster = get_player(Player->RequestProcessingGamemaster);
 		if(Gamemaster == NULL){
 			SendCloseRequest(Connection);
 			Player->Request = 0;
@@ -925,7 +925,7 @@ void CJoinChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -936,7 +936,7 @@ void CJoinChannel(TConnection *Connection, TReadBuffer *Buffer){
 			bool OwnChannel = join_channel(Channel, Player->ID);
 			if(Channel == CHANNEL_RULEVIOLATIONS){
 				SendOpenRequestQueue(Connection);
-				SendExistingRequests(Connection);
+				send_existing_requests(Connection);
 			}else if(OwnChannel){
 				SendOpenOwnChannel(Connection, Channel);
 			}else{
@@ -954,7 +954,7 @@ void CLeaveChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -971,7 +971,7 @@ void CPrivateChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -982,7 +982,7 @@ void CPrivateChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	uint32 CharacterID = GetCharacterID(Name);
+	uint32 CharacterID = get_character_id(Name);
 	if(CharacterID == 0){
 		SendResult(Connection, PLAYERNOTEXISTING);
 		return;
@@ -994,7 +994,7 @@ void CPrivateChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	SendPrivateChannel(Connection, GetCharacterName(Name));
+	SendPrivateChannel(Connection, get_character_name(Name));
 }
 
 void CProcessRequest(TConnection *Connection, TReadBuffer *Buffer){
@@ -1003,7 +1003,7 @@ void CProcessRequest(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL || !channel_available(CHANNEL_RULEVIOLATIONS, Player->ID)){
 		return;
 	}
@@ -1015,7 +1015,7 @@ void CProcessRequest(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	TPlayer *Other;
-	if(IdentifyPlayer(Name, true, true, &Other) != 0){
+	if(identify_player(Name, true, true, &Other) != 0){
 		SendMessage(Connection, TALK_FAILURE_MESSAGE,
 				"Player is not online any more.");
 		SendFinishRequest(Connection, Name);
@@ -1039,7 +1039,7 @@ void CRemoveRequest(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL || !channel_available(CHANNEL_RULEVIOLATIONS, Player->ID)){
 		return;
 	}
@@ -1051,7 +1051,7 @@ void CRemoveRequest(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	TPlayer *Other;
-	if(IdentifyPlayer(Name, true, true, &Other) != 0){
+	if(identify_player(Name, true, true, &Other) != 0){
 		SendMessage(Connection, TALK_FAILURE_MESSAGE,
 				"Player is not online any more.");
 		SendFinishRequest(Connection, Name);
@@ -1075,7 +1075,7 @@ void CCancelRequest(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	// TODO(fusion): Does this mean regular players can't cancel their requests?
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL || !channel_available(CHANNEL_RULEVIOLATIONS, Player->ID)){
 		return;
 	}
@@ -1083,7 +1083,7 @@ void CCancelRequest(TConnection *Connection, TReadBuffer *Buffer){
 	if(Player->Request != 0){
 		Player->Request = 0;
 		if(Player->RequestProcessingGamemaster != 0){
-			TPlayer *Gamemaster = GetPlayer(Player->RequestProcessingGamemaster);
+			TPlayer *Gamemaster = get_player(Player->RequestProcessingGamemaster);
 			if(Gamemaster != NULL){
 				SendFinishRequest(Gamemaster->Connection, Player->Name);
 			}
@@ -1099,7 +1099,7 @@ void CSetTactics(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1138,7 +1138,7 @@ void CAttack(TConnection *Connection, TReadBuffer *Buffer, bool Follow){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1162,13 +1162,13 @@ void CInviteToParty(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
 
 	uint32 GuestID = Buffer->readQuad();
-	TCreature *Guest = GetCreature(GuestID);
+	TCreature *Guest = get_creature(GuestID);
 	if(Guest == NULL){
 		return;
 	}
@@ -1187,7 +1187,7 @@ void CJoinParty(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1202,7 +1202,7 @@ void CRevokeInvitation(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1222,7 +1222,7 @@ void CPassLeadership(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1242,7 +1242,7 @@ void CLeaveParty(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1261,7 +1261,7 @@ void COpenChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1279,7 +1279,7 @@ void CInviteToChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1304,7 +1304,7 @@ void CExcludeFromChannel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1331,7 +1331,7 @@ void CCancel(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1375,7 +1375,7 @@ void CRefreshContainer(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1395,7 +1395,7 @@ void CGetOutfit(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1415,7 +1415,7 @@ void CSetOutfit(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1461,7 +1461,7 @@ void CAddBuddy(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1479,7 +1479,7 @@ void CRemoveBuddy(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1537,7 +1537,7 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1573,7 +1573,7 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 	TPlayer *Criminal;
 	const char *IPAddress = NULL;
 	bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
-	if(IdentifyPlayer(Name, false, IgnoreGamemasters, &Criminal) == 0){
+	if(identify_player(Name, false, IgnoreGamemasters, &Criminal) == 0){
 		if(check_right(Criminal->ID, NO_BANISHMENT)){
 			if(Action == 1 || Action == 3 || Action == 5){
 				SendMessage(Connection, TALK_FAILURE_MESSAGE,
@@ -1591,12 +1591,12 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 		strcpy(Name, Criminal->Name);
 		IPAddress = Criminal->IPAddress;
 	}else{
-		if(GetCharacterID(Name) == 0){
+		if(get_character_id(Name) == 0){
 			SendResult(Connection, PLAYERNOTEXISTING);
 			return;
 		}
 
-		strcpy(Name, GetCharacterName(Name));
+		strcpy(Name, get_character_name(Name));
 		if(ip_banishment){
 			SendMessage(Connection, TALK_FAILURE_MESSAGE,
 					"Player is not online. No IP address was banished.");
@@ -1708,7 +1708,7 @@ void ReceiveData(TConnection *Connection){
 		}else if(!Connection->JoinGame(&Buffer)){
 			log_message("game", "Login failed.\n");
 			SendResult(Connection, LOGINERROR);
-			TPlayer *Player = Connection->GetPlayer();
+			TPlayer *Player = Connection->get_player();
 			if(Player != NULL){
 				decrement_is_online_order(Player->ID);
 			}else{

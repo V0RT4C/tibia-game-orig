@@ -8,7 +8,7 @@
 
 #include <dirent.h>
 
-TRaceData RaceData[MAX_RACES];
+RaceData race_data[MAX_RACES];
 priority_queue<uint32, uint32> ToDoQueue(5000, 1000);
 
 static TCreature *HashList[1000];
@@ -20,18 +20,18 @@ static uint32 NextCreatureID;
 static int KilledCreatures[MAX_RACES];
 static int KilledPlayers[MAX_RACES];
 
-static priority_queue<uint32, TAttackWave*> AttackWaveQueue(100, 100);
+static priority_queue<uint32, AttackWave*> AttackWaveQueue(100, 100);
 
-// TFindCreatures
+// FindCreatures
 // =============================================================================
-TFindCreatures::TFindCreatures(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask){
+FindCreatures::FindCreatures(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask){
 	this->initSearch(RadiusX, RadiusY, CenterX, CenterY, Mask);
 }
 
-TFindCreatures::TFindCreatures(int RadiusX, int RadiusY, uint32 CreatureID, int Mask){
-	TCreature *Creature = GetCreature(CreatureID);
+FindCreatures::FindCreatures(int RadiusX, int RadiusY, uint32 CreatureID, int Mask){
+	TCreature *Creature = get_creature(CreatureID);
 	if(Creature == NULL){
-		error("TFindCreatures::TFindCreatures: Creature does not exist.\n");
+		error("FindCreatures::FindCreatures: Creature does not exist.\n");
 		this->finished = true;
 		return;
 	}
@@ -40,9 +40,9 @@ TFindCreatures::TFindCreatures(int RadiusX, int RadiusY, uint32 CreatureID, int 
 	this->SkipID = Creature->ID;
 }
 
-TFindCreatures::TFindCreatures(int RadiusX, int RadiusY, Object Obj, int Mask){
+FindCreatures::FindCreatures(int RadiusX, int RadiusY, Object Obj, int Mask){
 	if(!Obj.exists()){
-		error("TFindCreatures::TFindCreatures: Passed object does not exist.\n");
+		error("FindCreatures::FindCreatures: Passed object does not exist.\n");
 		this->finished = true;
 		return;
 	}
@@ -52,12 +52,12 @@ TFindCreatures::TFindCreatures(int RadiusX, int RadiusY, Object Obj, int Mask){
 	this->initSearch(RadiusX, RadiusY, ObjX, ObjY, Mask);
 }
 
-void TFindCreatures::initSearch(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask){
+void FindCreatures::initSearch(int RadiusX, int RadiusY, int CenterX, int CenterY, int Mask){
 	this->startx = CenterX - RadiusX;
 	this->starty = CenterY - RadiusY;
 	this->endx = CenterX + RadiusX;
 	this->endy = CenterY + RadiusY;
-	// NOTE(fusion): See `TFindCreatures::getNext` for an explanation on the -1.
+	// NOTE(fusion): See `FindCreatures::getNext` for an explanation on the -1.
 	this->blockx = (this->startx / 16) - 1;
 	this->blocky = (this->starty / 16);
 	this->ActID = 0;
@@ -66,7 +66,7 @@ void TFindCreatures::initSearch(int RadiusX, int RadiusY, int CenterX, int Cente
 	this->finished = false;
 }
 
-uint32 TFindCreatures::getNext(void){
+uint32 FindCreatures::getNext(void){
 	if(this->finished){
 		return 0;
 	}
@@ -94,9 +94,9 @@ uint32 TFindCreatures::getNext(void){
 			}
 		}
 
-		TCreature *Creature = GetCreature(this->ActID);
+		TCreature *Creature = get_creature(this->ActID);
 		if(Creature == NULL){
-			error("TFindCreatures::getNext: Creature does not exist.\n");
+			error("FindCreatures::getNext: Creature does not exist.\n");
 			this->ActID = 0;
 			continue;
 		}
@@ -127,7 +127,7 @@ void TCreature::SetID(uint32 CharacterID){
 		bool Found = false;
 		for(int Attempts = 0; Attempts < 16; Attempts += 1){
 			CreatureID = NextCreatureID++;
-			if(GetCreature(CreatureID) == NULL){
+			if(get_creature(CreatureID) == NULL){
 				Found = true;
 				break;
 			}
@@ -139,7 +139,7 @@ void TCreature::SetID(uint32 CharacterID){
 		}
 	}else{
 		CreatureID = CharacterID;
-		if(GetCreature(CreatureID) != NULL){
+		if(get_creature(CreatureID) != NULL){
 			error("TCreature::SetID: Duplicate character ID %d found.\n", CharacterID);
 		}
 	}
@@ -186,7 +186,7 @@ void TCreature::SetInCrList(void){
 }
 
 void TCreature::DelInCrList(void){
-	// TODO(fusion): See note in `ProcessCreatures`.
+	// TODO(fusion): See note in `process_creatures`.
 	for(int Index = 0; Index < FirstFreeCreature; Index += 1){
 		TCreature **Current = CreatureList.at(Index);
 		if(*Current == this){
@@ -204,7 +204,7 @@ void TCreature::DelInCrList(void){
 
 // Creature Management
 // =============================================================================
-TCreature *GetCreature(uint32 CreatureID){
+TCreature *get_creature(uint32 CreatureID){
 	if(CreatureID == 0){
 		return NULL;
 	}
@@ -217,16 +217,16 @@ TCreature *GetCreature(uint32 CreatureID){
 	return Creature;
 }
 
-TCreature *GetCreature(Object Obj){
-	return GetCreature(Obj.get_creature_id());
+TCreature *get_creature(Object Obj){
+	return get_creature(Obj.get_creature_id());
 }
 
-void InsertChainCreature(TCreature *Creature, int CoordX, int CoordY){
+void insert_chain_creature(TCreature *Creature, int CoordX, int CoordY){
 	if(Creature == NULL){
 		// TODO(fusion): Maybe a typo on the name of the function? I thought it
 		// could be some type of macro because there was no function name mismatch
 		// until now.
-		error("DeleteChainCreature: Passed creature does not exist.\n");
+		error("delete_chain_creature: Passed creature does not exist.\n");
 		return;
 	}
 
@@ -245,9 +245,9 @@ void InsertChainCreature(TCreature *Creature, int CoordX, int CoordY){
 	*FirstID = Creature->ID;
 }
 
-void DeleteChainCreature(TCreature *Creature){
+void delete_chain_creature(TCreature *Creature){
 	if(Creature == NULL){
-		error("DeleteChainCreature: Passed creature does not exist.\n");
+		error("delete_chain_creature: Passed creature does not exist.\n");
 		return;
 	}
 
@@ -264,13 +264,13 @@ void DeleteChainCreature(TCreature *Creature){
 		uint32 CurrentID = *FirstID;
 		while(true){
 			if(CurrentID == 0){
-				error("DeleteChainCreature: Creature not found.\n");
+				error("delete_chain_creature: Creature not found.\n");
 				return;
 			}
 
-			TCreature *Current = GetCreature(CurrentID);
+			TCreature *Current = get_creature(CurrentID);
 			if(Current == NULL){
-				error("DeleteChainCreature: Creature does not exist.\n");
+				error("delete_chain_creature: Creature does not exist.\n");
 				return;
 			}
 
@@ -284,9 +284,9 @@ void DeleteChainCreature(TCreature *Creature){
 	}
 }
 
-void MoveChainCreature(TCreature *Creature, int CoordX, int CoordY){
+void move_chain_creature(TCreature *Creature, int CoordX, int CoordY){
 	if(Creature == NULL){
-		error("DeleteChainCreature: Passed creature does not exist.\n");
+		error("delete_chain_creature: Passed creature does not exist.\n");
 		return;
 	}
 
@@ -296,22 +296,22 @@ void MoveChainCreature(TCreature *Creature, int CoordX, int CoordY){
 	int OldChainY = Creature->posy / 16;
 
 	if(NewChainX != OldChainX || NewChainY != OldChainY){
-		DeleteChainCreature(Creature);
-		InsertChainCreature(Creature, CoordX, CoordY);
+		delete_chain_creature(Creature);
+		insert_chain_creature(Creature, CoordX, CoordY);
 	}
 }
 
-void ProcessCreatures(void){
+void process_creatures(void){
 	for(int Index = 0; Index < FirstFreeCreature; Index += 1){
 		TCreature *Creature = *CreatureList.at(Index);
 		if(Creature == NULL){
-			error("ProcessCreatures: Creature %d does not exist.\n", Index);
+			error("process_creatures: Creature %d does not exist.\n", Index);
 			continue;
 		}
 
 		// TODO(fusion): I'm almost sure this is processing ITEM regen rather
 		// FOOD regen. It wouldn't make a lot of sense to have this plus what
-		// happens in `TSkillFed::Event` if we didn't consider things like the
+		// happens in `SkillFed::Event` if we didn't consider things like the
 		// life ring, etc...
 		int RegenInterval = Creature->Skills[SKILL_FED]->Get();
 		if(RegenInterval > 0 && (RoundNr % RegenInterval) == 0 && !Creature->IsDead
@@ -335,13 +335,13 @@ void ProcessCreatures(void){
 		}
 
 		if(!Creature->IsDead && Creature->Skills[SKILL_HITPOINTS]->Get() <= 0){
-			error("ProcessCreatures: Creature %s is not dead, even though it has no HP left.\n", Creature->Name);
+			error("process_creatures: Creature %s is not dead, even though it has no HP left.\n", Creature->Name);
 			Creature->Death();
 		}
 
 		if(Creature->LoggingOut && Creature->LogoutPossible() == 0){ // LOGOUT_POSSIBLE ?
 			if(Creature->IsDead && Creature->Skills[SKILL_HITPOINTS]->Get() > 0){
-				error("ProcessCreatures: Creature %s has HP, even though it is dead.\n", Creature->Name);
+				error("process_creatures: Creature %s has HP, even though it is dead.\n", Creature->Name);
 				Creature->Skills[SKILL_HITPOINTS]->Set(0);
 			}
 
@@ -356,11 +356,11 @@ void ProcessCreatures(void){
 	}
 }
 
-void ProcessSkills(void){
+void process_skills(void){
 	for(int Index = 0; Index < FirstFreeCreature; Index += 1){
 		TCreature *Creature = *CreatureList.at(Index);
 		if(Creature == NULL){
-			error("ProcessSkills: Creature %d does not exist.\n", Index);
+			error("process_skills: Creature %d does not exist.\n", Index);
 			continue;
 		}
 
@@ -368,7 +368,7 @@ void ProcessSkills(void){
 	}
 }
 
-void MoveCreatures(int Delay){
+void move_creatures(int Delay){
 	ServerMilliseconds += Delay;
 	while(ToDoQueue.Entries > 0){
 		auto Entry = *ToDoQueue.Entry->at(1);
@@ -379,7 +379,7 @@ void MoveCreatures(int Delay){
 		}
 
 		ToDoQueue.deleteMin();
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if(Creature != NULL){
 			Creature->Execute();
 		}
@@ -388,22 +388,22 @@ void MoveCreatures(int Delay){
 
 // Kill Statistics
 // =============================================================================
-void AddKillStatistics(int AttackerRace, int DefenderRace){
+void add_kill_statistics(int AttackerRace, int DefenderRace){
 	// NOTE(fusion): I think the race name can be "human" only for players,
 	// which means we're probably tracking how many creatures are killed by
 	// players with `KilledCreatures`, and how many players are killed by
 	// creatures with `KilledPlayers`.
 
-	if(strcmp(RaceData[AttackerRace].Name, "human") == 0){
+	if(strcmp(race_data[AttackerRace].Name, "human") == 0){
 		KilledCreatures[DefenderRace] += 1;
 	}
 
-	if(strcmp(RaceData[DefenderRace].Name, "human") == 0){
+	if(strcmp(race_data[DefenderRace].Name, "human") == 0){
 		KilledPlayers[AttackerRace] += 1;
 	}
 }
 
-void WriteKillStatistics(void){
+void write_kill_statistics(void){
 	// TODO(fusion): Using the same names with local and global variables is
 	// trash. I'd personally have all globals with a `g_` prefix but I'm trying
 	// to not change the original code too much.
@@ -426,7 +426,7 @@ void WriteKillStatistics(void){
 		if(Race == 0){
 			strcpy(Name, "(fire/poison/energy)");
 		}else{
-			sprintf(Name, "%s %s", RaceData[Race].Article, RaceData[Race].Name);
+			sprintf(Name, "%s %s", race_data[Race].Article, race_data[Race].Name);
 			// TODO(fusion): The original function had a call to `Plural` and
 			// `Capitals` but didn't seem to put the results back into `Name`.
 		}
@@ -437,23 +437,23 @@ void WriteKillStatistics(void){
 	}
 
 	kill_statistics_order(NumberOfRaces, RaceNames, KilledPlayers, KilledCreatures);
-	InitKillStatistics();
+	init_kill_statistics();
 }
 
-void InitKillStatistics(void){
+void init_kill_statistics(void){
 	for(int i = 0; i < MAX_RACES; i += 1){
 		KilledCreatures[i] = 0;
 		KilledPlayers[i] = 0;
 	}
 }
 
-void ExitKillStatistics(void){
-	WriteKillStatistics();
+void exit_kill_statistics(void){
+	write_kill_statistics();
 }
 
 // Monster Raid
 // =============================================================================
-TAttackWave::TAttackWave(void) :
+AttackWave::AttackWave(void) :
 		ExtraItem(1, 5, 5)
 {
 	this->x = 0;
@@ -469,16 +469,16 @@ TAttackWave::TAttackWave(void) :
 	this->ExtraItems = 0;
 }
 
-TAttackWave::~TAttackWave(void){
+AttackWave::~AttackWave(void){
 	if(this->Message != 0){
 		DeleteDynamicString(this->Message);
 	}
 }
 
-void LoadMonsterRaid(const char *FileName, int Start,
+void load_monster_raid(const char *FileName, int Start,
 		bool *Type, int *Date, int *Interval, int *Duration){
 	if(FileName == NULL){
-		error("LoadMonsterRaid: Filename is NULL.\n");
+		error("load_monster_raid: Filename is NULL.\n");
 		throw "cannot load monster raid";
 	}
 
@@ -549,7 +549,7 @@ void LoadMonsterRaid(const char *FileName, int Start,
 
 		Script.read_symbol('=');
 		int Delay = Script.read_number();
-		TAttackWave *Wave = new TAttackWave;
+		AttackWave *Wave = new AttackWave;
 		while(true){
 			Script.next_token();
 			if(Script.Token == ENDOFFILE){
@@ -571,7 +571,7 @@ void LoadMonsterRaid(const char *FileName, int Start,
 				Wave->Spread = Script.read_number();
 			}else if(strcmp(Identifier, "race") == 0){
 				Wave->Race = Script.read_number();
-				if(!IsRaceValid(Wave->Race)){
+				if(!is_race_valid(Wave->Race)){
 					Script.error("illegal race number");
 				}
 			}else if(strcmp(Identifier, "count") == 0){
@@ -599,7 +599,7 @@ void LoadMonsterRaid(const char *FileName, int Start,
 				do{
 					// NOTE(fusion): Items are indexed from 1.
 					Wave->ExtraItems += 1;
-					TItemData *ItemData = Wave->ExtraItem.at(Wave->ExtraItems);
+					ItemData *ItemData = Wave->ExtraItem.at(Wave->ExtraItems);
 					Script.read_symbol('(');
 					ItemData->Type = Script.read_number();
 					Script.read_symbol(',');
@@ -640,10 +640,10 @@ void LoadMonsterRaid(const char *FileName, int Start,
 	Script.close();
 }
 
-void LoadMonsterRaids(void){
+void load_monster_raids(void){
 	DIR *MonsterDir = opendir(MONSTERPATH);
 	if(MonsterDir == NULL){
-		error("LoadMonsterRaids: Subdirectory %s not found.\n", MONSTERPATH);
+		error("load_monster_raids: Subdirectory %s not found.\n", MONSTERPATH);
 		throw "Cannot load monster raids";
 	}
 
@@ -679,14 +679,14 @@ void LoadMonsterRaids(void){
 		bool BigRaid;
 		int Date, Interval, Duration;
 		snprintf(FileName, sizeof(FileName), "%s/%s", MONSTERPATH, DirEntry->d_name);
-		LoadMonsterRaid(FileName, -1, &BigRaid, &Date, &Interval, &Duration);
+		load_monster_raid(FileName, -1, &BigRaid, &Date, &Interval, &Duration);
 		print(1, "Raid %s: Date %d, Interval %d, Duration %d\n",
 				FileName, Date, Interval, Duration);
 
 		if(Date > 0){
 			if(Now <= Date && Date <= (Now + SecondsToReboot)){
 				int Start = RoundNr + (Date - Now);
-				LoadMonsterRaid(FileName, Start, NULL, NULL, NULL, NULL);
+				load_monster_raid(FileName, Start, NULL, NULL, NULL, NULL);
 				if(BigRaid){
 					BigRaidName[0] = 0;
 					BigRaidDuration = 0;
@@ -703,7 +703,7 @@ void LoadMonsterRaids(void){
 			if(random(0, Interval - 1) < SecondsToReboot){
 				if(!BigRaid){
 					int Start = RoundNr + random(0, SecondsToReboot - Duration);
-					LoadMonsterRaid(FileName, Start, NULL, NULL, NULL, NULL);
+					load_monster_raid(FileName, Start, NULL, NULL, NULL, NULL);
 				}else{
 					int TieBreaker = random(0, 99);
 					if(TieBreaker > BigRaidTieBreaker){
@@ -720,15 +720,15 @@ void LoadMonsterRaids(void){
 
 	if(BigRaidName[0] != 0){
 		int Start = RoundNr + random(0, SecondsToReboot - BigRaidDuration);
-		LoadMonsterRaid(BigRaidName, Start, NULL, NULL, NULL, NULL);
+		load_monster_raid(BigRaidName, Start, NULL, NULL, NULL, NULL);
 	}
 }
 
-void ProcessMonsterRaids(void){
+void process_monster_raids(void){
 	while(AttackWaveQueue.Entries > 0){
 		auto Entry = *AttackWaveQueue.Entry->at(1);
 		uint32 ExecutionRound = Entry.Key;
-		TAttackWave *Wave = Entry.Data;
+		AttackWave *Wave = Entry.Data;
 		if(ExecutionRound > RoundNr){
 			break;
 		}
@@ -762,7 +762,7 @@ void ProcessMonsterRaids(void){
 				continue;
 			}
 
-			TCreature *Creature = CreateMonster(Wave->Race, SpawnX, SpawnY, SpawnZ, 0, 0, true);
+			TCreature *Creature = create_monster(Wave->Race, SpawnX, SpawnY, SpawnZ, 0, 0, true);
 			if(Creature != NULL){
 				Creature->Radius = Wave->Radius;
 				if(Wave->Lifetime != 0){
@@ -777,7 +777,7 @@ void ProcessMonsterRaids(void){
 		if(NumSpawned > 0){
 			int ExtraItems = Wave->ExtraItems;
 			for(int i = 1; i <= ExtraItems; i += 1){
-				TItemData *ItemData = Wave->ExtraItem.at(i);
+				ItemData *ItemData = Wave->ExtraItem.at(i);
 				if(random(0, 999) > ItemData->Probability){
 					continue;
 				}
@@ -790,7 +790,7 @@ void ProcessMonsterRaids(void){
 								get_special_object(DEFAULT_CONTAINER),
 								0);
 					}catch(RESULT r){
-						error("ProcessMonsterRaids: Exception %d for race %d"
+						error("process_monster_raids: Exception %d for race %d"
 								" when creating the backpack.\n", r, Wave->Race);
 						continue;
 					}
@@ -829,13 +829,13 @@ void ProcessMonsterRaids(void){
 							Item = create_at_creature(Creature->ID, ItemType, Amount);
 						}
 					}catch(RESULT r){
-						error("ProcessMonsterRaids: Exception %d for race %d, consider"
+						error("process_monster_raids: Exception %d for race %d, consider"
 							" increasing CarryStrength.\n", r, Wave->Race);
 						break;
 					}
 
 					if(Item.get_container().get_object_type().is_map_container()){
-						error("ProcessMonsterRaids: Object falls on the map."
+						error("process_monster_raids: Object falls on the map."
 								" Increase CarryStrength for race %d.\n", Wave->Race);
 						delete_op(Item, -1);
 						// TODO(fusion): Should probably stop this inner loop here.
@@ -856,7 +856,7 @@ void ProcessMonsterRaids(void){
 
 // Initialization
 // =============================================================================
-void InitCr(void){
+void init_cr(void){
 	NextCreatureID = 0x40000000;
 	FirstFreeCreature = 0;
 	FirstChainCreature = new matrix<uint32>(
@@ -864,19 +864,19 @@ void InitCr(void){
 				SectorYMin * 2, SectorYMax * 2 + 1,
 				0);
 
-	LoadRaces();
-	LoadMonsterRaids();
-	InitCrskill();
-	InitPlayer();
-	InitNonplayer();
-	InitKillStatistics();
+	load_races();
+	load_monster_raids();
+	init_crskill();
+	init_player();
+	init_nonplayer();
+	init_kill_statistics();
 }
 
-void ExitCr(void){
-	ExitKillStatistics();
-	ExitPlayer();
-	ExitNonplayer();
-	ExitCrskill();
+void exit_cr(void){
+	exit_kill_statistics();
+	exit_player();
+	exit_nonplayer();
+	exit_crskill();
 
 	delete FirstChainCreature;
 }

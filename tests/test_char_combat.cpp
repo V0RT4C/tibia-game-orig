@@ -7,12 +7,12 @@
 // We cannot instantiate TCombat (ctor in combat.cpp), so we use
 // compile-time sizeof expressions on member types via null pointer casts.
 
-TEST_CASE("TCombatEntry is a POD with three uint32 fields") {
-	CHECK(sizeof(TCombatEntry) >= 3 * sizeof(uint32));
+TEST_CASE("CombatEntry is a POD with three uint32 fields") {
+	CHECK(sizeof(CombatEntry) >= 3 * sizeof(uint32));
 }
 
-TEST_CASE("TCombatEntry fields have expected offsets") {
-	TCombatEntry entry{};
+TEST_CASE("CombatEntry fields have expected offsets") {
+	CombatEntry entry{};
 	entry.ID = 1;
 	entry.Damage = 2;
 	entry.TimeStamp = 3;

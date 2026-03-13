@@ -67,22 +67,22 @@ struct TPlayerData {
 
 // TPlayerIndex
 // =============================================================================
-struct TPlayerIndexNode {
+struct PlayerIndexNode {
 	bool InternalNode;
 };
 
-struct TPlayerIndexInternalNode: TPlayerIndexNode {
-	TPlayerIndexNode *Child[27];
+struct PlayerIndexInternalNode: PlayerIndexNode {
+	PlayerIndexNode *Child[27];
 };
 
-struct TPlayerIndexEntry {
+struct PlayerIndexEntry {
 	char Name[30];
 	uint32 CharacterID;
 };
 
-struct TPlayerIndexLeafNode: TPlayerIndexNode {
+struct PlayerIndexLeafNode: PlayerIndexNode {
 	int Count;
-	TPlayerIndexEntry Entry[10];
+	PlayerIndexEntry Entry[10];
 };
 
 // TPlayer
@@ -192,46 +192,46 @@ struct TPlayer: TCreature {
 
 // crplayer.cc API
 // =============================================================================
-int GetNumberOfPlayers(void);
-TPlayer *GetPlayer(uint32 CharacterID);
-TPlayer *GetPlayer(const char *Name);
-bool IsPlayerOnline(const char *Name);
-int IdentifyPlayer(const char *Name, bool ExactMatch, bool IgnoreGamemasters, TPlayer **OutPlayer);
-void LogoutAllPlayers(void);
-void CloseProcessedRequests(uint32 CharacterID);
-void NotifyBuddies(uint32 CharacterID, const char *Name, bool Login);
-void CreatePlayerList(bool Online);
-void PrintPlayerPositions(void);
-void LoadDepot(TPlayerData *PlayerData, int DepotNr, Object Con);
-void SaveDepot(TPlayerData *PlayerData, int DepotNr, Object Con);
-void GetProfessionName(char *Buffer, int Profession, bool Article, bool Capitals);
-void SendExistingRequests(TConnection *Connection);
+int get_number_of_players(void);
+TPlayer *get_player(uint32 CharacterID);
+TPlayer *get_player(const char *Name);
+bool is_player_online(const char *Name);
+int identify_player(const char *Name, bool ExactMatch, bool IgnoreGamemasters, TPlayer **OutPlayer);
+void logout_all_players(void);
+void close_processed_requests(uint32 CharacterID);
+void notify_buddies(uint32 CharacterID, const char *Name, bool Login);
+void create_player_list(bool Online);
+void print_player_positions(void);
+void load_depot(TPlayerData *PlayerData, int DepotNr, Object Con);
+void save_depot(TPlayerData *PlayerData, int DepotNr, Object Con);
+void get_profession_name(char *Buffer, int Profession, bool Article, bool Capitals);
+void send_existing_requests(TConnection *Connection);
 
-void SavePlayerPoolSlot(TPlayerData *Slot);
-void FreePlayerPoolSlot(TPlayerData *Slot);
-TPlayerData *GetPlayerPoolSlot(uint32 CharacterID);
-TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait);
-TPlayerData *AttachPlayerPoolSlot(uint32 CharacterID, bool DontWait);
-void AttachPlayerPoolSlot(TPlayerData *Slot, bool DontWait);
-void IncreasePlayerPoolSlotSticky(TPlayerData *Slot);
-void DecreasePlayerPoolSlotSticky(TPlayerData *Slot);
-void DecreasePlayerPoolSlotSticky(uint32 CharacterID);
-void ReleasePlayerPoolSlot(TPlayerData *Slot);
-void SavePlayerPoolSlots(void);
-void InitPlayerPool(void);
-void ExitPlayerPool(void);
+void save_player_pool_slot(TPlayerData *Slot);
+void free_player_pool_slot(TPlayerData *Slot);
+TPlayerData *get_player_pool_slot(uint32 CharacterID);
+TPlayerData *assign_player_pool_slot(uint32 CharacterID, bool DontWait);
+TPlayerData *attach_player_pool_slot(uint32 CharacterID, bool DontWait);
+void attach_player_pool_slot(TPlayerData *Slot, bool DontWait);
+void increase_player_pool_slot_sticky(TPlayerData *Slot);
+void decrease_player_pool_slot_sticky(TPlayerData *Slot);
+void decrease_player_pool_slot_sticky(uint32 CharacterID);
+void release_player_pool_slot(TPlayerData *Slot);
+void save_player_pool_slots(void);
+void init_player_pool(void);
+void exit_player_pool(void);
 
-int GetPlayerIndexEntryNumber(const char *Name, int Position);
-void InsertPlayerIndex(TPlayerIndexInternalNode *Node,
+int get_player_index_entry_number(const char *Name, int Position);
+void insert_player_index(PlayerIndexInternalNode *Node,
 		int Position, const char *Name, uint32 CharacterID);
-TPlayerIndexEntry *SearchPlayerIndex(const char *Name);
-bool PlayerExists(const char *Name);
-uint32 GetCharacterID(const char *Name);
-const char *GetCharacterName(const char *Name);
-void InitPlayerIndex(void);
-void ExitPlayerIndex(void);
+PlayerIndexEntry *search_player_index(const char *Name);
+bool player_exists(const char *Name);
+uint32 get_character_id(const char *Name);
+const char *get_character_name(const char *Name);
+void init_player_index(void);
+void exit_player_index(void);
 
-void InitPlayer(void);
-void ExitPlayer(void);
+void init_player(void);
+void exit_player(void);
 
 #endif // TIBIA_CREATURE_PLAYER_H_

@@ -11,15 +11,15 @@ TEST_CASE("TPlayerData array sizes") {
 	CHECK(sizeof(TPlayerData::Buddy) / sizeof(uint32) == 100);
 }
 
-TEST_CASE("TPlayerIndexEntry name capacity") {
-	TPlayerIndexEntry e{};
+TEST_CASE("PlayerIndexEntry name capacity") {
+	PlayerIndexEntry e{};
 	CHECK(sizeof(e.Name) == 30);
 }
 
-TEST_CASE("TPlayerIndexLeafNode entry count") {
-	CHECK(sizeof(TPlayerIndexLeafNode::Entry) / sizeof(TPlayerIndexEntry) == 10);
+TEST_CASE("PlayerIndexLeafNode entry count") {
+	CHECK(sizeof(PlayerIndexLeafNode::Entry) / sizeof(PlayerIndexEntry) == 10);
 }
 
-TEST_CASE("TPlayerIndexInternalNode child count") {
-	CHECK(sizeof(TPlayerIndexInternalNode::Child) / sizeof(TPlayerIndexNode *) == 27);
+TEST_CASE("PlayerIndexInternalNode child count") {
+	CHECK(sizeof(PlayerIndexInternalNode::Child) / sizeof(PlayerIndexNode *) == 27);
 }

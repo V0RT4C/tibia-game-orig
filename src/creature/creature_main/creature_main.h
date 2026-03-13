@@ -5,11 +5,11 @@
 #include "creature/race/race.h"
 #include "containers.h"
 
-// TAttackWave
+// AttackWave
 // =============================================================================
-struct TAttackWave {
-	TAttackWave(void);
-	~TAttackWave(void);
+struct AttackWave {
+	AttackWave(void);
+	~AttackWave(void);
 
 	// DATA
 	// =================
@@ -24,36 +24,36 @@ struct TAttackWave {
 	int Lifetime;
 	uint32 Message;
 	int ExtraItems;
-	vector<TItemData> ExtraItem;
+	vector<ItemData> ExtraItem;
 };
 
 // Global data
 #define MAX_RACES 512
-extern TRaceData RaceData[MAX_RACES];
+extern RaceData race_data[MAX_RACES];
 extern priority_queue<uint32, uint32> ToDoQueue;
 
 // Creature chain/hash management
-void InsertChainCreature(TCreature *Creature, int CoordX, int CoordY);
-void DeleteChainCreature(TCreature *Creature);
-void MoveChainCreature(TCreature *Creature, int CoordX, int CoordY);
-void ProcessCreatures(void);
-void ProcessSkills(void);
-void MoveCreatures(int Delay);
+void insert_chain_creature(TCreature *Creature, int CoordX, int CoordY);
+void delete_chain_creature(TCreature *Creature);
+void move_chain_creature(TCreature *Creature, int CoordX, int CoordY);
+void process_creatures(void);
+void process_skills(void);
+void move_creatures(int Delay);
 
 // Kill statistics
-void AddKillStatistics(int AttackerRace, int DefenderRace);
-void WriteKillStatistics(void);
-void InitKillStatistics(void);
-void ExitKillStatistics(void);
+void add_kill_statistics(int AttackerRace, int DefenderRace);
+void write_kill_statistics(void);
+void init_kill_statistics(void);
+void exit_kill_statistics(void);
 
 // Monster raids
-void LoadMonsterRaid(const char *FileName, int Start,
+void load_monster_raid(const char *FileName, int Start,
 		bool *Type, int *Date, int *Interval, int *Duration);
-void LoadMonsterRaids(void);
-void ProcessMonsterRaids(void);
+void load_monster_raids(void);
+void process_monster_raids(void);
 
 // Init/Exit
-void InitCr(void);
-void ExitCr(void);
+void init_cr(void);
+void exit_cr(void);
 
 #endif // TIBIA_CREATURE_MAIN_H_

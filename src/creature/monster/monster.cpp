@@ -6,31 +6,31 @@
 #include "operate.h"
 #include "writer.h"
 
-static vector<TMonsterhome> Monsterhome(1, 5000, 1000);
+static vector<Monsterhome> MonsterhomeList(1, 5000, 1000);
 static int Monsterhomes;
 
 // Monster Homes
 // =============================================================================
-void StartMonsterhomeTimer(int Nr){
+void start_monsterhome_timer(int Nr){
 	if(Nr < 1 || Nr > Monsterhomes){
-		error("StartMonsterhomeTimer: Invalid monsterhome number %d.\n", Nr);
+		error("start_monsterhome_timer: Invalid monsterhome number %d.\n", Nr);
 		return;
 	}
 
-	TMonsterhome *MH = Monsterhome.at(Nr);
+	Monsterhome *MH = MonsterhomeList.at(Nr);
 	if(MH->Timer > 0){
-		error("StartMonsterhomeTimer: Timer is already running.\n");
+		error("start_monsterhome_timer: Timer is already running.\n");
 		return;
 	}
 
 	if(MH->ActMonsters >= MH->MaxMonsters){
-		error("StartMonsterhomeTimer: Maximum monster count already reached.\n");
+		error("start_monsterhome_timer: Maximum monster count already reached.\n");
 		error("# Monsterhome with race %d at [%d,%d,%d]\n", MH->Race, MH->x, MH->y, MH->z);
 		return;
 	}
 
 	int MaxTimer = MH->RegenerationTime;
-	int NumPlayers = GetNumberOfPlayers();
+	int NumPlayers = get_number_of_players();
 	if(NumPlayers > 800){
 		MaxTimer = (MaxTimer * 2) / 5;
 	}else if(NumPlayers > 200){
@@ -40,7 +40,7 @@ void StartMonsterhomeTimer(int Nr){
 	MH->Timer = random(MaxTimer / 2, MaxTimer);
 }
 
-void LoadMonsterhomes(void){
+void load_monsterhomes(void){
 	print(1, "Initializing Monsterhomes ...\n");
 
 	char FileName[4096];
@@ -57,7 +57,7 @@ void LoadMonsterhomes(void){
 		}
 
 		Monsterhomes += 1;
-		TMonsterhome *MH = Monsterhome.at(Monsterhomes);
+		Monsterhome *MH = MonsterhomeList.at(Monsterhomes);
 		MH->Race = Race;
 		MH->x = Script.read_number();
 		MH->y = Script.read_number();
@@ -77,7 +77,7 @@ void LoadMonsterhomes(void){
 	Script.close();
 
 	for(int i = 0; i < Monsterhomes; i += 1){
-		TMonsterhome *MH = Monsterhome.at(i);
+		Monsterhome *MH = MonsterhomeList.at(i);
 		for (int j = 0; j < MH->MaxMonsters; j += 1){
 			int SpawnX = MH->x;
 			int SpawnY = MH->y;
@@ -99,23 +99,23 @@ void LoadMonsterhomes(void){
 			}
 
 			if(search_spawn_field(&SpawnX, &SpawnY, &SpawnZ, SpawnRadius, false)){
-				CreateMonster(MH->Race, SpawnX, SpawnY, SpawnZ, i, 0, false);
+				create_monster(MH->Race, SpawnX, SpawnY, SpawnZ, i, 0, false);
 				MH->ActMonsters += 1;
 			}
 		}
 
 		if(MH->Timer > 0){
-			error("LoadMonsterhomes: Timer is already running (race %d at [%d,%d,%d]).\n",
+			error("load_monsterhomes: Timer is already running (race %d at [%d,%d,%d]).\n",
 					MH->Race, MH->x, MH->y, MH->z);
 		}else if(MH->ActMonsters < MH->MaxMonsters){
-			StartMonsterhomeTimer(i);
+			start_monsterhome_timer(i);
 		}
 	}
 }
 
-void ProcessMonsterhomes(void){
+void process_monsterhomes(void){
 	for(int i = 1; i <= Monsterhomes; i += 1){
-		TMonsterhome *MH = Monsterhome.at(i);
+		Monsterhome *MH = MonsterhomeList.at(i);
 
 		ASSERT(MH->Timer >= 0);
 		if(MH->Timer == 0){
@@ -132,16 +132,16 @@ void ProcessMonsterhomes(void){
 			MaxRadius = 10;
 		}
 
-		TFindCreatures Search(MaxRadius + 9, MaxRadius + 7, MH->x, MH->y, FIND_PLAYERS);
+		FindCreatures Search(MaxRadius + 9, MaxRadius + 7, MH->x, MH->y, FIND_PLAYERS);
 		while(true){
 			uint32 CharacterID = Search.getNext();
 			if(CharacterID == 0){
 				break;
 			}
 
-			TPlayer *Player = GetPlayer(CharacterID);
+			TPlayer *Player = get_player(CharacterID);
 			if(Player == NULL){
-				error("ProcessMonsterhomes: Creature does not exist.\n");
+				error("process_monsterhomes: Creature does not exist.\n");
 				break;
 			}
 
@@ -174,58 +174,58 @@ void ProcessMonsterhomes(void){
 			}
 
 			if(search_spawn_field(&SpawnX, &SpawnY, &SpawnZ, SpawnRadius, false)){
-				CreateMonster(MH->Race, SpawnX, SpawnY, SpawnZ, i, 0, false);
+				create_monster(MH->Race, SpawnX, SpawnY, SpawnZ, i, 0, false);
 				MH->ActMonsters += 1;
 
 				// TODO(fusion): Not sure why this check is here.
 				if(MH->Timer > 0){
-					error("ProcessMonsterhomes: Timer is already running (race %d at [%d,%d,%d]).\n",
+					error("process_monsterhomes: Timer is already running (race %d at [%d,%d,%d]).\n",
 							MH->Race, SpawnX, SpawnY, SpawnZ);
 				}
 			}
 		}
 
 		if(MH->ActMonsters < MH->MaxMonsters){
-			StartMonsterhomeTimer(i);
+			start_monsterhome_timer(i);
 		}
 	}
 }
 
-void NotifyMonsterhomeOfDeath(int Nr){
+void notify_monsterhome_of_death(int Nr){
 	if(Nr < 1 || Nr > Monsterhomes){
-		error("NotifyMonsterhomeOfDeath: Invalid monsterhome number %d.\n", Nr);
+		error("notify_monsterhome_of_death: Invalid monsterhome number %d.\n", Nr);
 		return;
 	}
 
-	TMonsterhome *MH = Monsterhome.at(Nr);
+	Monsterhome *MH = MonsterhomeList.at(Nr);
 	if(MH->ActMonsters < 1){
-		error("NotifyMonsterhomeOfDeath: Monsterhome has no living creatures.\n");
+		error("notify_monsterhome_of_death: Monsterhome has no living creatures.\n");
 		return;
 	}
 
 	MH->ActMonsters -= 1;
 	if(MH->ActMonsters >= MH->MaxMonsters){
-		error("NotifyMonsterhomeOfDeath: Monsterhome %d had too many monsters (%d instead of %d).\n",
+		error("notify_monsterhome_of_death: Monsterhome %d had too many monsters (%d instead of %d).\n",
 				Nr, (MH->ActMonsters + 1), MH->MaxMonsters);
 		return;
 	}
 
 	if(MH->Timer == 0){
-		StartMonsterhomeTimer(Nr);
+		start_monsterhome_timer(Nr);
 	}
 }
 
-bool MonsterhomeInRange(int Nr, int x, int y, int z){
+bool monsterhome_in_range(int Nr, int x, int y, int z){
 	if(Nr == 0){
 		return true;
 	}
 
 	if(Nr < 1 || Nr > Monsterhomes){
-		error("MonsterhomeInRange: Invalid monsterhome number %d.\n", Nr);
+		error("monsterhome_in_range: Invalid monsterhome number %d.\n", Nr);
 		return false;
 	}
 
-	TMonsterhome *MH = Monsterhome.at(Nr);
+	Monsterhome *MH = MonsterhomeList.at(Nr);
 	return std::abs(z - MH->z) <= 2
 		&& std::abs(x - MH->x) <= MH->Radius
 		&& std::abs(y - MH->y) <= MH->Radius;
@@ -234,7 +234,7 @@ bool MonsterhomeInRange(int Nr, int x, int y, int z){
 // TMonster
 // =============================================================================
 TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
-		TNonplayer()
+		Nonplayer()
 {
 	this->Type = MONSTER;
 	this->Race = Race;
@@ -250,7 +250,7 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 	this->Target = 0;
 
 	while(this->Master != 0){
-		TCreature *Master = GetCreature(this->Master);
+		TCreature *Master = get_creature(this->Master);
 		// TODO(fusion): Do we actually want to return here?
 		if(Master == NULL){
 			error("TMonster::TMonster: Master does not exist.\n");
@@ -267,16 +267,16 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 		this->Master = ((TMonster*)Master)->Master;
 	}
 
-	if(RaceData[Race].Article[0] == 0){
-		strcpy(this->Name, RaceData[Race].Name);
+	if(race_data[Race].Article[0] == 0){
+		strcpy(this->Name, race_data[Race].Name);
 	}else{
 		snprintf(this->Name, sizeof(this->Name), "%s %s",
-				RaceData[Race].Article, RaceData[Race].Name);
+				race_data[Race].Article, race_data[Race].Name);
 	}
 
 	this->SetSkills(Race);
-	this->OrgOutfit = RaceData[Race].Outfit;
-	this->Outfit = RaceData[Race].Outfit;
+	this->OrgOutfit = race_data[Race].Outfit;
+	this->Outfit = race_data[Race].Outfit;
 	this->SetID(0);
 	this->SetInList();
 	if(!this->SetOnMap()){
@@ -284,15 +284,15 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 		return;
 	}
 
-	// TODO(fusion): This part is very similar to `ProcessMonsterRaids` when
+	// TODO(fusion): This part is very similar to `process_monster_raids` when
 	// adding extra items to spawned monsters.
 	try{
-		if(this->Master == 0 && RaceData[Race].Items > 0){
+		if(this->Master == 0 && race_data[Race].Items > 0){
 			Object Bag = create(get_body_container(this->ID, INVENTORY_BAG),
 								get_special_object(DEFAULT_CONTAINER),
 								0);
-			for(int i = 1; i <= RaceData[Race].Items; i += 1){
-				TItemData *ItemData = RaceData[Race].Item.at(i);
+			for(int i = 1; i <= race_data[Race].Items; i += 1){
+				ItemData *ItemData = race_data[Race].Item.at(i);
 				if(random(0, 999) > ItemData->Probability){
 					continue;
 				}
@@ -354,18 +354,18 @@ TMonster::~TMonster(void){
 	if(!this->IsDead){
 		graphical_effect(this->posx, this->posy, this->posz, EFFECT_POFF);
 	}else if(this->Master == 0){
-		this->Combat.DistributeExperiencePoints(RaceData[this->Race].ExperiencePoints);
+		this->Combat.DistributeExperiencePoints(race_data[this->Race].ExperiencePoints);
 	}
 
 	if(this->Master != 0){
-		TCreature *Master = GetCreature(this->Master);
+		TCreature *Master = get_creature(this->Master);
 		if(Master != NULL && Master->SummonedCreatures > 0){
 			Master->SummonedCreatures -= 1;
 		}
 	}
 
 	if(this->Home != 0){
-		NotifyMonsterhomeOfDeath(this->Home);
+		notify_monsterhome_of_death(this->Home);
 	}
 }
 
@@ -377,7 +377,7 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 	}
 
 	if(this->State != ATTACKING && this->State != PANIC){
-		if(!MonsterhomeInRange(this->Home, x, y, z)){
+		if(!monsterhome_in_range(this->Home, x, y, z)){
 			return false;
 		}
 
@@ -401,7 +401,7 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 	}
 
 	if(Execute && this->Master != 0 && this->State != ATTACKING && this->State != PANIC){
-		TCreature *Master = GetCreature(this->Master);
+		TCreature *Master = get_creature(this->Master);
 		if(Master != NULL && Master->posz == this->posz){
 			// NOTE(fusion): Manhattan distance.
 			if((std::abs(Master->posx - this->posx) + std::abs(Master->posy - this->posy)) >  1
@@ -430,11 +430,11 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 					return false;
 				}
 
-				if(!RaceData[this->Race].KickCreatures){
+				if(!race_data[this->Race].KickCreatures){
 					return false;
 				}
 
-				TCreature *Creature = GetCreature(Obj);
+				TCreature *Creature = get_creature(Obj);
 				if(Creature == NULL){
 					error("TMonster::MovePossible: Cannot identify blocking creature.\n");
 					return false;
@@ -444,12 +444,12 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 					return false;
 				}
 
-				if(RaceData[Creature->Race].Unpushable){
+				if(race_data[Creature->Race].Unpushable){
 					return false;
 				}
 
 				// TODO(fusion): Why?
-				if(!RaceData[this->Race].SeeInvisible && Creature->IsInvisible()){
+				if(!race_data[this->Race].SeeInvisible && Creature->IsInvisible()){
 					return false;
 				}
 
@@ -493,9 +493,9 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 				if(ObjType.get_flag(AVOID)){
 					int AvoidDamageTypes = (int)ObjType.get_attribute(AVOIDDAMAGETYPES);
 					bool IgnoreHazard = (this->State == PANIC && AvoidDamageTypes != 0)
-						|| (RaceData[this->Race].NoPoison  && AvoidDamageTypes == DAMAGE_POISON)
-						|| (RaceData[this->Race].NoBurning && AvoidDamageTypes == DAMAGE_FIRE)
-						|| (RaceData[this->Race].NoEnergy  && AvoidDamageTypes == DAMAGE_ENERGY);
+						|| (race_data[this->Race].NoPoison  && AvoidDamageTypes == DAMAGE_POISON)
+						|| (race_data[this->Race].NoBurning && AvoidDamageTypes == DAMAGE_FIRE)
+						|| (race_data[this->Race].NoEnergy  && AvoidDamageTypes == DAMAGE_ENERGY);
 					if(!IgnoreHazard){
 						if(ObjType.get_flag(UNMOVE) || !this->CanKickBoxes()){
 							return false;
@@ -525,7 +525,7 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 
 bool TMonster::IsPeaceful(void){
 	return this->Master != 0
-		&& IsCreaturePlayer(this->Master);
+		&& is_creature_player(this->Master);
 }
 
 uint32 TMonster::GetMaster(void){
@@ -564,8 +564,8 @@ void TMonster::IdleStimulus(void){
 	}
 
 	if(this->Master != 0){
-		TCreature *Master = GetCreature(this->Master);
-		bool MasterIsPlayer = IsCreaturePlayer(this->Master);
+		TCreature *Master = get_creature(this->Master);
+		bool MasterIsPlayer = is_creature_player(this->Master);
 		bool ShouldDespawn = false;
 		if(Master == NULL){
 			if(MasterIsPlayer){
@@ -612,8 +612,8 @@ void TMonster::IdleStimulus(void){
 		}
 
 	}else{
-		if(!MonsterhomeInRange(this->Home, this->posx, this->posy, this->posz)){
-			TMonsterhome *MH = Monsterhome.at(this->Home);
+		if(!monsterhome_in_range(this->Home, this->posx, this->posy, this->posz)){
+			Monsterhome *MH = MonsterhomeList.at(this->Home);
 			print(3, "%s at [%d,%d,%d] too far from [%d,%d,%d].\n",
 					this->Name, this->posx, this->posy, this->posz, MH->x, MH->y, MH->z);
 			this->StartLogout(true, true);
@@ -623,7 +623,7 @@ void TMonster::IdleStimulus(void){
 	}
 
 	if(this->Target != 0){
-		TCreature *Target = GetCreature(this->Target);
+		TCreature *Target = get_creature(this->Target);
 		bool LoseTarget = (Target == NULL)
 			// RANGE CHECK
 			|| Target->posz != this->posz
@@ -633,9 +633,9 @@ void TMonster::IdleStimulus(void){
 			|| is_protection_zone(Target->posx, Target->posy, Target->posz)
 			|| is_house(Target->posx, Target->posy, Target->posz)
 			// INVISIBILITY CHECK
-			|| (Target->IsInvisible() && !RaceData[this->Race].SeeInvisible)
+			|| (Target->IsInvisible() && !race_data[this->Race].SeeInvisible)
 			// LOSETARGET CHECK
-			|| (this->Master == 0 && random(0, 99) < RaceData[this->Race].LoseTarget);
+			|| (this->Master == 0 && random(0, 99) < race_data[this->Race].LoseTarget);
 		if(LoseTarget){
 			this->Target = 0;
 		}
@@ -646,9 +646,9 @@ void TMonster::IdleStimulus(void){
 	}
 
 	// NOTE(fusion): TALKING.
-	if(RaceData[this->Race].Talks > 0 && (rand() % 50) == 0){
-		int TalkNr = random(1, RaceData[this->Race].Talks);
-		const char *Text = GetDynamicString(*RaceData[this->Race].Talk.at(TalkNr));
+	if(race_data[this->Race].Talks > 0 && (rand() % 50) == 0){
+		int TalkNr = random(1, race_data[this->Race].Talks);
+		const char *Text = GetDynamicString(*race_data[this->Race].Talk.at(TalkNr));
 		if(Text != 0 && Text[0] != 0){
 			// TODO(fusion): We were only checking for a `#` but it could be
 			// problematic for any two character nul terminated string, since
@@ -680,24 +680,24 @@ void TMonster::IdleStimulus(void){
 			// IMPORTANT(fusion): We don't iterate over the last strategy on purpose.
 			int Strategy = 0;
 			int StrategyRoll = random(0, 99);
-			while(Strategy < (NARRAY(TRaceData::Strategy) - 1)){
-				if(StrategyRoll < RaceData[this->Race].Strategy[Strategy]){
+			while(Strategy < (NARRAY(RaceData::Strategy) - 1)){
+				if(StrategyRoll < race_data[this->Race].Strategy[Strategy]){
 					break;
 				}
-				StrategyRoll -= RaceData[this->Race].Strategy[Strategy];
+				StrategyRoll -= race_data[this->Race].Strategy[Strategy];
 				Strategy += 1;
 			}
 
 			int BestStrategyParam = INT_MIN;
 			int BestTieBreaker = 0;
-			TFindCreatures Search(12, 12, this->ID, FIND_PLAYERS | FIND_MONSTERS);
+			FindCreatures Search(12, 12, this->ID, FIND_PLAYERS | FIND_MONSTERS);
 			while(true){
 				uint32 TargetID = Search.getNext();
 				if(TargetID == 0){
 					break;
 				}
 
-				TCreature *Target = GetCreature(TargetID);
+				TCreature *Target = get_creature(TargetID);
 				if(Target == NULL){
 					error("TMonster::IdleStimulus: Creature does not exist.\n");
 					continue;
@@ -717,7 +717,7 @@ void TMonster::IdleStimulus(void){
 				int DistanceY = std::abs(Target->posy - this->posy);
 				if((Target->posz != this->posz || DistanceX > 10 || DistanceY > 10)
 						||(Target->Type == PLAYER && check_right(Target->ID, IGNORED_BY_MONSTERS))
-						|| (Target->IsInvisible() && !RaceData[this->Race].SeeInvisible)
+						|| (Target->IsInvisible() && !race_data[this->Race].SeeInvisible)
 						|| is_protection_zone(Target->posx, Target->posy, Target->posz)
 						|| is_house(Target->posx, Target->posy, Target->posz)
 						|| std::abs(Target->posx - this->posx) > 10
@@ -774,12 +774,12 @@ void TMonster::IdleStimulus(void){
 	// NOTE(fusion): CASTING.
 	// TODO(fusion): It is highly unlikely but we could cast all spells at once.
 	// I'm not sure this is correct but I can see it happening.
-	if(RaceData[this->Race].Spells > 0){
-		TCreature *Target = GetCreature(this->Target);
+	if(race_data[this->Race].Spells > 0){
+		TCreature *Target = get_creature(this->Target);
 		for(int SpellNr = 1;
-				SpellNr <= RaceData[this->Race].Spells;
+				SpellNr <= race_data[this->Race].Spells;
 				SpellNr += 1){
-			TSpellData *SpellData = RaceData[this->Race].Spell.at(SpellNr);
+			SpellData *SpellData = race_data[this->Race].Spell.at(SpellNr);
 			if((rand() % SpellData->Delay) != 0){
 				continue;
 			}
@@ -923,7 +923,7 @@ void TMonster::IdleStimulus(void){
 	}
 
 	// NOTE(fusion): WALKING. What was already bad got even worse.
-	TCreature *Target = GetCreature(this->Target);
+	TCreature *Target = get_creature(this->Target);
 	if(this->Target != 0 && Target == NULL){
 		error("TMonster::IdleStimulus: Creature does not exist.\n");
 		this->Target = 0;
@@ -974,7 +974,7 @@ void TMonster::IdleStimulus(void){
 				int Distance = std::max<int>(
 						std::abs(Target->posx - this->posx),
 						std::abs(Target->posy - this->posy));
-				if(!RaceData[this->Race].DistanceFighting
+				if(!race_data[this->Race].DistanceFighting
 						|| !throw_possible(this->posx, this->posy, this->posz,
 								Target->posx, Target->posy, Target->posz, 0)){
 					this->Combat.SetChaseMode(CHASE_MODE_CLOSE);
@@ -1068,7 +1068,7 @@ void TMonster::IdleStimulus(void){
 	}
 
 	// TODO(fusion): This part is similar to `TNPC::IdleStimulus`. Perhaps there
-	// is a common function in `TNonplayer` that does this?
+	// is a common function in `Nonplayer` that does this?
 	bool FoundDest = false;
 	int DestX, DestY, DestZ;
 	for(int i = 0; i < 10; i += 1){
@@ -1116,7 +1116,7 @@ void TMonster::CreatureMoveStimulus(uint32 CreatureID, int Type){
 	}
 
 	if(this->State == SLEEPING && Type != OBJECT_DELETED){
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if(Creature == NULL){
 			error("TMonster::CreatureMoveStimulus: Creature %u does not exist.\n", CreatureID);
 			return;
@@ -1138,9 +1138,9 @@ void TMonster::CreatureMoveStimulus(uint32 CreatureID, int Type){
 }
 
 bool TMonster::CanKickBoxes(void){
-	bool Result = RaceData[this->Race].KickBoxes;
+	bool Result = race_data[this->Race].KickBoxes;
 	if(!Result && this->Master != 0){
-		TCreature *Master = GetCreature(this->Master);
+		TCreature *Master = get_creature(this->Master);
 		Result = (Master != NULL && Master->Type == MONSTER
 					&& ((TMonster*)Master)->CanKickBoxes());
 	}
@@ -1260,12 +1260,12 @@ void TMonster::Convince(TCreature *NewMaster){
 	}
 
 	if(this->Home != 0){
-		NotifyMonsterhomeOfDeath(this->Home);
+		notify_monsterhome_of_death(this->Home);
 	}
 
 	this->Home = 0;
 	if(this->Master != 0){
-		TCreature *OldMaster = GetCreature(this->Master);
+		TCreature *OldMaster = get_creature(this->Master);
 		if(OldMaster != NULL){
 			OldMaster->SummonedCreatures -= 1;
 		}
@@ -1295,7 +1295,7 @@ void TMonster::SetTarget(TCreature *NewTarget){
 bool TMonster::IsPlayerControlled(void){
 	bool Result = false;
 	if(this->Master != 0){
-		TCreature *Master = GetCreature(this->Master);
+		TCreature *Master = get_creature(this->Master);
 		Result = (Master && Master->Type == PLAYER);
 	}
 	return Result;
@@ -1305,20 +1305,20 @@ bool TMonster::IsFleeing(void){
 	bool Result = false;
 	if(this->Master == 0){
 		int HitPoints = this->Skills[SKILL_HITPOINTS]->Get();
-		int FleeThreshold = RaceData[this->Race].FleeThreshold;
+		int FleeThreshold = race_data[this->Race].FleeThreshold;
 		Result = HitPoints <= FleeThreshold;
 	}
 	return Result;
 }
 
-TCreature *CreateMonster(int Race, int x, int y, int z, int Home, uint32 MasterID, bool ShowEffect){
-	if(!IsRaceValid(Race)){
-		error("CreateMonster: Invalid race number %d.\n", Race);
+TCreature *create_monster(int Race, int x, int y, int z, int Home, uint32 MasterID, bool ShowEffect){
+	if(!is_race_valid(Race)){
+		error("create_monster: Invalid race number %d.\n", Race);
 		return NULL;
 	}
 
-	if(RaceData[Race].Name[0] == 0){
-		error("CreateMonster: Data for race %d not defined.\n", Race);
+	if(race_data[Race].Name[0] == 0){
+		error("create_monster: Data for race %d not defined.\n", Race);
 		return NULL;
 	}
 
@@ -1330,38 +1330,38 @@ TCreature *CreateMonster(int Race, int x, int y, int z, int Home, uint32 MasterI
 	return Monster;
 }
 
-void ConvinceMonster(TCreature *Master, TCreature *Slave){
+void convince_monster(TCreature *Master, TCreature *Slave){
 	if(Master == NULL){
-		error("ConvinceMonster: Master does not exist.\n");
+		error("convince_monster: Master does not exist.\n");
 		return;
 	}
 
 	if(Slave == NULL){
-		error("ConvinceMonster: Slave does not exist.\n");
+		error("convince_monster: Slave does not exist.\n");
 		return;
 	}
 
 	if(Slave->Type != MONSTER){
-		error("ConvinceMonster: Slave is not a monster.\n");
+		error("convince_monster: Slave is not a monster.\n");
 		return;
 	}
 
 	((TMonster*)Slave)->Convince(Master);
 }
 
-void ChallengeMonster(TCreature *Challenger, TCreature *Monster){
+void challenge_monster(TCreature *Challenger, TCreature *Monster){
 	if(Challenger == NULL){
-		error("ChallengeMonster: Challenger does not exist.\n");
+		error("challenge_monster: Challenger does not exist.\n");
 		return;
 	}
 
 	if(Monster == NULL){
-		error("ChallengeMonster: Monster does not exist.\n");
+		error("challenge_monster: Monster does not exist.\n");
 		return;
 	}
 
 	if(Monster->Type != MONSTER){
-		error("ChallengeMonster: Monster is not a monster.\n");
+		error("challenge_monster: Monster is not a monster.\n");
 		return;
 	}
 

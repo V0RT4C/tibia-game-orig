@@ -8,7 +8,7 @@
 // TCreature
 // =============================================================================
 TCreature::TCreature(void) :
-		TSkillBase(),
+		SkillBase(),
 		Combat(),
 		ToDoList(0, 20, 10)
 {
@@ -65,9 +65,9 @@ TCreature::~TCreature(void){
 	if(this->IsDead){
 		int Race = this->Race;
 		int PoolLiquid = LIQUID_NONE;
-		if(RaceData[Race].Blood == BT_BLOOD){
+		if(race_data[Race].Blood == BT_BLOOD){
 			PoolLiquid = LIQUID_BLOOD;
-		}else if(RaceData[Race].Blood == BT_SLIME){
+		}else if(race_data[Race].Blood == BT_SLIME){
 			PoolLiquid = LIQUID_SLIME;
 		}
 
@@ -85,8 +85,8 @@ TCreature::~TCreature(void){
 		}
 
 		ObjectType CorpseType = (this->Sex == 1) // MALE ?
-				? RaceData[Race].MaleCorpse
-				: RaceData[Race].FemaleCorpse;
+				? race_data[Race].MaleCorpse
+				: race_data[Race].FemaleCorpse;
 
 		if(CorpseType.get_flag(MAGICFIELD)){
 			Object Obj = get_first_object(this->posx, this->posy, this->posz);
@@ -289,7 +289,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 			// which case it would try to attack before checking whether it should
 			// despawn in `TMonster::IdleStimulus`, causing `Responsible` to be NULL
 			// even though `Attacker` is not.
-			TCreature *Master = GetCreature(MasterID);
+			TCreature *Master = get_creature(MasterID);
 			if(Master != NULL){
 				Responsible = Master;
 			}
@@ -353,7 +353,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	}
 
 	if(DamageType == DAMAGE_POISON_PERIODIC){
-		if(RaceData[this->Race].NoPoison){
+		if(race_data[this->Race].NoPoison){
 			return 0;
 		}
 
@@ -365,7 +365,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 		this->DamageStimulus(AttackerID, Damage, DamageType);
 		return Damage;
 	}else if(DamageType == DAMAGE_FIRE_PERIODIC){
-		if(RaceData[this->Race].NoBurning){
+		if(race_data[this->Race].NoBurning){
 			return 0;
 		}
 
@@ -374,7 +374,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 		this->DamageStimulus(AttackerID, Damage, DamageType);
 		return Damage;
 	}else if(DamageType == DAMAGE_ENERGY_PERIODIC){
-		if(RaceData[this->Race].NoEnergy){
+		if(race_data[this->Race].NoEnergy){
 			return 0;
 		}
 
@@ -385,11 +385,11 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 		return Damage;
 	}
 
-	if((DamageType == DAMAGE_PHYSICAL && RaceData[this->Race].NoHit)
-	|| (DamageType == DAMAGE_POISON && RaceData[this->Race].NoPoison)
-	|| (DamageType == DAMAGE_FIRE && RaceData[this->Race].NoBurning)
-	|| (DamageType == DAMAGE_ENERGY && RaceData[this->Race].NoEnergy)
-	|| (DamageType == DAMAGE_LIFEDRAIN && RaceData[this->Race].NoLifeDrain)){
+	if((DamageType == DAMAGE_PHYSICAL && race_data[this->Race].NoHit)
+	|| (DamageType == DAMAGE_POISON && race_data[this->Race].NoPoison)
+	|| (DamageType == DAMAGE_FIRE && race_data[this->Race].NoBurning)
+	|| (DamageType == DAMAGE_ENERGY && race_data[this->Race].NoEnergy)
+	|| (DamageType == DAMAGE_LIFEDRAIN && race_data[this->Race].NoLifeDrain)){
 		graphical_effect(this->CrObject, EFFECT_BLOCK_HIT);
 		return 0;
 	}
@@ -480,7 +480,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	int TextColor = COLOR_BLACK;
 	int SplashLiquid = LIQUID_NONE;
 	if(DamageType == DAMAGE_PHYSICAL){
-		switch(RaceData[this->Race].Blood){
+		switch(race_data[this->Race].Blood){
 			case BT_BLOOD:{
 				HitEffect = EFFECT_BLOOD_HIT;
 				TextColor = COLOR_RED;
@@ -510,7 +510,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 			}
 			default:{
 				error("TCreature::Damage: Invalid blood type %d for race %d.\n",
-						RaceData[this->Race].Blood, this->Race);
+						race_data[this->Race].Blood, this->Race);
 				break;
 			}
 		}
@@ -602,7 +602,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 		uint32 MurdererID = 0;
 		char Remark[30] = {};
 		if(Attacker == NULL){
-			AddKillStatistics(0, this->Race);
+			add_kill_statistics(0, this->Race);
 			if(DamageType == DAMAGE_PHYSICAL){
 				strcpy(Remark, "a hit");
 			}else if(DamageType == DAMAGE_POISON){
@@ -617,7 +617,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 				error("TCreature::Damage: Invalid damage type %d as cause of death.\n", DamageType);
 			}
 		}else{
-			AddKillStatistics(Attacker->Race, this->Race);
+			add_kill_statistics(Attacker->Race, this->Race);
 			strcpy(this->Murderer, Attacker->Name);
 
 			if(Responsible->Type == PLAYER){
@@ -635,7 +635,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 			uint32 MostDangerousID = this->Combat.GetMostDangerousAttacker();
 			if(MostDangerousID != 0
 					&& MostDangerousID != MurdererID
-					&& IsCreaturePlayer(MostDangerousID)){
+					&& is_creature_player(MostDangerousID)){
 				// TODO(fusion): The original function is confusing at this point
 				// but it seems correct that the remark is included only with the
 				// murderer.
@@ -706,7 +706,7 @@ void TCreature::CreatureMoveStimulus(uint32 CreatureID, int Type){
 		return;
 	}
 
-	TCreature *Target = GetCreature(this->Combat.AttackDest);
+	TCreature *Target = get_creature(this->Combat.AttackDest);
 	if(Target == NULL){
 		return;
 	}
@@ -740,6 +740,6 @@ void TCreature::AttackStimulus(uint32 AttackerID){
 
 // Creature Management
 // =============================================================================
-bool IsCreaturePlayer(uint32 CreatureID){
+bool is_creature_player(uint32 CreatureID){
 	return CreatureID < 0x40000000;
 }

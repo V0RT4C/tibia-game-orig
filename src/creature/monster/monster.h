@@ -3,7 +3,7 @@
 
 #include "creature/nonplayer/nonplayer.h"
 
-struct TMonsterhome {
+struct Monsterhome {
 	int Race;
 	int x;
 	int y;
@@ -15,7 +15,7 @@ struct TMonsterhome {
 	int Timer;
 };
 
-struct TMonster: TNonplayer {
+struct TMonster: Nonplayer {
 	TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID);
 	bool CanKickBoxes(void);
 	void KickBoxes(Object Obj);
@@ -41,16 +41,16 @@ struct TMonster: TNonplayer {
 };
 
 // Monsterhome API
-void StartMonsterhomeTimer(int Nr);
-void LoadMonsterhomes(void);
-void ProcessMonsterhomes(void);
-void NotifyMonsterhomeOfDeath(int Nr);
-bool MonsterhomeInRange(int Nr, int x, int y, int z);
+void start_monsterhome_timer(int Nr);
+void load_monsterhomes(void);
+void process_monsterhomes(void);
+void notify_monsterhome_of_death(int Nr);
+bool monsterhome_in_range(int Nr, int x, int y, int z);
 
 // Monster creation API
-TCreature *CreateMonster(int Race, int x, int y, int z,
+TCreature *create_monster(int Race, int x, int y, int z,
 		int Home, uint32 MasterID, bool ShowEffect);
-void ConvinceMonster(TCreature *Master, TCreature *Slave);
-void ChallengeMonster(TCreature *Challenger, TCreature *Monster);
+void convince_monster(TCreature *Master, TCreature *Slave);
+void challenge_monster(TCreature *Challenger, TCreature *Monster);
 
 #endif // TIBIA_CREATURE_MONSTER_H_

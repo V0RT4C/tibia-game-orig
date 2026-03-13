@@ -8,12 +8,12 @@
 
 #include <dirent.h>
 
-static store<TBehaviourNode, 256> BehaviourNodeTable;
+static store<BehaviourNode, 256> BehaviourNodeTable;
 
 // Behaviour Database
 // =============================================================================
-static TBehaviourNode *NewBehaviourNode(int Type, TBehaviourNode *Left, TBehaviourNode *Right){
-	TBehaviourNode *Node = BehaviourNodeTable.getFreeItem();
+static BehaviourNode *NewBehaviourNode(int Type, BehaviourNode *Left, BehaviourNode *Right){
+	BehaviourNode *Node = BehaviourNodeTable.getFreeItem();
 	Node->Type = Type;
 	Node->Data = 0;
 	Node->Left = Left;
@@ -21,8 +21,8 @@ static TBehaviourNode *NewBehaviourNode(int Type, TBehaviourNode *Left, TBehavio
 	return Node;
 }
 
-static TBehaviourNode *NewBehaviourNode(int Type, int Data){
-	TBehaviourNode *Node = BehaviourNodeTable.getFreeItem();
+static BehaviourNode *NewBehaviourNode(int Type, int Data){
+	BehaviourNode *Node = BehaviourNodeTable.getFreeItem();
 	Node->Type = Type;
 	Node->Data = Data;
 	Node->Left = NULL;
@@ -30,7 +30,7 @@ static TBehaviourNode *NewBehaviourNode(int Type, int Data){
 	return Node;
 }
 
-static void DeleteBehaviourNode(TBehaviourNode *Node){
+static void DeleteBehaviourNode(BehaviourNode *Node){
 	if(Node != NULL){
 		DeleteBehaviourNode(Node->Left);
 		DeleteBehaviourNode(Node->Right);
@@ -38,9 +38,9 @@ static void DeleteBehaviourNode(TBehaviourNode *Node){
 	}
 }
 
-bool TBehaviourCondition::set(int Type, void *Data){
+bool BehaviourCondition::set(int Type, void *Data){
 	if(Type != BEHAVIOUR_CONDITION_SHORTCIRCUIT && Data == NULL){
-		error("TBehaviourCondition::set: Data is NULL.\n");
+		error("BehaviourCondition::set: Data is NULL.\n");
 		this->Type = BEHAVIOUR_CONDITION_NONE;
 		return false;
 	}
@@ -97,7 +97,7 @@ bool TBehaviourCondition::set(int Type, void *Data){
 		}
 
 		case BEHAVIOUR_CONDITION_EXPRESSION:{
-			this->Expression = (TBehaviourNode*)Data;
+			this->Expression = (BehaviourNode*)Data;
 			break;
 		}
 
@@ -107,7 +107,7 @@ bool TBehaviourCondition::set(int Type, void *Data){
 		}
 
 		default:{
-			error("TBehaviourCondition::set: Invalid condition type %d\n", Type);
+			error("BehaviourCondition::set: Invalid condition type %d\n", Type);
 			return false;
 		}
 	}
@@ -115,7 +115,7 @@ bool TBehaviourCondition::set(int Type, void *Data){
 	return true;
 }
 
-void TBehaviourCondition::clear(void){
+void BehaviourCondition::clear(void){
 	if(this->Type == BEHAVIOUR_CONDITION_TEXT){
 		DeleteDynamicString(this->Text);
 	}else if(this->Type == BEHAVIOUR_CONDITION_EXPRESSION){
@@ -125,7 +125,7 @@ void TBehaviourCondition::clear(void){
 	this->Type = BEHAVIOUR_CONDITION_NONE;
 }
 
-bool TBehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void *Data4){
+bool BehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void *Data4){
 	this->Type = Type;
 	switch(Type){
 		case BEHAVIOUR_ACTION_REPLY:{
@@ -137,15 +137,15 @@ bool TBehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void 
 		case BEHAVIOUR_ACTION_SET_SKILL:
 		case BEHAVIOUR_ACTION_FUNCTION1:{
 			this->Number = *(int*)Data;
-			this->Expression = (TBehaviourNode*)Data2;
+			this->Expression = (BehaviourNode*)Data2;
 			break;
 		}
 
 		case BEHAVIOUR_ACTION_FUNCTION2:
 		case BEHAVIOUR_ACTION_SET_SKILL_TIMER:{
 			this->Number = *(int*)Data;
-			this->Expression = (TBehaviourNode*)Data2;
-			this->Expression2 = (TBehaviourNode*)Data3;
+			this->Expression = (BehaviourNode*)Data2;
+			this->Expression2 = (BehaviourNode*)Data3;
 			break;
 		}
 
@@ -162,9 +162,9 @@ bool TBehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void 
 
 		case BEHAVIOUR_ACTION_FUNCTION3:{
 			this->Number = *(int*)Data;
-			this->Expression = (TBehaviourNode*)Data2;
-			this->Expression2 = (TBehaviourNode*)Data3;
-			this->Expression3 = (TBehaviourNode*)Data4;
+			this->Expression = (BehaviourNode*)Data2;
+			this->Expression2 = (BehaviourNode*)Data3;
+			this->Expression3 = (BehaviourNode*)Data4;
 			break;
 		}
 
@@ -177,7 +177,7 @@ bool TBehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void 
 	return true;
 }
 
-void TBehaviourAction::clear(void){
+void BehaviourAction::clear(void){
 	switch(this->Type){
 		case BEHAVIOUR_ACTION_REPLY:{
 			DeleteDynamicString(this->Text);
@@ -266,7 +266,7 @@ void TBehaviour::operator=(const TBehaviour &Other){
 }
 
 
-TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
+BehaviourDatabase::BehaviourDatabase(ReadScriptFile *Script) :
 		Behaviour(0, 50, 25)
 {
 	this->Behaviours = 0;
@@ -296,7 +296,7 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 				}
 
 				if(!Ok){
-					TBehaviourNode *Left = this->readTerm(Script);
+					BehaviourNode *Left = this->readTerm(Script);
 					if(Script->Token != SPECIAL){
 						Script->error("relational operator expected");
 					}
@@ -316,7 +316,7 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 					}
 
 					Script->next_token();
-					TBehaviourNode *Right = this->readTerm(Script);
+					BehaviourNode *Right = this->readTerm(Script);
 					Behaviour->addCondition(BEHAVIOUR_CONDITION_EXPRESSION,
 							NewBehaviourNode(Operator, Left, Right));
 				}else{
@@ -426,7 +426,7 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 					case BEHAVIOUR_ACTION_SET_SKILL:{
 						Script->read_symbol('=');
 						Script->next_token();
-						TBehaviourNode *Value = this->readTerm(Script);
+						BehaviourNode *Value = this->readTerm(Script);
 						Behaviour->addAction(Type, &Data, Value, NULL, NULL);
 						break;
 					}
@@ -434,7 +434,7 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 					case BEHAVIOUR_ACTION_FUNCTION1:{
 						Script->read_symbol('(');
 						Script->next_token();
-						TBehaviourNode *Param = this->readTerm(Script);
+						BehaviourNode *Param = this->readTerm(Script);
 						if(Script->Token != SPECIAL || Script->get_special() != ')'){
 							Script->error(") expected");
 						}
@@ -447,12 +447,12 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 					case BEHAVIOUR_ACTION_SET_SKILL_TIMER:{
 						Script->read_symbol('(');
 						Script->next_token();
-						TBehaviourNode *Param1 = this->readTerm(Script);
+						BehaviourNode *Param1 = this->readTerm(Script);
 						if(Script->Token != SPECIAL || Script->get_special() != ','){
 							Script->error(", expected");
 						}
 						Script->next_token();
-						TBehaviourNode *Param2 = this->readTerm(Script);
+						BehaviourNode *Param2 = this->readTerm(Script);
 						if(Script->Token != SPECIAL || Script->get_special() != ')'){
 							Script->error(") expected");
 						}
@@ -471,17 +471,17 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 					case BEHAVIOUR_ACTION_FUNCTION3:{
 						Script->read_symbol('(');
 						Script->next_token();
-						TBehaviourNode *Param1 = this->readTerm(Script);
+						BehaviourNode *Param1 = this->readTerm(Script);
 						if(Script->Token != SPECIAL || Script->get_special() != ','){
 							Script->error(", expected");
 						}
 						Script->next_token();
-						TBehaviourNode *Param2 = this->readTerm(Script);
+						BehaviourNode *Param2 = this->readTerm(Script);
 						if(Script->Token != SPECIAL || Script->get_special() != ','){
 							Script->error(", expected");
 						}
 						Script->next_token();
-						TBehaviourNode *Param3 = this->readTerm(Script);
+						BehaviourNode *Param3 = this->readTerm(Script);
 						if(Script->Token != SPECIAL || Script->get_special() != ')'){
 							Script->error(") expected");
 						}
@@ -517,8 +517,8 @@ TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 	}
 }
 
-TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
-	TBehaviourNode *Node = NULL;
+BehaviourNode *BehaviourDatabase::readValue(ReadScriptFile *Script){
+	BehaviourNode *Node = NULL;
 	if(Script->Token == NUMBER){
 		Node = NewBehaviourNode(BEHAVIOUR_NODE_NUMBER, Script->get_number());
 	}else if(Script->Token == IDENTIFIER){
@@ -542,7 +542,7 @@ TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 		}else if(strcmp(Identifier, "count") == 0){
 			Script->read_symbol('(');
 			Script->next_token();
-			TBehaviourNode *Left = this->readTerm(Script);
+			BehaviourNode *Left = this->readTerm(Script);
 			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
@@ -557,7 +557,7 @@ TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 		}else if(strcmp(Identifier, "spellknown") == 0){
 			Script->read_symbol('(');
 			Script->next_token();
-			TBehaviourNode *Left = this->readTerm(Script);
+			BehaviourNode *Left = this->readTerm(Script);
 			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
@@ -566,7 +566,7 @@ TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 		}else if(strcmp(Identifier, "spelllevel") == 0){
 			Script->read_symbol('(');
 			Script->next_token();
-			TBehaviourNode *Left = this->readTerm(Script);
+			BehaviourNode *Left = this->readTerm(Script);
 			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
@@ -576,13 +576,13 @@ TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 			Script->read_symbol('(');
 
 			Script->next_token();
-			TBehaviourNode *Left = this->readTerm(Script);
+			BehaviourNode *Left = this->readTerm(Script);
 			if(Script->Token != SPECIAL || Script->get_special() != ','){
 				Script->error(", expected");
 			}
 
 			Script->next_token();
-			TBehaviourNode *Right = this->readTerm(Script);
+			BehaviourNode *Right = this->readTerm(Script);
 			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
@@ -591,7 +591,7 @@ TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 		}else if(strcmp(Identifier, "questvalue") == 0){
 			Script->read_symbol('(');
 			Script->next_token();
-			TBehaviourNode *Left = this->readTerm(Script);
+			BehaviourNode *Left = this->readTerm(Script);
 			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
@@ -615,8 +615,8 @@ TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 	return Node;
 }
 
-TBehaviourNode *TBehaviourDatabase::readFactor(ReadScriptFile *Script){
-	TBehaviourNode *Node = this->readValue(Script);
+BehaviourNode *BehaviourDatabase::readFactor(ReadScriptFile *Script){
+	BehaviourNode *Node = this->readValue(Script);
 	while(Script->Token == SPECIAL && Script->get_special() == '*'){
 		Script->next_token();
 		Node = NewBehaviourNode(BEHAVIOUR_NODE_MUL, Node, this->readValue(Script));
@@ -624,8 +624,8 @@ TBehaviourNode *TBehaviourDatabase::readFactor(ReadScriptFile *Script){
 	return Node;
 }
 
-TBehaviourNode *TBehaviourDatabase::readTerm(ReadScriptFile *Script){
-	TBehaviourNode *Node = this->readFactor(Script);
+BehaviourNode *BehaviourDatabase::readTerm(ReadScriptFile *Script){
+	BehaviourNode *Node = this->readFactor(Script);
 	while(Script->Token == SPECIAL){
 		int Type = BEHAVIOUR_NODE_NONE;
 		if(Script->get_special() == '+'){
@@ -642,26 +642,26 @@ TBehaviourNode *TBehaviourDatabase::readTerm(ReadScriptFile *Script){
 	return Node;
 }
 
-int TBehaviourDatabase::evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameters){
+int BehaviourDatabase::evaluate(TNPC *Npc, BehaviourNode *Node, int *Parameters){
 	if(Npc == NULL){
-		error("TBehaviourDatabase::evaluate: NPC does not exist.\n");
+		error("BehaviourDatabase::evaluate: NPC does not exist.\n");
 		return 0;
 	}
 
 	if(Node == NULL){
-		error("TBehaviourDatabase::evaluate: Node does not exist.\n");
+		error("BehaviourDatabase::evaluate: Node does not exist.\n");
 		return 0;
 	}
 
 	if(Parameters == NULL){
-		error("TBehaviourDatabase::evaluate: Parameters do not exist.\n");
+		error("BehaviourDatabase::evaluate: Parameters do not exist.\n");
 		return 0;
 	}
 
 	uint32 InterlocutorID = Npc->Interlocutor;
-	TPlayer *Interlocutor = GetPlayer(InterlocutorID);
+	TPlayer *Interlocutor = get_player(InterlocutorID);
 	if(Interlocutor == NULL){
-		error("TBehaviourDatabase::evaluate: Interlocutor does not exist.\n");
+		error("BehaviourDatabase::evaluate: Interlocutor does not exist.\n");
 		return 0;
 	}
 
@@ -732,9 +732,9 @@ int TBehaviourDatabase::evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameter
 
 		case BEHAVIOUR_NODE_PARAMETER:{
 			if(Node->Data != 1 && Node->Data != 2){
-				error("TBehaviourDatabase::evaluate: Invalid number parameter %d.\n", Node->Data);
+				error("BehaviourDatabase::evaluate: Invalid number parameter %d.\n", Node->Data);
 			}else if(Parameters[Node->Data - 1] < 0){
-				error("TBehaviourDatabase::evaluate: Number parameter %d not assigned.\n", Node->Data);
+				error("BehaviourDatabase::evaluate: Number parameter %d not assigned.\n", Node->Data);
 			}else{
 				Result = Parameters[Node->Data - 1];
 			}
@@ -771,7 +771,7 @@ int TBehaviourDatabase::evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameter
 					|| SkillNr == SKILL_BURNING){
 				Result = Interlocutor->Skills[SkillNr]->TimerValue();
 			}else{
-				error("TBehaviourDatabase::evaluate: Invalid skill %d.\n", SkillNr);
+				error("BehaviourDatabase::evaluate: Invalid skill %d.\n", SkillNr);
 			}
 			break;
 		}
@@ -823,14 +823,14 @@ int TBehaviourDatabase::evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameter
 		}
 
 		default:{
-			error("TBehaviourDatabase::evaluate: Invalid node type %d.\n", Node->Type);
+			error("BehaviourDatabase::evaluate: Invalid node type %d.\n", Node->Type);
 			break;
 		}
 	}
 	return Result;
 }
 
-// NOTE(fusion): These smaller functions were inside `TBehaviourDatabase::react`
+// NOTE(fusion): These smaller functions were inside `BehaviourDatabase::react`
 // but I figured it would be better to pull them out for readability.
 static bool CheckBehaviourProperty(int Property, SITUATION Situation, TPlayer *Interlocutor){
 	if(Interlocutor == NULL){
@@ -964,21 +964,21 @@ static bool FormatNpcResponse(char *Buffer, int BufferSize,
 	}
 }
 
-void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation){
+void BehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation){
 	if(Npc == NULL){
-		error("TBehaviourDatabase::react: NPC does not exist.\n");
+		error("BehaviourDatabase::react: NPC does not exist.\n");
 		return;
 	}
 
 	if(Text == NULL){
-		error("TBehaviourDatabase::react: Provided text does not exist.\n");
+		error("BehaviourDatabase::react: Provided text does not exist.\n");
 		return;
 	}
 
 	uint32 InterlocutorID = Npc->Interlocutor;
-	TPlayer *Interlocutor = GetPlayer(InterlocutorID);
+	TPlayer *Interlocutor = get_player(InterlocutorID);
 	if(Interlocutor == NULL){
-		error("TBehaviourDatabase::react: Interlocutor does not exist"
+		error("BehaviourDatabase::react: Interlocutor does not exist"
 				" (Text=%s, Situation=%d).\n", Text, Situation);
 		return;
 	}
@@ -996,7 +996,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 		for(int ConditionNr = 0;
 				ConditionNr < Behaviour->Conditions && Match;
 				ConditionNr += 1){
-			TBehaviourCondition *Condition = Behaviour->Condition.at(ConditionNr);
+			BehaviourCondition *Condition = Behaviour->Condition.at(ConditionNr);
 			if(Condition->Type == BEHAVIOUR_CONDITION_SHORTCIRCUIT){
 				ShortCircuit = true;
 				break;
@@ -1083,13 +1083,13 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 		for(int ActionNr = 0;
 				ActionNr < Behaviour->Actions;
 				ActionNr += 1){
-			TBehaviourAction *Action = Behaviour->Action.at(ActionNr);
+			BehaviourAction *Action = Behaviour->Action.at(ActionNr);
 			if(Action->Type == BEHAVIOUR_ACTION_REPEAT){
 				if(BehaviourNr > 0){
 					BehaviourNr -= 1;
 					Repeat = true;
 				}else{
-					error("TBehaviourDatabase::react (9): No previous pattern.\n");
+					error("BehaviourDatabase::react (9): No previous pattern.\n");
 				}
 				break;
 			}
@@ -1105,7 +1105,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 						StartToDo = true;
 					}else{
 						Response[20] = 0;
-						error("TBehaviourDatabase::react: Text from NPC %s is too long (%s...).\n",
+						error("BehaviourDatabase::react: Text from NPC %s is too long (%s...).\n",
 								Npc->Name, Response);
 					}
 					break;
@@ -1121,7 +1121,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 						case 4: Npc->TypeID = Value; break;
 						case 6: Npc->Data = Value; break;
 						default:{
-							error("TBehaviourDatabase::react: Invalid variable.\n");
+							error("BehaviourDatabase::react: Invalid variable.\n");
 							break;
 						}
 					}
@@ -1134,10 +1134,10 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 					if(SkillNr == SKILL_HITPOINTS){
 						Interlocutor->Skills[SKILL_HITPOINTS]->Set(Value);
 						if(Interlocutor->Skills[SKILL_HITPOINTS]->Get() <= 0){
-							error("TBehaviourDatabase::react: NPC %s kills player.\n", Npc->Name);
+							error("BehaviourDatabase::react: NPC %s kills player.\n", Npc->Name);
 						}
 					}else{
-						error("TBehaviourDatabase::react: Invalid skill.\n");
+						error("BehaviourDatabase::react: Invalid skill.\n");
 					}
 					break;
 				}
@@ -1149,7 +1149,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 					switch(FunctionNr){
 						case 3: Interlocutor->SetQuestValue(Param1, Param2); break;
 						default:{
-							error("TBehaviourDatabase::react (4): Invalid function number.\n");
+							error("BehaviourDatabase::react (4): Invalid function number.\n");
 							break;
 						}
 					}
@@ -1164,11 +1164,11 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 						case 2: graphical_effect(Interlocutor->CrObject, Param); break;
 						case 3: Interlocutor->SetProfession(Param); break;
 						case 4: Interlocutor->LearnSpell(Param); break;
-						case 5: CreateMonster(Param, Npc->posx, Npc->posy, Npc->posz, 0, 0, true); break;
+						case 5: create_monster(Param, Npc->posx, Npc->posy, Npc->posz, 0, 0, true); break;
 						case 6: Npc->GiveTo(Param, Npc->Amount); break;
 						case 7: Npc->GetFrom(Param, Npc->Amount); break;
 						default:{
-							error("TBehaviourDatabase::react (5): Invalid function number.\n");
+							error("BehaviourDatabase::react (5): Invalid function number.\n");
 							break;
 						}
 					}
@@ -1184,12 +1184,12 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 							if(Situation == BUSY){
 								Npc->Enqueue(InterlocutorID, Text);
 							}else{
-								error("TBehaviourDatabase::react (6): wrong situation for action \"Queue\".\n");
+								error("BehaviourDatabase::react (6): wrong situation for action \"Queue\".\n");
 							}
 							break;
 						}
 						default:{
-							error("TBehaviourDatabase::react (6): Invalid function number.\n");
+							error("BehaviourDatabase::react (6): Invalid function number.\n");
 							break;
 						}
 					}
@@ -1203,7 +1203,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 						if(Situation != ADDRESSQUEUE){
 							StartToDo = true;
 						}else{
-							error("TBehaviourDatabase::react: NPC %s does not respond to address %s.\n",
+							error("BehaviourDatabase::react: NPC %s does not respond to address %s.\n",
 									Npc->Name, Text);
 						}
 					}else{
@@ -1229,7 +1229,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 							}
 						}
 					}else{
-						error("TBehaviourDatabase::react (8): Invalid skill.\n");
+						error("BehaviourDatabase::react (8): Invalid skill.\n");
 					}
 					break;
 				}
@@ -1247,7 +1247,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 								Object Dest = get_map_container(Param1, Param2, Param3);
 								move(0, Interlocutor->CrObject, Dest, -1, false, NONE);
 							}catch(RESULT r){
-								error("TBehaviourDatabase::react (10): Exception %d.\n", r);
+								error("BehaviourDatabase::react (10): Exception %d.\n", r);
 							}
 							break;
 						}
@@ -1263,7 +1263,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 						}
 
 						default:{
-							error("TBehaviourDatabase::react (10): Invalid sub-number.\n");
+							error("BehaviourDatabase::react (10): Invalid sub-number.\n");
 							break;
 						}
 					}
@@ -1285,7 +1285,7 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 // TNPC
 // =============================================================================
 TNPC::TNPC(const char *FileName) :
-		TNonplayer(),
+		Nonplayer(),
 		QueuedPlayers(0, 9, 10),
 		QueuedAddresses(0, 9, 10)
 {
@@ -1333,7 +1333,7 @@ TNPC::TNPC(const char *FileName) :
 			this->Race = Script.read_number();
 			this->SetSkills(this->Race);
 		}else if(strcmp(Identifier, "outfit") == 0){
-			this->OrgOutfit = ReadOutfit(&Script);
+			this->OrgOutfit = read_outfit(&Script);
 			this->Outfit = this->OrgOutfit;
 		}else if(strcmp(Identifier, "home") == 0){
 			Script.read_coordinate(&this->startx, &this->starty, &this->startz);
@@ -1353,7 +1353,7 @@ TNPC::TNPC(const char *FileName) :
 			if(this->Behaviour != NULL){
 				Script.error("behaviour database specified twice for NPC");
 			}
-			this->Behaviour = new TBehaviourDatabase(&Script);
+			this->Behaviour = new BehaviourDatabase(&Script);
 		}else{
 			Script.error("unknown npc property");
 		}
@@ -1462,7 +1462,7 @@ void TNPC::IdleStimulus(void){
 
 			this->ToDoClear();
 
-			TCreature *Interlocutor = GetCreature(InterlocutorID);
+			TCreature *Interlocutor = get_creature(InterlocutorID);
 			if(Interlocutor != NULL){
 				this->ChangeState(TALKING, false);
 				this->Interlocutor = InterlocutorID;
@@ -1480,7 +1480,7 @@ void TNPC::IdleStimulus(void){
 		}
 
 		if(!this->LockToDo){
-			TFindCreatures Search(10, 10, this->ID, FIND_PLAYERS);
+			FindCreatures Search(10, 10, this->ID, FIND_PLAYERS);
 			if(Search.getNext() == 0){
 				this->ChangeState(SLEEPING, false);
 				return;
@@ -1528,7 +1528,7 @@ void TNPC::CreatureMoveStimulus(uint32 CreatureID, int Type){
 			continue;
 		}
 
-		TCreature *QueuedPlayer = GetCreature(QueuedPlayerID);
+		TCreature *QueuedPlayer = get_creature(QueuedPlayerID);
 		if(Type != OBJECT_DELETED
 				&& QueuedPlayer->posz == this->posz
 				&& std::abs(QueuedPlayer->posx - this->posx) < 5
@@ -1550,7 +1550,7 @@ void TNPC::CreatureMoveStimulus(uint32 CreatureID, int Type){
 
 	if(this->State == TALKING || this->State == LEAVING){
 		if(CreatureID == this->Interlocutor || CreatureID == this->ID){
-			TCreature *Interlocutor = GetCreature(this->Interlocutor);
+			TCreature *Interlocutor = get_creature(this->Interlocutor);
 			if(Interlocutor == NULL){
 				error("TNPC::CreatureMoveStimulus: Interlocutor does not exist.\n");
 				this->ChangeState(IDLE, true);
@@ -1674,7 +1674,7 @@ void TNPC::Enqueue(uint32 InterlocutorID, const char *Text){
 }
 
 void TNPC::TurnToInterlocutor(void){
-	TCreature *Interlocutor = GetCreature(this->Interlocutor);
+	TCreature *Interlocutor = get_creature(this->Interlocutor);
 	if(Interlocutor == NULL){
 		error("TNPC::TurnToInterlocutor: Interlocutor does not exist.\n");
 		return;
@@ -1690,14 +1690,14 @@ void TNPC::ChangeState(STATE NewState, bool Stimulus){
 	}
 }
 
-void ChangeNPCState(TCreature *Npc, int NewState, bool Stimulus){
+void change_npc_state(TCreature *Npc, int NewState, bool Stimulus){
 	if(Npc == NULL){
-		error("ChangeNPCState: npc is NULL.\n");
+		error("change_npc_state: npc is NULL.\n");
 		return;
 	}
 
 	if(Npc->Type != NPC){
-		error("ChangeNPCState: npc is not an NPC.\n");
+		error("change_npc_state: npc is not an NPC.\n");
 		return;
 	}
 
@@ -1706,10 +1706,10 @@ void ChangeNPCState(TCreature *Npc, int NewState, bool Stimulus){
 
 // Initialization
 // =============================================================================
-void InitNPCs(void){
+void init_npcs(void){
 	DIR *NpcDir = opendir(NPCPATH);
 	if(NpcDir == NULL){
-		error("InitNPCs: Subdirectory %s not found\n", NPCPATH);
+		error("init_npcs: Subdirectory %s not found\n", NPCPATH);
 		throw "Cannot init NPCs";
 	}
 

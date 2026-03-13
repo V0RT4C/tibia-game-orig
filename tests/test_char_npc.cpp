@@ -2,8 +2,8 @@
 #include "doctest.h"
 #include "creature/npc/npc.h"
 
-TEST_CASE("TBehaviourNode struct layout") {
-	TBehaviourNode n{};
+TEST_CASE("BehaviourNode struct layout") {
+	BehaviourNode n{};
 	CHECK(n.Type == 0);
 	CHECK(n.Data == 0);
 	CHECK(n.Left == nullptr);

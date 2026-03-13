@@ -861,7 +861,7 @@ TPlayerData *PerformRegistration(TConnection *Connection, char *PlayerName,
 	log_message("game", "Player %s logging in on socket %d from %s.\n",
 			PlayerName, Connection->GetSocket(), Connection->GetIPAddress());
 
-	TPlayerData *PlayerData = AssignPlayerPoolSlot(CharacterID, true);
+	TPlayerData *PlayerData = assign_player_pool_slot(CharacterID, true);
 	if(PlayerData == NULL){
 		error("PerformRegistration: Cannot assign a slot for player data.\n");
 		QueryManagerConnection->decrementIsOnline(CharacterID);
@@ -1063,7 +1063,7 @@ bool HandleLogin(TConnection *Connection){
 			BlockLogin = true;
 		}
 
-		if(!BlockLogin && !IsPlayerOnline(PlayerName)){
+		if(!BlockLogin && !is_player_online(PlayerName)){
 			int WaitingTime = CheckWaitingTime(PlayerName, Connection, FreeAccount, Newbie);
 			if(WaitingTime > 0){
 				uint32 NextTry = RoundNr + (uint32)WaitingTime;
@@ -1082,17 +1082,17 @@ bool HandleLogin(TConnection *Connection){
 			}
 
 			if(SlotLocked){
-				ReleasePlayerPoolSlot(Slot);
+				release_player_pool_slot(Slot);
 			}else{
-				DecreasePlayerPoolSlotSticky(Slot);
+				decrease_player_pool_slot_sticky(Slot);
 			}
 			return false;
 		}
 	}
 
 	if(SlotLocked){
-		IncreasePlayerPoolSlotSticky(Slot);
-		ReleasePlayerPoolSlot(Slot);
+		increase_player_pool_slot_sticky(Slot);
+		release_player_pool_slot(Slot);
 	}
 
 	// NOTE(fusion): Rewrite packet in a different format, ready for the main

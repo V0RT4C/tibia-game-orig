@@ -542,14 +542,14 @@ void kick_guests(uint16 HouseID) {
 
 	// TODO(fusion): I think `MaxHouseX` and `MaxHouseY` are the maximum house
 	// radii but it is a mistery as to why they're not stored INSIDE `House`.
-	TFindCreatures Search(MaxHouseX, MaxHouseY, House->CenterX, House->CenterY, FIND_PLAYERS);
+	FindCreatures Search(MaxHouseX, MaxHouseY, House->CenterX, House->CenterY, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (get_house_id(Player->posx, Player->posy, Player->posz) == HouseID &&
 			!is_invited(HouseID, Player, INT_MAX) && !check_right(CharacterID, ENTER_HOUSES)) {
 			kick_guest(HouseID, Player);
@@ -857,7 +857,7 @@ void clean_house(House *House, TPlayerData *PlayerData) {
 
 	bool PlayerDataAssigned = false;
 	if (PlayerData == NULL) {
-		PlayerData = AssignPlayerPoolSlot(House->OwnerID, false);
+		PlayerData = assign_player_pool_slot(House->OwnerID, false);
 		if (PlayerData == NULL) {
 			error("clean_house: Cannot allocate slot for player data.\n");
 			return;
@@ -867,7 +867,7 @@ void clean_house(House *House, TPlayerData *PlayerData) {
 	}
 
 	Object TempDepot = CreateTempDepot();
-	LoadDepot(PlayerData, House->DepotNr, TempDepot);
+	load_depot(PlayerData, House->DepotNr, TempDepot);
 
 	int MinX = House->CenterX - MaxHouseX;
 	int MaxX = House->CenterX + MaxHouseX;
@@ -897,11 +897,11 @@ void clean_house(House *House, TPlayerData *PlayerData) {
 				}
 			}
 
-	SaveDepot(PlayerData, House->DepotNr, TempDepot);
+	save_depot(PlayerData, House->DepotNr, TempDepot);
 	delete_object(TempDepot);
 
 	if (PlayerDataAssigned) {
-		ReleasePlayerPoolSlot(PlayerData);
+		release_player_pool_slot(PlayerData);
 	}
 }
 
@@ -955,13 +955,13 @@ bool finish_auctions(void) {
 			continue;
 		}
 
-		TPlayerData *PlayerData = AssignPlayerPoolSlot(CharacterID, false);
+		TPlayerData *PlayerData = assign_player_pool_slot(CharacterID, false);
 		if (PlayerData == NULL) {
 			error("finish_auctions: Cannot allocate slot for player data.\n");
 			continue;
 		}
 
-		LoadDepot(PlayerData, House->DepotNr, TempDepot);
+		load_depot(PlayerData, House->DepotNr, TempDepot);
 		int DepotMoney = count_money(get_first_container_object(TempDepot));
 		if (DepotMoney < (House->Rent + Bid)) {
 			log_message("houses", "Auction winner does not have enough money.\n");
@@ -986,7 +986,7 @@ bool finish_auctions(void) {
 					 House->Name);
 			Object WelcomeLetter = set_object(TempDepot, get_special_object(LETTER_STAMPED), 0);
 			change_object(WelcomeLetter, TEXTSTRING, AddDynamicString(WelcomeMessage));
-			SaveDepot(PlayerData, House->DepotNr, TempDepot);
+			save_depot(PlayerData, House->DepotNr, TempDepot);
 
 			House->OwnerID = CharacterID;
 			strcpy(House->OwnerName, CharacterName);
@@ -995,7 +995,7 @@ bool finish_auctions(void) {
 		}
 
 		DeleteContainerObjects(TempDepot);
-		ReleasePlayerPoolSlot(PlayerData);
+		release_player_pool_slot(PlayerData);
 	}
 
 	delete_object(TempDepot);
@@ -1046,13 +1046,13 @@ bool transfer_houses(void) {
 
 		if (NewOwnerID != 0 && TransferPrice > 0) {
 			log_message("houses", "Selling house %d to %u for %d gold.\n", HouseID, NewOwnerID, TransferPrice);
-			TPlayerData *PlayerData = AssignPlayerPoolSlot(NewOwnerID, false);
+			TPlayerData *PlayerData = assign_player_pool_slot(NewOwnerID, false);
 			if (PlayerData == NULL) {
 				error("CollectRents: Cannot allocate slot for player data (1a).\n");
 				continue;
 			}
 
-			LoadDepot(PlayerData, House->DepotNr, TempDepot);
+			load_depot(PlayerData, House->DepotNr, TempDepot);
 			int DepotMoney = count_money(get_first_container_object(TempDepot));
 			if (DepotMoney < TransferPrice) {
 				log_message("houses", "Buyer does not have enough money.\n");
@@ -1067,9 +1067,9 @@ bool transfer_houses(void) {
 						 House->Name);
 				Object WarningLetter = set_object(TempDepot, get_special_object(LETTER_STAMPED), 0);
 				change_object(WarningLetter, TEXTSTRING, AddDynamicString(WarningMessage));
-				SaveDepot(PlayerData, House->DepotNr, TempDepot);
+				save_depot(PlayerData, House->DepotNr, TempDepot);
 				DeleteContainerObjects(TempDepot);
-				ReleasePlayerPoolSlot(PlayerData);
+				release_player_pool_slot(PlayerData);
 
 				log_message("houses",
 							"on reset: UPDATE HouseOwners SET Termination=null,NewOwner=null,Accepted=0,Price=null "
@@ -1080,21 +1080,21 @@ bool transfer_houses(void) {
 			}
 
 			DeleteMoney(TempDepot, TransferPrice);
-			SaveDepot(PlayerData, House->DepotNr, TempDepot);
+			save_depot(PlayerData, House->DepotNr, TempDepot);
 			DeleteContainerObjects(TempDepot);
-			ReleasePlayerPoolSlot(PlayerData);
+			release_player_pool_slot(PlayerData);
 
-			PlayerData = AssignPlayerPoolSlot(House->OwnerID, false);
+			PlayerData = assign_player_pool_slot(House->OwnerID, false);
 			if (PlayerData == NULL) {
 				error("CollectRents: Cannot allocate slot for player data (1b).\n");
 				continue;
 			}
 
-			LoadDepot(PlayerData, House->DepotNr, TempDepot);
+			load_depot(PlayerData, House->DepotNr, TempDepot);
 			create_money(TempDepot, TransferPrice);
-			SaveDepot(PlayerData, House->DepotNr, TempDepot);
+			save_depot(PlayerData, House->DepotNr, TempDepot);
 			DeleteContainerObjects(TempDepot);
-			ReleasePlayerPoolSlot(PlayerData);
+			release_player_pool_slot(PlayerData);
 		}
 
 		// TODO(fusion): The old owner needs to manually move out when transfering
@@ -1246,13 +1246,13 @@ void collect_rent(void) {
 			Deadline = PaymentExtension;
 		}
 
-		TPlayerData *PlayerData = AssignPlayerPoolSlot(H->OwnerID, false);
+		TPlayerData *PlayerData = assign_player_pool_slot(H->OwnerID, false);
 		if (PlayerData == NULL) {
 			error("CollectRents: Cannot allocate slot for player data (2).\n");
 			continue;
 		}
 
-		LoadDepot(PlayerData, H->DepotNr, TempDepot);
+		load_depot(PlayerData, H->DepotNr, TempDepot);
 		int DepotMoney = count_money(get_first_container_object(TempDepot));
 		if (DepotMoney < H->Rent) {
 			if (TimeStamp < Deadline) {
@@ -1271,7 +1271,7 @@ void collect_rent(void) {
 						 H->Rent, H->Name, DaysLeft, (DaysLeft != 1 ? "s" : ""));
 				Object WarningLetter = set_object(TempDepot, get_special_object(LETTER_STAMPED), 0);
 				change_object(WarningLetter, TEXTSTRING, AddDynamicString(WarningMessage));
-				SaveDepot(PlayerData, H->DepotNr, TempDepot);
+				save_depot(PlayerData, H->DepotNr, TempDepot);
 			} else {
 				log_message("houses", "Tenant is being evicted.\n");
 
@@ -1285,12 +1285,12 @@ void collect_rent(void) {
 		} else {
 			log_message("houses", "Tenant has enough money.\n");
 			DeleteMoney(TempDepot, H->Rent);
-			SaveDepot(PlayerData, H->DepotNr, TempDepot);
+			save_depot(PlayerData, H->DepotNr, TempDepot);
 			H->PaidUntil += 30 * 24 * 60 * 60; // one month
 		}
 
 		DeleteContainerObjects(TempDepot);
-		ReleasePlayerPoolSlot(PlayerData);
+		release_player_pool_slot(PlayerData);
 	}
 	delete_object(TempDepot);
 }
@@ -1428,15 +1428,15 @@ void prepare_house_cleanup(void) {
 void finish_house_cleanup(void) {
 	for (int HelpDepotNr = 0; HelpDepotNr < HelpDepots; HelpDepotNr += 1) {
 		HelpDepot *Help = HelpDepotArray.at(HelpDepotNr);
-		TPlayerData *PlayerData = AssignPlayerPoolSlot(Help->CharacterID, false);
+		TPlayerData *PlayerData = assign_player_pool_slot(Help->CharacterID, false);
 		if (PlayerData == NULL) {
 			error("finish_house_cleanup: Cannot allocate slot for player data.\n");
 			continue;
 		}
 
-		SaveDepot(PlayerData, Help->DepotNr, Help->Box);
+		save_depot(PlayerData, Help->DepotNr, Help->Box);
 		delete_object(Help->Box);
-		ReleasePlayerPoolSlot(PlayerData);
+		release_player_pool_slot(PlayerData);
 	}
 
 	HelpDepots = 0;
@@ -1489,7 +1489,7 @@ void clean_house_field(int x, int y, int z) {
 	}
 
 	if (HelpDepotNr >= HelpDepots) {
-		TPlayerData *PlayerData = AssignPlayerPoolSlot(House->OwnerID, false);
+		TPlayerData *PlayerData = assign_player_pool_slot(House->OwnerID, false);
 		if (PlayerData == NULL) {
 			error("clean_house_field: Cannot allocate slot for player data.\n");
 			return;
@@ -1502,8 +1502,8 @@ void clean_house_field(int x, int y, int z) {
 		Help->CharacterID = House->OwnerID;
 		Help->DepotNr = House->DepotNr;
 		Help->Box = CreateTempDepot();
-		LoadDepot(PlayerData, House->DepotNr, Help->Box);
-		ReleasePlayerPoolSlot(PlayerData);
+		load_depot(PlayerData, House->DepotNr, Help->Box);
+		release_player_pool_slot(PlayerData);
 	}
 
 	clean_field(x, y, z, HelpDepotArray.at(HelpDepotNr)->Box);

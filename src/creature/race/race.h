@@ -6,7 +6,7 @@
 struct ReadScriptFile;
 struct WriteScriptFile;
 
-struct TSkillData {
+struct SkillData {
 	int Nr;
 	int Actual;
 	int Minimum;
@@ -16,13 +16,13 @@ struct TSkillData {
 	int AddLevel;
 };
 
-struct TItemData {
+struct ItemData {
 	ObjectType Type;
 	int Maximum;
 	int Probability;
 };
 
-struct TSpellData {
+struct SpellData {
 	SpellShapeType Shape;
 	int ShapeParam1;
 	int ShapeParam2;
@@ -36,8 +36,8 @@ struct TSpellData {
 	int Delay;
 };
 
-struct TRaceData {
-	TRaceData(void);
+struct RaceData {
+	RaceData(void);
 
 	// DATA
 	// =================
@@ -71,30 +71,30 @@ struct TRaceData {
 	bool NoLifeDrain;
 	bool NoParalyze;
 	int Skills;
-	vector<TSkillData> Skill;
+	vector<SkillData> Skill;
 	int Talks;
 	vector<uint32> Talk; // POINTER? Probably a reference from `AddDynamicString`?
 	int Items;
-	vector<TItemData> Item;
+	vector<ItemData> Item;
 	int Spells;
-	vector<TSpellData> Spell;
+	vector<SpellData> Spell;
 };
 
 // Race API
-bool IsRaceValid(int Race);
-int GetRaceByName(const char *RaceName);
-const char *GetRaceName(int Race);
-TOutfit GetRaceOutfit(int Race);
-bool GetRaceNoSummon(int Race);
-bool GetRaceNoConvince(int Race);
-bool GetRaceNoIllusion(int Race);
-bool GetRaceNoParalyze(int Race);
-int GetRaceSummonCost(int Race);
-int GetRacePoison(int Race);
-bool GetRaceUnpushable(int Race);
-TOutfit ReadOutfit(ReadScriptFile *Script);
-void WriteOutfit(WriteScriptFile *Script, TOutfit Outfit);
-void LoadRace(const char *FileName);
-void LoadRaces(void);
+bool is_race_valid(int Race);
+int get_race_by_name(const char *RaceName);
+const char *get_race_name(int Race);
+TOutfit get_race_outfit(int Race);
+bool get_race_no_summon(int Race);
+bool get_race_no_convince(int Race);
+bool get_race_no_illusion(int Race);
+bool get_race_no_paralyze(int Race);
+int get_race_summon_cost(int Race);
+int get_race_poison(int Race);
+bool get_race_unpushable(int Race);
+TOutfit read_outfit(ReadScriptFile *Script);
+void write_outfit(WriteScriptFile *Script, TOutfit Outfit);
+void load_race(const char *FileName);
+void load_races(void);
 
 #endif // TIBIA_CREATURE_RACE_H_

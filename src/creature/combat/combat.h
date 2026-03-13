@@ -9,7 +9,7 @@ struct TCreature;
 
 // TCombat
 // =============================================================================
-struct TCombatEntry{
+struct CombatEntry{
 	uint32 ID;
 	uint32 Damage;
 	uint32 TimeStamp;
@@ -65,7 +65,7 @@ struct TCombat{
 	bool Fist;
 	uint32 CombatDamage;
 	int ActCombatEntry;
-	TCombatEntry CombatList[20];
+	CombatEntry CombatList[20];
 	int LearningPoints;
 };
 

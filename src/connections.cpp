@@ -221,7 +221,7 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 	this->TerminalWidth = 18;
 	this->TerminalHeight = 14;
 
-	TPlayer *Player = ::GetPlayer(this->CharacterID);
+	TPlayer *Player = ::get_player(this->CharacterID);
 	if(Player == NULL){
 		Player = new TPlayer(this, this->CharacterID);
 		if(Player->ConstructError != NOERROR){
@@ -231,13 +231,13 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 	}else{
 		if(Player->IsDead){
 			log_message("game", "Player %s is currently dying - login failed.\n", Player->Name);
-			DecreasePlayerPoolSlotSticky(this->CharacterID);
+			decrease_player_pool_slot_sticky(this->CharacterID);
 			return false;
 		}
 
 		if(Player->LoggingOut && Player->LogoutPossible() == 0){
 			log_message("game", "Player %s is currently logging out - login failed.\n", Player->Name);
-			DecreasePlayerPoolSlotSticky(this->CharacterID);
+			decrease_player_pool_slot_sticky(this->CharacterID);
 			return false;
 		}
 
@@ -279,7 +279,7 @@ void TConnection::Logout(int Delay, bool StopFight){
 
 	this->State = CONNECTION_LOGOUT;
 	if(this->CharacterID != 0){
-		TPlayer *Player = ::GetPlayer(this->CharacterID);
+		TPlayer *Player = ::get_player(this->CharacterID);
 		if(Player != NULL){
 			Player->ClearConnection();
 			Player->StartLogout(false, StopFight);
@@ -319,15 +319,15 @@ void TConnection::Disconnect(void){
 	tgkill(GetGameProcessID(), this->ThreadID, SIGHUP);
 }
 
-TPlayer *TConnection::GetPlayer(void){
+TPlayer *TConnection::get_player(void){
 	if(!this->Live()){
-		error("TConnection::GetPlayer: Invalid connection state %d.\n", this->State);
+		error("TConnection::get_player: Invalid connection state %d.\n", this->State);
 		return NULL;
 	}
 
 	TPlayer *Player = NULL;
 	if(this->CharacterID != 0){
-		Player = ::GetPlayer(this->CharacterID);
+		Player = ::get_player(this->CharacterID);
 	}
 	return Player;
 }
@@ -342,7 +342,7 @@ const char *TConnection::get_name(void){
 }
 
 void TConnection::get_position(int *x, int *y, int *z){
-	TPlayer *Player = this->GetPlayer();
+	TPlayer *Player = this->get_player();
 	if(Player != NULL){
 		*x = Player->posx;
 		*y = Player->posy;
@@ -420,7 +420,7 @@ uint32 TConnection::NewKnownCreature(uint32 NewID){
 
 	if(EntryIndex == -1){
 		for(int i = 0; i < NARRAY(this->KnownCreatureTable); i += 1){
-			TCreature *Creature = GetCreature(this->KnownCreatureTable[i].CreatureID);
+			TCreature *Creature = get_creature(this->KnownCreatureTable[i].CreatureID);
 			if(Creature == NULL || !this->IsVisible(Creature->posx, Creature->posy, Creature->posz)){
 				OldID = this->KnownCreatureTable[i].CreatureID;
 				EntryIndex = i;
@@ -442,7 +442,7 @@ uint32 TConnection::NewKnownCreature(uint32 NewID){
 	this->KnownCreatureTable[EntryIndex].State = KNOWNCREATURE_UPTODATE;
 	this->KnownCreatureTable[EntryIndex].CreatureID = NewID;
 
-	TCreature *Creature = GetCreature(NewID);
+	TCreature *Creature = get_creature(NewID);
 	if(Creature != NULL){
 		this->KnownCreatureTable[EntryIndex].Next = Creature->FirstKnowingConnection;
 		Creature->FirstKnowingConnection = &this->KnownCreatureTable[EntryIndex];
@@ -465,7 +465,7 @@ void TConnection::ClearKnownCreatureTable(bool Unchain){
 }
 
 void TConnection::UnchainKnownCreature(uint32 ID){
-	TCreature *Creature = GetCreature(ID);
+	TCreature *Creature = get_creature(ID);
 	if(Creature == NULL){
 		error("TUserCom::UnchainKnownCreature: Creature %u does not exist.\n", ID);
 		return;

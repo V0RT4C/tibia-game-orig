@@ -169,7 +169,7 @@ struct TConnection {
 	void Logout(int Delay, bool StopFight);
 	void Close(bool Delay);
 	void Disconnect(void);
-	TPlayer *GetPlayer(void);
+	TPlayer *get_player(void);
 	const char *get_name(void);
 	void get_position(int *x, int *y, int *z);
 	bool IsVisible(int x, int y, int z);

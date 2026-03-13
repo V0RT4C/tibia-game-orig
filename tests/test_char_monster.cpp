@@ -2,8 +2,8 @@
 #include "doctest.h"
 #include "creature/monster/monster.h"
 
-TEST_CASE("TMonsterhome struct layout") {
-	TMonsterhome m{};
+TEST_CASE("Monsterhome struct layout") {
+	Monsterhome m{};
 	CHECK(m.Race == 0);
 	CHECK(m.x == 0);
 	CHECK(m.y == 0);

@@ -129,7 +129,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 	case MOVEUSE_CONDITION_ISPLAYER: {
 		Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			Result = (Creature && Creature->Type == PLAYER);
 		}
 		break;
@@ -170,7 +170,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 	case MOVEUSE_CONDITION_ISPEACEFUL: {
 		Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			Result = (Creature && Creature->IsPeaceful());
 		}
 		break;
@@ -179,7 +179,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 	case MOVEUSE_CONDITION_MAYLOGOUT: {
 		Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			Result = (Creature != NULL && Creature->Type == PLAYER && Creature->LogoutPossible() == 0);
 		}
 		break;
@@ -189,7 +189,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 		int Profession = Condition->Parameters[1];
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			Result = (Creature != NULL && Creature->Type == PLAYER &&
 					  ((TPlayer *)Creature)->GetEffectiveProfession() == Profession);
 		}
@@ -201,7 +201,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		int Operator = Condition->Parameters[1];
 		int Value = Condition->Parameters[2];
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			if (Creature != NULL) {
 				int Level = Creature->Skills[SKILL_LEVEL]->Get();
 				Result = compare(Level, Operator, Value);
@@ -214,7 +214,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 		RIGHT Right = (RIGHT)Condition->Parameters[1];
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			Result = (Creature != NULL && Creature->Type == PLAYER && check_right(Creature->ID, Right));
 		}
 		break;
@@ -226,7 +226,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		int Operator = Condition->Parameters[2];
 		int Value = Condition->Parameters[3];
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			if (Creature != NULL && Creature->Type == PLAYER) {
 				int QuestValue = ((TPlayer *)Creature)->GetQuestValue(QuestNr);
 				Result = compare(QuestValue, Operator, Value);
@@ -241,7 +241,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		int Difficulty = Condition->Parameters[2];
 		int Probability = Condition->Parameters[3];
 		if (Obj.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			if (Creature != NULL) {
 				if (SkillNr >= 0 && SkillNr < NARRAY(Creature->Skills)) {
 					Result = Creature->Skills[SkillNr]->Probe(Difficulty, Probability, true);
@@ -301,7 +301,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		ObjectType Type = TYPEID_CREATURE_CONTAINER;
 		*Temp = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 		if (*Temp != NONE) {
-			TCreature *Creature = GetCreature(*Temp);
+			TCreature *Creature = get_creature(*Temp);
 			Result = Creature && Creature->Type == PLAYER;
 		}
 		break;
@@ -338,7 +338,7 @@ bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition, Ob
 		Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 		Object Cr = get_event_object(Condition->Parameters[1], User, Obj1, Obj2, *Temp);
 		if (Cr.get_object_type().is_creature_container()) {
-			TCreature *Creature = GetCreature(Cr);
+			TCreature *Creature = get_creature(Cr);
 			if (Creature != NULL && Creature->Type == PLAYER) {
 				int ObjX, ObjY, ObjZ;
 				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
@@ -628,7 +628,7 @@ void clear_field(Object Obj, Object Exclude) {
 }
 
 void load_depot_box(uint32 CreatureID, int Nr, Object Con) {
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("moveuse::load_depot_box: Creature not found.\n");
 		return;
@@ -645,7 +645,7 @@ void load_depot_box(uint32 CreatureID, int Nr, Object Con) {
 	}
 
 	// NOTE(fusion): Holy fuck. Objects are actually loaded into the depot box.
-	LoadDepot(Player->PlayerData, Nr, Con);
+	load_depot(Player->PlayerData, Nr, Con);
 
 	int DepotObjects = count_objects(Con) - 1;
 	int DepotCapacity = get_depot_size(Nr, check_right(Player->ID, PREMIUM_ACCOUNT));
@@ -665,7 +665,7 @@ void load_depot_box(uint32 CreatureID, int Nr, Object Con) {
 }
 
 void save_depot_box(uint32 CreatureID, int Nr, Object Con) {
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("moveuse::save_depot_box: Creature not found.\n");
 		return;
@@ -686,7 +686,7 @@ void save_depot_box(uint32 CreatureID, int Nr, Object Con) {
 	print(3, "Depot of %s: calculated free slots %d, actual objects %d.\n", Player->Name, Player->DepotSpace,
 		  DepotObjects);
 
-	SaveDepot(Player->PlayerData, Nr, Con);
+	save_depot(Player->PlayerData, Nr, Con);
 	Player->Depot = NONE;
 
 	Object Obj = get_first_container_object(Con);
@@ -784,12 +784,12 @@ void send_mail(Object Obj) {
 	TPlayer *Player;
 	bool PlayerOnline;
 	uint32 CharacterID;
-	if (IdentifyPlayer(Addressee, true, true, &Player) == 0) {
+	if (identify_player(Addressee, true, true, &Player) == 0) {
 		PlayerOnline = true;
 		CharacterID = Player->ID;
 	} else {
 		PlayerOnline = false;
-		CharacterID = GetCharacterID(Addressee);
+		CharacterID = get_character_id(Addressee);
 		if (CharacterID == 0) {
 			return;
 		}
@@ -929,14 +929,14 @@ void text_effect(const char *Text, int x, int y, int z, int Radius) {
 		return;
 	}
 
-	TFindCreatures Search(Radius, Radius, x, y, FIND_PLAYERS);
+	FindCreatures Search(Radius, Radius, x, y, FIND_PLAYERS);
 	while (true) {
 		uint32 CharacterID = Search.getNext();
 		if (CharacterID == 0) {
 			break;
 		}
 
-		TPlayer *Player = GetPlayer(CharacterID);
+		TPlayer *Player = get_player(CharacterID);
 		if (Player == NULL || Player->Connection == NULL) {
 			continue;
 		}
@@ -974,7 +974,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 			int CoordX, CoordY, CoordZ;
 			unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 			int Race = Action->Parameters[1];
-			CreateMonster(Race, CoordX, CoordY, CoordZ, 0, 0, true);
+			create_monster(Race, CoordX, CoordY, CoordZ, 0, 0, true);
 			break;
 		}
 
@@ -983,7 +983,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 			Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 			int Race = Action->Parameters[1];
 			get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
-			CreateMonster(Race, ObjX, ObjY, ObjZ, 0, 0, true);
+			create_monster(Race, ObjX, ObjY, ObjZ, 0, 0, true);
 			break;
 		}
 
@@ -1097,7 +1097,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 			int QuestValue = Action->Parameters[2];
 			ObjectType ObjType = Obj.get_object_type();
 			if (ObjType.is_creature_container()) {
-				TCreature *Creature = GetCreature(Obj);
+				TCreature *Creature = get_creature(Obj);
 				if (Creature != NULL && Creature->Type == PLAYER) {
 					((TPlayer *)Creature)->SetQuestValue(QuestNr, QuestValue);
 				} else {
@@ -1119,19 +1119,19 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 			if (AttackerObj != NONE) {
 				ObjectType AttackerType = AttackerObj.get_object_type();
 				if (AttackerType.is_creature_container()) {
-					Attacker = GetCreature(AttackerObj);
+					Attacker = get_creature(AttackerObj);
 				} else if (AttackerType.get_flag(MAGICFIELD) && AttackerObj.get_attribute(RESPONSIBLE) != 0) {
 					int TotalExpireTime = (int)AttackerType.get_attribute(TOTALEXPIRETIME);
 					int CurExpireTime = (int)cron_info(AttackerObj, false);
 					if ((TotalExpireTime - CurExpireTime) < 5) {
-						Attacker = GetCreature(AttackerObj.get_attribute(RESPONSIBLE));
+						Attacker = get_creature(AttackerObj.get_attribute(RESPONSIBLE));
 					}
 				}
 			}
 
 			ObjectType VictimType = VictimObj.get_object_type();
 			if (VictimType.is_creature_container()) {
-				TCreature *Victim = GetCreature(VictimObj);
+				TCreature *Victim = get_creature(VictimObj);
 				if (Victim != NULL) {
 					Victim->Damage(Attacker, Damage, DamageType);
 				} else {
@@ -1152,7 +1152,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 				throw ERROR;
 			}
 
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			if (Creature == NULL || Creature->Type != PLAYER) {
 				throw ERROR;
 			}
@@ -1174,7 +1174,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 				throw ERROR;
 			}
 
-			TCreature *Writer = GetCreature(WriterObj);
+			TCreature *Writer = get_creature(WriterObj);
 			if (Writer == NULL) {
 				throw ERROR;
 			}
@@ -1246,7 +1246,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 				throw ERROR;
 			}
 
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			if (Creature == NULL) {
 				throw ERROR;
 			}
@@ -1422,7 +1422,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 			Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 			Object Cr = get_event_object(Action->Parameters[1], User, Obj1, Obj2, *Temp);
 			if (Cr.get_object_type().is_creature_container()) {
-				TCreature *Creature = GetCreature(Cr);
+				TCreature *Creature = get_creature(Cr);
 				if (Creature != NULL && Creature->Type == PLAYER) {
 					SendMessage(Creature->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Obj));
 				}
@@ -1550,7 +1550,7 @@ void use_container(uint32 CreatureID, Object Con, int NextContainerNr) {
 		throw NOTUSABLE;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_container: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -1607,7 +1607,7 @@ void use_chest(uint32 CreatureID, Object Chest) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_chest: Player %u does not exist.\n", CreatureID);
 		throw ERROR;
@@ -1742,7 +1742,7 @@ void use_liquid_container(uint32 CreatureID, Object Obj, Object Dest) {
 	}
 
 	// NOTE(fusion): Drink liquid.
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_liquid_container: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -1811,7 +1811,7 @@ void use_food(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_food: Creature %u does not exist.\n", CreatureID);
 		throw ERROR;
@@ -1840,7 +1840,7 @@ void use_text_object(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_text_object: Creature %u does not exist.\n", CreatureID);
 		throw ERROR;
@@ -1861,7 +1861,7 @@ void use_announcer(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_announcer: Creature %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -1994,7 +1994,7 @@ void use_name_door(uint32 CreatureID, Object Door) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_name_door: Player does not exist.\n");
 		throw ERROR;
@@ -2033,7 +2033,7 @@ void use_level_door(uint32 CreatureID, Object Door) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_level_door: Player does not exist.\n");
 		throw ERROR;
@@ -2068,7 +2068,7 @@ void use_quest_door(uint32 CreatureID, Object Door) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_quest_door: Player does not exist.\n");
 		throw ERROR;
@@ -2107,7 +2107,7 @@ void use_weapon(uint32 CreatureID, Object Weapon, Object Target) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_weapon: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -2142,7 +2142,7 @@ void use_change_object(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("use_change_object: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
@@ -2188,7 +2188,7 @@ void use_object(uint32 CreatureID, Object Obj) {
 
 	Object User = NONE;
 	if (CreatureID != 0) {
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if (Creature != NULL) {
 			User = Creature->CrObject;
 		}
@@ -2217,7 +2217,7 @@ void use_objects(uint32 CreatureID, Object Obj1, Object Obj2) {
 
 	Object User = NONE;
 	if (CreatureID != 0) {
-		TCreature *Creature = GetCreature(CreatureID);
+		TCreature *Creature = get_creature(CreatureID);
 		if (Creature != NULL) {
 			User = Creature->CrObject;
 		}
@@ -2544,7 +2544,7 @@ void load_parameters(ReadScriptFile *Script, int *Parameters, int NumberOfParame
 		}
 
 		case MOVEUSE_PARAMETER_SKILL: {
-			int SkillNr = GetSkillByName(Script->read_identifier());
+			int SkillNr = get_skill_by_name(Script->read_identifier());
 			Parameters[i] = SkillNr;
 			if (SkillNr == -1) {
 				Script->error("Unknown skill");

@@ -127,7 +127,7 @@ void process_load_sector_order(int SectorX, int SectorY, int SectorZ) {
 
 void process_load_character_order(uint32 CharacterID) {
 	while (true) {
-		TPlayerData *Slot = AssignPlayerPoolSlot(CharacterID, true);
+		TPlayerData *Slot = assign_player_pool_slot(CharacterID, true);
 		if (Slot == NULL) {
 			error("process_load_character_order: Cannot assign a slot for player data.\n");
 			break;
@@ -138,8 +138,8 @@ void process_load_character_order(uint32 CharacterID) {
 		}
 
 		if (Slot->Locked == gettid()) {
-			IncreasePlayerPoolSlotSticky(Slot);
-			ReleasePlayerPoolSlot(Slot);
+			increase_player_pool_slot_sticky(Slot);
+			release_player_pool_slot(Slot);
 			character_reply(CharacterID);
 			break;
 		}
@@ -220,15 +220,15 @@ void process_sector_reply(RefreshSectorFunction *refresh_sector, int SectorX, in
 }
 
 void process_character_reply(SendMailsFunction *send_mails, uint32 CharacterID) {
-	TPlayerData *Slot = AttachPlayerPoolSlot(CharacterID, true);
+	TPlayerData *Slot = attach_player_pool_slot(CharacterID, true);
 	if (Slot == NULL) {
-		DecreasePlayerPoolSlotSticky(Slot);
+		decrease_player_pool_slot_sticky(Slot);
 		return;
 	}
 
 	send_mails(Slot);
-	DecreasePlayerPoolSlotSticky(Slot);
-	ReleasePlayerPoolSlot(Slot);
+	decrease_player_pool_slot_sticky(Slot);
+	release_player_pool_slot(Slot);
 }
 
 void process_reader_thread_replies(RefreshSectorFunction *refresh_sector, SendMailsFunction *send_mails) {

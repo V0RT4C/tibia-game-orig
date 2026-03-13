@@ -1,25 +1,25 @@
 #include "cr.h"
 
-static vector<TNonplayer*> NonplayerList(0, 10000, 1000, NULL);
+static vector<Nonplayer*> NonplayerList(0, 10000, 1000, NULL);
 static int FirstFreeNonplayer;
 
-// TNonplayer
+// Nonplayer
 // =============================================================================
-TNonplayer::TNonplayer(void) : TCreature() {
+Nonplayer::Nonplayer(void) : TCreature() {
 	this->State = SLEEPING;
 }
 
-TNonplayer::~TNonplayer(void){
+Nonplayer::~Nonplayer(void){
 	this->DelInList();
 }
 
-void TNonplayer::SetInList(void){
+void Nonplayer::SetInList(void){
 	TCreature::SetInCrList();
 	*NonplayerList.at(FirstFreeNonplayer) = this;
 	FirstFreeNonplayer += 1;
 }
 
-void TNonplayer::DelInList(void){
+void Nonplayer::DelInList(void){
 	bool Removed = false;
 	for(int i = 0; i < FirstFreeNonplayer; i += 1){
 		if(*NonplayerList.at(i) == this){
@@ -32,24 +32,24 @@ void TNonplayer::DelInList(void){
 	}
 
 	if(!Removed){
-		error("TNonplayer::DelInList: Creature not found.\n");
+		error("Nonplayer::DelInList: Creature not found.\n");
 	}
 }
 
 // Initialization
 // =============================================================================
-void InitNonplayer(void){
+void init_nonplayer(void){
 	print(1, "Initializing Nonplayers ...\n");
 	FirstFreeNonplayer = 0;
-	InitNPCs();
-	LoadMonsterhomes();
+	init_npcs();
+	load_monsterhomes();
 }
 
-void ExitNonplayer(void){
+void exit_nonplayer(void){
 	while(FirstFreeNonplayer > 0){
 		// NOTE(fusion): Deleting a non player or any other creature will
 		// automatically remove it from its related creature lists.
-		TNonplayer *Nonplayer = *NonplayerList.at(0);
+		Nonplayer *Nonplayer = *NonplayerList.at(0);
 		delete Nonplayer;
 	}
 

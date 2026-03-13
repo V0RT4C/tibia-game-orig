@@ -48,7 +48,7 @@ static bool IsAggressionValid(TCreature *Actor, TCreature *Victim) {
 		return false;
 	}
 
-	if (GetRaceNoParalyze(Victim->Race)) {
+	if (get_race_no_paralyze(Victim->Race)) {
 		return false;
 	}
 
@@ -323,7 +323,7 @@ SummonImpact::SummonImpact(TCreature *Actor, int Race, int Maximum) {
 		error("SummonImpact::SummonImpact: Actor is NULL.\n");
 	}
 
-	if (!IsRaceValid(Race)) {
+	if (!is_race_valid(Race)) {
 		error("SummonImpact::SummonImpact: Invalid race number %d.\n", Race);
 	}
 
@@ -336,9 +336,9 @@ void SummonImpact::handleField(int x, int y, int z) {
 	TCreature *Actor = this->Actor;
 	int Race = this->Race;
 	int Maximum = this->Maximum;
-	if (Actor != NULL && IsRaceValid(Race) && Actor->SummonedCreatures < Maximum) {
+	if (Actor != NULL && is_race_valid(Race) && Actor->SummonedCreatures < Maximum) {
 		if (search_summon_field(&x, &y, &z, 2)) {
-			CreateMonster(Race, x, y, z, 0, Actor->ID, true);
+			create_monster(Race, x, y, z, 0, Actor->ID, true);
 		}
 	}
 }
@@ -428,7 +428,7 @@ static void ExecuteCircleSpell(int DestX, int DestY, int DestZ, int Radius, Impa
 			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while (Obj != NONE) {
 				if (Obj.get_object_type().is_creature_container()) {
-					TCreature *Victim = GetCreature(Obj);
+					TCreature *Victim = get_creature(Obj);
 					if (Victim != NULL) {
 						Impact->handleCreature(Victim);
 					}
@@ -535,7 +535,7 @@ void angle_shape_spell(TCreature *Actor, int Angle, int Range, Impact *Impact, i
 			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while (Obj != NONE) {
 				if (Obj.get_object_type().is_creature_container()) {
-					TCreature *Victim = GetCreature(Obj);
+					TCreature *Victim = get_creature(Obj);
 					if (Victim != NULL) {
 						Impact->handleCreature(Victim);
 					}
@@ -654,7 +654,7 @@ void check_affected_players(TCreature *Actor, int x, int y, int z) {
 		while (Obj != NONE) {
 			if (Obj.get_object_type().is_creature_container()) {
 				uint32 TargetID = Obj.get_creature_id();
-				if (IsCreaturePlayer(TargetID) && Actor->ID != TargetID &&
+				if (is_creature_player(TargetID) && Actor->ID != TargetID &&
 					!((TPlayer *)Actor)->IsAttackJustified(TargetID)) {
 					throw SECUREMODE;
 				}
@@ -895,7 +895,7 @@ void kill_all_monsters(TCreature *Actor, int Effect, int Radius) {
 			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while (Obj != NONE) {
 				if (Obj.get_object_type().is_creature_container()) {
-					TCreature *Victim = GetCreature(Obj);
+					TCreature *Victim = get_creature(Obj);
 					if (Victim == NULL) {
 						error("kill_all_monsters: Invalid creature.\n");
 					} else if (Actor != Victim && Victim->Type == MONSTER) {
@@ -1469,7 +1469,7 @@ void teleport_to_creature(TCreature *Actor, const char *Name) {
 
 	TPlayer *Player;
 	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)) {
+	switch (identify_player(Name, false, IgnoreGamemasters, &Player)) {
 	case 0:
 		break; // PLAYERFOUND ?
 	case -1:
@@ -1477,7 +1477,7 @@ void teleport_to_creature(TCreature *Actor, const char *Name) {
 	case -2:
 		throw NAMEAMBIGUOUS;
 	default: {
-		error("teleport_to_creature: Invalid return value from IdentifyPlayer.\n");
+		error("teleport_to_creature: Invalid return value from identify_player.\n");
 		throw ERROR;
 	}
 	}
@@ -1528,7 +1528,7 @@ void teleport_player_to_me(TCreature *Actor, const char *Name) {
 
 	TPlayer *Player;
 	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)) {
+	switch (identify_player(Name, false, IgnoreGamemasters, &Player)) {
 	case 0:
 		break; // PLAYERFOUND ?
 	case -1:
@@ -1536,7 +1536,7 @@ void teleport_player_to_me(TCreature *Actor, const char *Name) {
 	case -2:
 		throw NAMEAMBIGUOUS;
 	default: {
-		error("teleport_player_to_me: Invalid return value from IdentifyPlayer.\n");
+		error("teleport_player_to_me: Invalid return value from identify_player.\n");
 		throw ERROR;
 	}
 	}
@@ -1847,7 +1847,7 @@ void summon_creature(TCreature *Actor, int ManaPoints, int Race, bool God) {
 		throw ERROR;
 	}
 
-	if (!IsRaceValid(Race)) {
+	if (!is_race_valid(Race)) {
 		error("summon_creature: Invalid race number %d passed.\n", Race);
 		throw ERROR;
 	}
@@ -1861,7 +1861,7 @@ void summon_creature(TCreature *Actor, int ManaPoints, int Race, bool God) {
 			return;
 		}
 	} else if (Actor->Type == PLAYER) {
-		if (!check_right(Actor->ID, CREATE_MONSTERS) && GetRaceNoSummon(Race)) {
+		if (!check_right(Actor->ID, CREATE_MONSTERS) && get_race_no_summon(Race)) {
 			throw NOTACCESSIBLE;
 		}
 
@@ -1880,12 +1880,12 @@ void summon_creature(TCreature *Actor, int ManaPoints, int Race, bool God) {
 	uint32 Master = 0;
 	if (!God) {
 		int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-		ManaPoints += GetRaceSummonCost(Race);
+		ManaPoints += get_race_summon_cost(Race);
 		check_mana(Actor, ManaPoints, 0, Delay);
 		Master = Actor->ID;
 	}
 
-	CreateMonster(Race, SummonX, SummonY, SummonZ, 0, Master, true);
+	create_monster(Race, SummonX, SummonY, SummonZ, 0, Master, true);
 	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
@@ -1900,7 +1900,7 @@ void summon_creature(TCreature *Actor, int ManaPoints, const char *RaceName, boo
 		throw ERROR;
 	}
 
-	int Race = GetRaceByName(RaceName);
+	int Race = get_race_by_name(RaceName);
 	if (Race == 0) {
 		throw CREATURENOTEXISTING;
 	}
@@ -1932,7 +1932,7 @@ void start_monsterraid(TCreature *Actor, const char *RaidName) {
 	char FileName[4096];
 	snprintf(FileName, sizeof(FileName), "%s/%s.evt", MONSTERPATH, RaidNameLower);
 	if (FileExists(FileName)) {
-		LoadMonsterRaid(FileName, RoundNr, NULL, NULL, NULL, NULL);
+		load_monster_raid(FileName, RoundNr, NULL, NULL, NULL, NULL);
 		graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 	} else {
 		graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
@@ -1985,7 +1985,7 @@ void raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints)
 
 	// NOTE(fusion): The race of a common skeleton is 33 but it should probably
 	// be a constant somewhere.
-	CreateMonster(33, TargetX, TargetY, TargetZ, 0, Actor->ID, true);
+	create_monster(33, TargetX, TargetY, TargetZ, 0, Actor->ID, true);
 }
 
 void mass_raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius) {
@@ -2043,7 +2043,7 @@ void mass_raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPo
 					if (search_free_field(&SummonX, &SummonY, &SummonZ, 1, 0, false) &&
 						!is_protection_zone(SummonX, SummonY, SummonZ)) {
 						delete_op(Obj, -1);
-						CreateMonster(33, SummonX, SummonY, SummonZ, 0, Actor->ID, false);
+						create_monster(33, SummonX, SummonY, SummonZ, 0, Actor->ID, false);
 					}
 				}
 				Obj = Next;
@@ -2132,7 +2132,7 @@ void mass_heal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, 
 			while (Obj != NONE) {
 				ObjectType ObjType = Obj.get_object_type();
 				if (ObjType.is_creature_container()) {
-					TCreature *Victim = GetCreature(Obj);
+					TCreature *Victim = get_creature(Obj);
 					if (Victim == NULL) {
 						error("mass_heal: Invalid creature.\n");
 					} else if (WorldType != NON_PVP || Victim->IsPeaceful()) {
@@ -2171,7 +2171,7 @@ void heal_friend(TCreature *Actor, const char *TargetName, int ManaPoints, int S
 	}
 
 	TPlayer *Target;
-	switch (IdentifyPlayer(TargetName, false, true, &Target)) {
+	switch (identify_player(TargetName, false, true, &Target)) {
 	default:
 	case 0:
 		break; // PLAYERFOUND ?
@@ -2238,7 +2238,7 @@ void magic_go_strength(TCreature *Actor, TCreature *Target, int ManaPoints, int 
 	}
 
 	if (Percent < 0) {
-		if (GetRaceNoParalyze(Target->Race)) {
+		if (get_race_no_paralyze(Target->Race)) {
 			throw NOTACCESSIBLE;
 		}
 
@@ -2372,7 +2372,7 @@ void cancel_invisibility(TCreature *Actor, Object Target, int ManaPoints, int So
 			while (Obj != NONE) {
 				ObjectType ObjType = Obj.get_object_type();
 				if (ObjType.is_creature_container()) {
-					TCreature *Victim = GetCreature(Obj);
+					TCreature *Victim = get_creature(Obj);
 					if (Victim == NULL) {
 						error("cancel_invisibility: Invalid creature.\n");
 					} else if (Victim->IsInvisible() && (WorldType != NON_PVP || !Victim->IsPeaceful())) {
@@ -2428,18 +2428,18 @@ void creature_illusion(TCreature *Actor, int ManaPoints, int SoulPoints, const c
 		throw ERROR;
 	}
 
-	int Race = GetRaceByName(RaceName);
+	int Race = get_race_by_name(RaceName);
 	if (Race == 0) {
 		throw CREATURENOTEXISTING;
 	}
 
-	if (GetRaceNoIllusion(Race)) {
+	if (get_race_no_illusion(Race)) {
 		throw NOTACCESSIBLE;
 	}
 
 	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	if (Actor->Skills[SKILL_ILLUSION]->Get() == 0) {
-		Actor->Outfit = GetRaceOutfit(Race);
+		Actor->Outfit = get_race_outfit(Race);
 		Actor->SetTimer(SKILL_ILLUSION, 1, Duration, Duration, -1);
 	}
 
@@ -2581,14 +2581,14 @@ void convince(TCreature *Actor, TCreature *Target) {
 		throw ATTACKNOTALLOWED;
 	}
 
-	if (GetRaceNoConvince(Target->Race)) {
+	if (get_race_no_convince(Target->Race)) {
 		throw NOTACCESSIBLE;
 	}
 
-	int SummonCost = GetRaceSummonCost(Target->Race);
+	int SummonCost = get_race_summon_cost(Target->Race);
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
 	check_mana(Actor, SummonCost, 0, Delay);
-	ConvinceMonster(Actor, Target);
+	convince_monster(Actor, Target);
 	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 	graphical_effect(Target->posx, Target->posy, Target->posz, EFFECT_BONE_HIT);
 }
@@ -2619,11 +2619,11 @@ void challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius) {
 			graphical_effect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
 			Object Obj = get_first_spec_object(FieldX, FieldY, FieldZ, TYPEID_CREATURE_CONTAINER);
 			if (Obj != NONE) {
-				TCreature *Victim = GetCreature(Obj);
+				TCreature *Victim = get_creature(Obj);
 				if (Victim == NULL) {
 					error("challenge: Invalid creature.\n");
 				} else if (Victim->Type == MONSTER) {
-					ChallengeMonster(Actor, Victim);
+					challenge_monster(Actor, Victim);
 				}
 			}
 		}
@@ -2649,7 +2649,7 @@ void find_person(TCreature *Actor, int ManaPoints, int SoulPoints, const char *T
 
 	TPlayer *Target;
 	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(TargetName, false, IgnoreGamemasters, &Target)) {
+	switch (identify_player(TargetName, false, IgnoreGamemasters, &Target)) {
 	default:
 	case 0:
 		break; // PLAYERFOUND ?
@@ -3029,7 +3029,7 @@ void kick_guest(TCreature *Actor, const char *GuestName) {
 
 	TPlayer *Guest;
 	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(GuestName, false, IgnoreGamemasters, &Guest)) {
+	switch (identify_player(GuestName, false, IgnoreGamemasters, &Guest)) {
 	default:
 	case 0:
 		break; // PLAYERFOUND ?
@@ -3258,7 +3258,7 @@ void kick_player(TCreature *Actor, const char *Name) {
 
 	TPlayer *Player;
 	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)) {
+	switch (identify_player(Name, false, IgnoreGamemasters, &Player)) {
 	default:
 	case 0:
 		break; // PLAYERFOUND ?
@@ -3296,7 +3296,7 @@ void home_teleport(TCreature *Actor, const char *Name) {
 
 	TPlayer *Player;
 	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
-	switch (IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)) {
+	switch (identify_player(Name, false, IgnoreGamemasters, &Player)) {
 	default:
 	case 0:
 		break; // PLAYERFOUND ?
@@ -3318,7 +3318,7 @@ void home_teleport(TCreature *Actor, const char *Name) {
 // Spell Casting
 // =============================================================================
 static void CharacterRightSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512]) {
-	TCreature *Actor = GetCreature(CreatureID);
+	TCreature *Actor = get_creature(CreatureID);
 	if (Actor == NULL) {
 		error("CharacterRightSpell: Creature does not exist.\n");
 		throw ERROR;
@@ -3402,7 +3402,7 @@ static void CharacterRightSpell(uint32 CreatureID, int SpellNr, const char (*Spe
 }
 
 static void AccountRightSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512]) {
-	TCreature *Actor = GetCreature(CreatureID);
+	TCreature *Actor = get_creature(CreatureID);
 	if (Actor == NULL) {
 		error("AccountRightSpell: Creature does not exist.\n");
 		throw ERROR;
@@ -3447,7 +3447,7 @@ static void AccountRightSpell(uint32 CreatureID, int SpellNr, const char (*Spell
 }
 
 static void CastSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512]) {
-	TCreature *Actor = GetCreature(CreatureID);
+	TCreature *Actor = get_creature(CreatureID);
 	if (Actor == NULL) {
 		error("CastSpell: Creature does not exist.\n");
 		throw ERROR;
@@ -3692,7 +3692,7 @@ static void CastSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512
 }
 
 static void RuneSpell(uint32 CreatureID, int SpellNr) {
-	TCreature *Actor = GetCreature(CreatureID);
+	TCreature *Actor = get_creature(CreatureID);
 	if (Actor == NULL) {
 		error("RuneSpell: Creature does not exist.\n");
 		throw ERROR;
@@ -3873,7 +3873,7 @@ void get_magic_item_description(Object Obj, char *SpellString, int *MagicLevel) 
 }
 
 void get_spellbook(uint32 CharacterID, char *Buffer) {
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("get_spellbook: Player does not exist.\n");
 		return;
@@ -4043,7 +4043,7 @@ int check_for_spell(uint32 CreatureID, const char *Text) {
 	} catch (RESULT r) {
 		// TODO(fusion): `SpellFailed` is inlined in here but I think it's
 		// cleaner to keep it this way.
-		TCreature *Actor = GetCreature(CreatureID);
+		TCreature *Actor = get_creature(CreatureID);
 		if (Actor == NULL) {
 			error("SpellFailed: Creature does not exist.\n");
 		} else {
@@ -4076,7 +4076,7 @@ static void DeleteRune(Object Obj) {
 }
 
 void use_magic_item(uint32 CreatureID, Object Obj, Object Dest) {
-	TPlayer *Actor = GetPlayer(CreatureID);
+	TPlayer *Actor = get_player(CreatureID);
 	if (Actor == NULL) {
 		error("use_magic_item: Creature does not exist.\n");
 		throw ERROR;
@@ -4109,7 +4109,7 @@ void use_magic_item(uint32 CreatureID, Object Obj, Object Dest) {
 	bool Aggressive = is_aggressive_spell(SpellNr);
 	{
 		if (Dest.get_object_type().is_creature_container()) {
-			Target = GetCreature(Dest);
+			Target = get_creature(Dest);
 		}
 
 		Object Other = get_first_container_object(Dest.get_container());
@@ -4118,7 +4118,7 @@ void use_magic_item(uint32 CreatureID, Object Obj, Object Dest) {
 				uint32 OtherID = Other.get_creature_id();
 				if (Target == NULL || (Aggressive && OtherID != Actor->ID && OtherID != Target->ID) ||
 					(!Aggressive && OtherID == Actor->ID && OtherID != Target->ID)) {
-					Target = GetCreature(OtherID);
+					Target = get_creature(OtherID);
 					Dest = Other;
 				}
 			}
@@ -4343,7 +4343,7 @@ void use_magic_item(uint32 CreatureID, Object Obj, Object Dest) {
 }
 
 void drink_potion(uint32 CreatureID, Object Obj) {
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if (Player == NULL) {
 		error("drink_potion: Creature does not exist.\n");
 		throw ERROR;

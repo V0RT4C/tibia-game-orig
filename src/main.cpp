@@ -104,7 +104,7 @@ static void DefaultHandler(int signr){
 static void ErrorHandler(int signr){
 	error("ErrorHandler: SigNr. %d: %s\n", signr, strsignal(signr));
 	EndGame();
-	LogoutAllPlayers();
+	logout_all_players();
 	exit(EXIT_FAILURE);
 }
 #endif
@@ -264,7 +264,7 @@ static void InitAll(void){
 		init_info();
 		init_move_use();
 		init_magic();
-		InitCr();
+		init_cr();
 		init_houses();
 		InitTime();
 		apply_patches();
@@ -277,7 +277,7 @@ static void InitAll(void){
 static void ExitAll(void){
 	EndGame();
 	ExitTime();
-	ExitCr();
+	exit_cr();
 	exit_magic();
 	exit_move_use();
 	exit_info();
@@ -327,7 +327,7 @@ static void AdvanceGame(int Delay){
 
 	if(CreatureTimeCounter >= 1750){
 		CreatureTimeCounter -= 1000;
-		ProcessCreatures();
+		process_creatures();
 	}
 
 	if(CronTimeCounter >= 1500){
@@ -337,7 +337,7 @@ static void AdvanceGame(int Delay){
 
 	if(SkillTimeCounter >= 1250){
 		SkillTimeCounter -= 1000;
-		ProcessSkills();
+		process_skills();
 	}
 
 	if(OtherTimeCounter >= 1000){
@@ -347,8 +347,8 @@ static void AdvanceGame(int Delay){
 		SetRoundNr(RoundNr);
 
 		ProcessConnections();
-		ProcessMonsterhomes();
-		ProcessMonsterRaids();
+		process_monsterhomes();
+		process_monster_raids();
 		process_communication_control();
 		process_reader_thread_replies(refresh_sector, send_mails);
 		process_writer_thread_replies();
@@ -378,7 +378,7 @@ static void AdvanceGame(int Delay){
 
 			refresh_cylinders();
 			if(Minute % 5 == 0){
-				CreatePlayerList(true);
+				create_player_list(true);
 			}
 			if(Minute % 15 == 0){
 				save_player_data_order();
@@ -387,7 +387,7 @@ static void AdvanceGame(int Delay){
 				NetLoadSummary();
 			}
 			if(Minute == 55){
-				WriteKillStatistics();
+				write_kill_statistics();
 			}
 
 			int RealTime = Minute + Hour * 60;
@@ -418,7 +418,7 @@ static void AdvanceGame(int Delay){
 				}
 			}else if(RealTime == RebootTime){
 				CloseGame();
-				LogoutAllPlayers();
+				logout_all_players();
 				SendAll();
 				if(Reboot){
 					refresh_map();
@@ -439,7 +439,7 @@ static void AdvanceGame(int Delay){
 
 	// TODO(fusion): Why would we delay creature movement yet another beat?
 	if(Delay < 1000){
-		MoveCreatures(Delay);
+		move_creatures(Delay);
 		Lag = false;
 	}else{
 		if(!Lag && RoundNr > 10){
@@ -493,7 +493,7 @@ static void LaunchGame(void){
 		}
 	}
 
-	LogoutAllPlayers();
+	logout_all_players();
 }
 
 static bool DaemonInit(bool NoFork){

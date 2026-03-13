@@ -3,18 +3,18 @@
 
 #include "creature/nonplayer/nonplayer.h"
 
-struct TNPC; // forward declaration for TBehaviourDatabase
+struct TNPC; // forward declaration for BehaviourDatabase
 
 // TNPC
 // =============================================================================
-struct TBehaviourNode {
+struct BehaviourNode {
 	int Type;
 	int Data;
-	TBehaviourNode *Left;
-	TBehaviourNode *Right;
+	BehaviourNode *Left;
+	BehaviourNode *Right;
 };
 
-struct TBehaviourCondition {
+struct BehaviourCondition {
 	bool set(int Type, void *Data);
 	void clear(void);
 
@@ -22,12 +22,12 @@ struct TBehaviourCondition {
 	// =================
 	int Type;
 	uint32 Text;
-	TBehaviourNode *Expression;
+	BehaviourNode *Expression;
 	int Property;
 	int Number;
 };
 
-struct TBehaviourAction {
+struct BehaviourAction {
 	bool set(int Type, void *Data, void *Data2, void *Data3, void *Data4);
 	void clear(void);
 
@@ -36,9 +36,9 @@ struct TBehaviourAction {
 	int Type;
 	uint32 Text;
 	int Number;
-	TBehaviourNode *Expression;
-	TBehaviourNode *Expression2;
-	TBehaviourNode *Expression3;
+	BehaviourNode *Expression;
+	BehaviourNode *Expression2;
+	BehaviourNode *Expression3;
 };
 
 struct TBehaviour {
@@ -53,20 +53,20 @@ struct TBehaviour {
 
 	// DATA
 	// =================
-	vector<TBehaviourCondition> Condition;
-	vector<TBehaviourAction> Action;
+	vector<BehaviourCondition> Condition;
+	vector<BehaviourAction> Action;
 	int Conditions;
 	int Actions;
 };
 
-struct TBehaviourDatabase {
-	TBehaviourDatabase(ReadScriptFile *Script);
+struct BehaviourDatabase {
+	BehaviourDatabase(ReadScriptFile *Script);
 
 	// TODO(fusion): These could/should be standalone functions.
-	TBehaviourNode *readValue(ReadScriptFile *Script);
-	TBehaviourNode *readFactor(ReadScriptFile *Script);
-	TBehaviourNode *readTerm(ReadScriptFile *Script);
-	int evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameters);
+	BehaviourNode *readValue(ReadScriptFile *Script);
+	BehaviourNode *readFactor(ReadScriptFile *Script);
+	BehaviourNode *readTerm(ReadScriptFile *Script);
+	int evaluate(TNPC *Npc, BehaviourNode *Node, int *Parameters);
 
 	void react(TNPC *Npc, const char *Text, SITUATION Situation);
 
@@ -76,7 +76,7 @@ struct TBehaviourDatabase {
 	int Behaviours;
 };
 
-struct TNPC: TNonplayer {
+struct TNPC: Nonplayer {
 	TNPC(const char *FileName);
 	void GiveTo(ObjectType Type, int Amount);
 	void GetFrom(ObjectType Type, int Amount);
@@ -97,7 +97,7 @@ struct TNPC: TNonplayer {
 
 	// DATA
 	// =================
-	//TNonplayer super_TNonplayer; 	// IMPLICIT
+	//Nonplayer super_TNonplayer; 	// IMPLICIT
 	uint32 Interlocutor;
 	int Topic;
 	int Price;
@@ -108,10 +108,10 @@ struct TNPC: TNonplayer {
 	vector<uint32> QueuedPlayers;
 	vector<uint32> QueuedAddresses;
 	int QueueLength;
-	TBehaviourDatabase *Behaviour;
+	BehaviourDatabase *Behaviour;
 };
 
-void ChangeNPCState(TCreature *Npc, int NewState, bool Stimulus);
-void InitNPCs(void);
+void change_npc_state(TCreature *Npc, int NewState, bool Stimulus);
+void init_npcs(void);
 
 #endif // TIBIA_CREATURE_NPC_H_

@@ -209,7 +209,7 @@ void SendMapObject(TConnection *Connection, Object Obj){
 	}
 
 	// TODO(fusion): This might also be contained in its own `SendCreature` function?
-	TCreature *Creature = GetCreature(Obj);
+	TCreature *Creature = get_creature(Obj);
 	if(Creature == NULL){
 		error("SendMapObject: Creature has no creature object\n");
 		return;
@@ -253,7 +253,7 @@ void SendMapObject(TConnection *Connection, Object Obj){
 		int PartyMark = PARTY_SHIELD_NONE;
 		if(Creature->Type == PLAYER){
 			TPlayer *Player = (TPlayer*)Creature;
-			TPlayer *Observer = Connection->GetPlayer();
+			TPlayer *Observer = Connection->get_player();
 			PlayerkillingMark = Player->GetPlayerkillingMark(Observer);
 			PartyMark = Player->GetPartyMark(Observer);
 		}
@@ -662,7 +662,7 @@ void SendMoveCreature(TConnection *Connection,
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if(Creature == NULL){
 		error("SendMoveCreature: Creature does not exist.\n");
 		return;
@@ -699,7 +699,7 @@ void SendContainer(TConnection *Connection, int ContainerNr){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		error("SendContainer: No player belongs to this connection.\n");
 		return;
@@ -976,7 +976,7 @@ void SendCreatureHealth(TConnection *Connection, uint32 CreatureID){
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if(Creature == NULL){
 		error("SendCreatureHealth: Creature %u does not exist.\n", CreatureID);
 		return;
@@ -993,7 +993,7 @@ void SendCreatureLight(TConnection *Connection, uint32 CreatureID){
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if(Creature == NULL){
 		error("SendCreatureLight: Creature %u does not exist.\n", CreatureID);
 		return;
@@ -1014,7 +1014,7 @@ void SendCreatureOutfit(TConnection *Connection, uint32 CreatureID){
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if(Creature == NULL){
 		error("SendCreatureOutfit: Creature %u does not exist.\n", CreatureID);
 		return;
@@ -1031,7 +1031,7 @@ void SendCreatureSpeed(TConnection *Connection, uint32 CreatureID){
 		return;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if(Creature == NULL){
 		error("SendCreatureSpeed: Creature %u does not exist.\n", CreatureID);
 		return;
@@ -1048,7 +1048,7 @@ void SendCreatureSkull(TConnection *Connection, uint32 CreatureID){
 		return;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if(Player == NULL){
 		error("SendCreatureSkull: Creature %u does not exist.\n", CreatureID);
 		return;
@@ -1056,7 +1056,7 @@ void SendCreatureSkull(TConnection *Connection, uint32 CreatureID){
 
 	SendByte(Connection, SV_CMD_CREATURE_SKULL);
 	SendQuad(Connection, CreatureID);
-	SendByte(Connection, Player->GetPlayerkillingMark(Connection->GetPlayer()));
+	SendByte(Connection, Player->GetPlayerkillingMark(Connection->get_player()));
 	FinishSendData(Connection);
 }
 
@@ -1065,7 +1065,7 @@ void SendCreatureParty(TConnection *Connection, uint32 CreatureID){
 		return;
 	}
 
-	TPlayer *Player = GetPlayer(CreatureID);
+	TPlayer *Player = get_player(CreatureID);
 	if(Player == NULL){
 		error("SendCreatureParty: Creature %u does not exist.\n", CreatureID);
 		return;
@@ -1073,7 +1073,7 @@ void SendCreatureParty(TConnection *Connection, uint32 CreatureID){
 
 	SendByte(Connection, SV_CMD_CREATURE_PARTY);
 	SendQuad(Connection, CreatureID);
-	SendByte(Connection, Player->GetPartyMark(Connection->GetPlayer()));
+	SendByte(Connection, Player->GetPartyMark(Connection->get_player()));
 	FinishSendData(Connection);
 }
 
@@ -1102,7 +1102,7 @@ void SendEditText(TConnection *Connection, Object Obj){
 		Editor = GetDynamicString(Obj.get_attribute(EDITOR));
 	}else if(ObjType.get_flag(INFORMATION)
 			&& ObjType.get_attribute(INFORMATIONTYPE) == 4){ // INFORMATION_SPELLBOOK ?
-		TPlayer *Player = Connection->GetPlayer();
+		TPlayer *Player = Connection->get_player();
 		if(Player == NULL){
 			error("SendEditText: No player belongs to this connection.\n");
 			return;
@@ -1161,7 +1161,7 @@ void SendPlayerData(TConnection *Connection){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		error("SendStatus: No player belongs to this connection.\n");
 		return;
@@ -1232,7 +1232,7 @@ void SendPlayerSkills(TConnection *Connection){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		error("SendPlayerSkills: No player belongs to this connection.\n");
 		return;
@@ -1441,7 +1441,7 @@ void SendChannels(TConnection *Connection){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1510,7 +1510,7 @@ void SendOpenChannel(TConnection *Connection, int Channel){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1595,7 +1595,7 @@ void SendOpenOwnChannel(TConnection *Connection, int Channel){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1649,7 +1649,7 @@ void SendSnapback(TConnection *Connection){
 	}
 
 	// TODO(fusion): Sometimes we check, sometimes we don't.
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1664,7 +1664,7 @@ void SendOutfit(TConnection *Connection){
 		return;
 	}
 
-	TPlayer *Player = Connection->GetPlayer();
+	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
 		return;
 	}
@@ -1742,7 +1742,7 @@ void CreateGamemasterRequest(const char *Name, const char *Text){
 	TConnection *Connection = GetFirstConnection();
 	while(Connection != NULL){
 		if(Connection->Live()){
-			TPlayer *Player = Connection->GetPlayer();
+			TPlayer *Player = Connection->get_player();
 			if(Player != NULL && channel_subscribed(CHANNEL_RULEVIOLATIONS, Player->ID)){
 				SendTalk(Connection, 0, Name, TALK_GAMEMASTER_REQUEST, Text, 0);
 			}
@@ -1760,7 +1760,7 @@ void DeleteGamemasterRequest(const char *Name){
 	TConnection *Connection = GetFirstConnection();
 	while(Connection != NULL){
 		if(Connection->Live()){
-			TPlayer *Player = Connection->GetPlayer();
+			TPlayer *Player = Connection->get_player();
 			if(Player != NULL && channel_subscribed(CHANNEL_RULEVIOLATIONS, Player->ID)){
 				SendDeleteRequest(Connection, Name);
 			}

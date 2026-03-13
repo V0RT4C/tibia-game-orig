@@ -179,7 +179,7 @@ void TCombat::GetAttackValue(int *Value, int *SkillNr){
 		AttackValue = 0;
 		WeaponType = WEAPON_NONE;
 	}else{
-		AttackValue = RaceData[this->Master->Race].Attack;
+		AttackValue = race_data[this->Master->Race].Attack;
 		WeaponType = WEAPON_NONE;
 	}
 
@@ -208,7 +208,7 @@ void TCombat::GetDefendValue(int *Value, int *SkillNr){
 		DefenseValue = 0;
 		WeaponType = WEAPON_AMMO;
 	}else{
-		DefenseValue = RaceData[this->Master->Race].Defend;
+		DefenseValue = race_data[this->Master->Race].Defend;
 		WeaponType = WEAPON_NONE;
 	}
 
@@ -298,7 +298,7 @@ int TCombat::GetArmorStrength(void){
 		}
 	}
 
-	Armor += RaceData[Master->Race].Armor;
+	Armor += race_data[Master->Race].Armor;
 	if(Armor >= 2){
 		Armor = (Armor / 2) + rand() % (Armor / 2);
 	}
@@ -364,7 +364,7 @@ void TCombat::SetAttackDest(uint32 TargetID, bool Follow){
 		return;
 	}
 
-	TCreature *Target = GetCreature(TargetID);
+	TCreature *Target = get_creature(TargetID);
 	if(Target == NULL){
 		this->StopAttack(0);
 		return;
@@ -450,7 +450,7 @@ void TCombat::CanToDoAttack(void){
 		throw ERROR;
 	}
 
-	TCreature *Target = GetCreature(this->AttackDest);
+	TCreature *Target = get_creature(this->AttackDest);
 	if(Target == NULL){
 		this->StopAttack(0);
 		throw TARGETLOST;
@@ -539,7 +539,7 @@ void TCombat::Attack(void){
 		throw ERROR;
 	}
 
-	TCreature *Target = GetCreature(this->AttackDest);
+	TCreature *Target = get_creature(this->AttackDest);
 	if(Target == NULL){
 		this->StopAttack(0);
 		throw TARGETLOST;
@@ -657,7 +657,7 @@ void TCombat::CloseAttack(TCreature *Target){
 		this->ActivateLearning();
 	}
 
-	int Poison = GetRacePoison(Master->Race);
+	int Poison = get_race_poison(Master->Race);
 	if(Poison != 0){
 		if(DamageDone > 0 || (Attack > Defense && (rand() % 5) == 0)){
 			int PoisonDamage = random(Poison / 2, Poison);
@@ -905,7 +905,7 @@ void TCombat::DistributeExperiencePoints(uint32 Exp){
 	}
 
 	for(int i = 0; i < NARRAY(this->CombatList); i += 1){
-		TCreature *Attacker = GetCreature(this->CombatList[i].ID);
+		TCreature *Attacker = get_creature(this->CombatList[i].ID);
 		if(Attacker == NULL || Attacker->IsDead){
 			continue;
 		}

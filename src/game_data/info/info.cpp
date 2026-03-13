@@ -108,7 +108,7 @@ const char *get_name(Object Obj) {
 	char ObjectName[50] = {};
 	ObjectType ObjType = Obj.get_object_type();
 	if (ObjType.is_creature_container()) {
-		TCreature *Creature = GetCreature(Obj);
+		TCreature *Creature = get_creature(Obj);
 		if (Creature != NULL) {
 			snprintf(ObjectName, sizeof(ObjectName), "%s", Creature->Name);
 		} else {
@@ -283,7 +283,7 @@ int get_object_rnum(Object Obj) {
 }
 
 bool object_in_range(uint32 CreatureID, Object Obj, int Range) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("object_in_range: Invalid creature CreatureID=%d passed.\n", CreatureID);
 		return false;
@@ -321,7 +321,7 @@ bool object_accessible(uint32 CreatureID, Object Obj, int Range) {
 		bool HookSouth = coordinate_flag(ObjX, ObjY, ObjZ, HOOKSOUTH);
 		bool HookEast = coordinate_flag(ObjX, ObjY, ObjZ, HOOKEAST);
 		if (HookSouth || HookEast) {
-			TCreature *Creature = GetCreature(CreatureID);
+			TCreature *Creature = get_creature(CreatureID);
 			if (Creature == NULL) {
 				error("object_accessible: Creature does not exist.\n");
 				return false;
@@ -370,7 +370,7 @@ Object get_body_container(uint32 CreatureID, int Position) {
 		return NONE;
 	}
 
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("get_body_container: Creature %d does not exist.\n", CreatureID);
 		return NONE;
@@ -495,7 +495,7 @@ Object get_row_object(Object Obj, ObjectType Type, uint32 Value, bool Recurse) {
 }
 
 Object get_inventory_object(uint32 CreatureID, ObjectType Type, uint32 Value) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("get_inventory_object: Creature %d does not exist.\n", CreatureID);
 		return NONE;
@@ -609,7 +609,7 @@ int count_objects(Object Obj, ObjectType Type, uint32 Value) {
 }
 
 int count_inventory_objects(uint32 CreatureID, ObjectType Type, uint32 Value) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("count_inventory_objects: Creature %d does not exist; object type %d.\n", CreatureID, Type.TypeID);
 		return 0;
@@ -653,7 +653,7 @@ int count_money(Object Obj) {
 }
 
 int count_inventory_money(uint32 CreatureID) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("count_inventory_money: Creature %d does not exist.\n", CreatureID);
 		return 0;
@@ -749,7 +749,7 @@ bool jump_possible(int x, int y, int z, bool AvoidPlayers) {
 		}
 
 		if (AvoidPlayers && ObjType.is_creature_container()) {
-			TCreature *Creature = GetCreature(Obj);
+			TCreature *Creature = get_creature(Obj);
 			if (Creature != NULL && Creature->Type == PLAYER) {
 				return false;
 			}
@@ -1069,13 +1069,13 @@ bool search_spawn_field(int *x, int *y, int *z, int Distance, bool Player) {
 }
 
 bool search_flight_field(uint32 FugitiveID, uint32 PursuerID, int *x, int *y, int *z) {
-	TCreature *Fugitive = GetCreature(FugitiveID);
+	TCreature *Fugitive = get_creature(FugitiveID);
 	if (Fugitive == NULL) {
 		error("search_flight_field: Fugitive does not exist.\n");
 		return false;
 	}
 
-	TCreature *Pursuer = GetCreature(PursuerID);
+	TCreature *Pursuer = get_creature(PursuerID);
 	if (Pursuer == NULL) {
 		error("search_flight_field: Pursuer does not exist.\n");
 		return false;
@@ -1279,7 +1279,7 @@ bool throw_possible(int OrigX, int OrigY, int OrigZ, int DestX, int DestY, int D
 }
 
 void get_creature_light(uint32 CreatureID, int *Brightness, int *Color) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("get_creature_light: Creature does not exist.\n");
 		*Brightness = 0;
@@ -1345,7 +1345,7 @@ void get_creature_light(uint32 CreatureID, int *Brightness, int *Color) {
 }
 
 int get_inventory_weight(uint32 CreatureID) {
-	TCreature *Creature = GetCreature(CreatureID);
+	TCreature *Creature = get_creature(CreatureID);
 	if (Creature == NULL) {
 		error("get_inventory_weight: Creature %d does not exist.\n", CreatureID);
 		return 0;
@@ -1356,7 +1356,7 @@ int get_inventory_weight(uint32 CreatureID) {
 }
 
 bool check_right(uint32 CharacterID, RIGHT Right) {
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("check_right: Player does not exist; Right=%d.\n", Right);
 		return false;
@@ -1371,7 +1371,7 @@ bool check_right(uint32 CharacterID, RIGHT Right) {
 }
 
 bool check_banishment_right(uint32 CharacterID, int Reason, int Action) {
-	TPlayer *Player = GetPlayer(CharacterID);
+	TPlayer *Player = get_player(CharacterID);
 	if (Player == NULL) {
 		error("check_banishment_right: Player does not exist.\n");
 		return false;

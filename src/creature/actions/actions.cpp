@@ -244,7 +244,7 @@ bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps){
 	Node = Node->Predecessor;
 	while(Node != NULL && MaxSteps > 0
 			&& (MustReach || CurDistance > 1)){
-		TToDoEntry TD = {};
+		ToDoEntry TD = {};
 		TD.Code = TDGo;
 		TD.Go.x = this->StartX + Node->x;
 		TD.Go.y = this->StartY + Node->y;
@@ -609,7 +609,7 @@ void TCreature::Trade(Object Obj, uint32 PartnerID){
 		throw CROSSREFERENCE;
 	}
 
-	TPlayer *Partner = GetPlayer(PartnerID);
+	TPlayer *Partner = get_player(PartnerID);
 	if(Partner == NULL || Partner->Type != PLAYER){
 		throw PLAYERNOTONLINE;
 	}
@@ -751,7 +751,7 @@ void TCreature::Execute(void){
 			break;
 		}
 
-		TToDoEntry TD = *this->ToDoList.at(this->ActToDo);
+		ToDoEntry TD = *this->ToDoList.at(this->ActToDo);
 		this->ActToDo += 1;
 		try{
 			switch(TD.Code){
@@ -803,7 +803,7 @@ void TCreature::Execute(void){
 
 				case TDChangeState:{
 					if(this->Type == NPC){
-						ChangeNPCState(this, TD.ChangeState.NewState, true);
+						change_npc_state(this, TD.ChangeState.NewState, true);
 					}
 					break;
 				}
@@ -845,7 +845,7 @@ void TCreature::Execute(void){
 
 uint32 TCreature::CalculateDelay(void){
 	uint32 Delay = 0;
-	TToDoEntry *TD = this->ToDoList.at(this->ActToDo);
+	ToDoEntry *TD = this->ToDoList.at(this->ActToDo);
 	switch(TD->Code){
 		case TDWait:{
 			// TODO(fusion): I'm not sure about having `EarliestWalkTime` here.
@@ -898,7 +898,7 @@ uint32 TCreature::CalculateDelay(void){
 bool TCreature::ToDoClear(void){
 	bool SnapbackNecessary = false;
 	for(int i = 0; i < this->NrToDo; i += 1){
-		TToDoEntry *TD = this->ToDoList.at(i);
+		ToDoEntry *TD = this->ToDoList.at(i);
 		switch(TD->Code){
 			case TDGo:{
 				if(this->ActToDo <= i){
@@ -915,7 +915,7 @@ bool TCreature::ToDoClear(void){
 
 			case TDChangeState:{
 				if(this->ActToDo <= i && this->Type == NPC){
-					ChangeNPCState(this, TD->ChangeState.NewState, false);
+					change_npc_state(this, TD->ChangeState.NewState, false);
 				}
 				break;
 			}
@@ -933,7 +933,7 @@ bool TCreature::ToDoClear(void){
 	return SnapbackNecessary;
 }
 
-void TCreature::ToDoAdd(TToDoEntry TD){
+void TCreature::ToDoAdd(ToDoEntry TD){
 	if(this->LockToDo){
 		if(this->ToDoClear() && this->Type == PLAYER){
 			SendSnapback(this->Connection);
@@ -976,14 +976,14 @@ void TCreature::ToDoYield(void){
 }
 
 void TCreature::ToDoWait(int Delay){
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDWait;
 	TD.Wait.Time = ServerMilliseconds + Delay;
 	this->ToDoAdd(TD);
 }
 
 void TCreature::ToDoWaitUntil(uint32 Time){
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDWait;
 	TD.Wait.Time = Time;
 	this->ToDoAdd(TD);
@@ -997,7 +997,7 @@ void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxS
 	}
 
 	if(this->LockToDo){
-		TToDoEntry *Last = this->ToDoList.at(this->NrToDo - 1);
+		ToDoEntry *Last = this->ToDoList.at(this->NrToDo - 1);
 		if(Last->Code == TDGo
 				&& Last->Go.x == DestX
 				&& Last->Go.y == DestY
@@ -1018,7 +1018,7 @@ void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxS
 	// their manhattan distance, if we exclude diagonal movement. We can skip
 	// the path finder if we know we're step away from the destination.
 	if(DistanceX + DistanceY == 1){
-		TToDoEntry TD = {};
+		ToDoEntry TD = {};
 		TD.Code = TDGo;
 		TD.Go.x = DestX;
 		TD.Go.y = DestY;
@@ -1046,7 +1046,7 @@ void TCreature::ToDoRotate(int Direction){
 		throw ERROR;
 	}
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDRotate;
 	TD.Rotate.Direction = Direction;
 	this->ToDoAdd(TD);
@@ -1079,7 +1079,7 @@ void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 			throw NOTACCESSIBLE;
 		}
 
-		TCreature *Creature = GetCreature(Obj);
+		TCreature *Creature = get_creature(Obj);
 		if(Creature == NULL){
 			error("TCreature::ToDoMove: Creature does not exist.\n");
 			throw ERROR;
@@ -1093,7 +1093,7 @@ void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 
 	this->ToDoWait(Delay);
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDMove;
 	TD.Move.Obj = Obj.ObjectID;
 	TD.Move.x = DestX;
@@ -1121,7 +1121,7 @@ void TCreature::ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Coun
 
 	this->ToDoWait(Delay);
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDMove;
 	TD.Move.Obj = Obj.ObjectID;
 	TD.Move.x = DestX;
@@ -1157,7 +1157,7 @@ void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 R
 		throw ERROR;
 	}
 
-	TCreature *Creature = GetCreature(TradePartner);
+	TCreature *Creature = get_creature(TradePartner);
 	if(Creature == NULL){
 		throw PLAYERNOTONLINE;
 	}
@@ -1180,7 +1180,7 @@ void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 R
 		}
 	}
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDTrade;
 	TD.Trade.Obj = Obj.ObjectID;
 	TD.Trade.Partner = TradePartner;
@@ -1217,7 +1217,7 @@ void TCreature::ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType
 
 	this->ToDoWait(100);
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDUse;
 	TD.Use.Obj1 = Obj1.ObjectID;
 	TD.Use.Obj2 = Obj2.ObjectID;
@@ -1246,7 +1246,7 @@ void TCreature::ToDoUse(uint8 Count, Object Obj1, Object Obj2){
 
 	this->ToDoWait(100);
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDUse;
 	TD.Use.Obj1 = Obj1.ObjectID;
 	TD.Use.Obj2 = Obj2.ObjectID;
@@ -1276,7 +1276,7 @@ void TCreature::ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 
 	this->ToDoWait(100);
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDTurn;
 	TD.Turn.Obj = Obj.ObjectID;
 	this->ToDoAdd(TD);
@@ -1288,13 +1288,13 @@ void TCreature::ToDoAttack(void){
 		this->ToDoWait(100);
 	}
 
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDAttack;
 	this->ToDoAdd(TD);
 }
 
 void TCreature::ToDoTalk(int Mode, const char *Addressee, const char *Text, bool CheckSpamming){
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 
 	if(Text == NULL || Text[0] == 0){
 		error("TCreature::ToDoTalk: Text is NULL for %s.\n", this->Name);
@@ -1320,7 +1320,7 @@ void TCreature::ToDoTalk(int Mode, const char *Addressee, const char *Text, bool
 }
 
 void TCreature::ToDoChangeState(int NewState){
-	TToDoEntry TD = {};
+	ToDoEntry TD = {};
 	TD.Code = TDChangeState;
 	TD.ChangeState.NewState = NewState;
 	this->ToDoAdd(TD);
@@ -1333,7 +1333,7 @@ void TCreature::NotifyGo(void){
 
 	int DestX, DestY, DestZ;
 	get_object_coordinates(this->CrObject, &DestX, &DestY, &DestZ);
-	MoveChainCreature(this, DestX, DestY);
+	move_chain_creature(this, DestX, DestY);
 
 	int OrigX = this->posx;
 	int OrigY = this->posy;
@@ -1418,7 +1418,7 @@ void TCreature::NotifyGo(void){
 		// NOTE(fusion): Check trade.
 		Object TradeObject = ((TPlayer*)this)->TradeObject;
 		if(TradeObject != NONE){
-			TPlayer *Partner = GetPlayer(((TPlayer*)this)->TradePartner);
+			TPlayer *Partner = get_player(((TPlayer*)this)->TradePartner);
 			if(!TradeObject.exists()){
 				error("TCreature::NotifyGo: Trade object no longer exists.\n");
 				error("# Trader %s at [%d,%d,%d]\n", this->Name, DestX, DestY, DestZ);
@@ -1486,7 +1486,7 @@ void TCreature::NotifyTurn(Object DestCon){
 }
 
 void TCreature::NotifyCreate(void){
-    InsertChainCreature(this, 0, 0);
+    insert_chain_creature(this, 0, 0);
 }
 
 void TCreature::NotifyDelete(void){
@@ -1499,7 +1499,7 @@ void TCreature::NotifyDelete(void){
 		((TPlayer*)this)->RejectTrade();
 	}
 
-	DeleteChainCreature(this);
+	delete_chain_creature(this);
 }
 
 void TCreature::NotifyChangeInventory(void){

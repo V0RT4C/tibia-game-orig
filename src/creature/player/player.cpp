@@ -15,9 +15,9 @@ static int FirstFreePlayer;
 static Semaphore PlayerDataPoolMutex(1);
 static TPlayerData PlayerDataPool[2000];
 
-static TPlayerIndexInternalNode PlayerIndexHead;
-static store<TPlayerIndexInternalNode, 100> PlayerIndexInternalNodes;
-static store<TPlayerIndexLeafNode, 100> PlayerIndexLeafNodes;
+static PlayerIndexInternalNode PlayerIndexHead;
+static store<PlayerIndexInternalNode, 100> PlayerIndexInternalNodes;
+static store<PlayerIndexLeafNode, 100> PlayerIndexLeafNodes;
 
 // TPlayer
 // =============================================================================
@@ -86,7 +86,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 		this->AddresseesTimes[AddresseeNr] = 0;
 	}
 
-	TPlayerData *PlayerData = AttachPlayerPoolSlot(CharacterID, false);
+	TPlayerData *PlayerData = attach_player_pool_slot(CharacterID, false);
 	if(PlayerData == NULL){
 		error("TPlayer::TPlayer: PlayerData slot not found.\n");
 		this->ConstructError = ERROR;
@@ -104,7 +104,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 	//	I couldn't find any functions here with unhandled exceptions so we might
 	// want to keep an eye out.
 	this->SetID(CharacterID);
-	InsertPlayerIndex(&PlayerIndexHead, 0, this->Name, CharacterID);
+	insert_player_index(&PlayerIndexHead, 0, this->Name, CharacterID);
 	this->LoadData();
 	this->AccountID = PlayerData->AccountID;
 	strcpy(this->IPAddress, Connection->GetIPAddress());
@@ -302,7 +302,7 @@ TPlayer::~TPlayer(void){
 	}
 
 	if(check_right(this->ID, READ_GAMEMASTER_CHANNEL)){
-		CloseProcessedRequests(this->ID);
+		close_processed_requests(this->ID);
 	}
 
 	this->ClearRequest();
@@ -317,8 +317,8 @@ TPlayer::~TPlayer(void){
 
 	PlayerData->Dirty = true;
 	// TODO(fusion): Something is telling me that `PlayerData->Sticky` is also poorly managed.
-	DecreasePlayerPoolSlotSticky(PlayerData);
-	ReleasePlayerPoolSlot(PlayerData);
+	decrease_player_pool_slot_sticky(PlayerData);
+	release_player_pool_slot(PlayerData);
 }
 
 void TPlayer::Death(void){
@@ -418,7 +418,7 @@ void TPlayer::SetInList(void){
 	FirstFreePlayer += 1;
 	PlayerMutex.up();
 
-	NotifyBuddies(this->ID, this->Name, true);
+	notify_buddies(this->ID, this->Name, true);
 	IncrementPlayersOnline();
 	if(this->Profession == PROFESSION_NONE){
 		IncrementNewbiesOnline();
@@ -426,7 +426,7 @@ void TPlayer::SetInList(void){
 }
 
 void TPlayer::DelInList(void){
-	NotifyBuddies(this->ID, this->Name, false);
+	notify_buddies(this->ID, this->Name, false);
 
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		if(*PlayerList.at(Index) == this){
@@ -452,7 +452,7 @@ void TPlayer::DelInList(void){
 void TPlayer::ClearRequest(void){
 	if(this->Request != 0){
 		if(this->RequestProcessingGamemaster != 0){
-			TCreature *Gamemaster = GetPlayer(this->RequestProcessingGamemaster);
+			TCreature *Gamemaster = get_player(this->RequestProcessingGamemaster);
 			if(Gamemaster != NULL){
 				SendFinishRequest(Gamemaster->Connection, this->Name);
 			}
@@ -726,7 +726,7 @@ void TPlayer::TakeOver(TConnection *Connection){
 	this->Connection = Connection;
 	Connection->EnterGame();
 
-	TPlayerData *PlayerData = GetPlayerPoolSlot(this->ID);
+	TPlayerData *PlayerData = get_player_pool_slot(this->ID);
 	if(PlayerData == NULL){
 		error("TPlayer::TakeOver: PlayerData slot not found.\n");
 		return;
@@ -737,13 +737,13 @@ void TPlayer::TakeOver(TConnection *Connection){
 	}
 
 	if(PlayerData->Sticky > 1){
-		DecreasePlayerPoolSlotSticky(PlayerData);
+		decrease_player_pool_slot_sticky(PlayerData);
 	}else{
 		error("TPlayer::TakeOver: Wrong sticky value %d.\n", PlayerData->Sticky);
 	}
 
 	strcpy(this->Name, PlayerData->Name);
-	InsertPlayerIndex(&PlayerIndexHead, 0, this->Name, this->ID);
+	insert_player_index(&PlayerIndexHead, 0, this->Name, this->ID);
 	strcpy(this->IPAddress, Connection->GetIPAddress());
 	memcpy(this->Rights, PlayerData->Rights, sizeof(this->Rights));
 	this->Sex = PlayerData->Sex;
@@ -760,7 +760,7 @@ void TPlayer::TakeOver(TConnection *Connection){
 	this->RejectTrade();
 
 	if(check_right(this->ID, READ_GAMEMASTER_CHANNEL)){
-		CloseProcessedRequests(this->ID);
+		close_processed_requests(this->ID);
 	}
 
 	SendInitGame(Connection, this->ID);
@@ -820,7 +820,7 @@ Object TPlayer::InspectTrade(bool OwnOffer, int Position){
 			return NONE;
 		}
 
-		TPlayer *Partner = GetPlayer(this->TradePartner);
+		TPlayer *Partner = get_player(this->TradePartner);
 		if(Partner == NULL
 				|| Partner->TradeObject == NONE
 				|| Partner->TradePartner != this->ID){
@@ -849,7 +849,7 @@ void TPlayer::AcceptTrade(void){
 		return;
 	}
 
-	TPlayer *Partner = GetPlayer(this->TradePartner);
+	TPlayer *Partner = get_player(this->TradePartner);
 	if(Partner == NULL
 			|| Partner->TradeObject == NONE
 			|| Partner->TradePartner != this->ID){
@@ -991,7 +991,7 @@ void TPlayer::AcceptTrade(void){
 void TPlayer::RejectTrade(void){
 	if(this->TradeObject != NONE){
 		this->TradeObject = NONE;
-		TPlayer *Partner = GetPlayer(this->TradePartner);
+		TPlayer *Partner = get_player(this->TradePartner);
 		if(Partner != NULL
 				&& Partner->TradeObject != NONE
 				&& Partner->TradePartner == this->ID){
@@ -1284,17 +1284,17 @@ void TPlayer::AddBuddy(const char *Name){
 	uint32 BuddyID = 0;
 	char BuddyName[30] = {};
 	bool Online = false;
-	if(IdentifyPlayer(Name, true, true, &Buddy) == 0){
+	if(identify_player(Name, true, true, &Buddy) == 0){
 		BuddyID = Buddy->ID;
 		strcpy(BuddyName, Buddy->Name);
 		Online = true;
 	}else{
-		BuddyID = GetCharacterID(Name);
+		BuddyID = get_character_id(Name);
 		if(BuddyID == 0){
 			SendResult(this->Connection, PLAYERNOTEXISTING);
 			return;
 		}
-		strcpy(BuddyName, GetCharacterName(Name));
+		strcpy(BuddyName, get_character_name(Name));
 		Online = false;
 	}
 
@@ -1352,7 +1352,7 @@ void TPlayer::SendBuddies(void){
 		bool Online = false;
 		uint32 BuddyID = PlayerData->Buddy[i];
 		const char *BuddyName = PlayerData->BuddyName[i];
-		TPlayer *Buddy = GetPlayer(BuddyID);
+		TPlayer *Buddy = get_player(BuddyID);
 		if(Buddy != NULL){
 			Online = ReadGamemasterChannel || !check_right(BuddyID, NO_STATISTICS);
 			BuddyName = Buddy->Name;
@@ -1436,7 +1436,7 @@ bool TPlayer::IsAggressor(bool CheckFormer){
 }
 
 bool TPlayer::IsAttackJustified(uint32 VictimID){
-	TPlayer *Victim = GetPlayer(VictimID);
+	TPlayer *Victim = get_player(VictimID);
 	if(Victim == NULL){
 		error("TPlayer::IsAttackJustified: Victim does not exist.\n");
 		return true;
@@ -1464,7 +1464,7 @@ void TPlayer::RecordAttack(uint32 VictimID){
 		return;
 	}
 
-	TPlayer *Victim = GetPlayer(VictimID);
+	TPlayer *Victim = get_player(VictimID);
 	if(Victim == NULL){
 		error("TPlayer::RecordAttack: Victim does not exist.\n");
 		return;
@@ -1495,7 +1495,7 @@ void TPlayer::RecordMurder(uint32 VictimID){
 		return;
 	}
 
-	TPlayer *Victim = GetPlayer(VictimID);
+	TPlayer *Victim = get_player(VictimID);
 	if(Victim == NULL){
 		error("TPlayer::RecordMurder: Victim does not exist.\n");
 		return;
@@ -1536,8 +1536,8 @@ void TPlayer::RecordMurder(uint32 VictimID){
 
 void TPlayer::RecordDeath(uint32 AttackerID, int OldLevel, const char *Remark){
 	bool Justified = true;
-	if(AttackerID != 0 && AttackerID != this->ID && IsCreaturePlayer(AttackerID)){
-		TPlayer *Attacker = GetPlayer(AttackerID);
+	if(AttackerID != 0 && AttackerID != this->ID && is_creature_player(AttackerID)){
+		TPlayer *Attacker = get_player(AttackerID);
 		if(Attacker == NULL){
 			return;
 		}
@@ -1600,7 +1600,7 @@ void TPlayer::ClearAttacker(uint32 VictimID){
 	this->NumberOfAttackedPlayers -= 1;
 	*this->AttackedPlayers.at(AttackedIndex) = *this->AttackedPlayers.at(this->NumberOfAttackedPlayers);
 
-	TPlayer *Victim = GetPlayer(VictimID);
+	TPlayer *Victim = get_player(VictimID);
 	if(Victim != NULL
 			&& Victim->Connection != NULL
 			&& Victim->Connection->KnownCreature(this->ID, false) == KNOWNCREATURE_UPTODATE){
@@ -1626,7 +1626,7 @@ void TPlayer::ClearPlayerkillingMarks(void){
 		announce_changed_creature(this->ID, CREATURE_SKULL_CHANGED);
 	}else{
 		for(int i = 0; i < this->NumberOfFormerAttackedPlayers; i += 1){
-			TPlayer *Victim = GetPlayer(*this->FormerAttackedPlayers.at(i));
+			TPlayer *Victim = get_player(*this->FormerAttackedPlayers.at(i));
 			if(Victim != NULL){
 				print(3, "Player %s is no longer an attacker of player %s.\n", this->Name, Victim->Name);
 				if(Victim->Connection != NULL
@@ -1781,20 +1781,20 @@ int TPlayer::CheckForMuting(void){
 
 // Player Utility
 // =============================================================================
-int GetNumberOfPlayers(void){
+int get_number_of_players(void){
 	return FirstFreePlayer;
 }
 
-TPlayer *GetPlayer(uint32 CharacterID){
-	TCreature *Creature = GetCreature(CharacterID);
+TPlayer *get_player(uint32 CharacterID){
+	TCreature *Creature = get_creature(CharacterID);
 	if(Creature != NULL && Creature->Type != PLAYER){
-		error("GetPlayer: Creature is not a player.\n");
+		error("get_player: Creature is not a player.\n");
 		Creature = NULL;
 	}
 	return (TPlayer*)Creature;
 }
 
-TPlayer *GetPlayer(const char *Name){
+TPlayer *get_player(const char *Name){
 	TPlayer *Result = NULL;
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
@@ -1806,23 +1806,23 @@ TPlayer *GetPlayer(const char *Name){
 	return Result;
 }
 
-bool IsPlayerOnline(const char *Name){
+bool is_player_online(const char *Name){
 	// TODO(fusion): What is `PlayerMutex` actually doing and where is it used?
 	bool Result;
 	PlayerMutex.down();
-	Result = (GetPlayer(Name) != NULL);
+	Result = (get_player(Name) != NULL);
 	PlayerMutex.up();
 	return Result;
 }
 
-int IdentifyPlayer(const char *Name, bool ExactMatch, bool IgnoreGamemasters, TPlayer **OutPlayer){
+int identify_player(const char *Name, bool ExactMatch, bool IgnoreGamemasters, TPlayer **OutPlayer){
 	if(Name == NULL){
-		error("IdentifyPlayer: Name is NULL.\n");
+		error("identify_player: Name is NULL.\n");
 		return -1; // NOTFOUND ?
 	}
 
 	if(Name[0] == 0){
-		error("IdentifyPlayer: Name is empty.\n");
+		error("identify_player: Name is empty.\n");
 		return -1; // NOTFOUND ?
 	}
 
@@ -1862,19 +1862,19 @@ int IdentifyPlayer(const char *Name, bool ExactMatch, bool IgnoreGamemasters, TP
 	return 0; // FOUND ?
 }
 
-void LogoutAllPlayers(void){
-	print(1, "LogoutAllPlayers: Logging out all players!\n");
+void logout_all_players(void){
+	print(1, "logout_all_players: Logging out all players!\n");
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
 
 		// TODO(fusion): Should we be checking if `Player` is NULL, because
-		// `GetPlayer` and `IdentifyPlayer` do not.
+		// `get_player` and `identify_player` do not.
 		if(Player == NULL){
-			error("LogoutAllPlayers: Entry %d in the player list is NULL.\n", Index);
+			error("logout_all_players: Entry %d in the player list is NULL.\n", Index);
 			continue;
 		}
 
-		// TODO(fusion): Same thing as with `ProcessCreatures`. Players are removed
+		// TODO(fusion): Same thing as with `process_creatures`. Players are removed
 		// from `PlayerList` by the player's destructor, in a swap and pop fashion.
 		// What a disaster.
 		delete Player;
@@ -1882,11 +1882,11 @@ void LogoutAllPlayers(void){
 	}
 }
 
-void CloseProcessedRequests(uint32 CharacterID){
+void close_processed_requests(uint32 CharacterID){
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
 		if(Player == NULL){
-			error("CloseProcessedRequests: Player %d does not exist.\n", Index);
+			error("close_processed_requests: Player %d does not exist.\n", Index);
 			continue;
 		}
 
@@ -1897,9 +1897,9 @@ void CloseProcessedRequests(uint32 CharacterID){
 	}
 }
 
-void NotifyBuddies(uint32 CharacterID, const char *Name, bool Login){
+void notify_buddies(uint32 CharacterID, const char *Name, bool Login){
 	if(Name == NULL || Name[0] == 0){
-		error("NotifyBuddies: Name does not exist.\n");
+		error("notify_buddies: Name does not exist.\n");
 		return;
 	}
 
@@ -1930,8 +1930,8 @@ void NotifyBuddies(uint32 CharacterID, const char *Name, bool Login){
 	}
 }
 
-void CreatePlayerList(bool Online){
-	// TODO(fusion): Same as `WriteKillStatistics` for names.
+void create_player_list(bool Online){
+	// TODO(fusion): Same as `write_kill_statistics` for names.
 
 	// TODO(fusion): We can avoid allocating these buffers when `Online` is false.
 	// We'll be sure when we dive into `writer.cc` and `reader.cc` and learn more
@@ -1960,7 +1960,7 @@ void CreatePlayerList(bool Online){
 	playerlist_order(NumberOfPlayers, PlayerNames, PlayerLevels, PlayerProfessions);
 }
 
-void PrintPlayerPositions(void){
+void print_player_positions(void){
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
 		log_message("players", "[%d,%d,%d] %d %d\n",
@@ -1970,24 +1970,24 @@ void PrintPlayerPositions(void){
 	}
 }
 
-void LoadDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
+void load_depot(TPlayerData *PlayerData, int DepotNr, Object Con){
 	if(PlayerData == NULL){
-		error("LoadDepot: PlayerData is NULL.\n");
+		error("load_depot: PlayerData is NULL.\n");
 		throw ERROR;
 	}
 
 	if(!Con.exists()){
-		error("LoadDepot: Passed container does not exist.\n");
+		error("load_depot: Passed container does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Con.get_object_type().get_flag(CONTAINER)){
-		error("LoadDepot: Passed object is not a container.\n");
+		error("load_depot: Passed object is not a container.\n");
 		throw ERROR;
 	}
 
 	if(DepotNr < 0 || DepotNr >= MAX_DEPOTS){
-		error("LoadDepot: Invalid depot number %d.\n", DepotNr);
+		error("load_depot: Invalid depot number %d.\n", DepotNr);
 		throw ERROR;
 	}
 
@@ -2000,30 +2000,30 @@ void LoadDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 					PlayerData->DepotSize[DepotNr]);
 			load_objects(&ReadBuffer, Con);
 		}catch(const char *str){
-			error("LoadDepot: Cannot read depot (%s).\n", str);
+			error("load_depot: Cannot read depot (%s).\n", str);
 			throw ERROR;
 		}
 	}
 }
 
-void SaveDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
+void save_depot(TPlayerData *PlayerData, int DepotNr, Object Con){
 	if(PlayerData == NULL){
-		error("SaveDepot: PlayerData is NULL.\n");
+		error("save_depot: PlayerData is NULL.\n");
 		throw ERROR;
 	}
 
 	if(!Con.exists()){
-		error("SaveDepot: Passed container does not exist.\n");
+		error("save_depot: Passed container does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Con.get_object_type().get_flag(CONTAINER)){
-		error("SaveDepot: Passed object is not a container.\n");
+		error("save_depot: Passed object is not a container.\n");
 		throw ERROR;
 	}
 
 	if(DepotNr < 0 || DepotNr >= MAX_DEPOTS){
-		error("SaveDepot: Invalid depot number %d.\n", DepotNr);
+		error("save_depot: Invalid depot number %d.\n", DepotNr);
 		throw ERROR;
 	}
 
@@ -2043,13 +2043,13 @@ void SaveDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 			memcpy(PlayerData->Depot[DepotNr], HelpBuffer.Data, DepotSize);
 		}
 	}catch(const char *str){
-		error("SaveDepot: Cannot write depot (%s).\n", str);
+		error("save_depot: Cannot write depot (%s).\n", str);
 		PlayerData->Depot[DepotNr] = NULL;
 		PlayerData->DepotSize[DepotNr] = 0;
 	}
 }
 
-void GetProfessionName(char *Buffer, int Profession, bool Article, bool Capitals){
+void get_profession_name(char *Buffer, int Profession, bool Article, bool Capitals){
 	Buffer[0] = 0;
 
 	if(Article){
@@ -2080,9 +2080,9 @@ void GetProfessionName(char *Buffer, int Profession, bool Article, bool Capitals
 	}
 }
 
-void SendExistingRequests(TConnection *Connection){
+void send_existing_requests(TConnection *Connection){
 	if(Connection == NULL){
-		error("SendExistingRequests: Connection is NULL.\n");
+		error("send_existing_requests: Connection is NULL.\n");
 		return;
 	}
 
@@ -2094,7 +2094,7 @@ void SendExistingRequests(TConnection *Connection){
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
 		if(Player == NULL){
-			error("SendExistingRequests: Player %d does not exist.\n", Index);
+			error("send_existing_requests: Player %d does not exist.\n", Index);
 			continue;
 		}
 
@@ -2147,7 +2147,7 @@ bool LoadPlayerData(TPlayerData *Slot){
 		return false;
 	}
 
-	// IMPORTANT(fusion): This function is only called from `AssignPlayerPoolSlot`
+	// IMPORTANT(fusion): This function is only called from `assign_player_pool_slot`
 	// which zero initializes it before hand. Note that it would be a problem
 	// otherwise, since we shouldn't write to `CharacterID`, `Locked`, or `Sticky`
 	// outside a critical section, making `memset` not viable and turning this
@@ -2194,11 +2194,11 @@ bool LoadPlayerData(TPlayerData *Slot){
 
 		Script.read_identifier(); // "originaloutfit"
 		Script.read_symbol('=');
-		Slot->OriginalOutfit = ReadOutfit(&Script);
+		Slot->OriginalOutfit = read_outfit(&Script);
 
 		Script.read_identifier(); // "currentoutfit"
 		Script.read_symbol('=');
-		Slot->CurrentOutfit = ReadOutfit(&Script);
+		Slot->CurrentOutfit = read_outfit(&Script);
 
 		Script.read_identifier(); // "lastlogin"
 		Script.read_symbol('=');
@@ -2445,11 +2445,11 @@ void SavePlayerData(TPlayerData *Slot){
 		Script.write_ln();
 
 		Script.write_text("OriginalOutfit  = ");
-		WriteOutfit(&Script, Slot->OriginalOutfit);
+		write_outfit(&Script, Slot->OriginalOutfit);
 		Script.write_ln();
 
 		Script.write_text("CurrentOutfit   = ");
-		WriteOutfit(&Script, Slot->CurrentOutfit);
+		write_outfit(&Script, Slot->CurrentOutfit);
 		Script.write_ln();
 
 		Script.write_text("LastLogin       = ");
@@ -2628,9 +2628,9 @@ void UnlinkPlayerData(uint32 CharacterID){
 
 // Player Pool
 // =============================================================================
-void SavePlayerPoolSlot(TPlayerData *Slot){
+void save_player_pool_slot(TPlayerData *Slot){
 	if(Slot == NULL){
-		error("SavePlayerPoolSlot: Slot does not exist.\n");
+		error("save_player_pool_slot: Slot does not exist.\n");
 		return;
 	}
 
@@ -2640,9 +2640,9 @@ void SavePlayerPoolSlot(TPlayerData *Slot){
 	}
 }
 
-void FreePlayerPoolSlot(TPlayerData *Slot){
+void free_player_pool_slot(TPlayerData *Slot){
 	if(Slot == NULL){
-		error("FreePlayerPoolSlot: Slot is NULL.\n");
+		error("free_player_pool_slot: Slot is NULL.\n");
 		return;
 	}
 
@@ -2652,12 +2652,12 @@ void FreePlayerPoolSlot(TPlayerData *Slot){
 	}
 
 	if(Slot->Sticky > 0){
-		error("FreePlayerPoolSlot: Slot is still needed; cannot be freed.\n");
+		error("free_player_pool_slot: Slot is still needed; cannot be freed.\n");
 		return;
 	}
 
 	if(Slot->Locked != 0 && Slot->Locked != gettid()){
-		error("FreePlayerPoolSlot: Slot is locked by another thread.\n");
+		error("free_player_pool_slot: Slot is locked by another thread.\n");
 		return;
 	}
 
@@ -2674,9 +2674,9 @@ void FreePlayerPoolSlot(TPlayerData *Slot){
 	Slot->CharacterID = 0;
 }
 
-TPlayerData *GetPlayerPoolSlot(uint32 CharacterID){
+TPlayerData *get_player_pool_slot(uint32 CharacterID){
 	if(CharacterID == 0){
-		error("GetPlayerPoolSlot: CharacterID is zero.\n");
+		error("get_player_pool_slot: CharacterID is zero.\n");
 		return NULL;
 	}
 
@@ -2690,9 +2690,9 @@ TPlayerData *GetPlayerPoolSlot(uint32 CharacterID){
 	return Slot;
 }
 
-TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
+TPlayerData *assign_player_pool_slot(uint32 CharacterID, bool DontWait){
 	if(CharacterID == 0){
-		error("AssignPlayerPoolSlot: CharacterID is zero.\n");
+		error("assign_player_pool_slot: CharacterID is zero.\n");
 		return NULL;
 	}
 
@@ -2704,7 +2704,7 @@ TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 	TPlayerData *Slot = NULL;
 	while(true){
 		PlayerDataPoolMutex.down();
-		Slot = GetPlayerPoolSlot(CharacterID);
+		Slot = get_player_pool_slot(CharacterID);
 		if(Slot == NULL){
 			break;
 		}
@@ -2745,7 +2745,7 @@ TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 					&& PlayerDataPool[i].Sticky == 0
 					&& !PlayerDataPool[i].Dirty){
 				Slot = &PlayerDataPool[i];
-				FreePlayerPoolSlot(Slot);
+				free_player_pool_slot(Slot);
 				break;
 			}
 		}
@@ -2756,7 +2756,7 @@ TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 		for(int i = 0; i < NARRAY(PlayerDataPool); i += 1){
 			if(PlayerDataPool[i].Locked == 0 && PlayerDataPool[i].Sticky == 0){
 				Slot = &PlayerDataPool[i];
-				FreePlayerPoolSlot(Slot);
+				free_player_pool_slot(Slot);
 				break;
 			}
 		}
@@ -2764,7 +2764,7 @@ TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 
 	if(Slot == NULL){
 		PlayerDataPoolMutex.up();
-		error("AssignPlayerPoolSlot: No more slots available.\n");
+		error("assign_player_pool_slot: No more slots available.\n");
 		return NULL;
 	}
 
@@ -2788,23 +2788,23 @@ TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 	return Slot;
 }
 
-TPlayerData *AttachPlayerPoolSlot(uint32 CharacterID, bool DontWait){
+TPlayerData *attach_player_pool_slot(uint32 CharacterID, bool DontWait){
 	if(CharacterID == 0){
-		error("AttachPlayerPoolSlot: CharacterID is zero.\n");
+		error("attach_player_pool_slot: CharacterID is zero.\n");
 		return NULL;
 	}
 
 	print(3, "Attaching slot of player %u.\n", CharacterID);
 
-	// TODO(fusion): Same as `AssignPlayerPoolSlot`.
+	// TODO(fusion): Same as `assign_player_pool_slot`.
 
 	while(true){
 		TPlayerData *Slot = NULL;
 		PlayerDataPoolMutex.down();
-		Slot = GetPlayerPoolSlot(CharacterID);
+		Slot = get_player_pool_slot(CharacterID);
 		if(Slot == NULL){
 			PlayerDataPoolMutex.up();
-			error("AttachPlayerPoolSlot: Character data is not available.\n");
+			error("attach_player_pool_slot: Character data is not available.\n");
 			return NULL;
 		}
 
@@ -2824,9 +2824,9 @@ TPlayerData *AttachPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 	}
 }
 
-void AttachPlayerPoolSlot(TPlayerData *Slot, bool DontWait){
+void attach_player_pool_slot(TPlayerData *Slot, bool DontWait){
 	if(Slot == NULL){
-		error("AttachPlayerPoolSlot: Slot is NULL.\n");
+		error("attach_player_pool_slot: Slot is NULL.\n");
 		return;
 	}
 
@@ -2849,9 +2849,9 @@ void AttachPlayerPoolSlot(TPlayerData *Slot, bool DontWait){
 	}
 }
 
-void IncreasePlayerPoolSlotSticky(TPlayerData *Slot){
+void increase_player_pool_slot_sticky(TPlayerData *Slot){
 	if(Slot == NULL){
-		error("IncreasePlayerPoolSlotSticky: Slot is NULL.\n");
+		error("increase_player_pool_slot_sticky: Slot is NULL.\n");
 		return;
 	}
 
@@ -2860,9 +2860,9 @@ void IncreasePlayerPoolSlotSticky(TPlayerData *Slot){
 	PlayerDataPoolMutex.up();
 }
 
-void DecreasePlayerPoolSlotSticky(TPlayerData *Slot){
+void decrease_player_pool_slot_sticky(TPlayerData *Slot){
 	if(Slot == NULL){
-		error("DecreasePlayerPoolSlotSticky: Slot is NULL.\n");
+		error("decrease_player_pool_slot_sticky: Slot is NULL.\n");
 		return;
 	}
 
@@ -2871,43 +2871,43 @@ void DecreasePlayerPoolSlotSticky(TPlayerData *Slot){
 	PlayerDataPoolMutex.up();
 }
 
-void DecreasePlayerPoolSlotSticky(uint32 CharacterID){
+void decrease_player_pool_slot_sticky(uint32 CharacterID){
 	if(CharacterID == 0){
-		error("DecreasePlayerPoolSlotSticky: CharacterID is zero.\n");
+		error("decrease_player_pool_slot_sticky: CharacterID is zero.\n");
 		return;
 	}
 
 	PlayerDataPoolMutex.down();
-	TPlayerData *Slot = GetPlayerPoolSlot(CharacterID);
+	TPlayerData *Slot = get_player_pool_slot(CharacterID);
 	if(Slot != NULL){
 		Slot->Sticky -= 1;
 	}else{
-		error("DecreasePlayerPoolSlotSticky: Slot of player %u not found.\n", CharacterID);
+		error("decrease_player_pool_slot_sticky: Slot of player %u not found.\n", CharacterID);
 	}
 	PlayerDataPoolMutex.up();
 }
 
-void ReleasePlayerPoolSlot(TPlayerData *Slot){
+void release_player_pool_slot(TPlayerData *Slot){
 	if(Slot == NULL){
-		error("ReleasePlayerPoolSlot: Slot is NULL.\n");
+		error("release_player_pool_slot: Slot is NULL.\n");
 		return;
 	}
 
 	print(3, "Releasing slot of player %u.\n", Slot->CharacterID);
 	if(Slot->Locked == 0){
-		error("ReleasePlayerPoolSlot: Slot is not locked.\n");
+		error("release_player_pool_slot: Slot is not locked.\n");
 		return;
 	}
 
 	if(Slot->Locked != gettid()){
-		error("ReleasePlayerPoolSlot: Slot is locked by another thread.\n");
+		error("release_player_pool_slot: Slot is locked by another thread.\n");
 		return;
 	}
 
 	Slot->Locked = 0;
 }
 
-void SavePlayerPoolSlots(void){
+void save_player_pool_slots(void){
 	time_t Now = time(NULL);
 	print(3, "Saving all player data...\n");
 	for(int i = 0; i < NARRAY(PlayerDataPool); i += 1){
@@ -2924,19 +2924,19 @@ void SavePlayerPoolSlots(void){
 			continue;
 		}
 
-		AttachPlayerPoolSlot(Slot, true);
+		attach_player_pool_slot(Slot, true);
 		if(Slot->Locked == gettid()){
-			SavePlayerPoolSlot(Slot);
-			ReleasePlayerPoolSlot(Slot);
+			save_player_pool_slot(Slot);
+			release_player_pool_slot(Slot);
 		}
 	}
 }
 
-void InitPlayerPool(void){
+void init_player_pool(void){
 	memset(PlayerDataPool, 0, sizeof(PlayerDataPool));
 }
 
-void ExitPlayerPool(void){
+void exit_player_pool(void){
 	// TODO(fusion): I assume the order in `ExitAll` is such to make this work?
 	for(int i = 0; i < NARRAY(PlayerDataPool); i += 1){
 		TPlayerData *Slot = &PlayerDataPool[i];
@@ -2951,24 +2951,24 @@ void ExitPlayerPool(void){
 
 		while(Slot->Sticky > 0){
 			DelayThread(1, 0);
-			AttachPlayerPoolSlot(Slot, false);
+			attach_player_pool_slot(Slot, false);
 			send_mails(Slot);
-			DecreasePlayerPoolSlotSticky(Slot);
-			ReleasePlayerPoolSlot(Slot);
+			decrease_player_pool_slot_sticky(Slot);
+			release_player_pool_slot(Slot);
 		}
 
-		AttachPlayerPoolSlot(Slot, false);
-		FreePlayerPoolSlot(Slot);
-		ReleasePlayerPoolSlot(Slot);
+		attach_player_pool_slot(Slot, false);
+		free_player_pool_slot(Slot);
+		release_player_pool_slot(Slot);
 	}
 	print(1, "All player data saved.\n");
 }
 
 // Player Index
 // =============================================================================
-int GetPlayerIndexEntryNumber(const char *Name, int Position){
+int get_player_index_entry_number(const char *Name, int Position){
 	if(Name == NULL){
-		error("GetPlayerIndexEntryNumber: Name is NULL.\n");
+		error("get_player_index_entry_number: Name is NULL.\n");
 		return 0;
 	}
 
@@ -2983,24 +2983,24 @@ int GetPlayerIndexEntryNumber(const char *Name, int Position){
 	return 0;
 }
 
-void InsertPlayerIndex(TPlayerIndexInternalNode *Node,
+void insert_player_index(PlayerIndexInternalNode *Node,
 		int Position, const char *Name, uint32 CharacterID){
 	while(true){
 		if(Node == NULL){
-			error("InsertPlayerIndex: Node is NULL.\n");
+			error("insert_player_index: Node is NULL.\n");
 			return;
 		}
 
 		if(Name == NULL){
-			error("InsertPlayerIndex: Name is NULL.\n");
+			error("insert_player_index: Name is NULL.\n");
 			return;
 		}
 
-		int ChildIndex = GetPlayerIndexEntryNumber(Name, Position);
-		TPlayerIndexNode *Child = Node->Child[ChildIndex];
+		int ChildIndex = get_player_index_entry_number(Name, Position);
+		PlayerIndexNode *Child = Node->Child[ChildIndex];
 		if(Child == NULL){
-			TPlayerIndexLeafNode *Leaf = PlayerIndexLeafNodes.getFreeItem();
-			memset(Leaf, 0, sizeof(TPlayerIndexLeafNode));
+			PlayerIndexLeafNode *Leaf = PlayerIndexLeafNodes.getFreeItem();
+			memset(Leaf, 0, sizeof(PlayerIndexLeafNode));
 			Leaf->InternalNode = false;
 			Leaf->Count = 1;
 			strcpy(Leaf->Entry[0].Name, Name);
@@ -3011,11 +3011,11 @@ void InsertPlayerIndex(TPlayerIndexInternalNode *Node,
 
 		if(Child->InternalNode){
 			Position += 1;
-			Node = (TPlayerIndexInternalNode*)Child;
+			Node = (PlayerIndexInternalNode*)Child;
 			continue;
 		}
 
-		TPlayerIndexLeafNode *ChildLeaf = (TPlayerIndexLeafNode*)Child;
+		PlayerIndexLeafNode *ChildLeaf = (PlayerIndexLeafNode*)Child;
 		for(int i = 0; i < ChildLeaf->Count; i += 1){
 			// NOTE(fusion): Check if entry is already in the index?
 			// TODO(fusion): We should probably be using `stricmp` here.
@@ -3035,13 +3035,13 @@ void InsertPlayerIndex(TPlayerIndexInternalNode *Node,
 		// internal node and move all previous leaf entries to it. Note that
 		// the position is also increased here, so entries should get different
 		// child indices.
-		TPlayerIndexInternalNode *ChildInternal = PlayerIndexInternalNodes.getFreeItem();
-		memset(ChildInternal, 0, sizeof(TPlayerIndexInternalNode));
+		PlayerIndexInternalNode *ChildInternal = PlayerIndexInternalNodes.getFreeItem();
+		memset(ChildInternal, 0, sizeof(PlayerIndexInternalNode));
 		ChildInternal->InternalNode = true;
 		Node->Child[ChildIndex] = ChildInternal;
 
 		for(int i = 0; i < ChildLeaf->Count; i += 1){
-			InsertPlayerIndex(ChildInternal, Position + 1,
+			insert_player_index(ChildInternal, Position + 1,
 					ChildLeaf->Entry[i].Name,
 					ChildLeaf->Entry[i].CharacterID);
 		}
@@ -3052,23 +3052,23 @@ void InsertPlayerIndex(TPlayerIndexInternalNode *Node,
 	}
 }
 
-TPlayerIndexEntry *SearchPlayerIndex(const char *Name){
+PlayerIndexEntry *search_player_index(const char *Name){
 	if(Name == NULL){
-		error("SearchPlayerIndex: Name is NULL.\n");
+		error("search_player_index: Name is NULL.\n");
 		return NULL;
 	}
 
-	TPlayerIndexNode *Node = &PlayerIndexHead;
+	PlayerIndexNode *Node = &PlayerIndexHead;
 	for(int Position = 0; Node->InternalNode; Position += 1){
-		int ChildIndex = GetPlayerIndexEntryNumber(Name, Position);
-		Node = ((TPlayerIndexInternalNode*)Node)->Child[ChildIndex];
+		int ChildIndex = get_player_index_entry_number(Name, Position);
+		Node = ((PlayerIndexInternalNode*)Node)->Child[ChildIndex];
 		if(Node == NULL){
 			return NULL;
 		}
 	}
 
 	ASSERT(!Node->InternalNode);
-	TPlayerIndexLeafNode *Leaf = (TPlayerIndexLeafNode*)Node;
+	PlayerIndexLeafNode *Leaf = (PlayerIndexLeafNode*)Node;
 	for(int i = 0; i < Leaf->Count; i += 1){
 		if(stricmp(Leaf->Entry[i].Name, Name) == 0){
 			return &Leaf->Entry[i];
@@ -3078,45 +3078,45 @@ TPlayerIndexEntry *SearchPlayerIndex(const char *Name){
 	return NULL;
 }
 
-bool PlayerExists(const char *Name){
+bool player_exists(const char *Name){
 	if(Name == NULL){
-		error("PlayerExists: Name is NULL.\n");
+		error("player_exists: Name is NULL.\n");
 		return false;
 	}
 
-	return SearchPlayerIndex(Name) != NULL;
+	return search_player_index(Name) != NULL;
 }
 
-uint32 GetCharacterID(const char *Name){
+uint32 get_character_id(const char *Name){
 	if(Name == NULL){
-		error("GetCharacterID: Name is NULL.\n");
+		error("get_character_id: Name is NULL.\n");
 		return 0;
 	}
 
 	uint32 Result = 0;
-	TPlayerIndexEntry *Entry = SearchPlayerIndex(Name);
+	PlayerIndexEntry *Entry = search_player_index(Name);
 	if(Entry != NULL){
 		Result = Entry->CharacterID;
 	}
 	return Result;
 }
 
-const char *GetCharacterName(const char *Name){
+const char *get_character_name(const char *Name){
 	if(Name == NULL){
-		error("GetCharacterName: Name is NULL.\n");
+		error("get_character_name: Name is NULL.\n");
 		return NULL;
 	}
 
 	const char *Result = "Unknown";
-	TPlayerIndexEntry *Entry = SearchPlayerIndex(Name);
+	PlayerIndexEntry *Entry = search_player_index(Name);
 	if(Entry != NULL){
 		Result = Entry->Name;
 	}
 	return Result;
 }
 
-void InitPlayerIndex(void){
-	memset(&PlayerIndexHead, 0, sizeof(TPlayerIndexInternalNode));
+void init_player_index(void){
+	memset(&PlayerIndexHead, 0, sizeof(PlayerIndexInternalNode));
 	PlayerIndexHead.InternalNode = true;
 
 	// TODO(fusion): The `QueryBufferSize` parameter to `TQueryManagerConnection`
@@ -3127,7 +3127,7 @@ void InitPlayerIndex(void){
 	char Names[10000][30];
 	TQueryManagerConnection QueryManager(360007);
 	if(!QueryManager.isConnected()){
-		error("InitPlayerIndex: Cannot connect to query manager.\n");
+		error("init_player_index: Cannot connect to query manager.\n");
 		return;
 	}
 
@@ -3137,12 +3137,12 @@ void InitPlayerIndex(void){
 		int Ret = QueryManager.loadPlayers(MinimumCharacterID,
 				&NumberOfPlayers, Names, CharacterIDs);
 		if(Ret != 0){
-			error("InitPlayerIndex: Cannot retrieve player data.\n");
+			error("init_player_index: Cannot retrieve player data.\n");
 			break;
 		}
 
 		for(int i = 0; i < NumberOfPlayers; i += 1){
-			InsertPlayerIndex(&PlayerIndexHead, 0, Names[i], CharacterIDs[i]);
+			insert_player_index(&PlayerIndexHead, 0, Names[i], CharacterIDs[i]);
 		}
 
 		if(NumberOfPlayers < 10000){
@@ -3153,20 +3153,20 @@ void InitPlayerIndex(void){
 	}
 }
 
-void ExitPlayerIndex(void){
+void exit_player_index(void){
 	// no-op
 }
 
 // Initialization
 // =============================================================================
-void InitPlayer(void){
-	InitPlayerPool();
-	CreatePlayerList(true);
-	InitPlayerIndex();
+void init_player(void){
+	init_player_pool();
+	create_player_list(true);
+	init_player_index();
 }
 
-void ExitPlayer(void){
-	ExitPlayerPool();
-	CreatePlayerList(false);
-	ExitPlayerIndex();
+void exit_player(void){
+	exit_player_pool();
+	create_player_list(false);
+	exit_player_index();
 }

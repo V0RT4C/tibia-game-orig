@@ -417,7 +417,7 @@ void process_logout_order(LogoutOrderData *Data) {
 	}
 
 	char ProfessionName[30];
-	GetProfessionName(ProfessionName, Data->Profession, false, true);
+	get_profession_name(ProfessionName, Data->Profession, false, true);
 	int Ret = QueryManagerConnection->logoutGame(Data->CharacterID, Data->Level, ProfessionName, Data->Residence,
 												 Data->LastLoginTime, Data->TutorActivities);
 	if (Ret != 0) {
@@ -446,7 +446,7 @@ void process_playerlist_order(PlayerlistOrderData *Data) {
 		for (int PlayerNr = 0; PlayerNr < Data->NumberOfPlayers; PlayerNr += 1) {
 			Names[PlayerNr] = &Data->PlayerNames[PlayerNr * 30];
 			Levels[PlayerNr] = Data->PlayerLevels[PlayerNr];
-			GetProfessionName(Professions[PlayerNr], Data->PlayerProfessions[PlayerNr], false, true);
+			get_profession_name(Professions[PlayerNr], Data->PlayerProfessions[PlayerNr], false, true);
 		}
 
 		int Ret =
@@ -857,7 +857,7 @@ int writer_thread_loop(void *Unused) {
 		}
 
 		case WRITER_ORDER_SAVEPLAYERDATA: {
-			SavePlayerPoolSlots();
+			save_player_pool_slots();
 			break;
 		}
 
@@ -960,7 +960,7 @@ void process_direct_reply(DirectReplyData *Data) {
 		return;
 	}
 
-	TPlayer *Player = GetPlayer(Data->CharacterID);
+	TPlayer *Player = get_player(Data->CharacterID);
 	if (Player != NULL) {
 		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s", Data->Message);
 	}
@@ -974,7 +974,7 @@ void process_logout_reply(const char *Name) {
 		return;
 	}
 
-	TPlayer *Player = GetPlayer(Name);
+	TPlayer *Player = get_player(Name);
 	if (Player != NULL) {
 		graphical_effect(Player->CrObject, EFFECT_MAGIC_GREEN);
 		Player->StartLogout(true, true);

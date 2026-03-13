@@ -8,7 +8,7 @@
 
 // Race
 // =============================================================================
-TRaceData::TRaceData(void) :
+RaceData::RaceData(void) :
 		Skill(1, 5, 5),
 		Talk(1, 5, 5),
 		Item(1, 5, 5),
@@ -50,14 +50,14 @@ TRaceData::TRaceData(void) :
 	this->Spells = 0;
 }
 
-bool IsRaceValid(int Race){
+bool is_race_valid(int Race){
 	return Race >= 1 && Race < MAX_RACES;
 }
 
-int GetRaceByName(const char *RaceName){
+int get_race_by_name(const char *RaceName){
 	int Result = 0;
 	for(int Race = 1; Race < MAX_RACES; Race += 1){
-		if(stricmp(RaceName, RaceData[Race].Name) == 0){
+		if(stricmp(RaceName, race_data[Race].Name) == 0){
 			Result = Race;
 			break;
 		}
@@ -65,89 +65,89 @@ int GetRaceByName(const char *RaceName){
 	return Result;
 }
 
-const char *GetRaceName(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceName: Invalid race number %d.\n", Race);
+const char *get_race_name(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_name: Invalid race number %d.\n", Race);
 		return NULL;
 	}
 
-	return RaceData[Race].Name;
+	return race_data[Race].Name;
 }
 
-TOutfit GetRaceOutfit(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceOutfit: Invalid race number %d.\n", Race);
-		return RaceData[1].Outfit;
+TOutfit get_race_outfit(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_outfit: Invalid race number %d.\n", Race);
+		return race_data[1].Outfit;
 	}
 
-	return RaceData[Race].Outfit;
+	return race_data[Race].Outfit;
 }
 
-bool GetRaceNoSummon(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceNoSummon: Invalid race number %d.\n", Race);
+bool get_race_no_summon(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_no_summon: Invalid race number %d.\n", Race);
 		return true;
 	}
 
-	return RaceData[Race].NoSummon;
+	return race_data[Race].NoSummon;
 }
 
-bool GetRaceNoConvince(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceNoConvince: Invalid race number %d.\n", Race);
+bool get_race_no_convince(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_no_convince: Invalid race number %d.\n", Race);
 		return true;
 	}
 
-	return RaceData[Race].NoConvince;
+	return race_data[Race].NoConvince;
 }
 
-bool GetRaceNoIllusion(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceNoIllusion: Invalid race number %d.\n", Race);
+bool get_race_no_illusion(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_no_illusion: Invalid race number %d.\n", Race);
 		return true;
 	}
 
-	return RaceData[Race].NoIllusion;
+	return race_data[Race].NoIllusion;
 }
 
-bool GetRaceNoParalyze(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceNoParalyze: Invalid race number %d.\n", Race);
+bool get_race_no_paralyze(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_no_paralyze: Invalid race number %d.\n", Race);
 		return true;
 	}
 
-	return RaceData[Race].NoParalyze;
+	return race_data[Race].NoParalyze;
 }
 
-int GetRaceSummonCost(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceSummonCost: Invalid race number %d.\n", Race);
+int get_race_summon_cost(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_summon_cost: Invalid race number %d.\n", Race);
 		return 0;
 	}
 
-	return RaceData[Race].SummonCost;
+	return race_data[Race].SummonCost;
 }
 
-int GetRacePoison(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRacePoison: Invalid race number %d.\n", Race);
+int get_race_poison(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_poison: Invalid race number %d.\n", Race);
 		return 0;
 	}
 
-	return RaceData[Race].Poison;
+	return race_data[Race].Poison;
 }
 
-bool GetRaceUnpushable(int Race){
-	if(!IsRaceValid(Race)){
-		error("GetRaceUnpushable: Invalid race number %d.\n", Race);
+bool get_race_unpushable(int Race){
+	if(!is_race_valid(Race)){
+		error("get_race_unpushable: Invalid race number %d.\n", Race);
 		return true;
 	}
 
-	return RaceData[Race].Unpushable;
+	return race_data[Race].Unpushable;
 }
 
 // TODO(fusion): Probably move this somewhere else?
-TOutfit ReadOutfit(ReadScriptFile *Script){
+TOutfit read_outfit(ReadScriptFile *Script){
 	TOutfit Outfit = {};
 	Script->read_symbol('(');
 	Outfit.OutfitID = Script->read_number();
@@ -162,7 +162,7 @@ TOutfit ReadOutfit(ReadScriptFile *Script){
 }
 
 // TODO(fusion): Probably move this somewhere else?
-void WriteOutfit(WriteScriptFile *Script, TOutfit Outfit){
+void write_outfit(WriteScriptFile *Script, TOutfit Outfit){
 	Script->write_text("(");
 	Script->write_number(Outfit.OutfitID);
 	Script->write_text(",");
@@ -174,7 +174,7 @@ void WriteOutfit(WriteScriptFile *Script, TOutfit Outfit){
 	Script->write_text(")");
 }
 
-void LoadRace(const char *FileName){
+void load_race(const char *FileName){
 	ReadScriptFile Script;
 
 	Script.open(FileName);
@@ -188,11 +188,11 @@ void LoadRace(const char *FileName){
 	Script.read_symbol('=');
 
 	int RaceNumber = Script.read_number();
-	if(!IsRaceValid(RaceNumber)){
+	if(!is_race_valid(RaceNumber)){
 		Script.error("illegal race number");
 	}
 
-	TRaceData *Race = &RaceData[RaceNumber];
+	RaceData *Race = &race_data[RaceNumber];
 	if(Race->Name[0] != 0){
 		Script.error("race already defined");
 	}
@@ -216,7 +216,7 @@ void LoadRace(const char *FileName){
 		}else if(strcmp(Identifier, "article") == 0){
 			strcpy(Race->Article, Script.read_string());
 		}else if(strcmp(Identifier, "outfit") == 0){
-			Race->Outfit = ReadOutfit(&Script);
+			Race->Outfit = read_outfit(&Script);
 		}else if(strcmp(Identifier, "corpse") == 0){
 			int CorpseTypeID = Script.read_number();
 			Race->MaleCorpse = CorpseTypeID;
@@ -306,14 +306,14 @@ void LoadRace(const char *FileName){
 			Script.read_symbol('{');
 			do{
 				Script.read_symbol('(');
-				int SkillNr = GetSkillByName(Script.read_identifier());
+				int SkillNr = get_skill_by_name(Script.read_identifier());
 				if(SkillNr == -1){
 					Script.error("unknown skill name");
 				}
 
 				// NOTE(fusion): Skills are indexed from 1.
 				Race->Skills += 1;
-				TSkillData *SkillData = Race->Skill.at(Race->Skills);
+				SkillData *SkillData = Race->Skill.at(Race->Skills);
 				SkillData->Nr = SkillNr;
 				Script.read_symbol(',');
 				SkillData->Actual = Script.read_number();
@@ -341,7 +341,7 @@ void LoadRace(const char *FileName){
 			do{
 				// NOTE(fusion): Items are indexed from 1.
 				Race->Items += 1;
-				TItemData *ItemData = Race->Item.at(Race->Items);
+				ItemData *ItemData = Race->Item.at(Race->Items);
 				Script.read_symbol('(');
 				ItemData->Type = Script.read_number();
 				Script.read_symbol(',');
@@ -355,7 +355,7 @@ void LoadRace(const char *FileName){
 			do{
 				// NOTE(fusion): Spells are indexed from 1.
 				Race->Spells += 1;
-				TSpellData *SpellData = Race->Spell.at(Race->Spells);
+				SpellData *SpellData = Race->Spell.at(Race->Spells);
 
 				// NOTE(fusion): Spell shape.
 				{
@@ -464,7 +464,7 @@ void LoadRace(const char *FileName){
 					}else if(strcmp(SpellImpact, "outfit") == 0){
 						SpellData->Impact = IMPACT_OUTFIT;
 						Script.read_symbol('(');
-						TOutfit Outfit = ReadOutfit(&Script);
+						TOutfit Outfit = read_outfit(&Script);
 						SpellData->ImpactParam1 = Outfit.OutfitID;
 						SpellData->ImpactParam2 = Outfit.ObjectType;
 						Script.read_symbol(',');
@@ -498,8 +498,8 @@ void LoadRace(const char *FileName){
 	}
 }
 
-void LoadRaces(void){
-	// TODO(fusion): It is possible to leak `MonsterDir` if `LoadRace` throws on
+void load_races(void){
+	// TODO(fusion): It is possible to leak `MonsterDir` if `load_race` throws on
 	// errors (which it does). This is usually not a problem because failing here
 	// means we're cascading back to `InitAll` which will report the error and
 	// exit, but it is something to keep in mind for any functions that uses
@@ -507,7 +507,7 @@ void LoadRaces(void){
 
 	DIR *MonsterDir = opendir(MONSTERPATH);
 	if(MonsterDir == NULL){
-		error("LoadRaces: Subdirectory %s not found\n", MONSTERPATH);
+		error("load_races: Subdirectory %s not found\n", MONSTERPATH);
 		throw "Cannot load races";
 	}
 
@@ -523,7 +523,7 @@ void LoadRaces(void){
 		}
 
 		snprintf(FileName, sizeof(FileName), "%s/%s", MONSTERPATH, DirEntry->d_name);
-		LoadRace(FileName);
+		load_race(FileName);
 	}
 
 	closedir(MonsterDir);

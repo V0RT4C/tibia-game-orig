@@ -1323,7 +1323,7 @@ int QueryClient::loadPlayers(uint32 MinimumCharacterID, int *NumberOfPlayers,
 	int Status = this->executeQuery(900, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status == QUERY_STATUS_OK){
-		// TODO(fusion): This is called to fill the player index in `InitPlayerIndex`
+		// TODO(fusion): This is called to fill the player index in `init_player_index`
 		// but there is no explicit parameter that limits how many results are returned
 		// which could be a problem.
 		*NumberOfPlayers = (int)this->getQuad();
