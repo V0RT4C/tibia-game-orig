@@ -282,7 +282,7 @@ void SkillLevel::Increase(int Amount) {
 	}
 
 	if (this->Master->Type == PLAYER) {
-		SendPlayerData(this->Master->Connection);
+		send_player_data(this->Master->Connection);
 	}
 }
 
@@ -325,7 +325,7 @@ void SkillLevel::Decrease(int Amount) {
 	}
 
 	if (this->Master->Type == PLAYER) {
-		SendPlayerData(this->Master->Connection);
+		send_player_data(this->Master->Connection);
 	}
 }
 
@@ -366,10 +366,10 @@ bool SkillLevel::Jump(int Range) {
 		int ToLevel = this->Get();
 		int FromLevel = ToLevel - Range;
 		if (Range > 0) {
-			SendMessage(this->Master->Connection, TALK_EVENT_MESSAGE, "You advanced from Level %d to Level %d.",
+			send_message(this->Master->Connection, TALK_EVENT_MESSAGE, "You advanced from Level %d to Level %d.",
 						FromLevel, ToLevel);
 		} else if (Range < 0) {
-			SendMessage(this->Master->Connection, TALK_EVENT_MESSAGE, "You were downgraded from Level %d to Level %d.",
+			send_message(this->Master->Connection, TALK_EVENT_MESSAGE, "You were downgraded from Level %d to Level %d.",
 						FromLevel, ToLevel);
 		}
 	}
@@ -414,9 +414,9 @@ void SkillProbe::Increase(int Amount) {
 			int NewProgress = this->GetProgress();
 			if (NewProgress != OldProgress) {
 				if (this->SkNr == SKILL_MAGIC_LEVEL) {
-					SendPlayerData(Master->Connection);
+					send_player_data(Master->Connection);
 				} else {
-					SendPlayerSkills(Master->Connection);
+					send_player_skills(Master->Connection);
 				}
 			}
 		}
@@ -456,9 +456,9 @@ void SkillProbe::Decrease(int Amount) {
 			int NewProgress = this->GetProgress();
 			if (NewProgress != OldProgress) {
 				if (this->SkNr == SKILL_MAGIC_LEVEL) {
-					SendPlayerData(Master->Connection);
+					send_player_data(Master->Connection);
 				} else {
-					SendPlayerSkills(Master->Connection);
+					send_player_skills(Master->Connection);
 				}
 			}
 		}
@@ -521,9 +521,9 @@ void SkillProbe::ChangeSkill(int FactorPercent, int Delta) {
 	TCreature *Master = this->Master;
 	if (Master != NULL && Master->Type == PLAYER) {
 		if (this->SkNr == SKILL_MAGIC_LEVEL) {
-			SendPlayerData(Master->Connection);
+			send_player_data(Master->Connection);
 		} else {
-			SendPlayerSkills(Master->Connection);
+			send_player_skills(Master->Connection);
 		}
 	}
 }
@@ -575,7 +575,7 @@ bool SkillProbe::SetTimer(int Cycle, int Count, int MaxCount, int AdditionalValu
 
 	if (this->Master->Type == PLAYER) {
 		((TPlayer *)this->Master)->CheckState();
-		SendPlayerData(this->Master->Connection);
+		send_player_data(this->Master->Connection);
 	}
 
 	return true;
@@ -590,43 +590,43 @@ bool SkillProbe::Jump(int Range) {
 
 	if (Master->Type == PLAYER) {
 		if (this->SkNr == SKILL_MAGIC_LEVEL) {
-			SendPlayerData(Master->Connection);
+			send_player_data(Master->Connection);
 		} else {
-			SendPlayerSkills(Master->Connection);
+			send_player_skills(Master->Connection);
 		}
 
 		if (Range > 0) {
 			switch (this->SkNr) {
 			case SKILL_MAGIC_LEVEL: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced to magic level %d.", this->Get());
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced to magic level %d.", this->Get());
 				break;
 			}
 			case SKILL_SHIELDING: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in shielding.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in shielding.");
 				break;
 			}
 			case SKILL_DISTANCE: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in distance fighting.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in distance fighting.");
 				break;
 			}
 			case SKILL_SWORD: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in sword fighting.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in sword fighting.");
 				break;
 			}
 			case SKILL_CLUB: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in club fighting.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in club fighting.");
 				break;
 			}
 			case SKILL_AXE: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in axe fighting.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in axe fighting.");
 				break;
 			}
 			case SKILL_FIST: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in fist fighting.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in fist fighting.");
 				break;
 			}
 			case SKILL_FISHING: {
-				SendMessage(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in fishing.");
+				send_message(Master->Connection, TALK_EVENT_MESSAGE, "You advanced in fishing.");
 				break;
 			}
 			}
@@ -652,7 +652,7 @@ void SkillProbe::Event(int Range) {
 				((TPlayer *)Master)->CheckState();
 			}
 
-			SendPlayerSkills(Master->Connection);
+			send_player_skills(Master->Connection);
 		}
 	}
 }
@@ -688,7 +688,7 @@ void SkillHitpoints::Set(int Value) {
 
 	if (Master != NULL) {
 		if (Master->Type == PLAYER) {
-			SendPlayerData(Master->Connection);
+			send_player_data(Master->Connection);
 		}
 		announce_changed_creature(Master->ID, CREATURE_HEALTH_CHANGED);
 	}
@@ -704,7 +704,7 @@ void SkillMana::Set(int Value) {
 
 	TCreature *Master = this->Master;
 	if (Master != NULL && Master->Type == PLAYER) {
-		SendPlayerData(Master->Connection);
+		send_player_data(Master->Connection);
 	}
 }
 
@@ -766,7 +766,7 @@ void SkillCarryStrength::Set(int Value) {
 
 	TCreature *Master = this->Master;
 	if (Master != NULL && Master->Type == PLAYER) {
-		SendPlayerData(Master->Connection);
+		send_player_data(Master->Connection);
 	}
 }
 
@@ -780,7 +780,7 @@ void SkillSoulpoints::Set(int Value) {
 
 	TCreature *Master = this->Master;
 	if (Master != NULL && Master->Type == PLAYER) {
-		SendPlayerData(Master->Connection);
+		send_player_data(Master->Connection);
 	}
 }
 

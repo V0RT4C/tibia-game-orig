@@ -16,40 +16,40 @@ TConnection::TConnection(void){
 	this->Transport = nullptr;
 }
 
-void TConnection::Process(void){
-	if(this->InGame()){
+void TConnection::process(void){
+	if(this->in_game()){
 		uint32 LastCommand = (RoundNr - this->TimeStamp);
 		if(LastCommand == 30 || LastCommand == 60){
-			SendPing(this);
+			send_ping(this);
 		}
 
 		uint32 LastAction = (RoundNr - this->TimeStampAction);
 		if(LastAction == 900 && !check_right(this->CharacterID, NO_LOGOUT_BLOCK)){
-			SendMessage(this, TALK_ADMIN_MESSAGE,
+			send_message(this, TALK_ADMIN_MESSAGE,
 					"You have been idle for %d minutes. You will be disconnected"
 					" in one minute if you are still idle then.", 15);
 		}
 
 		if(LastAction >= 960 && !check_right(this->CharacterID, NO_LOGOUT_BLOCK)){
-			this->Logout(0, true);
+			this->logout(0, true);
 		}else if(!GameRunning() || !this->ConnectionIsOk || (LastCommand >= 90)){
-			this->Logout(0, false);
+			this->logout(0, false);
 		}
 	}else if(this->State == CONNECTION_LOGIN){
 		if(!GameRunning() || !this->ConnectionIsOk){
-			this->Disconnect();
+			this->disconnect();
 		}
 	}else if(this->State == CONNECTION_LOGOUT){
 		// NOTE(fusion): `TimeStamp` has the logout round which is set by
-		// `TConnection::Logout`.
+		// `TConnection::logout`.
 		if(!GameRunning() || !this->ConnectionIsOk || this->TimeStamp <= RoundNr){
-			this->Disconnect();
+			this->disconnect();
 		}
 	}
 }
 
-void TConnection::ResetTimer(int Command){
-	if(this->InGame()){
+void TConnection::reset_timer(int Command){
+	if(this->in_game()){
 		this->TimeStamp = RoundNr;
 		if(Command != CL_CMD_PING
 				&& Command != CL_CMD_GO_STOP
@@ -61,8 +61,8 @@ void TConnection::ResetTimer(int Command){
 	}
 }
 
-void TConnection::EmergencyPing(void){
-	if(this->InGame()){
+void TConnection::emergency_ping(void){
+	if(this->in_game()){
 		uint32 LastCommand = (RoundNr - this->TimeStamp);
 		if(LastCommand < 80){
 			// TODO(fusion): This is only called by `NetLoadCheck`, when it detects
@@ -73,11 +73,11 @@ void TConnection::EmergencyPing(void){
 			// and unsigned integers.
 			this->TimeStamp = RoundNr - 100;
 		}
-		SendPing(this);
+		send_ping(this);
 	}
 }
 
-pid_t TConnection::GetThreadID(void){
+pid_t TConnection::get_thread_id(void){
 	if(this->State == CONNECTION_FREE){
 		error("TConnection::GetThreadID: Connection is not assigned.\n");
 		return 0;
@@ -86,7 +86,7 @@ pid_t TConnection::GetThreadID(void){
 	return this->ThreadID;
 }
 
-bool TConnection::SetLoginTimer(int Timeout){
+bool TConnection::set_login_timer(int Timeout){
 	if(this->State == CONNECTION_FREE){
 		error("TConnection::SetLoginTimer: Connection is not assigned.\n");
 		return false;
@@ -118,7 +118,7 @@ bool TConnection::SetLoginTimer(int Timeout){
 	return true;
 }
 
-void TConnection::StopLoginTimer(void){
+void TConnection::stop_login_timer(void){
 	if(this->State == CONNECTION_FREE){
 		error("TConnection::StopLoginTimer: Connection is not assigned.\n");
 		return;
@@ -137,7 +137,7 @@ void TConnection::StopLoginTimer(void){
 	this->LoginTimer = 0;
 }
 
-int TConnection::GetSocket(void){
+int TConnection::get_socket(void){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
 		error("TConnection::GetSocket: Connection is not connected.\n");
 		return -1;
@@ -146,7 +146,7 @@ int TConnection::GetSocket(void){
 	return this->Socket;
 }
 
-const char *TConnection::GetIPAddress(void){
+const char *TConnection::get_ip_address(void){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
 		error("TConnection::GetIPAddress: Connection is not connected.\n");
 		return "Unknown";
@@ -155,11 +155,11 @@ const char *TConnection::GetIPAddress(void){
 	return this->IPAddress;
 }
 
-void TConnection::Free(void){
+void TConnection::free_connection(void){
 	this->State = CONNECTION_FREE;
 }
 
-void TConnection::Assign(void){
+void TConnection::assign(void){
 	if(this->State != CONNECTION_FREE){
 		error("TConnection::Assign: Connection is not free.\n");
 	}
@@ -169,7 +169,7 @@ void TConnection::Assign(void){
 	this->LoginTimer = 0;
 }
 
-void TConnection::Connect(int Socket, ITransport *Transport){
+void TConnection::connect(int Socket, ITransport *Transport){
 	if(this->State != CONNECTION_ASSIGNED){
 		error("TConnection::Connect: Connection is not assigned to any thread.\n");
 	}
@@ -185,7 +185,7 @@ void TConnection::Connect(int Socket, ITransport *Transport){
 	strcpy(this->IPAddress, Transport->get_remote_address());
 }
 
-void TConnection::Login(void){
+void TConnection::login(void){
 	if(this->State != CONNECTION_CONNECTED){
 		error("TConnection::Connect: Invalid connection state %d.\n", this->State);
 	}
@@ -193,12 +193,12 @@ void TConnection::Login(void){
 	this->State = CONNECTION_LOGIN;
 }
 
-bool TConnection::JoinGame(TReadBuffer *Buffer){
+bool TConnection::join_game(TReadBuffer *Buffer){
 	if(this->State != CONNECTION_LOGIN){
 		error("TConnection::JoinGame: Invalid connection state %d.\n", this->State);
 	}
 
-	this->ClearKnownCreatureTable(false);
+	this->clear_known_creature_table(false);
 
 	try{
 		this->TerminalType = (int)Buffer->readWord();
@@ -242,7 +242,7 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 		Player->ClearConnection();
 		if(OldConnection != NULL){
 			OldConnection->CharacterID = 0;
-			OldConnection->Logout(0, true);
+			OldConnection->logout(0, true);
 		}
 
 		decrement_is_online_order(this->CharacterID);
@@ -255,7 +255,7 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 	return true;
 }
 
-void TConnection::EnterGame(void){
+void TConnection::enter_game(void){
 	if(this->State != CONNECTION_LOGIN){
 		error("TConnection::EnterGame: Invalid connection state %d.\n", this->State);
 	}
@@ -263,14 +263,14 @@ void TConnection::EnterGame(void){
 	this->State = CONNECTION_GAME;
 }
 
-void TConnection::Die(void){
+void TConnection::die(void){
 	if(this->State == CONNECTION_GAME){
 		this->State = CONNECTION_DEAD;
 	}
 }
 
-void TConnection::Logout(int Delay, bool StopFight){
-	if(!this->InGame() && this->State != CONNECTION_LOGOUT){
+void TConnection::logout(int Delay, bool StopFight){
+	if(!this->in_game() && this->State != CONNECTION_LOGOUT){
 		error("TConnection::Logout: Invalid connection state %d.\n", this->State);
 	}
 
@@ -292,7 +292,7 @@ void TConnection::Logout(int Delay, bool StopFight){
 	this->ClosingIsDelayed = false;
 }
 
-void TConnection::Close(bool Delay){
+void TConnection::close_connection(bool Delay){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
 		error("TConnection::Close: Invalid connection state %d.\n", this->State);
 	}
@@ -305,19 +305,19 @@ void TConnection::Close(bool Delay){
 	this->ClosingIsDelayed = Delay;
 }
 
-void TConnection::Disconnect(void){
+void TConnection::disconnect(void){
 	if(this->State == CONNECTION_FREE || this->State == CONNECTION_ASSIGNED){
 		error("TConnection::Close: Invalid connection state %d.\n", this->State);
 	}
 
-	this->ClearKnownCreatureTable(true);
+	this->clear_known_creature_table(true);
 	this->ConnectionIsOk = false;
 	this->State = CONNECTION_DISCONNECTED;
 	tgkill(GetGameProcessID(), this->ThreadID, SIGHUP);
 }
 
 TPlayer *TConnection::get_player(void){
-	if(!this->Live()){
+	if(!this->live()){
 		error("TConnection::get_player: Invalid connection state %d.\n", this->State);
 		return NULL;
 	}
@@ -330,7 +330,7 @@ TPlayer *TConnection::get_player(void){
 }
 
 const char *TConnection::get_name(void){
-	if(!this->Live()){
+	if(!this->live()){
 		error("TConnection::get_name: Invalid connection state %d.\n", this->State);
 		return "";
 	}
@@ -351,7 +351,7 @@ void TConnection::get_position(int *x, int *y, int *z){
 	}
 }
 
-bool TConnection::IsVisible(int x, int y, int z){
+bool TConnection::is_visible(int x, int y, int z){
 	int PlayerX, PlayerY, PlayerZ;
 	this->get_position(&PlayerX, &PlayerY, &PlayerZ);
 
@@ -374,7 +374,7 @@ bool TConnection::IsVisible(int x, int y, int z){
 		&& y >= MinY && y <= MaxY;
 }
 
-KNOWNCREATURESTATE TConnection::KnownCreature(uint32 ID, bool UpdateFollows){
+KNOWNCREATURESTATE TConnection::known_creature(uint32 ID, bool UpdateFollows){
 	int EntryIndex = -1;
 	for(int i = 0; i < NARRAY(this->KnownCreatureTable); i += 1){
 		if(this->KnownCreatureTable[i].CreatureID == ID){
@@ -394,7 +394,7 @@ KNOWNCREATURESTATE TConnection::KnownCreature(uint32 ID, bool UpdateFollows){
 	return Result;
 }
 
-uint32 TConnection::NewKnownCreature(uint32 NewID){
+uint32 TConnection::new_known_creature(uint32 NewID){
 	uint32 OldID = 0;
 	int EntryIndex = -1;
 	for(int i = 0; i < NARRAY(this->KnownCreatureTable); i += 1){
@@ -418,10 +418,10 @@ uint32 TConnection::NewKnownCreature(uint32 NewID){
 	if(EntryIndex == -1){
 		for(int i = 0; i < NARRAY(this->KnownCreatureTable); i += 1){
 			TCreature *Creature = get_creature(this->KnownCreatureTable[i].CreatureID);
-			if(Creature == NULL || !this->IsVisible(Creature->posx, Creature->posy, Creature->posz)){
+			if(Creature == NULL || !this->is_visible(Creature->posx, Creature->posy, Creature->posz)){
 				OldID = this->KnownCreatureTable[i].CreatureID;
 				EntryIndex = i;
-				this->UnchainKnownCreature(OldID);
+				this->unchain_known_creature(OldID);
 				break;
 			}
 		}
@@ -450,10 +450,10 @@ uint32 TConnection::NewKnownCreature(uint32 NewID){
 	return OldID;
 }
 
-void TConnection::ClearKnownCreatureTable(bool Unchain){
+void TConnection::clear_known_creature_table(bool Unchain){
 	for(int i = 0; i < NARRAY(this->KnownCreatureTable); i += 1){
 		if(Unchain && this->KnownCreatureTable[i].State != KNOWNCREATURE_FREE){
-			this->UnchainKnownCreature(this->KnownCreatureTable[i].CreatureID);
+			this->unchain_known_creature(this->KnownCreatureTable[i].CreatureID);
 		}
 		this->KnownCreatureTable[i].State = KNOWNCREATURE_FREE;
 		this->KnownCreatureTable[i].CreatureID = 0;
@@ -461,7 +461,7 @@ void TConnection::ClearKnownCreatureTable(bool Unchain){
 	}
 }
 
-void TConnection::UnchainKnownCreature(uint32 ID){
+void TConnection::unchain_known_creature(uint32 ID){
 	TCreature *Creature = get_creature(ID);
 	if(Creature == NULL){
 		error("TUserCom::UnchainKnownCreature: Creature %u does not exist.\n", ID);

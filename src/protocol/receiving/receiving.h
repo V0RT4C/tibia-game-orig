@@ -5,9 +5,9 @@
 #include "network/connection/connection.h"
 #include "protocol/protocol_enums.h"
 
-void ReceiveData(TConnection *Connection);
-void ReceiveData(void);
-void InitReceiving(void);
-void ExitReceiving(void);
+void receive_data(TConnection *Connection);
+void receive_data(void);
+void init_receiving(void);
+void exit_receiving(void);
 
 #endif // TIBIA_PROTOCOL_RECEIVING_H_

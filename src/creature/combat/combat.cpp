@@ -516,7 +516,7 @@ void TCombat::StopAttack(int Delay) {
 	if (Delay == 0) {
 		this->AttackDest = 0;
 		if (this->Master->Type == PLAYER) {
-			SendClearTarget(this->Master->Connection);
+			send_clear_target(this->Master->Connection);
 		}
 	} else {
 		this->LatestAttackTime = RoundNr + Delay;
@@ -666,7 +666,7 @@ void TCombat::CloseAttack(TCreature *Target) {
 			if (PoisonDamage > 0) {
 				Target->Damage(Master, PoisonDamage, DAMAGE_POISON_PERIODIC);
 				if (Target->Type == PLAYER) {
-					SendMessage(Target->Connection, TALK_STATUS_MESSAGE, "You are poisoned.");
+					send_message(Target->Connection, TALK_STATUS_MESSAGE, "You are poisoned.");
 				}
 			}
 		}

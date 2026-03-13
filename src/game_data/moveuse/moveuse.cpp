@@ -655,11 +655,11 @@ void load_depot_box(uint32 CreatureID, int Nr, Object Con) {
 	Player->DepotSpace = DepotSpace;
 
 	print(3, "Depot of %s has %d free slots.\n", Player->Name, DepotSpace);
-	SendMessage(Player->Connection, TALK_STATUS_MESSAGE, "Your depot contains %d item%s.", DepotObjects,
+	send_message(Player->Connection, TALK_STATUS_MESSAGE, "Your depot contains %d item%s.", DepotObjects,
 				(DepotObjects != 1 ? "s" : ""));
 
 	if (DepotSpace <= 0) {
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE,
+		send_message(Player->Connection, TALK_INFO_MESSAGE,
 					"Your depot is full. Remove surplus items before storing new ones.");
 	}
 }
@@ -807,7 +807,7 @@ void send_mail(Object Obj) {
 			log_message("game", "Mail to %s in %s sent.\n", Addressee, Town);
 			Player->DepotSpace -= count_objects(Obj);
 			print(3, "Depot of %s now has %d free slots.\n", Player->Name, Player->DepotSpace);
-			SendMessage(Player->Connection, TALK_INFO_MESSAGE, "New mail has arrived.");
+			send_message(Player->Connection, TALK_INFO_MESSAGE, "New mail has arrived.");
 			print(3, "Mail sent successfully.\n");
 		} catch (RESULT r) {
 			if (r != CONTAINERFULL) {
@@ -943,7 +943,7 @@ void text_effect(const char *Text, int x, int y, int z, int Radius) {
 
 		int PlayerZ = Player->posz;
 		if (PlayerZ == z || Radius > 30 || (Radius > 7 && PlayerZ <= 7 && z <= 7)) {
-			SendTalk(Player->Connection, 0, "", TALK_ANIMAL_LOW, x, y, z, Text);
+			send_talk(Player->Connection, 0, "", TALK_ANIMAL_LOW, x, y, z, Text);
 		}
 	}
 }
@@ -1424,7 +1424,7 @@ void execute_action(MoveUseEventType EventType, MoveUseAction *Action, Object Us
 			if (Cr.get_object_type().is_creature_container()) {
 				TCreature *Creature = get_creature(Cr);
 				if (Creature != NULL && Creature->Type == PLAYER) {
-					SendMessage(Creature->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Obj));
+					send_message(Creature->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Obj));
 				}
 			}
 			break;
@@ -1560,7 +1560,7 @@ void use_container(uint32 CreatureID, Object Con, int NextContainerNr) {
 	for (int ContainerNr = 0; ContainerNr < NARRAY(TPlayer::OpenContainer); ContainerNr += 1) {
 		if (Player->GetOpenContainer(ContainerNr) == Con) {
 			Player->SetOpenContainer(ContainerNr, NONE);
-			SendCloseContainer(Player->Connection, ContainerNr);
+			send_close_container(Player->Connection, ContainerNr);
 			ContainerClosed = true;
 			break;
 		}
@@ -1568,7 +1568,7 @@ void use_container(uint32 CreatureID, Object Con, int NextContainerNr) {
 
 	if (!ContainerClosed) {
 		Player->SetOpenContainer(NextContainerNr, Con);
-		SendContainer(Player->Connection, NextContainerNr);
+		send_container(Player->Connection, NextContainerNr);
 	}
 }
 
@@ -1615,7 +1615,7 @@ void use_chest(uint32 CreatureID, Object Chest) {
 
 	if (Player->GetQuestValue(QuestNr) != 0) {
 		print(3, "Treasure chest is already known.\n");
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "The %s is empty.", ChestType.get_name(-1));
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "The %s is empty.", ChestType.get_name(-1));
 		return;
 	}
 
@@ -1625,7 +1625,7 @@ void use_chest(uint32 CreatureID, Object Chest) {
 		int MaxWeight = Player->Skills[SKILL_CARRY_STRENGTH]->Get() * 100;
 		if ((InventoryWeight + TreasureWeight) > MaxWeight || check_right(CreatureID, ZERO_CAPACITY)) {
 			bool Multiple = TreasureType.get_flag(CUMULATIVE) && Treasure.get_attribute(AMOUNT) > 1;
-			SendMessage(Player->Connection, TALK_INFO_MESSAGE, "You have found %s. Weighing %d.%02d oz %s too heavy.",
+			send_message(Player->Connection, TALK_INFO_MESSAGE, "You have found %s. Weighing %d.%02d oz %s too heavy.",
 						get_name(Treasure), (TreasureWeight / 100), (TreasureWeight % 100),
 						(Multiple ? "they are" : "it is"));
 			return;
@@ -1663,13 +1663,13 @@ void use_chest(uint32 CreatureID, Object Chest) {
 
 	if (!TreasureMoved) {
 		bool Multiple = TreasureType.get_flag(CUMULATIVE) && Treasure.get_attribute(AMOUNT) > 1;
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "You have found %s, but you have no room to take %s.\n",
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "You have found %s, but you have no room to take %s.\n",
 					get_name(Treasure), (Multiple ? "them" : "it"));
 		delete_op(Treasure, -1);
 		return;
 	}
 
-	SendMessage(Player->Connection, TALK_INFO_MESSAGE, "You have found %s.\n", get_name(Treasure));
+	send_message(Player->Connection, TALK_INFO_MESSAGE, "You have found %s.\n", get_name(Treasure));
 	Player->SetQuestValue(QuestNr, 1);
 }
 
@@ -1846,7 +1846,7 @@ void use_text_object(uint32 CreatureID, Object Obj) {
 		throw ERROR;
 	}
 
-	SendEditText(Player->Connection, Obj);
+	send_edit_text(Player->Connection, Obj);
 }
 
 void use_announcer(uint32 CreatureID, Object Obj) {
@@ -1873,7 +1873,7 @@ void use_announcer(uint32 CreatureID, Object Obj) {
 		int Year, Cycle, Day, Hour, Minute;
 		GetDate(&Year, &Cycle, &Day);
 		GetTime(&Hour, &Minute);
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE,
+		send_message(Player->Connection, TALK_INFO_MESSAGE,
 					"It is the %dth day of the %dth cycle in the year %d. The time is %d:%.2d.", Day, Cycle, Year, Hour,
 					Minute);
 		break;
@@ -1882,7 +1882,7 @@ void use_announcer(uint32 CreatureID, Object Obj) {
 	case 2: { // INFORMATION_TIME
 		int Hour, Minute;
 		GetTime(&Hour, &Minute);
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "The time is %d:%.2d.", Hour, Minute);
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "The time is %d:%.2d.", Hour, Minute);
 		break;
 	}
 
@@ -1920,12 +1920,12 @@ void use_announcer(uint32 CreatureID, Object Obj) {
 			strcpy(Help, "No blessings received.");
 		}
 
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s", Help);
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "%s", Help);
 		break;
 	}
 
 	case 4: { // INFORMATION_SPELLBOOK
-		SendEditText(Player->Connection, Obj);
+		send_edit_text(Player->Connection, Obj);
 		break;
 	}
 
@@ -2047,7 +2047,7 @@ void use_level_door(uint32 CreatureID, Object Door) {
 	int DoorLevel = (int)Door.get_attribute(DOORLEVEL);
 	int PlayerLevel = Player->Skills[SKILL_LEVEL]->Get();
 	if (PlayerLevel < DoorLevel) {
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Door));
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Door));
 		return;
 	}
 
@@ -2082,7 +2082,7 @@ void use_quest_door(uint32 CreatureID, Object Door) {
 	int QuestNr = Door.get_attribute(DOORQUESTNUMBER);
 	int QuestValue = Door.get_attribute(DOORQUESTVALUE);
 	if (Player->GetQuestValue(QuestNr) != QuestValue) {
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Door));
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Door));
 		return;
 	}
 

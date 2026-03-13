@@ -319,7 +319,7 @@ void process_creatures(void) {
 			Creature->Skills[SKILL_HITPOINTS]->Change(1);
 			Creature->Skills[SKILL_MANA]->Change(4);
 			if (Creature->Type == PLAYER) {
-				SendPlayerData(Creature->Connection);
+				send_player_data(Creature->Connection);
 			}
 		}
 
@@ -740,7 +740,7 @@ void process_monster_raids(void) {
 		AttackWaveQueue.deleteMin();
 		print(2, "Attack by monsters of race %d.\n", Wave->Race);
 		if (Wave->Message != 0) {
-			BroadcastMessage(TALK_EVENT_MESSAGE, "%s", GetDynamicString(Wave->Message));
+			broadcast_message(TALK_EVENT_MESSAGE, "%s", GetDynamicString(Wave->Message));
 		}
 
 		int NumSpawned = 0;

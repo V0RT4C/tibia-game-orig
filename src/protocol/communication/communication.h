@@ -15,46 +15,46 @@ struct TWaitinglistEntry {
     bool Sleeping;
 };
 
-void GetCommunicationThreadStack(int *StackNumber, void **Stack);
-void AttachCommunicationThreadStack(int StackNumber);
-void ReleaseCommunicationThreadStack(int StackNumber);
-void InitCommunicationThreadStacks(void);
-void ExitCommunicationThreadStacks(void);
+void get_communication_thread_stack(int *StackNumber, void **Stack);
+void attach_communication_thread_stack(int StackNumber);
+void release_communication_thread_stack(int StackNumber);
+void init_communication_thread_stacks(void);
+void exit_communication_thread_stacks(void);
 
-bool LagDetected(void);
-void NetLoad(int Amount, bool Send);
-void NetLoadSummary(void);
-void NetLoadCheck(void);
-void InitLoadHistory(void);
-void ExitLoadHistory(void);
+bool lag_detected(void);
+void net_load(int Amount, bool Send);
+void net_load_summary(void);
+void net_load_check(void);
+void init_load_history(void);
+void exit_load_history(void);
 
-bool WriteToSocket(TConnection *Connection, uint8 *Buffer, int Size, int MaxSize);
-bool SendLoginMessage(TConnection *Connection, int Type, const char *Message, int WaitingTime);
-bool SendData(TConnection *Connection);
+bool write_to_socket(TConnection *Connection, uint8 *Buffer, int Size, int MaxSize);
+bool send_login_message(TConnection *Connection, int Type, const char *Message, int WaitingTime);
+bool send_data(TConnection *Connection);
 
-bool GetWaitinglistEntry(const char *Name, uint32 *NextTry, bool *FreeAccount, bool *Newbie);
-void InsertWaitinglistEntry(const char *Name, uint32 NextTry, bool FreeAccount, bool Newbie);
-void DeleteWaitinglistEntry(const char *Name);
-int GetWaitinglistPosition(const char *Name, bool FreeAccount, bool Newbie);
-int CheckWaitingTime(const char *Name, TConnection *Connection, bool FreeAccount, bool Newbie);
+bool get_waitinglist_entry(const char *Name, uint32 *NextTry, bool *FreeAccount, bool *Newbie);
+void insert_waitinglist_entry(const char *Name, uint32 NextTry, bool FreeAccount, bool Newbie);
+void delete_waitinglist_entry(const char *Name);
+int get_waitinglist_position(const char *Name, bool FreeAccount, bool Newbie);
+int check_waiting_time(const char *Name, TConnection *Connection, bool FreeAccount, bool Newbie);
 
-int ReadFromSocket(TConnection *Connection, uint8 *Buffer, int Size);
-bool CallGameThread(TConnection *Connection);
-bool CheckConnection(TConnection *Connection);
-TPlayerData *PerformRegistration(TConnection *Connection, char *PlayerName,
+int read_from_socket(TConnection *Connection, uint8 *Buffer, int Size);
+bool call_game_thread(TConnection *Connection);
+bool check_connection(TConnection *Connection);
+TPlayerData *perform_registration(TConnection *Connection, char *PlayerName,
 		uint32 AccountID, const char *PlayerPassword, bool GamemasterClient);
-bool HandleLogin(TConnection *Connection);
-bool ReceiveCommand(TConnection *Connection);
+bool handle_login(TConnection *Connection);
+bool receive_command(TConnection *Connection);
 
-void IncrementActiveConnections(void);
-void DecrementActiveConnections(void);
-void CommunicationThread(int Socket);
-int HandleConnection(void *Data);
-bool OpenSocket(void);
-int AcceptorThreadLoop(void *Unused);
+void increment_active_connections(void);
+void decrement_active_connections(void);
+void communication_thread(int Socket);
+int handle_connection(void *Data);
+bool open_socket(void);
+int acceptor_thread_loop(void *Unused);
 
-void CheckThreadlibVersion(void);
-void InitCommunication(void);
-void ExitCommunication(void);
+void check_threadlib_version(void);
+void init_communication(void);
+void exit_communication(void);
 
 #endif // TIBIA_PROTOCOL_COMMUNICATION_H_

@@ -96,7 +96,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID)
 	insert_player_index(&PlayerIndexHead, 0, this->Name, CharacterID);
 	this->LoadData();
 	this->AccountID = PlayerData->AccountID;
-	strcpy(this->IPAddress, Connection->GetIPAddress());
+	strcpy(this->IPAddress, Connection->get_ip_address());
 
 	static_assert(sizeof(this->Rights) == sizeof(PlayerData->Rights));
 	memcpy(this->Rights, PlayerData->Rights, sizeof(this->Rights));
@@ -182,16 +182,16 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID)
 	}
 
 	this->SetOnMap();
-	Connection->EnterGame();
-	SendInitGame(Connection, CharacterID);
-	SendRights(Connection);
-	SendFullScreen(Connection);
+	Connection->enter_game();
+	send_init_game(Connection, CharacterID);
+	send_rights(Connection);
+	send_full_screen(Connection);
 	graphical_effect(this->CrObject, EFFECT_ENERGY);
 	this->LoadInventory(PlayerData->LastLoginTime == 0);
 	this->NotifyChangeInventory();
-	SendAmbiente(Connection);
+	send_ambiente(Connection);
 	announce_changed_creature(CharacterID, CREATURE_LIGHT_CHANGED);
-	SendPlayerSkills(Connection);
+	send_player_skills(Connection);
 	this->CheckState();
 	this->SendBuddies();
 
@@ -199,11 +199,11 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID)
 		char TimeString[100];
 		struct tm LastLogin = GetLocalTimeTM(PlayerData->LastLoginTime);
 		strftime(TimeString, sizeof(TimeString), "%d. %b %Y %X %Z", &LastLogin);
-		SendMessage(Connection, TALK_LOGIN_MESSAGE, "Your last visit in Tibia: %s.", TimeString);
+		send_message(Connection, TALK_LOGIN_MESSAGE, "Your last visit in Tibia: %s.", TimeString);
 	} else if (!check_right(this->ID, GAMEMASTER_OUTFIT)) {
 		log_message("game", "Player %s logs in for the first time -> outfit selection.\n", this->Name);
-		SendMessage(Connection, TALK_LOGIN_MESSAGE, "Welcome to Tibia! Please choose your outfit.");
-		SendOutfit(Connection);
+		send_message(Connection, TALK_LOGIN_MESSAGE, "Welcome to Tibia! Please choose your outfit.");
+		send_outfit(Connection);
 	}
 
 	PlayerData->LastLoginTime = time(NULL);
@@ -308,9 +308,9 @@ void TPlayer::Death(void) {
 	}
 
 	if (this->Connection != NULL) {
-		SendPlayerData(this->Connection);
-		SendMessage(this->Connection, TALK_EVENT_MESSAGE, "You are dead.\n");
-		this->Connection->Die();
+		send_player_data(this->Connection);
+		send_message(this->Connection, TALK_EVENT_MESSAGE, "You are dead.\n");
+		this->Connection->die();
 	}
 
 	TCreature::Death();
@@ -370,7 +370,7 @@ void TPlayer::IdleStimulus(void) {
 			this->ToDoClear();
 			if (r != NOERROR) {
 				if (r != NOWAY) {
-					SendResult(this->Connection, r);
+					send_result(this->Connection, r);
 				}
 
 				this->ToDoWait(1000);
@@ -430,10 +430,10 @@ void TPlayer::ClearRequest(void) {
 		if (this->RequestProcessingGamemaster != 0) {
 			TCreature *Gamemaster = get_player(this->RequestProcessingGamemaster);
 			if (Gamemaster != NULL) {
-				SendFinishRequest(Gamemaster->Connection, this->Name);
+				send_finish_request(Gamemaster->Connection, this->Name);
 			}
 		} else {
-			DeleteGamemasterRequest(this->Name);
+			delete_gamemaster_request(this->Name);
 		}
 
 		this->Request = 0;
@@ -586,7 +586,7 @@ void TPlayer::LoadInventory(bool SetStandardInventory) {
 				load_objects(&ReadBuffer, get_body_container(this->ID, Position));
 				Object BodyObj = get_body_object(this->ID, Position);
 				if (BodyObj != NONE) {
-					SendSetInventory(this->Connection, Position, BodyObj);
+					send_set_inventory(this->Connection, Position, BodyObj);
 				}
 			}
 		} catch (const char *str) {
@@ -660,7 +660,7 @@ void TPlayer::TakeOver(TConnection *Connection) {
 	this->LoggingOut = false;
 	this->LogoutAllowed = false;
 	this->Connection = Connection;
-	Connection->EnterGame();
+	Connection->enter_game();
 
 	TPlayerData *PlayerData = get_player_pool_slot(this->ID);
 	if (PlayerData == NULL) {
@@ -680,7 +680,7 @@ void TPlayer::TakeOver(TConnection *Connection) {
 
 	strcpy(this->Name, PlayerData->Name);
 	insert_player_index(&PlayerIndexHead, 0, this->Name, this->ID);
-	strcpy(this->IPAddress, Connection->GetIPAddress());
+	strcpy(this->IPAddress, Connection->get_ip_address());
 	memcpy(this->Rights, PlayerData->Rights, sizeof(this->Rights));
 	this->Sex = PlayerData->Sex;
 	strcpy(this->Guild, PlayerData->Guild);
@@ -699,13 +699,13 @@ void TPlayer::TakeOver(TConnection *Connection) {
 		close_processed_requests(this->ID);
 	}
 
-	SendInitGame(Connection, this->ID);
-	SendRights(Connection);
-	SendFullScreen(Connection);
-	SendBodyInventory(Connection, this->ID);
-	SendAmbiente(Connection);
-	SendPlayerData(Connection);
-	SendPlayerSkills(Connection);
+	send_init_game(Connection, this->ID);
+	send_rights(Connection);
+	send_full_screen(Connection);
+	send_body_inventory(Connection, this->ID);
+	send_ambiente(Connection);
+	send_player_data(Connection);
+	send_player_skills(Connection);
 	this->CheckState();
 	this->SendBuddies();
 }
@@ -738,7 +738,7 @@ void TPlayer::CloseAllContainers(void) {
 		Object Con = this->GetOpenContainer(ContainerNr);
 		if (Con != NONE) {
 			this->SetOpenContainer(ContainerNr, NONE);
-			SendCloseContainer(this->Connection, ContainerNr);
+			send_close_container(this->Connection, ContainerNr);
 		}
 	}
 }
@@ -890,23 +890,23 @@ void TPlayer::AcceptTrade(void) {
 			}
 		} catch (RESULT r) {
 			if (r == TOOHEAVY || r == NOROOM) {
-				SendResult(Player[Other]->Connection, r);
+				send_result(Player[Other]->Connection, r);
 			} else {
-				SendResult(Player[Cur]->Connection, r);
+				send_result(Player[Cur]->Connection, r);
 			}
 
 			Player[Cur]->TradeObject = NONE;
 			Player[Other]->TradeObject = NONE;
-			SendCloseTrade(Player[Cur]->Connection);
-			SendCloseTrade(Player[Other]->Connection);
+			send_close_trade(Player[Cur]->Connection);
+			send_close_trade(Player[Other]->Connection);
 			return;
 		}
 	}
 
 	this->TradeObject = NONE;
 	Partner->TradeObject = NONE;
-	SendCloseTrade(this->Connection);
-	SendCloseTrade(Partner->Connection);
+	send_close_trade(this->Connection);
+	send_close_trade(Partner->Connection);
 
 	// TODO(fusion): I feel this could be problematic.
 	::move(0, Obj[0], get_map_container(Player[1]->CrObject), -1, true, NONE);
@@ -921,8 +921,8 @@ void TPlayer::RejectTrade(void) {
 		TPlayer *Partner = get_player(this->TradePartner);
 		if (Partner != NULL && Partner->TradeObject != NONE && Partner->TradePartner == this->ID) {
 			Partner->TradeObject = NONE;
-			SendCloseTrade(Partner->Connection);
-			SendMessage(Partner->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
+			send_close_trade(Partner->Connection);
+			send_message(Partner->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
 		}
 	}
 }
@@ -1168,7 +1168,7 @@ void TPlayer::CheckState(void) {
 		}
 
 		if (State != this->OldState) {
-			SendPlayerState(this->Connection, State);
+			send_player_state(this->Connection, State);
 			this->OldState = State;
 		}
 	}
@@ -1187,13 +1187,13 @@ void TPlayer::AddBuddy(const char *Name) {
 	}
 
 	if (PlayerData->Buddies >= 100) {
-		SendMessage(this->Connection, TALK_FAILURE_MESSAGE, "You cannot add more buddies.");
+		send_message(this->Connection, TALK_FAILURE_MESSAGE, "You cannot add more buddies.");
 		return;
 	}
 
 	if (PlayerData->Buddies >= 20 && !check_right(this->ID, PREMIUM_ACCOUNT) &&
 		!check_right(this->ID, READ_GAMEMASTER_CHANNEL)) {
-		SendMessage(this->Connection, TALK_FAILURE_MESSAGE, "You cannot add more buddies.");
+		send_message(this->Connection, TALK_FAILURE_MESSAGE, "You cannot add more buddies.");
 		return;
 	}
 
@@ -1208,7 +1208,7 @@ void TPlayer::AddBuddy(const char *Name) {
 	} else {
 		BuddyID = get_character_id(Name);
 		if (BuddyID == 0) {
-			SendResult(this->Connection, PLAYERNOTEXISTING);
+			send_result(this->Connection, PLAYERNOTEXISTING);
 			return;
 		}
 		strcpy(BuddyName, get_character_name(Name));
@@ -1217,7 +1217,7 @@ void TPlayer::AddBuddy(const char *Name) {
 
 	for (int i = 0; i < PlayerData->Buddies; i += 1) {
 		if (PlayerData->Buddy[i] == BuddyID) {
-			SendMessage(this->Connection, TALK_FAILURE_MESSAGE, "This player is already in your list.");
+			send_message(this->Connection, TALK_FAILURE_MESSAGE, "This player is already in your list.");
 			return;
 		}
 	}
@@ -1227,7 +1227,7 @@ void TPlayer::AddBuddy(const char *Name) {
 	PlayerData->Buddies += 1;
 
 	Online = Online && (!check_right(BuddyID, NO_STATISTICS) || check_right(this->ID, READ_GAMEMASTER_CHANNEL));
-	SendBuddyData(this->Connection, BuddyID, BuddyName, Online);
+	send_buddy_data(this->Connection, BuddyID, BuddyName, Online);
 	add_buddy_order(this, BuddyID);
 }
 
@@ -1272,7 +1272,7 @@ void TPlayer::SendBuddies(void) {
 			Online = ReadGamemasterChannel || !check_right(BuddyID, NO_STATISTICS);
 			BuddyName = Buddy->Name;
 		}
-		SendBuddyData(this->Connection, BuddyID, BuddyName, Online);
+		send_buddy_data(this->Connection, BuddyID, BuddyName, Online);
 	}
 }
 
@@ -1387,8 +1387,8 @@ void TPlayer::RecordAttack(uint32 VictimID) {
 		this->NumberOfAttackedPlayers += 1;
 		print(3, "Player %s is attacker of player %s.\n", this->Name, Victim->Name);
 		if (Victim->Connection != NULL &&
-			Victim->Connection->KnownCreature(this->ID, false) == KNOWNCREATURE_UPTODATE) {
-			SendCreatureSkull(Victim->Connection, this->ID);
+			Victim->Connection->known_creature(this->ID, false) == KNOWNCREATURE_UPTODATE) {
+			send_creature_skull(Victim->Connection, this->ID);
 		}
 	}
 
@@ -1422,7 +1422,7 @@ void TPlayer::RecordMurder(uint32 VictimID) {
 		PlayerData->MurderTimestamps[i - 1] = PlayerData->MurderTimestamps[i];
 	}
 	PlayerData->MurderTimestamps[NARRAY(PlayerData->MurderTimestamps) - 1] = Now;
-	SendMessage(this->Connection, TALK_ADMIN_MESSAGE, "Warning! The murder of %s was not justified.", Victim->Name);
+	send_message(this->Connection, TALK_ADMIN_MESSAGE, "Warning! The murder of %s was not justified.", Victim->Name);
 
 	int Playerkilling = this->CheckPlayerkilling(Now);
 	if (Playerkilling != 0) {
@@ -1509,8 +1509,8 @@ void TPlayer::ClearAttacker(uint32 VictimID) {
 
 	TPlayer *Victim = get_player(VictimID);
 	if (Victim != NULL && Victim->Connection != NULL &&
-		Victim->Connection->KnownCreature(this->ID, false) == KNOWNCREATURE_UPTODATE) {
-		SendCreatureSkull(Victim->Connection, this->ID);
+		Victim->Connection->known_creature(this->ID, false) == KNOWNCREATURE_UPTODATE) {
+		send_creature_skull(Victim->Connection, this->ID);
 	}
 }
 
@@ -1536,8 +1536,8 @@ void TPlayer::ClearPlayerkillingMarks(void) {
 			if (Victim != NULL) {
 				print(3, "Player %s is no longer an attacker of player %s.\n", this->Name, Victim->Name);
 				if (Victim->Connection != NULL &&
-					Victim->Connection->KnownCreature(this->ID, false) == KNOWNCREATURE_UPTODATE) {
-					SendCreatureSkull(Victim->Connection, this->ID);
+					Victim->Connection->known_creature(this->ID, false) == KNOWNCREATURE_UPTODATE) {
+					send_creature_skull(Victim->Connection, this->ID);
 				}
 			}
 		}
@@ -1795,7 +1795,7 @@ void close_processed_requests(uint32 CharacterID) {
 		}
 
 		if (Player->Request != 0 && Player->RequestProcessingGamemaster == CharacterID) {
-			SendCloseRequest(Player->Connection);
+			send_close_request(Player->Connection);
 			Player->Request = 0;
 		}
 	}
@@ -1822,9 +1822,9 @@ void notify_buddies(uint32 CharacterID, const char *Name, bool Login) {
 		for (int BuddyIndex = 0; BuddyIndex < PlayerData->Buddies; BuddyIndex += 1) {
 			if (PlayerData->Buddy[BuddyIndex] == CharacterID) {
 				if (strcmp(PlayerData->BuddyName[BuddyIndex], Name) == 0) {
-					SendBuddyStatus(Player->Connection, CharacterID, Login);
+					send_buddy_status(Player->Connection, CharacterID, Login);
 				} else {
-					SendBuddyData(Player->Connection, CharacterID, Name, Login);
+					send_buddy_data(Player->Connection, CharacterID, Name, Login);
 					strcpy(PlayerData->BuddyName[BuddyIndex], Name);
 				}
 			}
@@ -2032,7 +2032,7 @@ void send_existing_requests(TConnection *Connection) {
 
 	for (int i = 0; i < NumPlayers; i += 1) {
 		TPlayer *Player = Players[i];
-		SendTalk(Connection, 0, Player->Name, TALK_GAMEMASTER_REQUEST, GetDynamicString(Player->Request),
+		send_talk(Connection, 0, Player->Name, TALK_GAMEMASTER_REQUEST, GetDynamicString(Player->Request),
 				 (RoundNr - Player->RequestTimestamp));
 	}
 

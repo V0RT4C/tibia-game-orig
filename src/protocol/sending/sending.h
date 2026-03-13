@@ -6,78 +6,78 @@
 #include "protocol/protocol_enums.h"
 #include "map.h"  // for Object type used in Send* signatures
 
-void SendAll(void);
-bool BeginSendData(TConnection *Connection);
-void FinishSendData(TConnection *Connection);
-void SkipFlush(TConnection *Connection);
-void SendMapObject(TConnection *Connection, Object Obj);
-void SendMapPoint(TConnection *Connection, int x, int y, int z);
-void SendResult(TConnection *Connection, RESULT r);
-void SendRefresh(TConnection *Connection);
-void SendInitGame(TConnection *Connection, uint32 CreatureID);
-void SendRights(TConnection *Connection);
-void SendPing(TConnection *Connection);
-void SendFullScreen(TConnection *Connection);
-void SendRow(TConnection *Connection, int Direction);
-void SendFloors(TConnection *Connection, bool Up);
-void SendFieldData(TConnection *Connection, int x, int y, int z);
-void SendAddField(TConnection *Connection, int x, int y, int z, Object Obj);
-void SendChangeField(TConnection *Connection, int x, int y, int z, Object Obj);
-void SendDeleteField(TConnection *Connection, int x, int y, int z, Object Obj);
-void SendMoveCreature(TConnection *Connection,
+void send_all(void);
+bool begin_send_data(TConnection *Connection);
+void finish_send_data(TConnection *Connection);
+void skip_flush(TConnection *Connection);
+void send_map_object(TConnection *Connection, Object Obj);
+void send_map_point(TConnection *Connection, int x, int y, int z);
+void send_result(TConnection *Connection, RESULT r);
+void send_refresh(TConnection *Connection);
+void send_init_game(TConnection *Connection, uint32 CreatureID);
+void send_rights(TConnection *Connection);
+void send_ping(TConnection *Connection);
+void send_full_screen(TConnection *Connection);
+void send_row(TConnection *Connection, int Direction);
+void send_floors(TConnection *Connection, bool Up);
+void send_field_data(TConnection *Connection, int x, int y, int z);
+void send_add_field(TConnection *Connection, int x, int y, int z, Object Obj);
+void send_change_field(TConnection *Connection, int x, int y, int z, Object Obj);
+void send_delete_field(TConnection *Connection, int x, int y, int z, Object Obj);
+void send_move_creature(TConnection *Connection,
 		uint32 CreatureID, int DestX, int DestY, int DestZ);
-void SendContainer(TConnection *Connection, int ContainerNr);
-void SendCloseContainer(TConnection *Connection, int ContainerNr);
-void SendCreateInContainer(TConnection *Connection, int ContainerNr, Object Obj);
-void SendChangeInContainer(TConnection *Connection, int ContainerNr, Object Obj);
-void SendDeleteInContainer(TConnection *Connection, int ContainerNr, Object Obj);
-void SendBodyInventory(TConnection *Connection, uint32 CreatureID);
-void SendSetInventory(TConnection *Connection, int Position, Object Obj);
-void SendDeleteInventory(TConnection *Connection, int Position);
-void SendTradeOffer(TConnection *Connection, const char *Name, bool OwnOffer, Object Obj);
-void SendCloseTrade(TConnection *Connection);
-void SendAmbiente(TConnection *Connection);
-void SendGraphicalEffect(TConnection *Connection, int x, int y, int z, int Type);
-void SendTextualEffect(TConnection *Connection, int x, int y, int z, int Color, const char *Text);
-void SendMissileEffect(TConnection *Connection, int OrigX, int OrigY, int OrigZ,
+void send_container(TConnection *Connection, int ContainerNr);
+void send_close_container(TConnection *Connection, int ContainerNr);
+void send_create_in_container(TConnection *Connection, int ContainerNr, Object Obj);
+void send_change_in_container(TConnection *Connection, int ContainerNr, Object Obj);
+void send_delete_in_container(TConnection *Connection, int ContainerNr, Object Obj);
+void send_body_inventory(TConnection *Connection, uint32 CreatureID);
+void send_set_inventory(TConnection *Connection, int Position, Object Obj);
+void send_delete_inventory(TConnection *Connection, int Position);
+void send_trade_offer(TConnection *Connection, const char *Name, bool OwnOffer, Object Obj);
+void send_close_trade(TConnection *Connection);
+void send_ambiente(TConnection *Connection);
+void send_graphical_effect(TConnection *Connection, int x, int y, int z, int Type);
+void send_textual_effect(TConnection *Connection, int x, int y, int z, int Color, const char *Text);
+void send_missile_effect(TConnection *Connection, int OrigX, int OrigY, int OrigZ,
 		int DestX, int DestY, int DestZ, int Type);
-void SendMarkCreature(TConnection *Connection, uint32 CreatureID, int Color);
-void SendCreatureHealth(TConnection *Connection, uint32 CreatureID);
-void SendCreatureLight(TConnection *Connection, uint32 CreatureID);
-void SendCreatureOutfit(TConnection *Connection, uint32 CreatureID);
-void SendCreatureSpeed(TConnection *Connection, uint32 CreatureID);
-void SendCreatureSkull(TConnection *Connection, uint32 CreatureID);
-void SendCreatureParty(TConnection *Connection, uint32 CreatureID);
-void SendEditText(TConnection *Connection, Object Obj);
-void SendEditList(TConnection *Connection, uint8 Type, uint32 ID, const char *Text);
-void SendPlayerData(TConnection *Connection);
-void SendPlayerSkills(TConnection *Connection);
-void SendPlayerState(TConnection *Connection, uint8 State);
-void SendClearTarget(TConnection *Connection);
-void SendTalk(TConnection *Connection, uint32 StatementID,
+void send_mark_creature(TConnection *Connection, uint32 CreatureID, int Color);
+void send_creature_health(TConnection *Connection, uint32 CreatureID);
+void send_creature_light(TConnection *Connection, uint32 CreatureID);
+void send_creature_outfit(TConnection *Connection, uint32 CreatureID);
+void send_creature_speed(TConnection *Connection, uint32 CreatureID);
+void send_creature_skull(TConnection *Connection, uint32 CreatureID);
+void send_creature_party(TConnection *Connection, uint32 CreatureID);
+void send_edit_text(TConnection *Connection, Object Obj);
+void send_edit_list(TConnection *Connection, uint8 Type, uint32 ID, const char *Text);
+void send_player_data(TConnection *Connection);
+void send_player_skills(TConnection *Connection);
+void send_player_state(TConnection *Connection, uint8 State);
+void send_clear_target(TConnection *Connection);
+void send_talk(TConnection *Connection, uint32 StatementID,
 		const char *Sender, int Mode, const char *Text, int Data);
-void SendTalk(TConnection *Connection, uint32 StatementID,
+void send_talk(TConnection *Connection, uint32 StatementID,
 		const char *Sender, int Mode, int Channel, const char *Text);
-void SendTalk(TConnection *Connection, uint32 StatementID,
+void send_talk(TConnection *Connection, uint32 StatementID,
 		const char *Sender, int Mode, int x, int y, int z, const char *Text);
-void SendChannels(TConnection *Connection);
-void SendOpenChannel(TConnection *Connection, int Channel);
-void SendPrivateChannel(TConnection *Connection, const char *Name);
-void SendOpenRequestQueue(TConnection *Connection);
-void SendDeleteRequest(TConnection *Connection, const char *Name);
-void SendFinishRequest(TConnection *Connection, const char *Name);
-void SendCloseRequest(TConnection *Connection);
-void SendOpenOwnChannel(TConnection *Connection, int Channel);
-void SendCloseChannel(TConnection *Connection, int Channel);
-void SendMessage(TConnection *Connection, int Mode, const char *Text, ...) ATTR_PRINTF(3, 4);
-void SendSnapback(TConnection *Connection);
-void SendOutfit(TConnection *Connection);
-void SendBuddyData(TConnection *Connection, uint32 CharacterID, const char *Name, bool Online);
-void SendBuddyStatus(TConnection *Connection, uint32 CharacterID, bool Online);
-void BroadcastMessage(int Mode, const char *Text, ...) ATTR_PRINTF(2, 3);
-void CreateGamemasterRequest(const char *Name, const char *Text);
-void DeleteGamemasterRequest(const char *Name);
-void InitSending(void);
-void ExitSending(void);
+void send_channels(TConnection *Connection);
+void send_open_channel(TConnection *Connection, int Channel);
+void send_private_channel(TConnection *Connection, const char *Name);
+void send_open_request_queue(TConnection *Connection);
+void send_delete_request(TConnection *Connection, const char *Name);
+void send_finish_request(TConnection *Connection, const char *Name);
+void send_close_request(TConnection *Connection);
+void send_open_own_channel(TConnection *Connection, int Channel);
+void send_close_channel(TConnection *Connection, int Channel);
+void send_message(TConnection *Connection, int Mode, const char *Text, ...) ATTR_PRINTF(3, 4);
+void send_snapback(TConnection *Connection);
+void send_outfit(TConnection *Connection);
+void send_buddy_data(TConnection *Connection, uint32 CharacterID, const char *Name, bool Online);
+void send_buddy_status(TConnection *Connection, uint32 CharacterID, bool Online);
+void broadcast_message(int Mode, const char *Text, ...) ATTR_PRINTF(2, 3);
+void create_gamemaster_request(const char *Name, const char *Text);
+void delete_gamemaster_request(const char *Name);
+void init_sending(void);
+void exit_sending(void);
 
 #endif // TIBIA_PROTOCOL_SENDING_H_

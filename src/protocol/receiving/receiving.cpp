@@ -52,7 +52,7 @@ bool CheckVisibility(int Command, TConnection *Connection, int x, int y, int z){
 		return false;
 	}
 
-	bool Result = Connection->IsVisible(x, y, z);
+	bool Result = Connection->is_visible(x, y, z);
 	if(!Result){
 		int PlayerX, PlayerY, PlayerZ;
 		Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
@@ -84,24 +84,24 @@ ObjectType GetObjectType(int Command, int TypeID){
 void CQuitGame(TConnection *Connection, TReadBuffer *Buffer){
 	TPlayer *Player = Connection->get_player();
 	if(Player == NULL){
-		Connection->Logout(0, true);
+		Connection->logout(0, true);
 		return;
 	}
 
 	switch(Player->LogoutPossible()){
 		case 0:{
 			Player->ToDoClear();
-			Connection->Logout(0, true);
+			Connection->logout(0, true);
 			break;
 		}
 
 		case 1:{
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"You may not logout during or immediately after a fight!");
 			break;
 		}
 		case 2:{
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"You may not logout here!");
 			break;
 		}
@@ -135,7 +135,7 @@ void CGoPath(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	if(Player->ToDoClear()){
-		SendSnapback(Connection);
+		send_snapback(Connection);
 	}
 
 	int Steps = (int)Buffer->readByte();
@@ -167,7 +167,7 @@ void CGoPath(TConnection *Connection, TReadBuffer *Buffer){
 
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoYield();
 	}
 }
@@ -185,7 +185,7 @@ void CGoDirection(TConnection *Connection, int OffsetX, int OffsetY){
 
 	try{
 		if(Player->ToDoClear()){
-			SendSnapback(Connection);
+			send_snapback(Connection);
 		}
 
 		ToDoEntry TD = {};
@@ -196,7 +196,7 @@ void CGoDirection(TConnection *Connection, int OffsetX, int OffsetY){
 		Player->ToDoAdd(TD);
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoYield();
 	}
 }
@@ -228,7 +228,7 @@ void CRotate(TConnection *Connection, int Direction){
 		Player->ToDoRotate(Direction);
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoYield();
 	}
 }
@@ -284,7 +284,7 @@ void CMoveObject(TConnection *Connection, TReadBuffer *Buffer){
 		Player->ToDoStart();
 	}catch(RESULT r){
 		if(r != NOERROR){
-			SendResult(Connection, r);
+			send_result(Connection, r);
 			Player->ToDoYield();
 		}
 	}
@@ -331,7 +331,7 @@ void CTradeObject(TConnection *Connection, TReadBuffer *Buffer){
 		Player->ToDoStart();
 	}catch(RESULT r){
 		if(r != NOERROR){
-			SendResult(Connection, r);
+			send_result(Connection, r);
 			Player->ToDoYield();
 		}
 	}
@@ -355,7 +355,7 @@ void CInspectTrade(TConnection *Connection, TReadBuffer *Buffer){
 		try{
 			look(Player->ID, Obj);
 		}catch(RESULT r){
-			SendResult(Connection, r);
+			send_result(Connection, r);
 		}
 	}
 }
@@ -424,7 +424,7 @@ void CUseObject(TConnection *Connection, TReadBuffer *Buffer){
 		Player->ToDoUse(1, ObjX, ObjY, ObjZ, Type, RNum, Dummy, 0, 0, 0, 0, 0);
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoClear();
 		Player->ToDoYield();
 	}
@@ -474,7 +474,7 @@ void CUseTwoObjects(TConnection *Connection, TReadBuffer *Buffer){
 							ObjX2, ObjY2, ObjZ2, Type2, RNum2);
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoClear();
 		Player->ToDoYield();
 	}
@@ -528,13 +528,13 @@ void CUseOnCreature(TConnection *Connection, TReadBuffer *Buffer){
 	int DistanceY = std::abs(Target->posy - Player->posy);
 	if(DistanceX >= Connection->TerminalOffsetX
 	|| DistanceY >= Connection->TerminalOffsetY){
-		SendResult(Connection, OUTOFRANGE);
+		send_result(Connection, OUTOFRANGE);
 		return;
 	}
 
 	Object Obj = get_object(Player->ID, ObjX, ObjY, ObjZ, RNum, Type);
 	if(!Obj.exists() || !Target->CrObject.exists()){
-		SendResult(Connection, NOTACCESSIBLE);
+		send_result(Connection, NOTACCESSIBLE);
 		return;
 	}
 
@@ -543,7 +543,7 @@ void CUseOnCreature(TConnection *Connection, TReadBuffer *Buffer){
 		Player->ToDoUse(2, Obj, Target->CrObject);
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoClear();
 		Player->ToDoYield();
 	}
@@ -585,7 +585,7 @@ void CTurnObject(TConnection *Connection, TReadBuffer *Buffer){
 		Player->ToDoTurn(ObjX, ObjY, ObjZ, Type, RNum);
 		Player->ToDoStart();
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 		Player->ToDoClear();
 		Player->ToDoYield();
 	}
@@ -605,7 +605,7 @@ void CCloseContainer(TConnection *Connection, TReadBuffer *Buffer){
 	int ContainerNr = Buffer->readByte();
 	if(ContainerNr < NARRAY(TPlayer::OpenContainer)){
 		Player->SetOpenContainer(ContainerNr, NONE);
-		SendCloseContainer(Connection, ContainerNr);
+		send_close_container(Connection, ContainerNr);
 	}
 }
 
@@ -628,10 +628,10 @@ void CUpContainer(TConnection *Connection, TReadBuffer *Buffer){
 			ObjectType UpType = Up.get_object_type();
 			if(!UpType.is_map_container() && !UpType.is_body_container()){
 				Player->SetOpenContainer(ContainerNr, Up);
-				SendContainer(Connection, ContainerNr);
+				send_container(Connection, ContainerNr);
 			}else{
 				Player->SetOpenContainer(ContainerNr, NONE);
-				SendCloseContainer(Connection, ContainerNr);
+				send_close_container(Connection, ContainerNr);
 			}
 		}
 	}
@@ -650,14 +650,14 @@ void CEditText(TConnection *Connection, TReadBuffer *Buffer){
 
 	Object Obj = Object(Buffer->readQuad());
 	if(!Obj.exists()){
-		SendResult(Connection, NOTACCESSIBLE);
+		send_result(Connection, NOTACCESSIBLE);
 		return;
 	}
 
 	ObjectType ObjType = Obj.get_object_type();
 	if(!ObjType.get_flag(WRITE)
 	&& (!ObjType.get_flag(WRITEONCE) || Obj.get_attribute(TEXTSTRING) != 0)){
-		SendResult(Connection, NOTACCESSIBLE);
+		send_result(Connection, NOTACCESSIBLE);
 		return;
 	}
 
@@ -668,14 +668,14 @@ void CEditText(TConnection *Connection, TReadBuffer *Buffer){
 				? (int)ObjType.get_attribute(MAXLENGTH)
 				: (int)ObjType.get_attribute(MAXLENGTHONCE));
 	if(TextLength >= MaxLength){
-		SendResult(Connection, NOROOM);
+		send_result(Connection, NOROOM);
 		return;
 	}
 
 	try{
 		edit_text(Player->ID, Obj, Text);
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 	}
 }
 
@@ -701,13 +701,13 @@ void CEditList(TConnection *Connection, TReadBuffer *Buffer){
 	}else if(Type == DOORLIST){
 		Object Door = Object(ID);
 		if(!Door.exists()){
-			SendResult(Connection, NOTACCESSIBLE);
+			send_result(Connection, NOTACCESSIBLE);
 			return;
 		}
 
 		ObjectType DoorType = Door.get_object_type();
 		if(!DoorType.get_flag(NAMEDOOR) || !DoorType.get_flag(TEXT)){
-			SendResult(Connection, NOTACCESSIBLE);
+			send_result(Connection, NOTACCESSIBLE);
 			return;
 		}
 
@@ -745,7 +745,7 @@ void CLookAtPoint(TConnection *Connection, TReadBuffer *Buffer){
 		try{
 			look(Player->ID, Obj);
 		}catch(RESULT r){
-			SendResult(Connection, r);
+			send_result(Connection, r);
 		}
 	}
 }
@@ -835,13 +835,13 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	if(Mode == TALK_YELL && Player->Skills[SKILL_LEVEL]->Get() <= 1){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"You may not yell as long as you are on level 1.");
 		return;
 	}
 
 	if(Mode == TALK_CHANNEL_CALL && Player->Skills[SKILL_LEVEL]->Get() <= 1){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"You may not speak into channels as long as you are on level 1.");
 		return;
 	}
@@ -873,14 +873,14 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 		}
 
 		if(Player->RequestProcessingGamemaster == 0){
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"Please wait until your request is answered.");
 			return;
 		}
 
 		TPlayer *Gamemaster = get_player(Player->RequestProcessingGamemaster);
 		if(Gamemaster == NULL){
-			SendCloseRequest(Connection);
+			send_close_request(Connection);
 			Player->Request = 0;
 			return;
 		}
@@ -890,7 +890,7 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 
 	if(Mode == TALK_GAMEMASTER_REQUEST){
 		if(Player->Request != 0){
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"You have already submitted a request."
 					" Please wait until it is answered.");
 			return;
@@ -899,13 +899,13 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 		Player->Request = AddDynamicString(Text);
 		Player->RequestTimestamp = RoundNr;
 		Player->RequestProcessingGamemaster = 0;
-		CreateGamemasterRequest(Player->Name, Text);
+		create_gamemaster_request(Player->Name, Text);
 	}else{
 		try{
 			Player->ToDoTalk(Mode, Addressee, Text, true);
 			Player->ToDoStart();
 		}catch(RESULT r){
-			SendResult(Connection, r);
+			send_result(Connection, r);
 			Player->ToDoYield();
 		}
 	}
@@ -917,7 +917,7 @@ void CGetChannels(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	SendChannels(Connection);
+	send_channels(Connection);
 }
 
 void CJoinChannel(TConnection *Connection, TReadBuffer *Buffer){
@@ -936,12 +936,12 @@ void CJoinChannel(TConnection *Connection, TReadBuffer *Buffer){
 		try{
 			bool OwnChannel = join_channel(Channel, Player->ID);
 			if(Channel == CHANNEL_RULEVIOLATIONS){
-				SendOpenRequestQueue(Connection);
+				send_open_request_queue(Connection);
 				send_existing_requests(Connection);
 			}else if(OwnChannel){
-				SendOpenOwnChannel(Connection, Channel);
+				send_open_own_channel(Connection, Channel);
 			}else{
-				SendOpenChannel(Connection, Channel);
+				send_open_channel(Connection, Channel);
 			}
 		}catch(RESULT r){
 			print(3, "Player is not allowed to listen to channel.\n");
@@ -985,17 +985,17 @@ void CPrivateChannel(TConnection *Connection, TReadBuffer *Buffer){
 
 	uint32 CharacterID = get_character_id(Name);
 	if(CharacterID == 0){
-		SendResult(Connection, PLAYERNOTEXISTING);
+		send_result(Connection, PLAYERNOTEXISTING);
 		return;
 	}
 
 	if(CharacterID == Player->ID){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"You cannot set up a private message channel with yourself.");
 		return;
 	}
 
-	SendPrivateChannel(Connection, get_character_name(Name));
+	send_private_channel(Connection, get_character_name(Name));
 }
 
 void CProcessRequest(TConnection *Connection, TReadBuffer *Buffer){
@@ -1017,21 +1017,21 @@ void CProcessRequest(TConnection *Connection, TReadBuffer *Buffer){
 
 	TPlayer *Other;
 	if(identify_player(Name, true, true, &Other) != 0){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"Player is not online any more.");
-		SendFinishRequest(Connection, Name);
+		send_finish_request(Connection, Name);
 		return;
 	}
 
 	if(Other->Request == 0 || Other->RequestProcessingGamemaster != 0){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"Request has already been processed.");
-		SendFinishRequest(Connection, Name);
+		send_finish_request(Connection, Name);
 		return;
 	}
 
 	Other->RequestProcessingGamemaster = Player->ID;
-	DeleteGamemasterRequest(Other->Name);
+	delete_gamemaster_request(Other->Name);
 }
 
 void CRemoveRequest(TConnection *Connection, TReadBuffer *Buffer){
@@ -1053,18 +1053,18 @@ void CRemoveRequest(TConnection *Connection, TReadBuffer *Buffer){
 
 	TPlayer *Other;
 	if(identify_player(Name, true, true, &Other) != 0){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"Player is not online any more.");
-		SendFinishRequest(Connection, Name);
+		send_finish_request(Connection, Name);
 		return;
 	}
 
 	if(Other->Request != 0){
 		if(Other->RequestProcessingGamemaster == Player->ID){
 			Other->Request = 0;
-			SendCloseRequest(Other->Connection);
+			send_close_request(Other->Connection);
 		}else if(Other->RequestProcessingGamemaster == 0){
-			DeleteGamemasterRequest(Other->Name);
+			delete_gamemaster_request(Other->Name);
 		}
 	}
 }
@@ -1086,10 +1086,10 @@ void CCancelRequest(TConnection *Connection, TReadBuffer *Buffer){
 		if(Player->RequestProcessingGamemaster != 0){
 			TPlayer *Gamemaster = get_player(Player->RequestProcessingGamemaster);
 			if(Gamemaster != NULL){
-				SendFinishRequest(Gamemaster->Connection, Player->Name);
+				send_finish_request(Gamemaster->Connection, Player->Name);
 			}
 		}else{
-			DeleteGamemasterRequest(Player->Name);
+			delete_gamemaster_request(Player->Name);
 		}
 	}
 }
@@ -1151,7 +1151,7 @@ void CAttack(TConnection *Connection, TReadBuffer *Buffer, bool Follow){
 		Player->ToDoStart();
 	}catch(RESULT r){
 		if(r != NOERROR){
-			SendResult(Connection, r);
+			send_result(Connection, r);
 			Player->ToDoYield();
 		}
 	}
@@ -1270,7 +1270,7 @@ void COpenChannel(TConnection *Connection, TReadBuffer *Buffer){
 	try{
 		open_channel(Player->ID);
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 	}
 }
 
@@ -1295,7 +1295,7 @@ void CInviteToChannel(TConnection *Connection, TReadBuffer *Buffer){
 	try{
 		invite_to_channel(Player->ID, Name);
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 	}
 }
 
@@ -1322,7 +1322,7 @@ void CExcludeFromChannel(TConnection *Connection, TReadBuffer *Buffer){
 	try{
 		exclude_from_channel(Player->ID, Name);
 	}catch(RESULT r){
-		SendResult(Connection, r);
+		send_result(Connection, r);
 	}
 }
 
@@ -1340,7 +1340,7 @@ void CCancel(TConnection *Connection, TReadBuffer *Buffer){
 	try{
 		Player->Combat.StopAttack(0);
 		if(Player->ToDoClear()){
-			SendSnapback(Connection);
+			send_snapback(Connection);
 		}
 	}catch(RESULT r){
 		// no-op
@@ -1367,7 +1367,7 @@ void CRefreshField(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	SendFieldData(Connection, FieldX, FieldY, FieldZ);
+	send_field_data(Connection, FieldX, FieldY, FieldZ);
 }
 
 void CRefreshContainer(TConnection *Connection, TReadBuffer *Buffer){
@@ -1385,7 +1385,7 @@ void CRefreshContainer(TConnection *Connection, TReadBuffer *Buffer){
 	if(ContainerNr < NARRAY(TPlayer::OpenContainer)){
 		Object Con = Player->GetOpenContainer(ContainerNr);
 		if(Con != NONE){
-			SendContainer(Connection, ContainerNr);
+			send_container(Connection, ContainerNr);
 		}
 	}
 }
@@ -1402,12 +1402,12 @@ void CGetOutfit(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	if(check_right(Player->ID, GAMEMASTER_OUTFIT)){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"You may not change your outfit.");
 		return;
 	}
 
-	SendOutfit(Connection);
+	send_outfit(Connection);
 }
 
 void CSetOutfit(TConnection *Connection, TReadBuffer *Buffer){
@@ -1529,7 +1529,7 @@ void CBugReport(TConnection *Connection, TReadBuffer *Buffer){
 	log_message("bugreport", "%s\n", Text);
 	log_message("bugreport", "---------------------------------------------------------------------------\n");
 
-	SendMessage(Connection, TALK_STATUS_MESSAGE, "Comment sent.");
+	send_message(Connection, TALK_STATUS_MESSAGE, "Comment sent.");
 }
 
 void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
@@ -1554,19 +1554,19 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 
 	if(!check_banishment_right(Player->ID, Reason, Action)
 			|| (ip_banishment && !check_right(Player->ID, IP_BANISHMENT))){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"You have no authorization for this action.");
 		return;
 	}
 
 	if(Comment[0] == 0){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"Please provide a comment for this report.");
 		return;
 	}
 
 	if(Action == 6 && StatementID == 0){
-		SendMessage(Connection, TALK_FAILURE_MESSAGE,
+		send_message(Connection, TALK_FAILURE_MESSAGE,
 				"Please provide a statement for this rule violation.");
 		return;
 	}
@@ -1577,13 +1577,13 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 	if(identify_player(Name, false, IgnoreGamemasters, &Criminal) == 0){
 		if(check_right(Criminal->ID, NO_BANISHMENT)){
 			if(Action == 1 || Action == 3 || Action == 5){
-				SendMessage(Connection, TALK_FAILURE_MESSAGE,
+				send_message(Connection, TALK_FAILURE_MESSAGE,
 						"This name has already been approved.");
 				return;
 			}
 
 			if(Action != 6){
-				SendMessage(Connection, TALK_FAILURE_MESSAGE,
+				send_message(Connection, TALK_FAILURE_MESSAGE,
 						"You may not report a god or gamemaster.");
 				return;
 			}
@@ -1593,13 +1593,13 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 		IPAddress = Criminal->IPAddress;
 	}else{
 		if(get_character_id(Name) == 0){
-			SendResult(Connection, PLAYERNOTEXISTING);
+			send_result(Connection, PLAYERNOTEXISTING);
 			return;
 		}
 
 		strcpy(Name, get_character_name(Name));
 		if(ip_banishment){
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"Player is not online. No IP address was banished.");
 			ip_banishment = false;
 		}
@@ -1613,11 +1613,11 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 		int Context = get_communication_context(ListenerID, StatementID,
 							&NumberOfStatements, &ReportedStatements);
 		if(Context == 1){
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"Statement is unknown. Perhaps it is too old?");
 			return;
 		}else if(Context == 2){
-			SendMessage(Connection, TALK_FAILURE_MESSAGE,
+			send_message(Connection, TALK_FAILURE_MESSAGE,
 					"Statement has already been reported.");
 			return;
 		}
@@ -1672,7 +1672,7 @@ void CErrorFileEntry(TConnection *Connection, TReadBuffer *Buffer){
 	log_message("client-error","---------------------------------------------------------------------------\n");
 }
 
-void ReceiveData(TConnection *Connection){
+void receive_data(TConnection *Connection){
 	if(Connection == NULL){
 		error("ReceiveData: Connection is NULL.\n");
 		return;
@@ -1706,16 +1706,16 @@ void ReceiveData(TConnection *Connection){
 	if(Connection->State == CONNECTION_LOGIN){
 		if(Command != CL_CMD_LOGIN){
 			error("ReceiveData: Wrong login command %d.\n", Command);
-		}else if(!Connection->JoinGame(&Buffer)){
+		}else if(!Connection->join_game(&Buffer)){
 			log_message("game", "Login failed.\n");
-			SendResult(Connection, LOGINERROR);
+			send_result(Connection, LOGINERROR);
 			TPlayer *Player = Connection->get_player();
 			if(Player != NULL){
 				decrement_is_online_order(Player->ID);
 			}else{
 				error("ReceiveData: Login failed and no creature known.\n");
 			}
-			Connection->Disconnect();
+			Connection->disconnect();
 		}
 		return;
 	}
@@ -1724,7 +1724,7 @@ void ReceiveData(TConnection *Connection){
 		return;
 	}
 
-	Connection->ResetTimer(Command);
+	Connection->reset_timer(Command);
 	try{
 		switch(Command){
 			case CL_CMD_LOGOUT:					CQuitGame(Connection, &Buffer); break;
@@ -1796,28 +1796,28 @@ void ReceiveData(TConnection *Connection){
 	}
 }
 
-void ReceiveData(void){
-	TConnection *Connection = GetFirstConnection();
+void receive_data(void){
+	TConnection *Connection = get_first_connection();
 	while(Connection != NULL){
-		if(Connection->Live() && Connection->WaitingForACK){
-			ReceiveData(Connection);
+		if(Connection->live() && Connection->WaitingForACK){
+			receive_data(Connection);
 			Connection->WaitingForACK = false;
 			// NOTE(fusion): `SIGUSR1` is used to signal the connection thread
 			// that we parsed all received data and that it may resume reading.
 			// We check if the connection is still live because it may have been
 			// disconnected inside `ReceiveData`.
-			if(Connection->Live()){
-				tgkill(GetGameProcessID(), Connection->GetThreadID(), SIGUSR1);
+			if(Connection->live()){
+				tgkill(GetGameProcessID(), Connection->get_thread_id(), SIGUSR1);
 			}
 		}
-		Connection = GetNextConnection();
+		Connection = get_next_connection();
 	}
 }
 
-void InitReceiving(void){
+void init_receiving(void){
 	// no-op
 }
 
-void ExitReceiving(void){
+void exit_receiving(void){
 	// no-op
 }

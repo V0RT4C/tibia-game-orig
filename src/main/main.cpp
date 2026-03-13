@@ -254,8 +254,8 @@ static void InitAll(void){
 		init_log("game");
 		srand(time(NULL));
 		InitSignalHandler();
-		InitConnections();
-		InitCommunication();
+		init_connections();
+		init_communication();
 		InitStrings();
 		init_writer();
 		init_reader();
@@ -287,8 +287,8 @@ static void ExitAll(void){
 	exit_reader();
 	exit_writer();
 	ExitStrings();
-	ExitCommunication();
-	ExitConnections();
+	exit_communication();
+	exit_connections();
 	ExitSignalHandler();
 	ExitSHM();
 }
@@ -299,7 +299,7 @@ static void ProcessCommand(void){
 		char *Buffer = GetCommandBuffer();
 		if(Command == 1){
 			if(Buffer != NULL){
-				BroadcastMessage(TALK_ADMIN_MESSAGE, "%s", Buffer);
+				broadcast_message(TALK_ADMIN_MESSAGE, "%s", Buffer);
 			}else{
 				error("ProcessCommand: Text for broadcast is NULL.\n");
 			}
@@ -346,7 +346,7 @@ static void AdvanceGame(int Delay){
 		RoundNr += 1;
 		SetRoundNr(RoundNr);
 
-		ProcessConnections();
+		process_connections();
 		process_monsterhomes();
 		process_monster_raids();
 		process_communication_control();
@@ -359,17 +359,17 @@ static void AdvanceGame(int Delay){
 		GetAmbiente(&Brightness, &Color);
 		if(OldAmbiente != Brightness){
 			OldAmbiente = Brightness;
-			TConnection *Connection = GetFirstConnection();
+			TConnection *Connection = get_first_connection();
 			while(Connection != NULL){
-				if(Connection->Live()){
-					SendAmbiente(Connection);
+				if(Connection->live()){
+					send_ambiente(Connection);
 				}
-				Connection = GetNextConnection();
+				Connection = get_next_connection();
 			}
 		}
 
 		if(RoundNr % 10 == 0){
-			NetLoadCheck();
+			net_load_check();
 		}
 
 		if(RoundNr >= NextMinute){
@@ -384,7 +384,7 @@ static void AdvanceGame(int Delay){
 				save_player_data_order();
 			}
 			if(Minute == 0){
-				NetLoadSummary();
+				net_load_summary();
 			}
 			if(Minute == 55){
 				write_kill_statistics();
@@ -393,33 +393,33 @@ static void AdvanceGame(int Delay){
 			int RealTime = Minute + Hour * 60;
 			if((RealTime + 5) % 1440 == RebootTime){
 				if(Reboot){
-					BroadcastMessage(TALK_ADMIN_MESSAGE,
+					broadcast_message(TALK_ADMIN_MESSAGE,
 						"Server is saving game in 5 minutes.\nPlease come back in 10 minutes.");
 				}else{
-					BroadcastMessage(TALK_ADMIN_MESSAGE,
+					broadcast_message(TALK_ADMIN_MESSAGE,
 						"Server is going down in 5 minutes.\nPlease log out.");
 				}
 				CloseGame();
 			}else if((RealTime + 3) % 1440 == RebootTime){
 				if(Reboot){
-					BroadcastMessage(TALK_ADMIN_MESSAGE,
+					broadcast_message(TALK_ADMIN_MESSAGE,
 						"Server is saving game in 3 minutes.\nPlease come back in 10 minutes.");
 				}else{
-					BroadcastMessage(TALK_ADMIN_MESSAGE,
+					broadcast_message(TALK_ADMIN_MESSAGE,
 						"Server is going down in 3 minutes.\nPlease log out.");
 				}
 			}else if((RealTime + 1) % 1440 == RebootTime){
 				if(Reboot){
-					BroadcastMessage(TALK_ADMIN_MESSAGE,
+					broadcast_message(TALK_ADMIN_MESSAGE,
 						"Server is saving game in one minute.\nPlease log out.");
 				}else{
-					BroadcastMessage(TALK_ADMIN_MESSAGE,
+					broadcast_message(TALK_ADMIN_MESSAGE,
 						"Server is going down in one minute.\nPlease log out.");
 				}
 			}else if(RealTime == RebootTime){
 				CloseGame();
 				logout_all_players();
-				SendAll();
+				send_all();
 				if(Reboot){
 					refresh_map();
 				}
@@ -448,7 +448,7 @@ static void AdvanceGame(int Delay){
 		Lag = true;
 	}
 
-	SendAll();
+	send_all();
 }
 
 static void SigUsr1Handler(int signr){
@@ -483,7 +483,7 @@ static void LaunchGame(void){
 
 		if(SigUsr1Counter > 0){
 			SigUsr1Counter = 0;
-			ReceiveData();
+			receive_data();
 		}
 
 		int NumBeats = SigAlarmCounter;

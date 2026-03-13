@@ -293,7 +293,7 @@ bool TCreature::SetOnMap(void) {
 	} catch (RESULT r) {
 		error("TCreature::SetOnMap: Cannot place creature ([%d,%d,%d] - Exception %d).\n", LoginX, LoginY, LoginZ, r);
 		if (this->Type == PLAYER) {
-			SendResult(this->Connection, r);
+			send_result(this->Connection, r);
 		}
 		Result = false;
 	}
@@ -353,7 +353,7 @@ void TCreature::Go(int DestX, int DestY, int DestZ) {
 			}
 
 			if (this->ToDoClear() && this->Type == PLAYER) {
-				SendSnapback(this->Connection);
+				send_snapback(this->Connection);
 			}
 
 			int TalkMode = (this->Type == MONSTER) ? TALK_ANIMAL_LOW : TALK_SAY;
@@ -562,7 +562,7 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count) {
 			(coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH) || coordinate_flag(DestY, DestY, DestZ, HOOKEAST)) &&
 			!object_in_range(this->ID, Dest, 1)) {
 			if (this->ToDoClear() && this->Type == PLAYER) {
-				SendSnapback(this->Connection);
+				send_snapback(this->Connection);
 			}
 
 			// NOTE(fusion): Pick up object if it's not in our inventory.
@@ -643,12 +643,12 @@ void TCreature::Trade(Object Obj, uint32 PartnerID) {
 	((TPlayer *)this)->TradeAccepted = false;
 
 	if (Partner->TradeObject != NONE) {
-		SendTradeOffer(Partner->Connection, this->Name, false, Obj);
-		SendTradeOffer(this->Connection, this->Name, true, Obj);
-		SendTradeOffer(this->Connection, Partner->Name, false, Partner->TradeObject);
+		send_trade_offer(Partner->Connection, this->Name, false, Obj);
+		send_trade_offer(this->Connection, this->Name, true, Obj);
+		send_trade_offer(this->Connection, Partner->Name, false, Partner->TradeObject);
 	} else {
-		SendMessage(Partner->Connection, TALK_INFO_MESSAGE, "%s wants to trade with you.", this->Name);
-		SendTradeOffer(this->Connection, this->Name, true, Obj);
+		send_message(Partner->Connection, TALK_INFO_MESSAGE, "%s wants to trade with you.", this->Name);
+		send_trade_offer(this->Connection, this->Name, true, Obj);
 	}
 }
 
@@ -668,7 +668,7 @@ void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy) {
 			get_object_coordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
 
 			if (this->ToDoClear() && this->Type == PLAYER) {
-				SendSnapback(this->Connection);
+				send_snapback(this->Connection);
 			}
 
 			// NOTE(fusion): Pick up object 1 if it's not in our inventory.
@@ -725,7 +725,7 @@ void TCreature::Execute(void) {
 			if (this->Stop) {
 				this->ToDoClear();
 				if (this->Type == PLAYER) {
-					SendSnapback(this->Connection);
+					send_snapback(this->Connection);
 				}
 			} else {
 				this->NextWakeup = ServerMilliseconds + Delay;
@@ -805,9 +805,9 @@ void TCreature::Execute(void) {
 			}
 
 			if (this->Type == PLAYER) {
-				SendResult(this->Connection, r);
+				send_result(this->Connection, r);
 				if (SnapbackNecessary && r != MOVENOTPOSSIBLE && r != NOTINVITED && r != ENTERPROTECTIONZONE) {
-					SendSnapback(this->Connection);
+					send_snapback(this->Connection);
 				}
 			}
 			break;
@@ -816,7 +816,7 @@ void TCreature::Execute(void) {
 		if (this->Stop) {
 			this->ToDoClear();
 			if (this->Type == PLAYER) {
-				SendSnapback(this->Connection);
+				send_snapback(this->Connection);
 			}
 			break;
 		}
@@ -916,7 +916,7 @@ bool TCreature::ToDoClear(void) {
 void TCreature::ToDoAdd(ToDoEntry TD) {
 	if (this->LockToDo) {
 		if (this->ToDoClear() && this->Type == PLAYER) {
-			SendSnapback(this->Connection);
+			send_snapback(this->Connection);
 		}
 	}
 
@@ -928,7 +928,7 @@ void TCreature::ToDoStop(void) {
 	if (this->LockToDo) {
 		this->Stop = true;
 	} else if (this->Type == PLAYER) {
-		SendSnapback(this->Connection);
+		send_snapback(this->Connection);
 	}
 }
 
@@ -1008,7 +1008,7 @@ void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxS
 		if (!Shortway.Calculate(DestX, DestY, MustReach, MaxSteps)) {
 			this->ToDoClear();
 			if (this->Type == PLAYER) {
-				SendSnapback(this->Connection);
+				send_snapback(this->Connection);
 			}
 			throw NOWAY;
 		}
@@ -1326,40 +1326,40 @@ void TCreature::NotifyGo(void) {
 				this->posx -= 1;
 				this->posy -= 1;
 				this->posz += 1;
-				SendFloors(this->Connection, false);
+				send_floors(this->Connection, false);
 			}
 
 			while (this->posz > DestZ) {
 				this->posx += 1;
 				this->posy += 1;
 				this->posz -= 1;
-				SendFloors(this->Connection, true);
+				send_floors(this->Connection, true);
 			}
 
 			while (this->posx < DestX) {
 				this->posx += 1;
-				SendRow(this->Connection, DIRECTION_EAST);
+				send_row(this->Connection, DIRECTION_EAST);
 			}
 
 			while (this->posx > DestX) {
 				this->posx -= 1;
-				SendRow(this->Connection, DIRECTION_WEST);
+				send_row(this->Connection, DIRECTION_WEST);
 			}
 
 			while (this->posy < DestY) {
 				this->posy += 1;
-				SendRow(this->Connection, DIRECTION_SOUTH);
+				send_row(this->Connection, DIRECTION_SOUTH);
 			}
 
 			while (this->posy > DestY) {
 				this->posy -= 1;
-				SendRow(this->Connection, DIRECTION_NORTH);
+				send_row(this->Connection, DIRECTION_NORTH);
 			}
 		} else {
 			this->posx = DestX;
 			this->posy = DestY;
 			this->posz = DestZ;
-			SendFullScreen(this->Connection);
+			send_full_screen(this->Connection);
 		}
 	} else {
 		this->posx = DestX;
@@ -1383,7 +1383,7 @@ void TCreature::NotifyGo(void) {
 
 			if (!object_accessible(this->ID, Con, 1)) {
 				((TPlayer *)this)->SetOpenContainer(ContainerNr, NONE);
-				SendCloseContainer(this->Connection, ContainerNr);
+				send_close_container(this->Connection, ContainerNr);
 			}
 		}
 
@@ -1402,8 +1402,8 @@ void TCreature::NotifyGo(void) {
 			if (Partner == NULL || !object_accessible(this->ID, TradeObject, 1) ||
 				object_distance(this->CrObject, Partner->CrObject) > 2 ||
 				!throw_possible(this->posx, this->posy, this->posz, Partner->posx, Partner->posy, Partner->posz, 0)) {
-				SendCloseTrade(this->Connection);
-				SendMessage(this->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
+				send_close_trade(this->Connection);
+				send_message(this->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
 				((TPlayer *)this)->RejectTrade();
 			}
 		}
@@ -1461,7 +1461,7 @@ void TCreature::NotifyCreate(void) {
 void TCreature::NotifyDelete(void) {
 	if (this->Type == PLAYER) {
 		if (this->Connection != NULL) {
-			this->Connection->Logout(30, true);
+			this->Connection->logout(30, true);
 			this->LoggingOut = true;
 		}
 
@@ -1544,10 +1544,10 @@ void TCreature::NotifyChangeInventory(void) {
 		}
 
 		if (SkillsChanged) {
-			SendPlayerSkills(this->Connection);
+			send_player_skills(this->Connection);
 			((TPlayer *)this)->CheckState();
 		}
 
-		SendPlayerData(this->Connection);
+		send_player_data(this->Connection);
 	}
 }

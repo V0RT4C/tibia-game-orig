@@ -24,33 +24,33 @@ TEST_CASE("TConnection: struct layout — compile-time sizes") {
 TEST_CASE("TConnection: InGame inline method") {
     TConnection *conn = make_zeroed_connection();
     conn->State = CONNECTION_FREE;
-    CHECK(conn->InGame() == false);
+    CHECK(conn->in_game() == false);
     conn->State = CONNECTION_GAME;
-    CHECK(conn->InGame() == true);
+    CHECK(conn->in_game() == true);
     conn->State = CONNECTION_DEAD;
-    CHECK(conn->InGame() == true);
+    CHECK(conn->in_game() == true);
     conn->State = CONNECTION_LOGOUT;
-    CHECK(conn->InGame() == false);
+    CHECK(conn->in_game() == false);
 }
 
 TEST_CASE("TConnection: Live inline method") {
     TConnection *conn = make_zeroed_connection();
     conn->State = CONNECTION_FREE;
-    CHECK(conn->Live() == false);
+    CHECK(conn->live() == false);
     conn->State = CONNECTION_ASSIGNED;
-    CHECK(conn->Live() == false);
+    CHECK(conn->live() == false);
     conn->State = CONNECTION_CONNECTED;
-    CHECK(conn->Live() == false);
+    CHECK(conn->live() == false);
     conn->State = CONNECTION_LOGIN;
-    CHECK(conn->Live() == true);
+    CHECK(conn->live() == true);
     conn->State = CONNECTION_GAME;
-    CHECK(conn->Live() == true);
+    CHECK(conn->live() == true);
     conn->State = CONNECTION_DEAD;
-    CHECK(conn->Live() == true);
+    CHECK(conn->live() == true);
     conn->State = CONNECTION_LOGOUT;
-    CHECK(conn->Live() == true);
+    CHECK(conn->live() == true);
     conn->State = CONNECTION_DISCONNECTED;
-    CHECK(conn->Live() == false);
+    CHECK(conn->live() == false);
 }
 
 TEST_CASE("TKnownCreature: struct layout") {

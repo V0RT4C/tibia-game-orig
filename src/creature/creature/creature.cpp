@@ -146,7 +146,7 @@ TCreature::~TCreature(void) {
 	this->ToDoClear();
 
 	if (this->Type == PLAYER && this->Connection != NULL) {
-		this->Connection->Logout(30, true);
+		this->Connection->logout(30, true);
 	}
 
 	this->DelInCrList();
@@ -166,12 +166,12 @@ TCreature::~TCreature(void) {
 
 void TCreature::StartLogout(bool Force, bool StopFight) {
 	this->LoggingOut = true;
-	if (Force || LagDetected()) {
+	if (Force || lag_detected()) {
 		this->LogoutAllowed = true;
 	}
 
 	if (this->Type == PLAYER && this->Connection != NULL) {
-		this->Connection->Logout(0, true);
+		this->Connection->logout(0, true);
 	}
 
 	this->Combat.StopAttack(StopFight ? 0 : 60);
@@ -179,7 +179,7 @@ void TCreature::StartLogout(bool Force, bool StopFight) {
 
 int TCreature::LogoutPossible(void) {
 	if (!this->LogoutAllowed && !this->IsDead && !GameEnding()) {
-		if (this->EarliestLogoutRound > RoundNr && !LagDetected()) {
+		if (this->EarliestLogoutRound > RoundNr && !lag_detected()) {
 			return 1; // LOGOUT_COMBAT ?
 		}
 
@@ -254,7 +254,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType) {
 
 	if (Attacker != NULL && this->Type == PLAYER) {
 		if (this->Connection != NULL) {
-			SendMarkCreature(this->Connection, Attacker->ID, COLOR_BLACK);
+			send_mark_creature(this->Connection, Attacker->ID, COLOR_BLACK);
 		}
 
 		if (Attacker->Type == PLAYER && DamageType != DAMAGE_POISON_PERIODIC && DamageType != DAMAGE_FIRE_PERIODIC &&
@@ -406,7 +406,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType) {
 		if (Damage > 0) {
 			this->Skills[SKILL_MANA]->Change(-Damage);
 			if (this->Type == PLAYER && this->Connection != NULL) {
-				SendMessage(this->Connection, TALK_STATUS_MESSAGE, "You lose %d mana.", Damage);
+				send_message(this->Connection, TALK_STATUS_MESSAGE, "You lose %d mana.", Damage);
 			}
 			graphical_effect(this->CrObject, EFFECT_MAGIC_RED);
 			textual_effect(this->CrObject, COLOR_BLUE, "%d", Damage);
@@ -426,12 +426,12 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType) {
 			textual_effect(this->CrObject, COLOR_BLUE, "%d", Damage);
 			if (this->Type == PLAYER && this->Connection != NULL) {
 				if (Attacker != NULL) {
-					SendMessage(this->Connection, TALK_STATUS_MESSAGE, "You lose %d mana blocking an attack by %s.",
+					send_message(this->Connection, TALK_STATUS_MESSAGE, "You lose %d mana blocking an attack by %s.",
 								Damage, Attacker->Name);
 				} else {
-					SendMessage(this->Connection, TALK_STATUS_MESSAGE, "You lose %d mana.", Damage);
+					send_message(this->Connection, TALK_STATUS_MESSAGE, "You lose %d mana.", Damage);
 				}
-				SendPlayerData(this->Connection);
+				send_player_data(this->Connection);
 			}
 			return Damage;
 		}
@@ -526,13 +526,13 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType) {
 
 	if (this->Type == PLAYER && this->Connection != NULL) {
 		if (Attacker != NULL) {
-			SendMessage(this->Connection, TALK_STATUS_MESSAGE, "You lose %d hitpoint%s due to an attack by %s.", Damage,
+			send_message(this->Connection, TALK_STATUS_MESSAGE, "You lose %d hitpoint%s due to an attack by %s.", Damage,
 						(Damage != 1 ? "s" : ""), Attacker->Name);
 		} else {
-			SendMessage(this->Connection, TALK_STATUS_MESSAGE, "You lose %d hitpoint%s.", Damage,
+			send_message(this->Connection, TALK_STATUS_MESSAGE, "You lose %d hitpoint%s.", Damage,
 						(Damage != 1 ? "s" : ""));
 		}
-		SendPlayerData(this->Connection);
+		send_player_data(this->Connection);
 	}
 
 	if (Damage == HitPoints) {
@@ -684,14 +684,14 @@ void TCreature::CreatureMoveStimulus(uint32 CreatureID, int Type) {
 	// TODO(fusion): Review this.
 	try {
 		if (this->ToDoClear() && this->Type == PLAYER) {
-			SendSnapback(this->Connection);
+			send_snapback(this->Connection);
 		}
 		this->ToDoWait(200);
 		this->ToDoAttack();
 		this->ToDoStart();
 	} catch (RESULT r) {
 		if (this->Type == PLAYER) {
-			SendResult(this->Connection, r);
+			send_result(this->Connection, r);
 		}
 		this->ToDoClear();
 		this->ToDoWaitUntil(this->Combat.EarliestAttackTime);

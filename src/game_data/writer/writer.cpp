@@ -949,7 +949,7 @@ void process_broadcast_reply(BroadcastReplyData *Data) {
 		return;
 	}
 
-	BroadcastMessage(TALK_STATUS_MESSAGE, Data->Message);
+	broadcast_message(TALK_STATUS_MESSAGE, Data->Message);
 
 	delete Data;
 }
@@ -962,7 +962,7 @@ void process_direct_reply(DirectReplyData *Data) {
 
 	TPlayer *Player = get_player(Data->CharacterID);
 	if (Player != NULL) {
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s", Data->Message);
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "%s", Data->Message);
 	}
 
 	delete Data;

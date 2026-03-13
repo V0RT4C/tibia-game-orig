@@ -18,39 +18,39 @@ struct TKnownCreature {
 
 struct TConnection {
 	TConnection(void);
-	void Process(void);
-	void ResetTimer(int Command);
-	void EmergencyPing(void);
-	pid_t GetThreadID(void);
-	bool SetLoginTimer(int Timeout);
-	void StopLoginTimer(void);
-	int GetSocket(void);
-	const char *GetIPAddress(void);
-	void Free(void);
-	void Assign(void);
-	void Connect(int Socket, ITransport *Transport);
-	void Login(void);
-	bool JoinGame(TReadBuffer *Buffer);
-	void EnterGame(void);
-	void Die(void);
-	void Logout(int Delay, bool StopFight);
-	void Close(bool Delay);
-	void Disconnect(void);
+	void process(void);
+	void reset_timer(int Command);
+	void emergency_ping(void);
+	pid_t get_thread_id(void);
+	bool set_login_timer(int Timeout);
+	void stop_login_timer(void);
+	int get_socket(void);
+	const char *get_ip_address(void);
+	void free_connection(void);
+	void assign(void);
+	void connect(int Socket, ITransport *Transport);
+	void login(void);
+	bool join_game(TReadBuffer *Buffer);
+	void enter_game(void);
+	void die(void);
+	void logout(int Delay, bool StopFight);
+	void close_connection(bool Delay);
+	void disconnect(void);
 	TPlayer *get_player(void);
 	const char *get_name(void);
 	void get_position(int *x, int *y, int *z);
-	bool IsVisible(int x, int y, int z);
-	KNOWNCREATURESTATE KnownCreature(uint32 ID, bool UpdateFollows);
-	uint32 NewKnownCreature(uint32 NewID);
-	void ClearKnownCreatureTable(bool Unchain);
-	void UnchainKnownCreature(uint32 ID);
+	bool is_visible(int x, int y, int z);
+	KNOWNCREATURESTATE known_creature(uint32 ID, bool UpdateFollows);
+	uint32 new_known_creature(uint32 NewID);
+	void clear_known_creature_table(bool Unchain);
+	void unchain_known_creature(uint32 ID);
 
-	bool InGame(void) const {
+	bool in_game(void) const {
 		return this->State == CONNECTION_GAME
 			|| this->State == CONNECTION_DEAD;
 	}
 
-	bool Live(void) const {
+	bool live(void) const {
 		return this->State == CONNECTION_LOGIN
 			|| this->State == CONNECTION_GAME
 			|| this->State == CONNECTION_DEAD

@@ -1411,7 +1411,7 @@ void teleport(TCreature *Actor, const char *Param) {
 				DestY += ParamY;
 				DestZ += ParamZ;
 			} else {
-				SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "Invalid coordinates.");
+				send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "Invalid coordinates.");
 				return;
 			}
 		} else {
@@ -1427,7 +1427,7 @@ void teleport(TCreature *Actor, const char *Param) {
 				// was also assigned to a couple of non GM characters?
 				HouseID = get_house_id(DestX, DestY, DestZ);
 			} else {
-				SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "There is no mark of this name.");
+				send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "There is no mark of this name.");
 				return;
 			}
 		}
@@ -1463,7 +1463,7 @@ void teleport_to_creature(TCreature *Actor, const char *Name) {
 	}
 
 	if (Name == NULL || Name[0] == 0) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "You must enter a name.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "You must enter a name.");
 		return;
 	}
 
@@ -1522,7 +1522,7 @@ void teleport_player_to_me(TCreature *Actor, const char *Name) {
 	}
 
 	if (Name == NULL || Name[0] == 0) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "You must enter a name.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "You must enter a name.");
 		return;
 	}
 
@@ -1686,19 +1686,19 @@ void create_thing(TCreature *Actor, const char *Param1, const char *Param2) {
 	}
 
 	if (TypeID == 0) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "There is no such takeable object.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "There is no such takeable object.");
 		return;
 	}
 
 	int Count = (Param2 != NULL ? atoi(Param2) : 1);
 	if (Count < 1 || Count > 100) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "You may only create 1 to 100 objects.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "You may only create 1 to 100 objects.");
 		return;
 	}
 
 	ObjectType ObjType(TypeID);
 	if (!ObjType.get_flag(TAKE) && Count > 0) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "You may only create one untakeable object.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "You may only create one untakeable object.");
 		return;
 	}
 
@@ -1735,7 +1735,7 @@ void create_money(TCreature *Actor, const char *Param) {
 
 	int Amount = atoi(Param);
 	if (Amount < 1 || Amount > 1000000) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "You may only create 1 to 1,000,000 gold.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "You may only create 1 to 1,000,000 gold.");
 		return;
 	}
 
@@ -2495,7 +2495,7 @@ void change_data(TCreature *Actor, const char *Param) {
 	Object RightHand = get_body_object(Actor->ID, INVENTORY_RIGHTHAND);
 	Object LeftHand = get_body_object(Actor->ID, INVENTORY_LEFTHAND);
 	if (RightHand != NONE && LeftHand != NONE) {
-		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "First drop one object.");
+		send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "First drop one object.");
 		return;
 	}
 
@@ -2542,7 +2542,7 @@ void change_data(TCreature *Actor, const char *Param) {
 			change(Obj, (INSTANCEATTRIBUTE)Attribute, Value);
 			graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 		} else {
-			SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "You can't change %s in this way.", get_name(Obj));
+			send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "You can't change %s in this way.", get_name(Obj));
 		}
 	}
 }
@@ -2669,11 +2669,11 @@ void find_person(TCreature *Actor, int ManaPoints, int SoulPoints, const char *T
 	int Distance = std::max<int>(std::abs(Actor->posx - Target->posx), std::abs(Actor->posy - Target->posy));
 	if (Distance <= 4) {
 		if (Actor->posz > Target->posz) {
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is above you.", Target->Name);
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is above you.", Target->Name);
 		} else if (Actor->posz < Target->posz) {
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is below you.", Target->Name);
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is below you.", Target->Name);
 		} else {
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is standing next to you.", Target->Name);
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is standing next to you.", Target->Name);
 		}
 	} else {
 		const char *Direction = "";
@@ -2710,18 +2710,18 @@ void find_person(TCreature *Actor, int ManaPoints, int SoulPoints, const char *T
 
 		if (Distance <= 99) {
 			if (Actor->posz > Target->posz) {
-				SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is on a higher level to the %s.", Target->Name,
+				send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is on a higher level to the %s.", Target->Name,
 							Direction);
 			} else if (Actor->posz < Target->posz) {
-				SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is on a lower level to the %s.", Target->Name,
+				send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is on a lower level to the %s.", Target->Name,
 							Direction);
 			} else {
-				SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is to the %s.", Target->Name, Direction);
+				send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is to the %s.", Target->Name, Direction);
 			}
 		} else if (Distance <= 250) {
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is far to the %s.", Target->Name, Direction);
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is far to the %s.", Target->Name, Direction);
 		} else {
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "%s is very far to the %s.", Target->Name, Direction);
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "%s is very far to the %s.", Target->Name, Direction);
 		}
 	}
 
@@ -2740,7 +2740,7 @@ void get_position(TCreature *Actor) {
 	}
 
 	if (check_right(Actor->ID, SHOW_COORDINATE)) {
-		SendMessage(Actor->Connection, TALK_EVENT_MESSAGE, "Your position is [%d,%d,%d].", Actor->posx, Actor->posy,
+		send_message(Actor->Connection, TALK_EVENT_MESSAGE, "Your position is [%d,%d,%d].", Actor->posx, Actor->posy,
 					Actor->posz);
 	}
 }
@@ -2764,10 +2764,10 @@ void get_quest_value(TCreature *Actor, const char *Param) {
 	if (check_right(Actor->ID, CHANGE_SKILLS)) {
 		int QuestNumber = atoi(Param);
 		if (QuestNumber >= 0 && QuestNumber < NARRAY(TPlayer::QuestValues)) {
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "Quest value %d is %d.", QuestNumber,
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "Quest value %d is %d.", QuestNumber,
 						((TPlayer *)Actor)->GetQuestValue(QuestNumber));
 		} else {
-			SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "Invalid quest number.");
+			send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "Invalid quest number.");
 		}
 	}
 }
@@ -2798,9 +2798,9 @@ void set_quest_value(TCreature *Actor, const char *Param1, const char *Param2) {
 		int QuestValue = atoi(Param2);
 		if (QuestNumber >= 0 && QuestNumber < NARRAY(TPlayer::QuestValues)) {
 			((TPlayer *)Actor)->SetQuestValue(QuestNumber, QuestValue);
-			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "Quest value %d set to %d.", QuestNumber, QuestValue);
+			send_message(Actor->Connection, TALK_INFO_MESSAGE, "Quest value %d set to %d.", QuestNumber, QuestValue);
 		} else {
-			SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "Invalid quest number.");
+			send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "Invalid quest number.");
 		}
 	}
 }
@@ -2820,7 +2820,7 @@ void clear_quest_values(TCreature *Actor) {
 		for (int QuestNumber = 0; QuestNumber < NARRAY(TPlayer::QuestValues); QuestNumber += 1) {
 			((TPlayer *)Actor)->SetQuestValue(QuestNumber, 0);
 		}
-		SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "All quest values deleted.");
+		send_message(Actor->Connection, TALK_INFO_MESSAGE, "All quest values deleted.");
 	}
 }
 
@@ -2925,7 +2925,7 @@ void edit_guests(TCreature *Actor) {
 	// lists to be under 4KB, we can easily get a buffer overflow here.
 	char GuestList[4096];
 	show_guest_list(HouseID, (TPlayer *)Actor, GuestList);
-	SendEditList(Actor->Connection, GUESTLIST, HouseID, GuestList);
+	send_edit_list(Actor->Connection, GUESTLIST, HouseID, GuestList);
 }
 
 void edit_subowners(TCreature *Actor) {
@@ -2948,7 +2948,7 @@ void edit_subowners(TCreature *Actor) {
 	// lists to be under 4KB, we can easily get a buffer overflow here.
 	char SubOwnerList[4096];
 	show_subowner_list(HouseID, (TPlayer *)Actor, SubOwnerList);
-	SendEditList(Actor->Connection, SUBOWNERLIST, HouseID, SubOwnerList);
+	send_edit_list(Actor->Connection, SUBOWNERLIST, HouseID, SubOwnerList);
 }
 
 void edit_name_door(TCreature *Actor) {
@@ -3008,7 +3008,7 @@ void edit_name_door(TCreature *Actor) {
 
 	char DoorList[4096];
 	show_name_door(Obj, (TPlayer *)Actor, DoorList);
-	SendEditList(Actor->Connection, DOORLIST, Obj.ObjectID, DoorList);
+	send_edit_list(Actor->Connection, DOORLIST, Obj.ObjectID, DoorList);
 }
 
 void kick_guest(TCreature *Actor, const char *GuestName) {
@@ -3068,7 +3068,7 @@ void notation(TCreature *Actor, const char *Name, const char *Comment) {
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3088,7 +3088,7 @@ void name_lock(TCreature *Actor, const char *Name) {
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3113,7 +3113,7 @@ void banish_account(TCreature *Actor, const char *Name, int Duration, const char
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3138,7 +3138,7 @@ void delete_account(TCreature *Actor, const char *Name, const char *Reason) {
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3163,7 +3163,7 @@ void banish_character(TCreature *Actor, const char *Name, int Duration, const ch
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3188,7 +3188,7 @@ void delete_character(TCreature *Actor, const char *Name, const char *Reason) {
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3213,7 +3213,7 @@ void ip_banishment(TCreature *Actor, const char *Name, const char *Reason) {
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
@@ -3233,7 +3233,7 @@ void set_name_rule(TCreature *Actor, const char *Name) {
 		throw ERROR;
 	}
 
-	SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "Spell is not available any more.");
+	send_message(Actor->Connection, TALK_FAILURE_MESSAGE, "Spell is not available any more.");
 }
 
 void kick_player(TCreature *Actor, const char *Name) {
@@ -3270,7 +3270,7 @@ void kick_player(TCreature *Actor, const char *Name) {
 
 	graphical_effect(Player->posx, Player->posy, Player->posz, EFFECT_MAGIC_GREEN);
 	Player->StartLogout(true, true);
-	SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "Player %s kicked out of the game.", Player->Name);
+	send_message(Actor->Connection, TALK_INFO_MESSAGE, "Player %s kicked out of the game.", Player->Name);
 	log_message("banish", "%s kicked %s.\n", Actor->Name, Player->Name);
 }
 
@@ -3311,7 +3311,7 @@ void home_teleport(TCreature *Actor, const char *Name) {
 	move(0, Player->CrObject, Dest, -1, false, NONE);
 	graphical_effect(Player->posx, Player->posy, Player->posz, EFFECT_ENERGY);
 
-	SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "Player %s has been moved to the temple.", Player->Name);
+	send_message(Actor->Connection, TALK_INFO_MESSAGE, "Player %s has been moved to the temple.", Player->Name);
 	log_message("banish", "%s teleported %s to the temple.\n", Actor->Name, Player->Name);
 }
 
@@ -4052,7 +4052,7 @@ int check_for_spell(uint32 CreatureID, const char *Text) {
 			}
 
 			if (Actor->Type == PLAYER) {
-				SendResult(Actor->Connection, r);
+				send_result(Actor->Connection, r);
 			}
 		}
 
@@ -4330,7 +4330,7 @@ void use_magic_item(uint32 CreatureID, Object Obj, Object Dest) {
 		}
 
 		if (Actor->Type == PLAYER) {
-			SendResult(Actor->Connection, r);
+			send_result(Actor->Connection, r);
 		}
 		return;
 	}

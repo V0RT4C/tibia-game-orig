@@ -6,11 +6,11 @@
 
 #define MAX_CONNECTIONS 1100
 
-TConnection *AssignFreeConnection(void);
-TConnection *GetFirstConnection(void);
-TConnection *GetNextConnection(void);
-void ProcessConnections(void);
-void InitConnections(void);
-void ExitConnections(void);
+TConnection *assign_free_connection(void);
+TConnection *get_first_connection(void);
+TConnection *get_next_connection(void);
+void process_connections(void);
+void init_connections(void);
+void exit_connections(void);
 
 #endif // TIBIA_NETWORK_CONNECTION_POOL_H_

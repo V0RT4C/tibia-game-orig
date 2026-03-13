@@ -7,13 +7,13 @@ static Semaphore ConnectionMutex(1);
 static int ConnectionIterator;
 static TConnection Connections[MAX_CONNECTIONS];
 
-TConnection *AssignFreeConnection(void){
+TConnection *assign_free_connection(void){
 	TConnection *Connection = NULL;
 	ConnectionMutex.down();
 	for(int i = 0; i < MAX_CONNECTIONS; i += 1){
 		if(Connections[i].State == CONNECTION_FREE){
 			Connection = &Connections[i];
-			Connection->Assign();
+			Connection->assign();
 			break;
 		}
 	}
@@ -21,12 +21,12 @@ TConnection *AssignFreeConnection(void){
 	return Connection;
 }
 
-TConnection *GetFirstConnection(void){
+TConnection *get_first_connection(void){
 	ConnectionIterator = 0;
-	return GetNextConnection();
+	return get_next_connection();
 }
 
-TConnection *GetNextConnection(void){
+TConnection *get_next_connection(void){
 	TConnection *NextConnection = NULL;
 	while(ConnectionIterator < MAX_CONNECTIONS){
 		TConnection *Connection = &Connections[ConnectionIterator];
@@ -39,17 +39,17 @@ TConnection *GetNextConnection(void){
 	return NextConnection;
 }
 
-void ProcessConnections(void){
-	TConnection *Connection = GetFirstConnection();
+void process_connections(void){
+	TConnection *Connection = get_first_connection();
 	while(Connection != NULL){
-		Connection->Process();
-		Connection = GetNextConnection();
+		Connection->process();
+		Connection = get_next_connection();
 	}
 }
 
-void InitConnections(void){
-	InitSending();
-	InitReceiving();
+void init_connections(void){
+	init_sending();
+	init_receiving();
 
 	ConnectionIterator = 0;
 	for(int i = 0; i < MAX_CONNECTIONS; i += 1){
@@ -57,7 +57,7 @@ void InitConnections(void){
 	}
 }
 
-void ExitConnections(void){
-	ExitSending();
-	ExitReceiving();
+void exit_connections(void){
+	exit_sending();
+	exit_receiving();
 }

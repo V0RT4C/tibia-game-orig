@@ -54,7 +54,7 @@ void announce_moving_creature(uint32 CreatureID, Object Con) {
 			continue;
 		}
 
-		SendMoveCreature(Player->Connection, CreatureID, ConX, ConY, ConZ);
+		send_move_creature(Player->Connection, CreatureID, ConX, ConY, ConZ);
 	}
 }
 
@@ -72,25 +72,25 @@ void announce_changed_creature(uint32 CreatureID, int Type) {
 			continue;
 		}
 
-		if (KnowingConnection->IsVisible(Creature->posx, Creature->posy, Creature->posz)) {
+		if (KnowingConnection->is_visible(Creature->posx, Creature->posy, Creature->posz)) {
 			switch (Type) {
 			case CREATURE_HEALTH_CHANGED:
-				SendCreatureHealth(KnowingConnection, CreatureID);
+				send_creature_health(KnowingConnection, CreatureID);
 				break;
 			case CREATURE_LIGHT_CHANGED:
-				SendCreatureLight(KnowingConnection, CreatureID);
+				send_creature_light(KnowingConnection, CreatureID);
 				break;
 			case CREATURE_OUTFIT_CHANGED:
-				SendCreatureOutfit(KnowingConnection, CreatureID);
+				send_creature_outfit(KnowingConnection, CreatureID);
 				break;
 			case CREATURE_SPEED_CHANGED:
-				SendCreatureSpeed(KnowingConnection, CreatureID);
+				send_creature_speed(KnowingConnection, CreatureID);
 				break;
 			case CREATURE_SKULL_CHANGED:
-				SendCreatureSkull(KnowingConnection, CreatureID);
+				send_creature_skull(KnowingConnection, CreatureID);
 				break;
 			case CREATURE_PARTY_CHANGED:
-				SendCreatureParty(KnowingConnection, CreatureID);
+				send_creature_party(KnowingConnection, CreatureID);
 				break;
 			}
 		} else {
@@ -119,19 +119,19 @@ void announce_changed_field(Object Obj, int Type) {
 			continue;
 		}
 
-		if (!Player->Connection->IsVisible(ObjX, ObjY, ObjZ)) {
+		if (!Player->Connection->is_visible(ObjX, ObjY, ObjZ)) {
 			continue;
 		}
 
 		switch (Type) {
 		case OBJECT_DELETED:
-			SendDeleteField(Player->Connection, ObjX, ObjY, ObjZ, Obj);
+			send_delete_field(Player->Connection, ObjX, ObjY, ObjZ, Obj);
 			break;
 		case OBJECT_CREATED:
-			SendAddField(Player->Connection, ObjX, ObjY, ObjZ, Obj);
+			send_add_field(Player->Connection, ObjX, ObjY, ObjZ, Obj);
 			break;
 		case OBJECT_CHANGED:
-			SendChangeField(Player->Connection, ObjX, ObjY, ObjZ, Obj);
+			send_change_field(Player->Connection, ObjX, ObjY, ObjZ, Obj);
 			break;
 		default: {
 			error("announce_changed_field: Invalid type %d.\n", Type);
@@ -167,13 +167,13 @@ void announce_changed_container(Object Obj, int Type) {
 
 			switch (Type) {
 			case OBJECT_DELETED:
-				SendDeleteInContainer(Player->Connection, ContainerNr, Obj);
+				send_delete_in_container(Player->Connection, ContainerNr, Obj);
 				break;
 			case OBJECT_CREATED:
-				SendCreateInContainer(Player->Connection, ContainerNr, Obj);
+				send_create_in_container(Player->Connection, ContainerNr, Obj);
 				break;
 			case OBJECT_CHANGED:
-				SendChangeInContainer(Player->Connection, ContainerNr, Obj);
+				send_change_in_container(Player->Connection, ContainerNr, Obj);
 				break;
 			default: {
 				error("announce_changed_container: Invalid type %d.\n", Type);
@@ -204,13 +204,13 @@ void announce_changed_inventory(Object Obj, int Type) {
 	int Position = get_object_body_position(Obj);
 	switch (Type) {
 	case OBJECT_DELETED:
-		SendDeleteInventory(Creature->Connection, Position);
+		send_delete_inventory(Creature->Connection, Position);
 		break;
 	case OBJECT_CREATED:
-		SendSetInventory(Creature->Connection, Position, Obj);
+		send_set_inventory(Creature->Connection, Position, Obj);
 		break;
 	case OBJECT_CHANGED:
-		SendSetInventory(Creature->Connection, Position, Obj);
+		send_set_inventory(Creature->Connection, Position, Obj);
 		break;
 	default: {
 		error("announce_changed_inventory: Invalid type %d.\n", Type);
@@ -253,11 +253,11 @@ void announce_graphical_effect(int x, int y, int z, int Type) {
 			continue;
 		}
 
-		if (!Player->Connection->IsVisible(x, y, z)) {
+		if (!Player->Connection->is_visible(x, y, z)) {
 			continue;
 		}
 
-		SendGraphicalEffect(Player->Connection, x, y, z, Type);
+		send_graphical_effect(Player->Connection, x, y, z, Type);
 	}
 }
 
@@ -278,11 +278,11 @@ void announce_textual_effect(int x, int y, int z, int Color, const char *Text) {
 			continue;
 		}
 
-		if (!Player->Connection->IsVisible(x, y, z)) {
+		if (!Player->Connection->is_visible(x, y, z)) {
 			continue;
 		}
 
-		SendTextualEffect(Player->Connection, x, y, z, Color, Text);
+		send_textual_effect(Player->Connection, x, y, z, Color, Text);
 	}
 }
 
@@ -307,12 +307,12 @@ void announce_missile(int OrigX, int OrigY, int OrigZ, int DestX, int DestY, int
 			continue;
 		}
 
-		if (!Player->Connection->IsVisible(OrigX, OrigY, OrigZ) &&
-			!Player->Connection->IsVisible(DestX, DestY, DestZ)) {
+		if (!Player->Connection->is_visible(OrigX, OrigY, OrigZ) &&
+			!Player->Connection->is_visible(DestX, DestY, DestZ)) {
 			continue;
 		}
 
-		SendMissileEffect(Player->Connection, OrigX, OrigY, OrigZ, DestX, DestY, DestZ, Type);
+		send_missile_effect(Player->Connection, OrigX, OrigY, OrigZ, DestX, DestY, DestZ, Type);
 	}
 }
 
@@ -1025,8 +1025,8 @@ void notify_trades(Object Obj) {
 		Object TradeObject = Player->InspectTrade(true, 0);
 		if (TradeObject != NONE) {
 			if (is_held_by_container(Obj, TradeObject) || is_held_by_container(TradeObject, Obj)) {
-				SendCloseTrade(Player->Connection);
-				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
+				send_close_trade(Player->Connection);
+				send_message(Player->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
 				Player->RejectTrade();
 			}
 		}
@@ -1094,10 +1094,10 @@ void close_container(Object Con, bool Force) {
 			if (is_held_by_container(OpenCon, Con)) {
 				if (Force || !object_accessible(Player->ID, Con, 1)) {
 					Player->SetOpenContainer(ContainerNr, NONE);
-					SendCloseContainer(Player->Connection, ContainerNr);
+					send_close_container(Player->Connection, ContainerNr);
 				} else {
 					// TODO(fusion): Why are we doing this? Is the container being refreshed?
-					SendContainer(Player->Connection, ContainerNr);
+					send_container(Player->Connection, ContainerNr);
 				}
 			}
 		}
@@ -1897,12 +1897,12 @@ void look(uint32 CreatureID, Object Obj) {
 					strcat(Membership, ")");
 				}
 
-				SendMessage(Player->Connection, TALK_INFO_MESSAGE, "You see %s. %s. %s.", Name, Vocation, Membership);
+				send_message(Player->Connection, TALK_INFO_MESSAGE, "You see %s. %s. %s.", Name, Vocation, Membership);
 			} else {
-				SendMessage(Player->Connection, TALK_INFO_MESSAGE, "You see %s. %s.", Name, Vocation);
+				send_message(Player->Connection, TALK_INFO_MESSAGE, "You see %s. %s.", Name, Vocation);
 			}
 		} else {
-			SendMessage(Player->Connection, TALK_INFO_MESSAGE, "You see %s.", Target->Name);
+			send_message(Player->Connection, TALK_INFO_MESSAGE, "You see %s.", Target->Name);
 		}
 	} else {
 		char Description[500] = {};
@@ -2137,7 +2137,7 @@ void look(uint32 CreatureID, Object Obj) {
 			}
 		}
 
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s", Description);
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "%s", Description);
 	}
 }
 
@@ -2193,7 +2193,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		if (CheckSpamming) {
 			Muting = Player->CheckForMuting();
 			if (Muting > 0 && TalkMuteable) {
-				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE, "You are still muted for %d second%s.", Muting,
+				send_message(Player->Connection, TALK_FAILURE_MESSAGE, "You are still muted for %d second%s.", Muting,
 							(Muting != 1 ? "s" : ""));
 				return;
 			}
@@ -2224,7 +2224,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 
 		if (Mode == TALK_CHANNEL_CALL && Channel == 5) {
 			if (Player->EarliestTradeChannelRound > RoundNr) {
-				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE, "You may only place one offer in two minutes.");
+				send_message(Player->Connection, TALK_FAILURE_MESSAGE, "You may only place one offer in two minutes.");
 				return;
 			}
 
@@ -2234,7 +2234,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		if (CheckSpamming && SpellType == 0 && TalkMuteable && !check_right(Player->ID, NO_BANISHMENT)) {
 			Muting = Player->RecordTalk();
 			if (Muting > 0) {
-				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE, "You are muted for %d second%s.", Muting,
+				send_message(Player->Connection, TALK_FAILURE_MESSAGE, "You are muted for %d second%s.", Muting,
 							(Muting != 1 ? "s" : ""));
 				return;
 			}
@@ -2273,7 +2273,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		if (Mode == TALK_PRIVATE_MESSAGE) {
 			int Muting = Player->RecordMessage(Receiver->ID);
 			if (Muting > 0) {
-				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE,
+				send_message(Player->Connection, TALK_FAILURE_MESSAGE,
 							"You have addressed too many players. You are muted for %d second%s.", Muting,
 							(Muting != 1 ? "s" : ""));
 				return;
@@ -2283,13 +2283,13 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		if (Mode != TALK_ANONYMOUS_MESSAGE) {
 			uint32 StatementID = log_communication(CreatureID, Mode, 0, Text);
 			log_listener(StatementID, Player);
-			SendTalk(Receiver->Connection, log_listener(StatementID, Receiver),
+			send_talk(Receiver->Connection, log_listener(StatementID, Receiver),
 					 (Mode == TALK_GAMEMASTER_ANSWER ? "Gamemaster" : Player->Name), Mode, Text, 0);
 		} else {
-			SendMessage(Receiver->Connection, TALK_ADMIN_MESSAGE, "%s", Text);
+			send_message(Receiver->Connection, TALK_ADMIN_MESSAGE, "%s", Text);
 		}
 
-		SendMessage(Player->Connection, TALK_FAILURE_MESSAGE, "Message sent to %s.",
+		send_message(Player->Connection, TALK_FAILURE_MESSAGE, "Message sent to %s.",
 					(Mode == TALK_PLAYER_ANSWER ? "Gamemaster" : Receiver->Name));
 		return;
 	} else if (Mode == TALK_SAY || Mode == TALK_WHISPER || Mode == TALK_YELL || Mode == TALK_ANIMAL_LOW ||
@@ -2333,7 +2333,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 				}
 
 				if (DistanceX > 1 && DistanceY > 1) {
-					SendTalk(Spectator->Connection, 0, Creature->Name, Mode, Creature->posx, Creature->posy,
+					send_talk(Spectator->Connection, 0, Creature->Name, Mode, Creature->posx, Creature->posy,
 							 Creature->posz, "pspsps");
 					continue;
 				}
@@ -2349,27 +2349,27 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 				}
 			}
 
-			SendTalk(Spectator->Connection, log_listener(StatementID, Spectator), Creature->Name, Mode, Creature->posx,
+			send_talk(Spectator->Connection, log_listener(StatementID, Spectator), Creature->Name, Mode, Creature->posx,
 					 Creature->posy, Creature->posz, Text);
 		}
 	} else if (Mode == TALK_GAMEMASTER_BROADCAST) {
 		uint32 StatementID = log_communication(CreatureID, Mode, 0, Text);
-		TConnection *Connection = GetFirstConnection();
+		TConnection *Connection = get_first_connection();
 		while (Connection != NULL) {
-			if (Connection->Live()) {
-				SendTalk(Connection, log_listener(StatementID, Connection->get_player()), Creature->Name, Mode, Text, 0);
+			if (Connection->live()) {
+				send_talk(Connection, log_listener(StatementID, Connection->get_player()), Creature->Name, Mode, Text, 0);
 			}
 
-			Connection = GetNextConnection();
+			Connection = get_next_connection();
 		}
 	} else if (Mode == TALK_ANONYMOUS_BROADCAST) {
-		TConnection *Connection = GetFirstConnection();
+		TConnection *Connection = get_first_connection();
 		while (Connection != NULL) {
-			if (Connection->Live()) {
-				SendMessage(Connection, TALK_ADMIN_MESSAGE, Text);
+			if (Connection->live()) {
+				send_message(Connection, TALK_ADMIN_MESSAGE, Text);
 			}
 
-			Connection = GetNextConnection();
+			Connection = get_next_connection();
 		}
 	} else if (Mode == TALK_CHANNEL_CALL || Mode == TALK_GAMEMASTER_CHANNELCALL || Mode == TALK_HIGHLIGHT_CHANNELCALL ||
 			   Mode == TALK_ANONYMOUS_CHANNELCALL) {
@@ -2396,7 +2396,7 @@ void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			// TODO(fusion): There was some weird logic here to select the statement
 			// id and it didn't seem to make a difference since `log_listener` was
 			// always called, regardless.
-			SendTalk(Subscriber->Connection, log_listener(StatementID, Subscriber), Creature->Name, Mode, Channel,
+			send_talk(Subscriber->Connection, log_listener(StatementID, Subscriber), Creature->Name, Mode, Channel,
 					 Text);
 		}
 	} else {
@@ -3485,7 +3485,7 @@ void open_channel(uint32 CharacterID) {
 	// NOTE(fusion): Check if character already has an open channel.
 	for (int ChannelID = FIRST_PRIVATE_CHANNEL; ChannelID < Channels; ChannelID += 1) {
 		if (ChannelArray.at(ChannelID)->Moderator == CharacterID) {
-			SendOpenOwnChannel(Player->Connection, ChannelID);
+			send_open_own_channel(Player->Connection, ChannelID);
 			return;
 		}
 	}
@@ -3509,7 +3509,7 @@ void open_channel(uint32 CharacterID) {
 	*Chan->Subscriber.at(0) = CharacterID;
 	Chan->Subscribers = 1;
 	Chan->InvitedPlayers = 0;
-	SendOpenOwnChannel(Player->Connection, ChannelID);
+	send_open_own_channel(Player->Connection, ChannelID);
 }
 
 void close_channel(int ChannelID) {
@@ -3589,7 +3589,7 @@ void invite_to_channel(uint32 CharacterID, const char *Name) {
 		Channel *Chan = ChannelArray.at(ChannelID);
 		for (int i = 0; i < Chan->InvitedPlayers; i += 1) {
 			if (*Chan->InvitedPlayer.at(i) == OtherID) {
-				SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s has already been invited.", Name);
+				send_message(Player->Connection, TALK_INFO_MESSAGE, "%s has already been invited.", Name);
 				return;
 			}
 		}
@@ -3597,10 +3597,10 @@ void invite_to_channel(uint32 CharacterID, const char *Name) {
 		*Chan->InvitedPlayer.at(Chan->InvitedPlayers) = OtherID;
 		Chan->InvitedPlayers += 1;
 
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s has been invited.", Name);
+		send_message(Player->Connection, TALK_INFO_MESSAGE, "%s has been invited.", Name);
 
 		if (Other != NULL) {
-			SendMessage(Other->Connection, TALK_INFO_MESSAGE, "%s invites you to %s private chat channel.",
+			send_message(Other->Connection, TALK_INFO_MESSAGE, "%s invites you to %s private chat channel.",
 						Player->Name, (Player->Sex == 1 ? "his" : "her"));
 		}
 	}
@@ -3675,9 +3675,9 @@ void exclude_from_channel(uint32 CharacterID, const char *Name) {
 		}
 
 		if (!Removed) {
-			SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s has not been invited.", Name);
+			send_message(Player->Connection, TALK_INFO_MESSAGE, "%s has not been invited.", Name);
 		} else {
-			SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s has been excluded.", Name);
+			send_message(Player->Connection, TALK_INFO_MESSAGE, "%s has been excluded.", Name);
 			if (channel_subscribed(ChannelID, OtherID)) {
 				leave_channel(ChannelID, OtherID, false);
 
@@ -3687,7 +3687,7 @@ void exclude_from_channel(uint32 CharacterID, const char *Name) {
 				//	Nevertheless, this check should become invisible to the branch
 				// predictor and it's always best to be safe.
 				if (Other != NULL) {
-					SendCloseChannel(Other->Connection, ChannelID);
+					send_close_channel(Other->Connection, ChannelID);
 				}
 			}
 		}
@@ -3732,7 +3732,7 @@ void leave_channel(int ChannelID, uint32 CharacterID, bool Close) {
 			uint32 SubscriberID = *Chan->Subscriber.at(i);
 			TPlayer *Subscriber = get_player(SubscriberID);
 			if (Subscriber != NULL) {
-				SendCloseChannel(Subscriber->Connection, ChannelID);
+				send_close_channel(Subscriber->Connection, ChannelID);
 			}
 		}
 		Chan->Subscribers = 0;
@@ -3826,11 +3826,11 @@ void disband_party(uint32 LeaderID) {
 		uint32 MemberID = *P->Member.at(i);
 		TPlayer *Member = get_player(MemberID);
 		if (Member != NULL && Member->Connection != NULL) {
-			SendMessage(Member->Connection, TALK_INFO_MESSAGE, "Your party has been disbanded.");
+			send_message(Member->Connection, TALK_INFO_MESSAGE, "Your party has been disbanded.");
 			for (int j = 0; j < P->Members; j += 1) {
 				uint32 OtherID = *P->Member.at(j);
-				SendCreatureParty(Member->Connection, OtherID);
-				SendCreatureSkull(Member->Connection, OtherID);
+				send_creature_party(Member->Connection, OtherID);
+				send_creature_skull(Member->Connection, OtherID);
 			}
 		}
 	}
@@ -3841,8 +3841,8 @@ void disband_party(uint32 LeaderID) {
 			uint32 GuestID = *P->InvitedPlayer.at(i);
 			TPlayer *Guest = get_player(GuestID);
 			if (Guest != NULL) {
-				SendCreatureParty(Guest->Connection, LeaderID);
-				SendCreatureParty(Leader->Connection, GuestID);
+				send_creature_party(Guest->Connection, LeaderID);
+				send_creature_party(Leader->Connection, GuestID);
 			}
 		}
 	}
@@ -3861,13 +3861,13 @@ void invite_to_party(uint32 HostID, uint32 GuestID) {
 
 	TPlayer *Guest = get_player(GuestID);
 	if (Guest == NULL) {
-		SendResult(Host->Connection, PLAYERNOTONLINE);
+		send_result(Host->Connection, PLAYERNOTONLINE);
 		return;
 	}
 
 	if (Host->GetPartyLeader(true) == 0) {
 		if (Guest->GetPartyLeader(true) != 0) {
-			SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s is already member of a party.", Guest->Name);
+			send_message(Host->Connection, TALK_INFO_MESSAGE, "%s is already member of a party.", Guest->Name);
 			return;
 		}
 
@@ -3884,16 +3884,16 @@ void invite_to_party(uint32 HostID, uint32 GuestID) {
 		P->InvitedPlayers = 1;
 
 		Host->JoinParty(HostID);
-		SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s has been invited.", Guest->Name);
-		SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "%s invites you to %s party.", Host->Name,
+		send_message(Host->Connection, TALK_INFO_MESSAGE, "%s has been invited.", Guest->Name);
+		send_message(Guest->Connection, TALK_INFO_MESSAGE, "%s invites you to %s party.", Host->Name,
 					(Host->Sex == 1 ? "his" : "her"));
-		SendCreatureParty(Host->Connection, HostID);
-		SendCreatureSkull(Host->Connection, HostID);
-		SendCreatureParty(Host->Connection, GuestID);
-		SendCreatureParty(Guest->Connection, HostID);
+		send_creature_party(Host->Connection, HostID);
+		send_creature_skull(Host->Connection, HostID);
+		send_creature_party(Host->Connection, GuestID);
+		send_creature_party(Guest->Connection, HostID);
 	} else if (Host->GetPartyLeader(false) == HostID) {
 		if (Guest->GetPartyLeader(true) != 0) {
-			SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s is already member of %s party.", Guest->Name,
+			send_message(Host->Connection, TALK_INFO_MESSAGE, "%s is already member of %s party.", Guest->Name,
 						(Guest->GetPartyLeader(true) == HostID ? "your" : "a"));
 			return;
 		}
@@ -3906,7 +3906,7 @@ void invite_to_party(uint32 HostID, uint32 GuestID) {
 
 		for (int i = 0; i < P->InvitedPlayers; i += 1) {
 			if (*P->InvitedPlayer.at(i) == GuestID) {
-				SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s has already been invited.", Guest->Name);
+				send_message(Host->Connection, TALK_INFO_MESSAGE, "%s has already been invited.", Guest->Name);
 				return;
 			}
 		}
@@ -3914,13 +3914,13 @@ void invite_to_party(uint32 HostID, uint32 GuestID) {
 		*P->InvitedPlayer.at(P->InvitedPlayers) = GuestID;
 		P->InvitedPlayers += 1;
 
-		SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s has been invited.", Guest->Name);
-		SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "%s invites you to %s party.", Host->Name,
+		send_message(Host->Connection, TALK_INFO_MESSAGE, "%s has been invited.", Guest->Name);
+		send_message(Guest->Connection, TALK_INFO_MESSAGE, "%s invites you to %s party.", Host->Name,
 					(Host->Sex == 1 ? "his" : "her"));
-		SendCreatureParty(Host->Connection, GuestID);
-		SendCreatureParty(Guest->Connection, HostID);
+		send_creature_party(Host->Connection, GuestID);
+		send_creature_party(Guest->Connection, HostID);
 	} else {
-		SendMessage(Host->Connection, TALK_INFO_MESSAGE, "You may not invite players.");
+		send_message(Host->Connection, TALK_INFO_MESSAGE, "You may not invite players.");
 	}
 }
 
@@ -3932,7 +3932,7 @@ void revoke_invitation(uint32 HostID, uint32 GuestID) {
 	}
 
 	if (Host->GetPartyLeader(false) != HostID) {
-		SendMessage(Host->Connection, TALK_INFO_MESSAGE, "You may not invite players.");
+		send_message(Host->Connection, TALK_INFO_MESSAGE, "You may not invite players.");
 		return;
 	}
 
@@ -3953,9 +3953,9 @@ void revoke_invitation(uint32 HostID, uint32 GuestID) {
 	TPlayer *Guest = get_player(GuestID);
 	if (InviteIndex >= P->InvitedPlayers) {
 		if (Guest != NULL) {
-			SendMessage(Host->Connection, TALK_INFO_MESSAGE, "%s has not been invited.", Guest->Name);
+			send_message(Host->Connection, TALK_INFO_MESSAGE, "%s has not been invited.", Guest->Name);
 		} else {
-			SendMessage(Host->Connection, TALK_INFO_MESSAGE, "This player has not been invited.");
+			send_message(Host->Connection, TALK_INFO_MESSAGE, "This player has not been invited.");
 		}
 		return;
 	}
@@ -3968,13 +3968,13 @@ void revoke_invitation(uint32 HostID, uint32 GuestID) {
 	}
 
 	if (Guest != NULL) {
-		SendMessage(Host->Connection, TALK_INFO_MESSAGE, "Invitation for %s has been revoked.", Guest->Name);
-		SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "%s has revoked %s invitation.", Host->Name,
+		send_message(Host->Connection, TALK_INFO_MESSAGE, "Invitation for %s has been revoked.", Guest->Name);
+		send_message(Guest->Connection, TALK_INFO_MESSAGE, "%s has revoked %s invitation.", Host->Name,
 					(Host->Sex == 1 ? "his" : "her"));
-		SendCreatureParty(Host->Connection, GuestID);
-		SendCreatureParty(Guest->Connection, HostID);
+		send_creature_party(Host->Connection, GuestID);
+		send_creature_party(Guest->Connection, HostID);
 	} else {
-		SendMessage(Host->Connection, TALK_INFO_MESSAGE, "Invitation has been revoked.");
+		send_message(Host->Connection, TALK_INFO_MESSAGE, "Invitation has been revoked.");
 	}
 
 	if (P->Members == 1 && P->InvitedPlayers == 0) {
@@ -3995,19 +3995,19 @@ void join_party(uint32 GuestID, uint32 HostID) {
 
 	TPlayer *Host = get_player(HostID);
 	if (Host == NULL) {
-		SendResult(Guest->Connection, PLAYERNOTONLINE);
+		send_result(Guest->Connection, PLAYERNOTONLINE);
 		return;
 	}
 
 	if (Guest->GetPartyLeader(true) != 0) {
-		SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "You are already member of %s party.",
+		send_message(Guest->Connection, TALK_INFO_MESSAGE, "You are already member of %s party.",
 					(Guest->InPartyWith(Host, true) ? "this" : "a"));
 		return;
 	}
 
 	Party *P = get_party(HostID);
 	if (P == NULL) {
-		SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "%s has not invited you.", Host->Name);
+		send_message(Guest->Connection, TALK_INFO_MESSAGE, "%s has not invited you.", Host->Name);
 		return;
 	}
 
@@ -4020,7 +4020,7 @@ void join_party(uint32 GuestID, uint32 HostID) {
 	}
 
 	if (InviteIndex >= P->InvitedPlayers) {
-		SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "%s has not invited you.", Host->Name);
+		send_message(Guest->Connection, TALK_INFO_MESSAGE, "%s has not invited you.", Host->Name);
 		return;
 	}
 
@@ -4032,17 +4032,17 @@ void join_party(uint32 GuestID, uint32 HostID) {
 	P->Members += 1;
 
 	Guest->JoinParty(HostID);
-	SendMessage(Guest->Connection, TALK_INFO_MESSAGE, "You have joined %s's party.", Host->Name);
+	send_message(Guest->Connection, TALK_INFO_MESSAGE, "You have joined %s's party.", Host->Name);
 	for (int i = 0; i < P->Members; i += 1) {
 		uint32 MemberID = *P->Member.at(i);
-		SendCreatureParty(Guest->Connection, MemberID);
-		SendCreatureSkull(Guest->Connection, MemberID);
+		send_creature_party(Guest->Connection, MemberID);
+		send_creature_skull(Guest->Connection, MemberID);
 		if (MemberID != GuestID) {
 			TPlayer *Member = get_player(MemberID);
 			if (Member != NULL) {
-				SendMessage(Member->Connection, TALK_INFO_MESSAGE, "%s has joined the party.", Guest->Name);
-				SendCreatureParty(Member->Connection, GuestID);
-				SendCreatureSkull(Member->Connection, GuestID);
+				send_message(Member->Connection, TALK_INFO_MESSAGE, "%s has joined the party.", Guest->Name);
+				send_creature_party(Member->Connection, GuestID);
+				send_creature_skull(Member->Connection, GuestID);
 			}
 		}
 	}
@@ -4061,17 +4061,17 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 
 	TPlayer *NewLeader = get_player(NewLeaderID);
 	if (NewLeader == NULL) {
-		SendResult(OldLeader->Connection, PLAYERNOTONLINE);
+		send_result(OldLeader->Connection, PLAYERNOTONLINE);
 		return;
 	}
 
 	if (OldLeader->GetPartyLeader(false) != OldLeaderID) {
-		SendMessage(OldLeader->Connection, TALK_INFO_MESSAGE, "You are not leader of a party.");
+		send_message(OldLeader->Connection, TALK_INFO_MESSAGE, "You are not leader of a party.");
 		return;
 	}
 
 	if (NewLeader->GetPartyLeader(false) != OldLeaderID) {
-		SendMessage(OldLeader->Connection, TALK_INFO_MESSAGE, "%s is not member of your party.", NewLeader->Name);
+		send_message(OldLeader->Connection, TALK_INFO_MESSAGE, "%s is not member of your party.", NewLeader->Name);
 		return;
 	}
 
@@ -4097,12 +4097,12 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 		TPlayer *Member = get_player(MemberID);
 		if (Member != NULL) {
 			if (MemberID == NewLeaderID) {
-				SendMessage(Member->Connection, TALK_INFO_MESSAGE, "You are now leader of your party.");
+				send_message(Member->Connection, TALK_INFO_MESSAGE, "You are now leader of your party.");
 			} else {
-				SendMessage(Member->Connection, TALK_INFO_MESSAGE, "%s is now leader of your party.", NewLeader->Name);
+				send_message(Member->Connection, TALK_INFO_MESSAGE, "%s is now leader of your party.", NewLeader->Name);
 			}
-			SendCreatureParty(Member->Connection, OldLeaderID);
-			SendCreatureParty(Member->Connection, NewLeaderID);
+			send_creature_party(Member->Connection, OldLeaderID);
+			send_creature_party(Member->Connection, NewLeaderID);
 		}
 	}
 
@@ -4114,8 +4114,8 @@ void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID) {
 		uint32 GuestID = *P->InvitedPlayer.at(i);
 		TPlayer *Guest = get_player(GuestID);
 		if (Guest != NULL) {
-			SendCreatureParty(Guest->Connection, OldLeaderID);
-			SendCreatureParty(OldLeader->Connection, GuestID);
+			send_creature_party(Guest->Connection, OldLeaderID);
+			send_creature_party(OldLeader->Connection, GuestID);
 		}
 	}
 }
@@ -4134,7 +4134,7 @@ void leave_party(uint32 MemberID, bool Forced) {
 	}
 
 	if (!Forced && Member->EarliestLogoutRound > RoundNr) {
-		SendMessage(Member->Connection, TALK_INFO_MESSAGE,
+		send_message(Member->Connection, TALK_INFO_MESSAGE,
 					"You may not leave your party during or immediately after a fight!");
 		return;
 	}
@@ -4180,22 +4180,22 @@ void leave_party(uint32 MemberID, bool Forced) {
 
 	Member->LeaveParty();
 	if (!Forced) {
-		SendMessage(Member->Connection, TALK_INFO_MESSAGE, "You have left the party.");
+		send_message(Member->Connection, TALK_INFO_MESSAGE, "You have left the party.");
 	}
 
-	SendCreatureParty(Member->Connection, MemberID);
-	SendCreatureSkull(Member->Connection, MemberID);
+	send_creature_party(Member->Connection, MemberID);
+	send_creature_skull(Member->Connection, MemberID);
 
 	for (int i = 0; i < P->Members; i += 1) {
 		uint32 OtherID = *P->Member.at(i);
-		SendCreatureParty(Member->Connection, OtherID);
-		SendCreatureSkull(Member->Connection, OtherID);
+		send_creature_party(Member->Connection, OtherID);
+		send_creature_skull(Member->Connection, OtherID);
 
 		TPlayer *Other = get_player(OtherID);
 		if (Other != NULL) {
-			SendMessage(Other->Connection, TALK_INFO_MESSAGE, "%s has left the party.", Member->Name);
-			SendCreatureParty(Other->Connection, MemberID);
-			SendCreatureSkull(Other->Connection, MemberID);
+			send_message(Other->Connection, TALK_INFO_MESSAGE, "%s has left the party.", Member->Name);
+			send_creature_party(Other->Connection, MemberID);
+			send_creature_skull(Other->Connection, MemberID);
 		}
 	}
 }
