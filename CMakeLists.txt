@@ -18,7 +18,7 @@ set(SOURCES
     src/creature/actions/actions.cpp
     src/creature/combat/combat.cpp
     src/creature/creature/creature.cpp
-    src/crmain.cpp
+    src/creature/creature_main/creature_main.cpp
     src/creature/race/race.cpp
     src/creature/monster/monster.cpp
     src/creature/npc/npc.cpp
