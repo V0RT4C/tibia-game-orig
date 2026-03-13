@@ -56,6 +56,12 @@ extern DatabaseSettings MANAGER_DATABASE;
 extern int NumberOfQueryManagers;
 extern QueryManagerSettings QUERY_MANAGER[10];
 
+enum TRANSPORTMODE { TRANSPORT_TCP, TRANSPORT_WEBSOCKET, TRANSPORT_BOTH };
+
+extern TRANSPORTMODE TransportMode;
+extern int WebSocketPort;
+extern char WebSocketAddress[16];
+
 void ReadConfig(void);
 
 #endif // GAMESERVER_CONFIG_H

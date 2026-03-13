@@ -43,6 +43,10 @@ DatabaseSettings MANAGER_DATABASE;
 int NumberOfQueryManagers;
 QueryManagerSettings QUERY_MANAGER[10];
 
+TRANSPORTMODE TransportMode;
+int WebSocketPort;
+char WebSocketAddress[16];
+
 static char PasswordKey[9] = "Pm-,o%yD";
 
 static void DisguisePassword(char *Password, char *Key){
@@ -97,6 +101,9 @@ void ReadConfig(void){
 	PremiumPlayerBuffer = 0;
 	PremiumNewbieBuffer = 0;
 	NumberOfQueryManagers = 0;
+	TransportMode = TRANSPORT_TCP;
+	WebSocketPort = 7172;
+	strncpy(WebSocketAddress, "0.0.0.0", 8);
 	Beat = 200;
 	RebootTime = 540;
 	ADMIN_DATABASE.Database[0] = 0;
@@ -272,6 +279,21 @@ void ReadConfig(void){
 				Script.read_symbol(')');
 				NumberOfQueryManagers += 1;
 			}while(Script.read_special() != '}');
+		}else if(strcmp(Identifier, "transportmode") == 0){
+			const char *Mode = Script.read_identifier();
+			if(strcmp(Mode, "tcp") == 0){
+				TransportMode = TRANSPORT_TCP;
+			}else if(strcmp(Mode, "websocket") == 0){
+				TransportMode = TRANSPORT_WEBSOCKET;
+			}else if(strcmp(Mode, "both") == 0){
+				TransportMode = TRANSPORT_BOTH;
+			}else{
+				Script.error("Invalid transport mode (expected tcp, websocket, or both)");
+			}
+		}else if(strcmp(Identifier, "websocketport") == 0){
+			WebSocketPort = Script.read_number();
+		}else if(strcmp(Identifier, "websocketaddress") == 0){
+			strcpy(WebSocketAddress, Script.read_string());
 		}else{
 			// TODO(fusion):
 			//error("Unknown configuration key \"%s\"", Identifier);
