@@ -5,7 +5,8 @@ RUN apk add --no-cache build-base cmake openssl-dev linux-headers
 
 WORKDIR /src
 COPY gameserver/ gameserver/
-RUN cd gameserver && cmake -B build -DCMAKE_BUILD_TYPE=Release \
+RUN rm -rf gameserver/build && cd gameserver \
+    && cmake -B build -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build -j$(nproc)
 
 # Run tests during build — image won't build if tests fail

@@ -1,4 +1,4 @@
-#include "magic.h"
+#include "game_data/magic/magic.h"
 #include "config.h"
 #include "houses.h"
 #include "info.h"

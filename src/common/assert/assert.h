@@ -50,12 +50,21 @@ static_assert(OS_LINUX, "Server requires Linux");
 
 #include <errno.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/syscall.h>
 
 // NOTE(fusion): This is the member name for the thread id in `struct sigevent`
 // when `sigev_notify` is `SIGEV_THREAD_ID` but for whatever reason glibc doesn't
-// define it.
+// define it. musl defines it in <signal.h> so the include above covers that case.
 #ifndef sigev_notify_thread_id
 #   define sigev_notify_thread_id _sigev_un._tid
+#endif
+
+// musl doesn't expose tgkill(); use the syscall directly.
+#ifndef __GLIBC__
+static inline int tgkill(int tgid, int tid, int sig) {
+    return syscall(SYS_tgkill, tgid, tid, sig);
+}
 #endif
 
 #endif // GAMESERVER_COMMON_ASSERT_H

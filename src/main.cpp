@@ -35,7 +35,10 @@ static sighandler_t SigHandler(int SigNr, sighandler_t Handler){
 	sigemptyset(&Action.sa_mask);
 
 	if(SigNr == SIGALRM){
-		Action.sa_flags = SA_INTERRUPT;
+		// SA_INTERRUPT is a glibc extension (absent on musl). The default
+		// behavior without SA_RESTART is to not restart syscalls, which
+		// is exactly what SA_INTERRUPT requests — so 0 is equivalent.
+		Action.sa_flags = 0;
 	}else{
 		Action.sa_flags = SA_RESTART;
 	}

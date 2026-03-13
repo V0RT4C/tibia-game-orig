@@ -1,0 +1,9 @@
+/root/senja_shell/gameserver/build-test/CMakeFiles/game.dir
+/root/senja_shell/gameserver/build-test/CMakeFiles/test.dir
+/root/senja_shell/gameserver/build-test/CMakeFiles/edit_cache.dir
+/root/senja_shell/gameserver/build-test/CMakeFiles/rebuild_cache.dir
+/root/senja_shell/gameserver/build-test/tests/CMakeFiles/test_byte_order.dir
+/root/senja_shell/gameserver/build-test/tests/CMakeFiles/test_utils.dir
+/root/senja_shell/gameserver/build-test/tests/CMakeFiles/test.dir
+/root/senja_shell/gameserver/build-test/tests/CMakeFiles/edit_cache.dir
+/root/senja_shell/gameserver/build-test/tests/CMakeFiles/rebuild_cache.dir

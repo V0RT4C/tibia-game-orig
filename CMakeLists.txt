@@ -25,7 +25,7 @@ set(SOURCES
     src/crypto/rsa/rsa.cpp
     src/game_data/houses/houses.cpp
     src/info.cpp
-    src/magic.cpp
+    src/game_data/magic/magic.cpp
     src/main.cpp
     src/game_data/map/map.cpp
     src/game_data/moveuse/moveuse.cpp

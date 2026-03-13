@@ -165,3 +165,10 @@ target_include_directories(test_char_moveuse PRIVATE ${CMAKE_SOURCE_DIR}/src ${C
 target_compile_features(test_char_moveuse PRIVATE cxx_std_17)
 target_compile_definitions(test_char_moveuse PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_char_moveuse COMMAND test_char_moveuse)
+
+add_executable(test_char_magic test_char_magic.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_char_magic PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_char_magic PRIVATE cxx_std_17)
+target_compile_definitions(test_char_magic PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_char_magic COMMAND test_char_magic)
