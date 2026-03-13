@@ -5,6 +5,7 @@
 #include "cr.h"
 #include "crypto.h"
 #include "network/transport/tcp_transport/tcp_transport.h"
+#include "network/transport/websocket_transport/websocket_transport.h"
 #include "query.h"
 #include "threads.h"
 #include "writer.h"
@@ -1220,6 +1221,86 @@ void decrement_active_connections(void) {
 	CommunicationThreadMutex.up();
 }
 
+static void communication_thread_common(TConnection *Connection, bool OwnsRawSocket, int RawSocket) {
+	sigset_t SignalSet;
+	sigfillset(&SignalSet);
+	sigprocmask(SIG_SETMASK, &SignalSet, NULL);
+	if (!Connection->set_login_timer(5)) {
+		error("CommunicationThread: Failed to set login timer.\n");
+		goto cleanup;
+	}
+
+	if (!receive_command(Connection)) {
+		Connection->close_connection(true);
+	}
+
+	Connection->SigIOPending = false;
+	while (GameRunning() && Connection->ConnectionIsOk) {
+		int Signal;
+		sigwait(&SignalSet, &Signal);
+		switch (Signal) {
+		case SIGHUP:
+		case SIGPIPE: {
+			Connection->close_connection(false);
+			break;
+		}
+
+		case SIGUSR1:
+		case SIGIO: {
+			if (Signal == SIGIO || Connection->SigIOPending) {
+				if (!Connection->WaitingForACK) {
+					Connection->SigIOPending = false;
+					if (!receive_command(Connection)) {
+						Connection->close_connection(true);
+					}
+				} else {
+					Connection->SigIOPending = true;
+				}
+			}
+			break;
+		}
+
+		case SIGUSR2: {
+			if (!send_data(Connection)) {
+				Connection->close_connection(false);
+			}
+			break;
+		}
+
+		case SIGALRM: {
+			Connection->stop_login_timer();
+			if (Connection->State == CONNECTION_CONNECTED) {
+				print(2, "Login timeout for socket %d.\n", Connection->Transport->get_fd());
+				Connection->close_connection(false);
+			}
+			break;
+		}
+
+		default: break;
+		}
+	}
+
+	while (Connection->live()) {
+		DelayThread(1, 0);
+	}
+
+	if (Connection->ClosingIsDelayed) {
+		DelayThread(2, 0);
+	}
+
+cleanup:
+	delete Connection->Transport;
+	Connection->Transport = nullptr;
+
+	if (OwnsRawSocket && RawSocket >= 0) {
+		if (close(RawSocket) == -1) {
+			error("CommunicationThread: Error %d while closing socket.\n", errno);
+		}
+	}
+
+	Connection->free_connection();
+}
+
 void communication_thread(int Socket) {
 	TConnection *Connection = assign_free_connection();
 	if (Connection == NULL) {
@@ -1291,92 +1372,7 @@ void communication_thread(int Socket) {
 		}
 	}
 
-	sigset_t SignalSet;
-	sigfillset(&SignalSet);
-	sigprocmask(SIG_SETMASK, &SignalSet, NULL);
-	if (!Connection->set_login_timer(5)) {
-		error("CommunicationThread: Failed to set login timer.\n");
-		delete Connection->Transport;
-		Connection->Transport = nullptr;
-		if (close(Socket) == -1) {
-			error("CommunicationThread: Error %d while closing socket (4).\n", errno);
-		}
-		Connection->free_connection();
-		return;
-	}
-
-	if (!receive_command(Connection)) {
-		Connection->close_connection(true);
-	}
-
-	Connection->SigIOPending = false;
-	while (GameRunning() && Connection->ConnectionIsOk) {
-		int Signal;
-		sigwait(&SignalSet, &Signal);
-		switch (Signal) {
-		case SIGHUP:
-		case SIGPIPE: {
-			Connection->close_connection(false);
-			break;
-		}
-
-		case SIGUSR1:
-		case SIGIO: {
-			if (Signal == SIGIO || Connection->SigIOPending) {
-				if (!Connection->WaitingForACK) {
-					Connection->SigIOPending = false;
-					if (!receive_command(Connection)) {
-						Connection->close_connection(true);
-					}
-				} else {
-					Connection->SigIOPending = true;
-				}
-			}
-			break;
-		}
-
-		case SIGUSR2: {
-			if (!send_data(Connection)) {
-				Connection->close_connection(false);
-			}
-			break;
-		}
-
-		case SIGALRM: {
-			// NOTE(fusion): Login timeout.
-			Connection->stop_login_timer();
-			if (Connection->State == CONNECTION_CONNECTED) {
-				print(2, "Login timeout for socket %d.\n", Socket);
-				Connection->close_connection(false);
-			}
-			break;
-		}
-
-		default: {
-			// no-op
-			break;
-		}
-		}
-	}
-
-	while (Connection->live()) {
-		DelayThread(1, 0);
-	}
-
-	// TODO(fusion): Is this done to allow for queued data to be sent, almost
-	// like `SO_LINGER`?
-	if (Connection->ClosingIsDelayed) {
-		DelayThread(2, 0);
-	}
-
-	delete Connection->Transport;
-	Connection->Transport = nullptr;
-
-	if (close(Socket) == -1) {
-		error("CommunicationThread: Error %d while closing socket (4).\n", errno);
-	}
-
-	Connection->free_connection();
+	communication_thread_common(Connection, true, Socket);
 }
 
 int handle_connection(void *Data) {
@@ -1405,6 +1401,77 @@ int handle_connection(void *Data) {
 		release_communication_thread_stack(StackNumber);
 	}
 
+	return 0;
+}
+
+void communication_thread_ws(WebSocketTransport *Transport) {
+	TConnection *Connection = assign_free_connection();
+	if (Connection == NULL) {
+		print(2, "No more connections available (WS).\n");
+		delete Transport;
+		return;
+	}
+
+	ASSERT(Connection->ThreadID == gettid());
+
+	int EventFD = Transport->get_fd();
+	if (EventFD == -1) {
+		error("CommunicationThreadWS: Transport has invalid eventfd.\n");
+		delete Transport;
+		Connection->free_connection();
+		return;
+	}
+
+	// Pass eventfd as the "socket" — used only for logging/identification.
+	Connection->connect(EventFD, Transport);
+	Connection->WaitingForACK = false;
+
+	// Publish our thread ID so the event loop's .close callback can SIGHUP us.
+	Transport->set_thread_id(gettid());
+
+	// Set up async I/O signaling on the eventfd (same as TCP does on the socket).
+	{
+		struct f_owner_ex FOwnerEx = {};
+		FOwnerEx.type = F_OWNER_TID;
+		FOwnerEx.pid = Connection->ThreadID;
+		if (fcntl(EventFD, F_SETOWN_EX, &FOwnerEx) == -1) {
+			error("CommunicationThreadWS: F_SETOWN_EX failed for eventfd %d.\n", EventFD);
+			delete Transport;
+			Connection->free_connection();
+			return;
+		}
+	}
+
+	{
+		int Flags = fcntl(EventFD, F_GETFL);
+		if (Flags == -1 || fcntl(EventFD, F_SETFL, (Flags | O_NONBLOCK | O_ASYNC)) == -1) {
+			error("CommunicationThreadWS: F_SETFL failed for eventfd %d.\n", EventFD);
+			delete Transport;
+			Connection->free_connection();
+			return;
+		}
+	}
+
+	// No TCP_NODELAY for WebSocket — not a raw TCP socket.
+	communication_thread_common(Connection, false, -1);
+}
+
+int handle_ws_connection(void *Data) {
+	WebSocketTransport *Transport = (WebSocketTransport *)Data;
+
+	try {
+		communication_thread_ws(Transport);
+	} catch (RESULT r) {
+		error("HandleWSConnection: Uncaught exception %d.\n", r);
+	} catch (const char *str) {
+		error("HandleWSConnection: Uncaught exception \"%s\".\n", str);
+	} catch (const std::exception &e) {
+		error("HandleWSConnection: Uncaught exception %s.\n", e.what());
+	} catch (...) {
+		error("HandleWSConnection: Uncaught exception of unknown type.\n");
+	}
+
+	decrement_active_connections();
 	return 0;
 }
 

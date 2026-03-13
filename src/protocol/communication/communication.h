@@ -50,6 +50,11 @@ void increment_active_connections(void);
 void decrement_active_connections(void);
 void communication_thread(int Socket);
 int handle_connection(void *Data);
+
+class WebSocketTransport;
+void communication_thread_ws(WebSocketTransport *Transport);
+int handle_ws_connection(void *Data);
+
 bool open_socket(void);
 int acceptor_thread_loop(void *Unused);
 
