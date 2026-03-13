@@ -71,7 +71,7 @@ struct PlayerIndexNode {
 	bool InternalNode;
 };
 
-struct PlayerIndexInternalNode: PlayerIndexNode {
+struct PlayerIndexInternalNode : PlayerIndexNode {
 	PlayerIndexNode *Child[27];
 };
 
@@ -80,14 +80,14 @@ struct PlayerIndexEntry {
 	uint32 CharacterID;
 };
 
-struct PlayerIndexLeafNode: PlayerIndexNode {
+struct PlayerIndexLeafNode : PlayerIndexNode {
 	int Count;
 	PlayerIndexEntry Entry[10];
 };
 
 // TPlayer
 // =============================================================================
-struct TPlayer: TCreature {
+struct TPlayer : TCreature {
 	TPlayer(TConnection *Connection, uint32 CharacterID);
 	void SetInList(void);
 	void DelInList(void);
@@ -151,7 +151,7 @@ struct TPlayer: TCreature {
 
 	// DATA
 	// =================
-	//TCreature super_TCreature;	// IMPLICIT
+	// TCreature super_TCreature;	// IMPLICIT
 	uint32 AccountID;
 	char Guild[31];
 	char Rank[31];
@@ -222,8 +222,7 @@ void init_player_pool(void);
 void exit_player_pool(void);
 
 int get_player_index_entry_number(const char *Name, int Position);
-void insert_player_index(PlayerIndexInternalNode *Node,
-		int Position, const char *Name, uint32 CharacterID);
+void insert_player_index(PlayerIndexInternalNode *Node, int Position, const char *Name, uint32 CharacterID);
 PlayerIndexEntry *search_player_index(const char *Name);
 bool player_exists(const char *Name);
 uint32 get_character_id(const char *Name);

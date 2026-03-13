@@ -15,7 +15,7 @@ struct Monsterhome {
 	int Timer;
 };
 
-struct TMonster: Nonplayer {
+struct TMonster : Nonplayer {
 	TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID);
 	bool CanKickBoxes(void);
 	void KickBoxes(Object Obj);
@@ -48,8 +48,7 @@ void notify_monsterhome_of_death(int Nr);
 bool monsterhome_in_range(int Nr, int x, int y, int z);
 
 // Monster creation API
-TCreature *create_monster(int Race, int x, int y, int z,
-		int Home, uint32 MasterID, bool ShowEffect);
+TCreature *create_monster(int Race, int x, int y, int z, int Home, uint32 MasterID, bool ShowEffect);
 void convince_monster(TCreature *Master, TCreature *Slave);
 void challenge_monster(TCreature *Challenger, TCreature *Monster);
 

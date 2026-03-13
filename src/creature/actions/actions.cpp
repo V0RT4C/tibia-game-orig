@@ -1,5 +1,5 @@
-#include "cr.h"
 #include "config.h"
+#include "cr.h"
 #include "houses.h"
 #include "info.h"
 #include "operate.h"
@@ -7,7 +7,7 @@
 // TShortway
 // =============================================================================
 struct TShortwayPoint {
-	TShortwayPoint(void){
+	TShortwayPoint(void) {
 		this->x = 0;
 		this->y = 0;
 		this->Waypoints = -1;
@@ -26,7 +26,7 @@ struct TShortwayPoint {
 	TShortwayPoint *NextToExpand;
 };
 
-struct TShortway{
+struct TShortway {
 	TShortway(TCreature *Creature, int VisibleX, int VisibleY);
 	~TShortway(void);
 	void FillMap(void);
@@ -47,13 +47,13 @@ struct TShortway{
 	int MinWaypoints;
 };
 
-TShortway::TShortway(TCreature *Creature, int VisibleX, int VisibleY){
-	if(Creature == NULL){
+TShortway::TShortway(TCreature *Creature, int VisibleX, int VisibleY) {
+	if (Creature == NULL) {
 		error("TShortway::TShortway: Provided creature is NULL.\n");
 		return;
 	}
 
-	if(VisibleX < 1 || VisibleX > 100 || VisibleY < 1 || VisibleY > 100){
+	if (VisibleX < 1 || VisibleX > 100 || VisibleY < 1 || VisibleY > 100) {
 		error("TShortway::TShortway: Invalid visibility range %d*%d.\n", VisibleX, VisibleY);
 		return;
 	}
@@ -64,69 +64,67 @@ TShortway::TShortway(TCreature *Creature, int VisibleX, int VisibleY){
 	this->StartX = Creature->posx;
 	this->StartY = Creature->posy;
 	this->StartZ = Creature->posz;
-	this->Map = new matrix<TShortwayPoint>(
-				-(VisibleX + 1), +(VisibleX + 1),
-				-(VisibleY + 1), +(VisibleY + 1));
+	this->Map = new matrix<TShortwayPoint>(-(VisibleX + 1), +(VisibleX + 1), -(VisibleY + 1), +(VisibleY + 1));
 	this->FillMap();
 }
 
-TShortway::~TShortway(void){
-	if(this->Map != NULL){
+TShortway::~TShortway(void) {
+	if (this->Map != NULL) {
 		delete this->Map;
 	}
 }
 
-void TShortway::FillMap(void){
+void TShortway::FillMap(void) {
 	this->MinWaypoints = 1000;
 
-	for(int X = -this->VisibleX; X <= this->VisibleX; X += 1)
-	for(int Y = -this->VisibleY; Y <= this->VisibleY; Y += 1){
-		int FieldX = this->StartX + X;
-		int FieldY = this->StartY + Y;
-		int FieldZ = this->StartZ;
+	for (int X = -this->VisibleX; X <= this->VisibleX; X += 1)
+		for (int Y = -this->VisibleY; Y <= this->VisibleY; Y += 1) {
+			int FieldX = this->StartX + X;
+			int FieldY = this->StartY + Y;
+			int FieldZ = this->StartZ;
 
-		int Waypoints = -1;
-		Object Obj = get_first_object(FieldX, FieldY, FieldZ);
-		if(Obj.exists()){
-			ObjectType ObjType = Obj.get_object_type();
-			if(ObjType.get_flag(BANK) && !ObjType.get_flag(UNPASS)){
-				Waypoints = (int)ObjType.get_attribute(WAYPOINTS);
-				if(Waypoints == 0){
-					error("TShortway::FillMap: Invalid waypoints value %d for bank %d.\n",
-							Waypoints, ObjType.TypeID);
-					Waypoints = -1;
-				}
+			int Waypoints = -1;
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
+			if (Obj.exists()) {
+				ObjectType ObjType = Obj.get_object_type();
+				if (ObjType.get_flag(BANK) && !ObjType.get_flag(UNPASS)) {
+					Waypoints = (int)ObjType.get_attribute(WAYPOINTS);
+					if (Waypoints == 0) {
+						error("TShortway::FillMap: Invalid waypoints value %d for bank %d.\n", Waypoints,
+							  ObjType.TypeID);
+						Waypoints = -1;
+					}
 
-				if(!this->Creature->MovePossible(FieldX, FieldY, FieldZ, false, false)){
-					Waypoints = -1;
-				}
+					if (!this->Creature->MovePossible(FieldX, FieldY, FieldZ, false, false)) {
+						Waypoints = -1;
+					}
 
-				if(Waypoints > 0 && Waypoints < this->MinWaypoints){
-					this->MinWaypoints = Waypoints;
+					if (Waypoints > 0 && Waypoints < this->MinWaypoints) {
+						this->MinWaypoints = Waypoints;
+					}
 				}
 			}
+
+			TShortwayPoint *Node = this->Map->at(X, Y);
+			Node->x = X;
+			Node->y = Y;
+			Node->Waypoints = Waypoints;
 		}
-
-		TShortwayPoint *Node = this->Map->at(X, Y);
-		Node->x = X;
-		Node->y = Y;
-		Node->Waypoints = Waypoints;
-	}
 }
 
-void TShortway::ClearMap(void){
-	for(int X = -this->VisibleX; X <= this->VisibleX; X += 1)
-	for(int Y = -this->VisibleY; Y <= this->VisibleY; Y += 1){
-		TShortwayPoint *Node = this->Map->at(X, Y);
-		Node->Waylength = INT_MAX;
-		Node->Heuristic = INT_MAX;
-		Node->Predecessor = NULL;
-		Node->NextToExpand = NULL;
-	}
+void TShortway::ClearMap(void) {
+	for (int X = -this->VisibleX; X <= this->VisibleX; X += 1)
+		for (int Y = -this->VisibleY; Y <= this->VisibleY; Y += 1) {
+			TShortwayPoint *Node = this->Map->at(X, Y);
+			Node->Waylength = INT_MAX;
+			Node->Heuristic = INT_MAX;
+			Node->Predecessor = NULL;
+			Node->NextToExpand = NULL;
+		}
 }
 
-void TShortway::Expand(TShortwayPoint *Node){
-	if(Node == NULL){
+void TShortway::Expand(TShortwayPoint *Node) {
+	if (Node == NULL) {
 		error("TShortway::Expand: Provided node is NULL.\n");
 		return;
 	}
@@ -134,77 +132,76 @@ void TShortway::Expand(TShortwayPoint *Node){
 	this->FirstToExpand = Node->NextToExpand;
 
 	int MinNeighborWaylength = Node->Waylength + Node->Waypoints;
-	if(MinNeighborWaylength >= this->Map->at(0, 0)->Waylength){
+	if (MinNeighborWaylength >= this->Map->at(0, 0)->Waylength) {
 		return;
 	}
 
-	for(int OffsetX = -1; OffsetX <= 1; OffsetX += 1)
-	for(int OffsetY = -1; OffsetY <= 1; OffsetY += 1){
-		if(OffsetX == 0 && OffsetY == 0){
-			continue;
-		}
+	for (int OffsetX = -1; OffsetX <= 1; OffsetX += 1)
+		for (int OffsetY = -1; OffsetY <= 1; OffsetY += 1) {
+			if (OffsetX == 0 && OffsetY == 0) {
+				continue;
+			}
 
-		TShortwayPoint *Neighbor = this->Map->at(Node->x + OffsetX, Node->y + OffsetY);
+			TShortwayPoint *Neighbor = this->Map->at(Node->x + OffsetX, Node->y + OffsetY);
 
-		// NOTE(fusion): The minimum neighbor waylength already contains the cost
-		// of a single step. Diagonal steps are three times more expensive so we
-		// add waypoints two more times.
-		int NeighborWaylength = MinNeighborWaylength;
-		if(OffsetX != 0 && OffsetY != 0){
-			NeighborWaylength += Node->Waypoints * 2;
-		}
+			// NOTE(fusion): The minimum neighbor waylength already contains the cost
+			// of a single step. Diagonal steps are three times more expensive so we
+			// add waypoints two more times.
+			int NeighborWaylength = MinNeighborWaylength;
+			if (OffsetX != 0 && OffsetY != 0) {
+				NeighborWaylength += Node->Waypoints * 2;
+			}
 
-		if(NeighborWaylength < Neighbor->Waylength){
-			Neighbor->Waylength = NeighborWaylength;
-			Neighbor->Predecessor = Node;
-			if((Neighbor->x != 0 || Neighbor->y != 0) && Neighbor->Waypoints != -1){
-				// NOTE(fusion): Remove from expand list if it was already expanded upon.
-				if(Neighbor->Heuristic != INT_MAX){
-					TShortwayPoint *Prev = NULL;
-					TShortwayPoint *Cur = this->FirstToExpand;
-					while(Cur != NULL && Cur != Neighbor){
-						Prev = Cur;
-						Cur = Cur->NextToExpand;
+			if (NeighborWaylength < Neighbor->Waylength) {
+				Neighbor->Waylength = NeighborWaylength;
+				Neighbor->Predecessor = Node;
+				if ((Neighbor->x != 0 || Neighbor->y != 0) && Neighbor->Waypoints != -1) {
+					// NOTE(fusion): Remove from expand list if it was already expanded upon.
+					if (Neighbor->Heuristic != INT_MAX) {
+						TShortwayPoint *Prev = NULL;
+						TShortwayPoint *Cur = this->FirstToExpand;
+						while (Cur != NULL && Cur != Neighbor) {
+							Prev = Cur;
+							Cur = Cur->NextToExpand;
+						}
+
+						if (Cur != Neighbor) {
+							error("TShortway::Expand: Node is not in the ExpandList.\n");
+						} else if (Prev == NULL) {
+							this->FirstToExpand = Neighbor->NextToExpand;
+						} else {
+							Prev->NextToExpand = Neighbor->NextToExpand;
+						}
 					}
 
-					if(Cur != Neighbor){
-						error("TShortway::Expand: Node is not in the ExpandList.\n");
-					}else if(Prev == NULL){
-						this->FirstToExpand = Neighbor->NextToExpand;
-					}else{
-						Prev->NextToExpand = Neighbor->NextToExpand;
-					}
-				}
+					// NOTE(fusion): Compute heuristic using the manhattan distance.
+					int Distance = std::abs(Neighbor->x) + std::abs(Neighbor->y);
+					Neighbor->Heuristic =
+						Neighbor->Waylength + Neighbor->Waypoints * 1 + this->MinWaypoints * (Distance - 1);
 
-				// NOTE(fusion): Compute heuristic using the manhattan distance.
-				int Distance = std::abs(Neighbor->x) + std::abs(Neighbor->y);
-				Neighbor->Heuristic = Neighbor->Waylength
-						+ Neighbor->Waypoints * 1
-						+ this->MinWaypoints * (Distance - 1);
+					// NOTE(fusion): Insert into expand list.
+					{
+						TShortwayPoint *Prev = NULL;
+						TShortwayPoint *Cur = this->FirstToExpand;
+						while (Cur != NULL && Cur->Heuristic < Neighbor->Heuristic) {
+							Prev = Cur;
+							Cur = Cur->NextToExpand;
+						}
 
-				// NOTE(fusion): Insert into expand list.
-				{
-					TShortwayPoint *Prev = NULL;
-					TShortwayPoint *Cur = this->FirstToExpand;
-					while(Cur != NULL && Cur->Heuristic < Neighbor->Heuristic){
-						Prev = Cur;
-						Cur = Cur->NextToExpand;
+						if (Prev == NULL) {
+							this->FirstToExpand = Neighbor;
+						} else {
+							Prev->NextToExpand = Neighbor;
+						}
+						Neighbor->NextToExpand = Cur;
 					}
-
-					if(Prev == NULL){
-						this->FirstToExpand = Neighbor;
-					}else{
-						Prev->NextToExpand = Neighbor;
-					}
-					Neighbor->NextToExpand = Cur;
 				}
 			}
 		}
-	}
 }
 
-bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps){
-	if(this->Map == NULL){
+bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps) {
+	if (this->Map == NULL) {
 		error("TShortway::Calculate: Map does not exist.\n");
 		return false;
 	}
@@ -214,12 +211,12 @@ bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps){
 	DestY -= this->StartY;
 
 	// NOTE(fusion): Check if already at destination.
-	if(DestX == 0 && DestY == 0){
+	if (DestX == 0 && DestY == 0) {
 		return true;
 	}
 
 	// NOTE(fusion): Check if out of range.
-	if(std::abs(DestX) > this->VisibleX || std::abs(DestY) > this->VisibleY){
+	if (std::abs(DestX) > this->VisibleX || std::abs(DestY) > this->VisibleY) {
 		return false;
 	}
 
@@ -227,23 +224,20 @@ bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps){
 	this->ClearMap();
 	this->FirstToExpand = this->Map->at(DestX, DestY);
 	this->FirstToExpand->Waylength = 0;
-	while(this->FirstToExpand != NULL){
+	while (this->FirstToExpand != NULL) {
 		this->Expand(this->FirstToExpand);
 	}
 
 	// NOTE(fusion): Check if the origin was reached from the destination.
 	TShortwayPoint *Node = this->Map->at(0, 0);
-	if(Node->Waylength == INT_MAX){
+	if (Node->Waylength == INT_MAX) {
 		return false;
 	}
 
 	// NOTE(fusion): Walk back from the origin to reconstruct the path.
-	int CurDistance = std::max<int>(
-			std::abs(Node->x - DestX),
-			std::abs(Node->y - DestY));
+	int CurDistance = std::max<int>(std::abs(Node->x - DestX), std::abs(Node->y - DestY));
 	Node = Node->Predecessor;
-	while(Node != NULL && MaxSteps > 0
-			&& (MustReach || CurDistance > 1)){
+	while (Node != NULL && MaxSteps > 0 && (MustReach || CurDistance > 1)) {
 		ToDoEntry TD = {};
 		TD.Code = TDGo;
 		TD.Go.x = this->StartX + Node->x;
@@ -251,9 +245,7 @@ bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps){
 		TD.Go.z = this->StartZ;
 		Creature->ToDoAdd(TD);
 
-		CurDistance = std::max<int>(
-			std::abs(Node->x - DestX),
-			std::abs(Node->y - DestY));
+		CurDistance = std::max<int>(std::abs(Node->x - DestX), std::abs(Node->y - DestY));
 		Node = Node->Predecessor;
 		MaxSteps -= 1;
 	}
@@ -263,20 +255,20 @@ bool TShortway::Calculate(int DestX, int DestY, bool MustReach, int MaxSteps){
 
 // TCreature
 // =============================================================================
-bool TCreature::SetOnMap(void){
+bool TCreature::SetOnMap(void) {
 	int LoginX = this->posx;
 	int LoginY = this->posy;
 	int LoginZ = this->posz;
 	bool Player = (this->Type == PLAYER);
-	if(!search_login_field(&LoginX, &LoginY, &LoginZ, 1, Player)){
+	if (!search_login_field(&LoginX, &LoginY, &LoginZ, 1, Player)) {
 		bool Found = false;
-		if(is_house(LoginX, LoginY, LoginZ)){
+		if (is_house(LoginX, LoginY, LoginZ)) {
 			uint16 HouseID = get_house_id(LoginX, LoginY, LoginZ);
 			get_exit_position(HouseID, &LoginX, &LoginY, &LoginZ);
 			Found = search_login_field(&LoginX, &LoginY, &LoginZ, 1, Player);
 		}
 
-		if(!Found){
+		if (!Found) {
 			LoginX = this->startx;
 			LoginY = this->starty;
 			LoginZ = this->startz;
@@ -284,9 +276,8 @@ bool TCreature::SetOnMap(void){
 	}
 
 	Object Con = get_map_container(LoginX, LoginY, LoginZ);
-	if(Con == NONE){
-		error("TCreature::SetOnMap: Map container for point [%d,%d,%d] does not exist.\n",
-				LoginX, LoginY, LoginZ);
+	if (Con == NONE) {
+		error("TCreature::SetOnMap: Map container for point [%d,%d,%d] does not exist.\n", LoginX, LoginY, LoginZ);
 		return false;
 	}
 
@@ -297,12 +288,11 @@ bool TCreature::SetOnMap(void){
 	// NOTE(fusion): `create` automatically sets `this->CrObject` and creates
 	// its body container slots.
 	bool Result = true;
-	try{
+	try {
 		create(Con, TYPEID_CREATURE_CONTAINER, this->ID);
-	}catch(RESULT r){
-		error("TCreature::SetOnMap: Cannot place creature ([%d,%d,%d] - Exception %d).\n",
-				LoginX, LoginY, LoginZ, r);
-		if(this->Type == PLAYER){
+	} catch (RESULT r) {
+		error("TCreature::SetOnMap: Cannot place creature ([%d,%d,%d] - Exception %d).\n", LoginX, LoginY, LoginZ, r);
+		if (this->Type == PLAYER) {
 			SendResult(this->Connection, r);
 		}
 		Result = false;
@@ -310,25 +300,25 @@ bool TCreature::SetOnMap(void){
 	return Result;
 }
 
-bool TCreature::DelOnMap(void){
+bool TCreature::DelOnMap(void) {
 	Object Obj = this->CrObject;
-	if(Obj == NONE){
+	if (Obj == NONE) {
 		return true;
 	}
 
 	// TODO(fusion): I feel `delete_op` should also manage `this->CrObject` automatically.
 	bool Result = true;
 	this->CrObject = NONE;
-	try{
+	try {
 		delete_op(Obj, -1);
-	}catch(RESULT r){
+	} catch (RESULT r) {
 		error("TCreature::DelOnMap: Error Deleting CreatureObject: %d\n", r);
 		Result = false;
 	}
 	return Result;
 }
 
-void TCreature::Go(int DestX, int DestY, int DestZ){
+void TCreature::Go(int DestX, int DestY, int DestZ) {
 	// NOTE(fusion): This is the execution function for `ToDoGo` which computes
 	// the path step by step. If the destination is outside the range of a single
 	// step, then it is an error.
@@ -336,25 +326,33 @@ void TCreature::Go(int DestX, int DestY, int DestZ){
 	int OrigY = this->posy;
 	int OrigZ = this->posz;
 	int Distance = std::max<int>(std::abs(OrigX - DestX), std::abs(OrigY - DestY));
-	if(Distance > 1 || OrigZ != DestZ){
+	if (Distance > 1 || OrigZ != DestZ) {
 		throw NOTACCESSIBLE;
 	}
 
 	// TODO(fusion): See note in `TPlayer::CheckState`.
 	int DrunkLevel = this->Skills[SKILL_DRUNKEN]->TimerValue();
-	if(DrunkLevel > 0 && this->Skills[SKILL_DRUNKEN]->Get() == 0){
+	if (DrunkLevel > 0 && this->Skills[SKILL_DRUNKEN]->Get() == 0) {
 		int StaggerChance = std::max<int>(7 - DrunkLevel, 1);
-		if(rand() % StaggerChance == 0){
+		if (rand() % StaggerChance == 0) {
 			DestX = OrigX;
 			DestY = OrigY;
-			switch(rand() % 4){
-				case DIRECTION_NORTH:	DestY -= 1; break;
-				case DIRECTION_EAST:	DestX += 1; break;
-				case DIRECTION_SOUTH:	DestY += 1; break;
-				case DIRECTION_WEST:	DestX -= 1; break;
+			switch (rand() % 4) {
+			case DIRECTION_NORTH:
+				DestY -= 1;
+				break;
+			case DIRECTION_EAST:
+				DestX += 1;
+				break;
+			case DIRECTION_SOUTH:
+				DestY += 1;
+				break;
+			case DIRECTION_WEST:
+				DestX -= 1;
+				break;
 			}
 
-			if(this->ToDoClear() && this->Type == PLAYER){
+			if (this->ToDoClear() && this->Type == PLAYER) {
 				SendSnapback(this->Connection);
 			}
 
@@ -364,26 +362,24 @@ void TCreature::Go(int DestX, int DestY, int DestZ){
 		}
 	}
 
-	if(!this->MovePossible(DestX, DestY, DestZ, true, false)){
+	if (!this->MovePossible(DestX, DestY, DestZ, true, false)) {
 		bool DiagonalMove = (OrigX != DestX && OrigY != DestY);
-		if(this->Type == PLAYER && !DiagonalMove){
+		if (this->Type == PLAYER && !DiagonalMove) {
 			// TODO(fusion): These are quite similar to `magic_climbing`. Perhaps
 			// there is an inlined function here that checks whether climbing is
 			// possible.
-			if(DestZ > 0 && get_height(OrigX, OrigY, OrigZ) >= 24
-					&& !coordinate_flag(OrigX, OrigY, OrigZ - 1, BANK)
-					&& !coordinate_flag(OrigX, OrigY, OrigZ - 1, UNPASS)
-					&& this->MovePossible(DestX, DestY, DestZ - 1, true, true)){
+			if (DestZ > 0 && get_height(OrigX, OrigY, OrigZ) >= 24 && !coordinate_flag(OrigX, OrigY, OrigZ - 1, BANK) &&
+				!coordinate_flag(OrigX, OrigY, OrigZ - 1, UNPASS) &&
+				this->MovePossible(DestX, DestY, DestZ - 1, true, true)) {
 				DestZ -= 1;
-			}else if(DestZ < 15 && get_height(DestX, DestY, DestZ + 1) >= 24
-					&& !coordinate_flag(DestX, DestY, DestZ, BANK)
-					&& !coordinate_flag(DestX, DestY, DestZ, UNPASS)
-					&& this->MovePossible(DestX, DestY, DestZ + 1, true, true)){
+			} else if (DestZ < 15 && get_height(DestX, DestY, DestZ + 1) >= 24 &&
+					   !coordinate_flag(DestX, DestY, DestZ, BANK) && !coordinate_flag(DestX, DestY, DestZ, UNPASS) &&
+					   this->MovePossible(DestX, DestY, DestZ + 1, true, true)) {
 				DestZ += 1;
 			}
 		}
 
-		if(this->posz == DestZ){
+		if (this->posz == DestZ) {
 			throw MOVENOTPOSSIBLE;
 		}
 	}
@@ -392,13 +388,13 @@ void TCreature::Go(int DestX, int DestY, int DestZ){
 	::move(this->ID, this->CrObject, Dest, -1, false, NONE);
 }
 
-void TCreature::Rotate(int Direction){
+void TCreature::Rotate(int Direction) {
 	this->Direction = Direction;
 	announce_changed_object(this->CrObject, OBJECT_CHANGED);
 }
 
-void TCreature::Rotate(TCreature *Target){
-	if(Target == NULL){
+void TCreature::Rotate(TCreature *Target) {
+	if (Target == NULL) {
 		error("TCreature::Rotate: Target is NULL.\n");
 		return;
 	}
@@ -408,60 +404,56 @@ void TCreature::Rotate(TCreature *Target){
 	int OffsetY = Target->posy - this->posy;
 	int DistanceX = std::abs(OffsetX);
 	int DistanceY = std::abs(OffsetY);
-	if(DistanceY > DistanceX){
+	if (DistanceY > DistanceX) {
 		Direction = (OffsetY < 0) ? DIRECTION_NORTH : DIRECTION_SOUTH;
-	}else{
+	} else {
 		Direction = (OffsetX < 0) ? DIRECTION_WEST : DIRECTION_EAST;
 	}
 
 	this->Rotate(Direction);
 }
 
-void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
+void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count) {
 	// NOTE(fusion): What a disaster.
 
-	if(!Obj.exists()){
+	if (!Obj.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
-	if(Obj == this->CrObject){
+	if (Obj == this->CrObject) {
 		this->Go(DestX, DestY, DestZ);
 		return;
 	}
 
 	ObjectType ObjType = Obj.get_object_type();
-	if(ObjType.is_creature_container()){
+	if (ObjType.is_creature_container()) {
 		this->Combat.DelayAttack(2000);
 	}
 
 	int MoveCount = (int)Count;
-	if(ObjType.get_flag(CUMULATIVE)){
+	if (ObjType.get_flag(CUMULATIVE)) {
 		int ObjAmount = (int)Obj.get_attribute(AMOUNT);
-		if(MoveCount > ObjAmount){
+		if (MoveCount > ObjAmount) {
 			MoveCount = ObjAmount;
 		}
 	}
 
-	if(DestX == 0xFFFF){ // SPECIAL_COORDINATE ?
-		if(DestY == INVENTORY_ANY){
+	if (DestX == 0xFFFF) { // SPECIAL_COORDINATE ?
+		if (DestY == INVENTORY_ANY) {
 			// NOTE(fusion): `check_inventory_destination` will throw if it's not
 			// possible to place the object on the chosen container. We want to
 			// find a slot that doesn't make it throw while giving priority to
 			// non hand or ammo slots.
-			for(int Position = INVENTORY_FIRST;
-					Position <= INVENTORY_LAST;
-					Position += 1){
-				try{
+			for (int Position = INVENTORY_FIRST; Position <= INVENTORY_LAST; Position += 1) {
+				try {
 					Object Con = get_body_container(this->ID, Position);
 					check_inventory_destination(Obj, Con, false);
-				}catch(RESULT r){
+				} catch (RESULT r) {
 					continue;
 				}
 
 				DestY = Position;
-				if(Position != INVENTORY_RIGHTHAND
-						&& Position != INVENTORY_LEFTHAND
-						&& Position != INVENTORY_AMMO){
+				if (Position != INVENTORY_RIGHTHAND && Position != INVENTORY_LEFTHAND && Position != INVENTORY_AMMO) {
 					break;
 				}
 			}
@@ -469,15 +461,13 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 			// NOTE(fusion): No appropriate inventory slot was found so we now
 			// fallback to inventory containers. For whatever reason we don't
 			// give priority to the bag slot.
-			if(DestY == INVENTORY_ANY){
-				for(int Position = INVENTORY_FIRST;
-						Position <= INVENTORY_LAST;
-						Position += 1){
+			if (DestY == INVENTORY_ANY) {
+				for (int Position = INVENTORY_FIRST; Position <= INVENTORY_LAST; Position += 1) {
 					Object Con = get_body_object(this->ID, Position);
-					if(Con != NONE && Con.get_object_type().get_flag(CONTAINER)){
-						try{
+					if (Con != NONE && Con.get_object_type().get_flag(CONTAINER)) {
+						try {
 							check_container_destination(Obj, Con);
-						}catch(RESULT r){
+						} catch (RESULT r) {
 							continue;
 						}
 
@@ -486,56 +476,56 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 				}
 			}
 
-			if(DestY == INVENTORY_ANY){
+			if (DestY == INVENTORY_ANY) {
 				throw NOROOM;
 			}
 		}
 
 		Object DestCon = NONE;
 		Object DestObj = NONE;
-		if(DestY >= INVENTORY_FIRST && DestY <= INVENTORY_LAST){
+		if (DestY >= INVENTORY_FIRST && DestY <= INVENTORY_LAST) {
 			DestCon = get_body_container(this->ID, DestY);
 			DestObj = get_body_object(this->ID, DestY);
-		}else if(DestY >= CONTAINER_FIRST && DestY <= CONTAINER_LAST){
+		} else if (DestY >= CONTAINER_FIRST && DestY <= CONTAINER_LAST) {
 			DestCon = get_body_container(this->ID, DestY);
-			if(DestZ < 254){
+			if (DestZ < 254) {
 				// TODO(fusion): The last argument to `get_object` is the object
 				// type we expect to find and it seems that the type id of a map
 				// container (which is 0) can be used as a wildcard for any object
 				// it finds.
 				DestObj = get_object(this->ID, DestX, DestY, DestZ, DestZ, 0);
-			}else if(DestZ == 254){
-				if(DestCon == NONE){
+			} else if (DestZ == 254) {
+				if (DestCon == NONE) {
 					throw NOTACCESSIBLE;
 				}
 				DestCon = DestCon.get_container();
 			}
-		}else{
+		} else {
 			error("TCreature::Move: Invalid container code %d.\n", DestY);
 			throw ERROR;
 		}
 
-		if(DestObj != NONE){
+		if (DestObj != NONE) {
 			ObjectType DestObjType = DestObj.get_object_type();
-			if(DestObjType.get_flag(CONTAINER)){
+			if (DestObjType.get_flag(CONTAINER)) {
 				DestCon = DestObj;
 				DestObj = NONE;
-			}else if(DestObjType.get_flag(CUMULATIVE) && DestObjType == ObjType){
+			} else if (DestObjType.get_flag(CUMULATIVE) && DestObjType == ObjType) {
 				int DestAmount = (int)DestObj.get_attribute(AMOUNT);
 				int MergeCount = MoveCount;
-				if((DestAmount + MergeCount) > 100){
+				if ((DestAmount + MergeCount) > 100) {
 					MergeCount = 100 - DestAmount;
 				}
 
-				if(MergeCount > 0){
-					try{
+				if (MergeCount > 0) {
+					try {
 						::merge(this->ID, Obj, DestObj, MergeCount, NONE);
 						MoveCount -= MergeCount;
-						if(MoveCount <= 0){
+						if (MoveCount <= 0) {
 							return;
 						}
-					}catch(RESULT r){
-						if(r == TOOHEAVY){
+					} catch (RESULT r) {
+						if (r == TOOHEAVY) {
 							throw;
 						}
 					}
@@ -545,43 +535,38 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 			}
 		}
 
-		if(DestCon == NONE){
+		if (DestCon == NONE) {
 			throw OUTOFRANGE;
 		}
 
-		try{
+		try {
 			::move(this->ID, Obj, DestCon, MoveCount, false, DestObj);
-		}catch(RESULT r){
+		} catch (RESULT r) {
 			// NOTE(fusion): Attempt to exchange inventory items.
-			if(DestY >= INVENTORY_FIRST && DestY <= INVENTORY_LAST
-					&& DestObj != NONE
-					&& (r == NOROOM
-						|| r == HANDSNOTFREE
-						|| r == HANDBLOCKED
-						|| r == ONEWEAPONONLY)){
+			if (DestY >= INVENTORY_FIRST && DestY <= INVENTORY_LAST && DestObj != NONE &&
+				(r == NOROOM || r == HANDSNOTFREE || r == HANDBLOCKED || r == ONEWEAPONONLY)) {
 				Object ObjCon = Obj.get_container();
 				::move(this->ID, DestObj, ObjCon, -1, false, NONE);
 				::move(this->ID, Obj, DestCon, MoveCount, false, DestObj);
-			}else{
+			} else {
 				throw;
 			}
 		}
-	}else{
+	} else {
 		Object Dest = get_map_container(DestX, DestY, DestZ);
-		if(!Dest.exists()){
+		if (!Dest.exists()) {
 			throw ERROR;
 		}
 
-		if(ObjType.get_flag(HANG)
-				&& (coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH)
-					|| coordinate_flag(DestY, DestY, DestZ, HOOKEAST))
-				&& !object_in_range(this->ID, Dest, 1)){
-			if(this->ToDoClear() && this->Type == PLAYER){
+		if (ObjType.get_flag(HANG) &&
+			(coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH) || coordinate_flag(DestY, DestY, DestZ, HOOKEAST)) &&
+			!object_in_range(this->ID, Dest, 1)) {
+			if (this->ToDoClear() && this->Type == PLAYER) {
 				SendSnapback(this->Connection);
 			}
 
 			// NOTE(fusion): Pick up object if it's not in our inventory.
-			if(get_object_creature_id(Obj) != this->ID){
+			if (get_object_creature_id(Obj) != this->ID) {
 				this->ToDoMove(Obj, 0xFFFF, 0, 0, 1);
 			}
 
@@ -589,107 +574,105 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 			this->ToDoGo(DestX, DestY, DestZ, false, INT_MAX);
 			this->ToDoMove(Obj, DestX, DestY, DestZ, 1);
 			this->ToDoStart();
-		}else{
+		} else {
 			::move(this->ID, Obj, Dest, MoveCount, false, NONE);
 		}
 	}
 }
 
-void TCreature::Trade(Object Obj, uint32 PartnerID){
-	if(this->Type != PLAYER){
+void TCreature::Trade(Object Obj, uint32 PartnerID) {
+	if (this->Type != PLAYER) {
 		error("TCreature::Trade: Only players can trade.\n");
 		throw ERROR;
 	}
 
-	if(!Obj.exists() || !object_accessible(this->ID, Obj, 1)){
+	if (!Obj.exists() || !object_accessible(this->ID, Obj, 1)) {
 		throw NOTACCESSIBLE;
 	}
 
-	if(this->ID == PartnerID){
+	if (this->ID == PartnerID) {
 		throw CROSSREFERENCE;
 	}
 
 	TPlayer *Partner = get_player(PartnerID);
-	if(Partner == NULL || Partner->Type != PLAYER){
+	if (Partner == NULL || Partner->Type != PLAYER) {
 		throw PLAYERNOTONLINE;
 	}
 
-	if(((TPlayer*)this)->TradeObject != NONE){
+	if (((TPlayer *)this)->TradeObject != NONE) {
 		throw ALREADYTRADING;
 	}
 
-	if(count_objects(Obj) > 100){
+	if (count_objects(Obj) > 100) {
 		throw TOOMANYOBJECTS;
 	}
 
-	if(object_distance(this->CrObject, Partner->CrObject) > 2){
+	if (object_distance(this->CrObject, Partner->CrObject) > 2) {
 		throw OUTOFRANGE;
 	}
 
-	if(!throw_possible(this->posx, this->posy, this->posz,
-			Partner->posx, Partner->posy, Partner->posz, 0)){
+	if (!throw_possible(this->posx, this->posy, this->posz, Partner->posx, Partner->posy, Partner->posz, 0)) {
 		throw CANNOTTHROW;
 	}
 
-	if(Partner->TradeObject != NONE && Partner->TradePartner != this->ID){
+	if (Partner->TradeObject != NONE && Partner->TradePartner != this->ID) {
 		throw PARTNERTRADING;
 	}
 
 	// NOTE(fusion): Check if one object is contained by the other.
-	if(Partner->TradeObject != NONE){
+	if (Partner->TradeObject != NONE) {
 		Object Help = Partner->TradeObject;
-		while(Help != NONE && !Help.get_object_type().is_map_container()){
-			if(Help == Obj){
+		while (Help != NONE && !Help.get_object_type().is_map_container()) {
+			if (Help == Obj) {
 				throw NOTACCESSIBLE;
 			}
 			Help = Help.get_container();
 		}
 
 		Help = Obj;
-		while(Help != NONE && !Help.get_object_type().is_map_container()){
-			if(Help == Partner->TradeObject){
+		while (Help != NONE && !Help.get_object_type().is_map_container()) {
+			if (Help == Partner->TradeObject) {
 				throw NOTACCESSIBLE;
 			}
 			Help = Help.get_container();
 		}
 	}
 
-	((TPlayer*)this)->TradeObject = Obj;
-	((TPlayer*)this)->TradePartner = PartnerID;
-	((TPlayer*)this)->TradeAccepted = false;
+	((TPlayer *)this)->TradeObject = Obj;
+	((TPlayer *)this)->TradePartner = PartnerID;
+	((TPlayer *)this)->TradeAccepted = false;
 
-	if(Partner->TradeObject != NONE){
+	if (Partner->TradeObject != NONE) {
 		SendTradeOffer(Partner->Connection, this->Name, false, Obj);
 		SendTradeOffer(this->Connection, this->Name, true, Obj);
 		SendTradeOffer(this->Connection, Partner->Name, false, Partner->TradeObject);
-	}else{
-		SendMessage(Partner->Connection, TALK_INFO_MESSAGE,
-				"%s wants to trade with you.", this->Name);
+	} else {
+		SendMessage(Partner->Connection, TALK_INFO_MESSAGE, "%s wants to trade with you.", this->Name);
 		SendTradeOffer(this->Connection, this->Name, true, Obj);
 	}
 }
 
-void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy){
-	if(!Obj1.exists()){
+void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy) {
+	if (!Obj1.exists()) {
 		throw DESTROYED;
 	}
 
-	if(Obj2 != NONE){
-		if(!Obj2.exists()){
+	if (Obj2 != NONE) {
+		if (!Obj2.exists()) {
 			throw DESTROYED;
 		}
 
 		bool DistUse = Obj1.get_object_type().get_flag(DISTUSE);
-		if(!DistUse && !object_in_range(this->ID, Obj2, 1)){
+		if (!DistUse && !object_in_range(this->ID, Obj2, 1)) {
 			int ObjX2, ObjY2, ObjZ2;
 			get_object_coordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
 
-			if(this->ToDoClear() && this->Type == PLAYER){
+			if (this->ToDoClear() && this->Type == PLAYER) {
 				SendSnapback(this->Connection);
 			}
 
 			// NOTE(fusion): Pick up object 1 if it's not in our inventory.
-			if(get_object_creature_id(Obj1) != this->ID){
+			if (get_object_creature_id(Obj1) != this->ID) {
 				this->ToDoMove(Obj1, 0xFFFF, 0, 0, 1);
 			}
 
@@ -703,7 +686,7 @@ void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy){
 			return;
 		}
 
-		if(DistUse && !object_in_range(this->ID, Obj2, 7)){
+		if (DistUse && !object_in_range(this->ID, Obj2, 7)) {
 			throw OUTOFRANGE;
 		}
 
@@ -713,38 +696,38 @@ void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy){
 	::use(this->ID, Obj1, Obj2, Dummy);
 }
 
-void TCreature::Turn(Object Obj){
-	if(!Obj.exists()){
+void TCreature::Turn(Object Obj) {
+	if (!Obj.exists()) {
 		throw DESTROYED;
 	}
 
 	::turn(this->ID, Obj);
 }
 
-void TCreature::Attack(void){
+void TCreature::Attack(void) {
 	this->Combat.Attack();
 }
 
-void TCreature::Execute(void){
-	while(true){
-		if(!this->LockToDo || this->IsDead || this->NextWakeup > ServerMilliseconds){
+void TCreature::Execute(void) {
+	while (true) {
+		if (!this->LockToDo || this->IsDead || this->NextWakeup > ServerMilliseconds) {
 			break;
 		}
 
-		if(this->NrToDo <= this->ActToDo){
+		if (this->NrToDo <= this->ActToDo) {
 			this->ToDoClear();
 			this->IdleStimulus();
 			break;
 		}
 
 		uint32 Delay = this->CalculateDelay();
-		if(Delay > 0){
-			if(this->Stop){
+		if (Delay > 0) {
+			if (this->Stop) {
 				this->ToDoClear();
-				if(this->Type == PLAYER){
+				if (this->Type == PLAYER) {
 					SendSnapback(this->Connection);
 				}
-			}else{
+			} else {
 				this->NextWakeup = ServerMilliseconds + Delay;
 				ToDoQueue.insert(this->NextWakeup, this->ID);
 			}
@@ -753,89 +736,86 @@ void TCreature::Execute(void){
 
 		ToDoEntry TD = *this->ToDoList.at(this->ActToDo);
 		this->ActToDo += 1;
-		try{
-			switch(TD.Code){
-				case TDGo:{
-					this->Go(TD.Go.x, TD.Go.y, TD.Go.z);
-					break;
-				}
-
-				case TDRotate:{
-					this->Rotate(TD.Rotate.Direction);
-					break;
-				}
-
-				case TDMove:{
-					this->Move(Object(TD.Move.Obj), TD.Move.x, TD.Move.y, TD.Move.z, (uint8)TD.Move.Count);
-					break;
-				}
-
-				case TDTrade:{
-					this->Trade(Object(TD.Trade.Obj), TD.Trade.Partner);
-					break;
-				}
-
-				case TDUse:{
-					this->Use(Object(TD.Use.Obj1), Object(TD.Use.Obj2), TD.Use.Dummy);
-					break;
-				}
-
-				case TDTurn:{
-					this->Turn(Object(TD.Turn.Obj));
-					break;
-				}
-
-				case TDAttack:{
-					this->Attack();
-					break;
-				}
-
-				case TDTalk:{
-					const char *Text = GetDynamicString(TD.Talk.Text);
-					if(Text != NULL){
-						const char *Addressee = GetDynamicString(TD.Talk.Addressee);
-						talk(this->ID, TD.Talk.Mode, Addressee, Text, TD.Talk.CheckSpamming);
-					}else{
-						error("TCreature::Execute: Text is NULL for %s.\n", this->Name);
-					}
-					break;
-				}
-
-				case TDChangeState:{
-					if(this->Type == NPC){
-						change_npc_state(this, TD.ChangeState.NewState, true);
-					}
-					break;
-				}
-
-				default:{
-					break;
-				}
+		try {
+			switch (TD.Code) {
+			case TDGo: {
+				this->Go(TD.Go.x, TD.Go.y, TD.Go.z);
+				break;
 			}
-		}catch(RESULT r){
+
+			case TDRotate: {
+				this->Rotate(TD.Rotate.Direction);
+				break;
+			}
+
+			case TDMove: {
+				this->Move(Object(TD.Move.Obj), TD.Move.x, TD.Move.y, TD.Move.z, (uint8)TD.Move.Count);
+				break;
+			}
+
+			case TDTrade: {
+				this->Trade(Object(TD.Trade.Obj), TD.Trade.Partner);
+				break;
+			}
+
+			case TDUse: {
+				this->Use(Object(TD.Use.Obj1), Object(TD.Use.Obj2), TD.Use.Dummy);
+				break;
+			}
+
+			case TDTurn: {
+				this->Turn(Object(TD.Turn.Obj));
+				break;
+			}
+
+			case TDAttack: {
+				this->Attack();
+				break;
+			}
+
+			case TDTalk: {
+				const char *Text = GetDynamicString(TD.Talk.Text);
+				if (Text != NULL) {
+					const char *Addressee = GetDynamicString(TD.Talk.Addressee);
+					talk(this->ID, TD.Talk.Mode, Addressee, Text, TD.Talk.CheckSpamming);
+				} else {
+					error("TCreature::Execute: Text is NULL for %s.\n", this->Name);
+				}
+				break;
+			}
+
+			case TDChangeState: {
+				if (this->Type == NPC) {
+					change_npc_state(this, TD.ChangeState.NewState, true);
+				}
+				break;
+			}
+
+			default: {
+				break;
+			}
+			}
+		} catch (RESULT r) {
 			bool SnapbackNecessary = (this->ToDoClear() || this->Stop);
-			if(r == EXHAUSTED){
+			if (r == EXHAUSTED) {
 				this->ToDoWait(1000);
 				this->ToDoStart();
-			}else{
+			} else {
 				this->ToDoYield();
 			}
 
-			if(this->Type == PLAYER){
+			if (this->Type == PLAYER) {
 				SendResult(this->Connection, r);
-				if(SnapbackNecessary
-						&& r != MOVENOTPOSSIBLE
-						&& r != NOTINVITED
-						&& r != ENTERPROTECTIONZONE){
+				if (SnapbackNecessary && r != MOVENOTPOSSIBLE && r != NOTINVITED && r != ENTERPROTECTIONZONE) {
 					SendSnapback(this->Connection);
 				}
 			}
 			break;
 		}
 
-		if(this->Stop){
+		if (this->Stop) {
 			this->ToDoClear();
-			if(this->Type == PLAYER){
+			if (this->Type == PLAYER) {
 				SendSnapback(this->Connection);
 			}
 			break;
@@ -843,86 +823,86 @@ void TCreature::Execute(void){
 	}
 }
 
-uint32 TCreature::CalculateDelay(void){
+uint32 TCreature::CalculateDelay(void) {
 	uint32 Delay = 0;
 	ToDoEntry *TD = this->ToDoList.at(this->ActToDo);
-	switch(TD->Code){
-		case TDWait:{
-			// TODO(fusion): I'm not sure about having `EarliestWalkTime` here.
-			uint32 WaitTime = TD->Wait.Time;
-			if(WaitTime < this->EarliestWalkTime){
-				WaitTime = this->EarliestWalkTime;
-			}
-
-			if(WaitTime > ServerMilliseconds){
-				Delay = WaitTime - ServerMilliseconds;
-			}
-			break;
+	switch (TD->Code) {
+	case TDWait: {
+		// TODO(fusion): I'm not sure about having `EarliestWalkTime` here.
+		uint32 WaitTime = TD->Wait.Time;
+		if (WaitTime < this->EarliestWalkTime) {
+			WaitTime = this->EarliestWalkTime;
 		}
 
-		case TDGo:{
-			if(this->EarliestWalkTime > ServerMilliseconds){
-				Delay = this->EarliestWalkTime - ServerMilliseconds;
+		if (WaitTime > ServerMilliseconds) {
+			Delay = WaitTime - ServerMilliseconds;
+		}
+		break;
+	}
+
+	case TDGo: {
+		if (this->EarliestWalkTime > ServerMilliseconds) {
+			Delay = this->EarliestWalkTime - ServerMilliseconds;
+		}
+		break;
+	}
+
+	case TDUse: {
+		if (TD->Use.Obj2 != 0) {
+			if (this->EarliestMultiuseTime > ServerMilliseconds) {
+				Delay = this->EarliestMultiuseTime - ServerMilliseconds;
 			}
-			break;
+		}
+		break;
+	}
+
+	case TDAttack: {
+		uint32 EarliestAttackTime = this->Combat.EarliestAttackTime;
+		if (EarliestAttackTime < this->EarliestSpellTime) {
+			EarliestAttackTime = this->EarliestSpellTime;
 		}
 
-		case TDUse:{
-			if(TD->Use.Obj2 != 0){
-				if(this->EarliestMultiuseTime > ServerMilliseconds){
-					Delay = this->EarliestMultiuseTime - ServerMilliseconds;
-				}
-			}
-			break;
+		if (EarliestAttackTime > ServerMilliseconds) {
+			Delay = EarliestAttackTime - ServerMilliseconds;
 		}
+		break;
+	}
 
-		case TDAttack:{
-			uint32 EarliestAttackTime = this->Combat.EarliestAttackTime;
-			if(EarliestAttackTime < this->EarliestSpellTime){
-				EarliestAttackTime = this->EarliestSpellTime;
-			}
-
-			if(EarliestAttackTime > ServerMilliseconds){
-				Delay = EarliestAttackTime - ServerMilliseconds;
-			}
-			break;
-		}
-
-		default:{
-			break;
-		}
+	default: {
+		break;
+	}
 	}
 	return Delay;
 }
 
-bool TCreature::ToDoClear(void){
+bool TCreature::ToDoClear(void) {
 	bool SnapbackNecessary = false;
-	for(int i = 0; i < this->NrToDo; i += 1){
+	for (int i = 0; i < this->NrToDo; i += 1) {
 		ToDoEntry *TD = this->ToDoList.at(i);
-		switch(TD->Code){
-			case TDGo:{
-				if(this->ActToDo <= i){
-					SnapbackNecessary = true;
-				}
-				break;
+		switch (TD->Code) {
+		case TDGo: {
+			if (this->ActToDo <= i) {
+				SnapbackNecessary = true;
 			}
+			break;
+		}
 
-			case TDTalk:{
-				DeleteDynamicString(TD->Talk.Text);
-				DeleteDynamicString(TD->Talk.Addressee);
-				break;
-			}
+		case TDTalk: {
+			DeleteDynamicString(TD->Talk.Text);
+			DeleteDynamicString(TD->Talk.Addressee);
+			break;
+		}
 
-			case TDChangeState:{
-				if(this->ActToDo <= i && this->Type == NPC){
-					change_npc_state(this, TD->ChangeState.NewState, false);
-				}
-				break;
+		case TDChangeState: {
+			if (this->ActToDo <= i && this->Type == NPC) {
+				change_npc_state(this, TD->ChangeState.NewState, false);
 			}
+			break;
+		}
 
-			default:{
-				break;
-			}
+		default: {
+			break;
+		}
 		}
 	}
 
@@ -933,9 +913,9 @@ bool TCreature::ToDoClear(void){
 	return SnapbackNecessary;
 }
 
-void TCreature::ToDoAdd(ToDoEntry TD){
-	if(this->LockToDo){
-		if(this->ToDoClear() && this->Type == PLAYER){
+void TCreature::ToDoAdd(ToDoEntry TD) {
+	if (this->LockToDo) {
+		if (this->ToDoClear() && this->Type == PLAYER) {
 			SendSnapback(this->Connection);
 		}
 	}
@@ -944,21 +924,21 @@ void TCreature::ToDoAdd(ToDoEntry TD){
 	this->NrToDo += 1;
 }
 
-void TCreature::ToDoStop(void){
-	if(this->LockToDo){
+void TCreature::ToDoStop(void) {
+	if (this->LockToDo) {
 		this->Stop = true;
-	}else if(this->Type == PLAYER){
+	} else if (this->Type == PLAYER) {
 		SendSnapback(this->Connection);
 	}
 }
 
-void TCreature::ToDoStart(void){
-	if(this->NrToDo != 0){
+void TCreature::ToDoStart(void) {
+	if (this->NrToDo != 0) {
 		this->LockToDo = true;
 		this->ActToDo = 0;
 
 		uint32 Delay = this->CalculateDelay();
-		if(Delay < 1){
+		if (Delay < 1) {
 			Delay = 1;
 		}
 
@@ -968,40 +948,37 @@ void TCreature::ToDoStart(void){
 	}
 }
 
-void TCreature::ToDoYield(void){
-	if(!this->LockToDo){
+void TCreature::ToDoYield(void) {
+	if (!this->LockToDo) {
 		this->ToDoWait(0);
 		this->ToDoStart();
 	}
 }
 
-void TCreature::ToDoWait(int Delay){
+void TCreature::ToDoWait(int Delay) {
 	ToDoEntry TD = {};
 	TD.Code = TDWait;
 	TD.Wait.Time = ServerMilliseconds + Delay;
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoWaitUntil(uint32 Time){
+void TCreature::ToDoWaitUntil(uint32 Time) {
 	ToDoEntry TD = {};
 	TD.Code = TDWait;
 	TD.Wait.Time = Time;
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxSteps){
-	if(this->posz > DestZ){
+void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxSteps) {
+	if (this->posz > DestZ) {
 		throw UPSTAIRS;
-	}else if(this->posz < DestZ){
+	} else if (this->posz < DestZ) {
 		throw DOWNSTAIRS;
 	}
 
-	if(this->LockToDo){
+	if (this->LockToDo) {
 		ToDoEntry *Last = this->ToDoList.at(this->NrToDo - 1);
-		if(Last->Code == TDGo
-				&& Last->Go.x == DestX
-				&& Last->Go.y == DestY
-				&& Last->Go.z == DestZ){
+		if (Last->Code == TDGo && Last->Go.x == DestX && Last->Go.y == DestY && Last->Go.z == DestZ) {
 			// TODO(fusion): Why? Shouldn't we just return here?
 			throw NOERROR;
 		}
@@ -1010,27 +987,27 @@ void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxS
 	int DistanceX = std::abs(DestX - this->posx);
 	int DistanceY = std::abs(DestY - this->posy);
 	int MaxDistance = std::max<int>(DistanceX, DistanceY);
-	if(MaxDistance == 0 || (!MustReach && MaxDistance <= 1)){
+	if (MaxDistance == 0 || (!MustReach && MaxDistance <= 1)) {
 		return;
 	}
 
 	// NOTE(fusion): The number of steps between two points is the same as the
 	// their manhattan distance, if we exclude diagonal movement. We can skip
 	// the path finder if we know we're step away from the destination.
-	if(DistanceX + DistanceY == 1){
+	if (DistanceX + DistanceY == 1) {
 		ToDoEntry TD = {};
 		TD.Code = TDGo;
 		TD.Go.x = DestX;
 		TD.Go.y = DestY;
 		TD.Go.z = DestZ;
 		this->ToDoAdd(TD);
-	}else{
+	} else {
 		int VisibleX = (this->Type == PLAYER) ? 7 : 10;
 		int VisibleY = (this->Type == PLAYER) ? 7 : 10;
 		TShortway Shortway(this, VisibleX, VisibleY);
-		if(!Shortway.Calculate(DestX, DestY, MustReach, MaxSteps)){
+		if (!Shortway.Calculate(DestX, DestY, MustReach, MaxSteps)) {
 			this->ToDoClear();
-			if(this->Type == PLAYER){
+			if (this->Type == PLAYER) {
 				SendSnapback(this->Connection);
 			}
 			throw NOWAY;
@@ -1038,11 +1015,9 @@ void TCreature::ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxS
 	}
 }
 
-void TCreature::ToDoRotate(int Direction){
-	if(Direction != DIRECTION_NORTH
-			&& Direction != DIRECTION_EAST
-			&& Direction != DIRECTION_SOUTH
-			&& Direction != DIRECTION_WEST){
+void TCreature::ToDoRotate(int Direction) {
+	if (Direction != DIRECTION_NORTH && Direction != DIRECTION_EAST && Direction != DIRECTION_SOUTH &&
+		Direction != DIRECTION_WEST) {
 		throw ERROR;
 	}
 
@@ -1052,41 +1027,41 @@ void TCreature::ToDoRotate(int Direction){
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum,
-						int DestX, int DestY, int DestZ, uint8 Count){
+void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum, int DestX, int DestY, int DestZ,
+						 uint8 Count) {
 	Object Obj = get_object(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
-	if(!Obj.exists()){
+	if (!Obj.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
 	// TODO(fusion): This could be an inlined function.
-	if(ObjX != 0xFFFF){ // SPECIAL_COORDINATE ?
-		if(this->posz > ObjZ){
+	if (ObjX != 0xFFFF) { // SPECIAL_COORDINATE ?
+		if (this->posz > ObjZ) {
 			throw UPSTAIRS;
-		}else if(this->posz < ObjZ){
+		} else if (this->posz < ObjZ) {
 			throw DOWNSTAIRS;
 		}
 
-		if(!object_in_range(this->ID, Obj, 1)){
+		if (!object_in_range(this->ID, Obj, 1)) {
 			this->ToDoGo(ObjX, ObjY, ObjZ, false, INT_MAX);
 		}
 	}
 
 	int Delay = 100;
-	if(Obj.get_object_type().is_creature_container()){
+	if (Obj.get_object_type().is_creature_container()) {
 		Object DestBank = get_first_object(DestX, DestY, DestZ);
-		if(DestBank == NONE || !DestBank.get_object_type().get_flag(BANK)){
+		if (DestBank == NONE || !DestBank.get_object_type().get_flag(BANK)) {
 			throw NOTACCESSIBLE;
 		}
 
 		TCreature *Creature = get_creature(Obj);
-		if(Creature == NULL){
+		if (Creature == NULL) {
 			error("TCreature::ToDoMove: Creature does not exist.\n");
 			throw ERROR;
 		}
 
 		Delay = 1000;
-		if(this->EarliestWalkTime > ServerMilliseconds){
+		if (this->EarliestWalkTime > ServerMilliseconds) {
 			Delay += (int)(this->EarliestWalkTime - ServerMilliseconds);
 		}
 	}
@@ -1103,17 +1078,17 @@ void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
-	if(!Obj.exists()){
+void TCreature::ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Count) {
+	if (!Obj.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
-	if(!object_in_range(this->ID, Obj, 1)){
+	if (!object_in_range(this->ID, Obj, 1)) {
 		this->ToDoGo(DestX, DestY, DestZ, false, INT_MAX);
 	}
 
 	int Delay = 100;
-	if(Obj.get_object_type().is_creature_container()){
+	if (Obj.get_object_type().is_creature_container()) {
 		// TODO(fusion): We don't add the delay until the earliest walk time
 		// like in the other variant above.
 		Delay = 1000;
@@ -1131,51 +1106,50 @@ void TCreature::ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Coun
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum,
-						uint32 TradePartner){
+void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum, uint32 TradePartner) {
 	Object Obj = get_object(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
-	if(!Obj.exists()){
+	if (!Obj.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
 	ObjectType ObjType = Obj.get_object_type();
-	if(ObjType.get_flag(UNMOVE)){
+	if (ObjType.get_flag(UNMOVE)) {
 		throw NOTMOVABLE;
 	}
 
-	if(!ObjType.get_flag(TAKE)){
+	if (!ObjType.get_flag(TAKE)) {
 		throw NOTTAKABLE;
 	}
 
-	if(ObjType.is_creature_container()){
+	if (ObjType.is_creature_container()) {
 		error("TCreature::ToDoTrade: Object is a creature.\n");
 		throw ERROR;
 	}
 
-	if(TradePartner == 0){
+	if (TradePartner == 0) {
 		error("TCreature::ToDoTrade: Trade partner is NULL.\n");
 		throw ERROR;
 	}
 
 	TCreature *Creature = get_creature(TradePartner);
-	if(Creature == NULL){
+	if (Creature == NULL) {
 		throw PLAYERNOTONLINE;
 	}
 
-	if(Creature->Type != PLAYER){
+	if (Creature->Type != PLAYER) {
 		error("TCreature::ToDoTrade: Trade partner of %s is not a player.\n", this->Name);
 		throw ERROR;
 	}
 
 	// TODO(fusion): This could be an inlined function.
-	if(ObjX != 0xFFFF){ // SPECIAL_COORDINATE ?
-		if(this->posz > ObjZ){
+	if (ObjX != 0xFFFF) { // SPECIAL_COORDINATE ?
+		if (this->posz > ObjZ) {
 			throw UPSTAIRS;
-		}else if(this->posz < ObjZ){
+		} else if (this->posz < ObjZ) {
 			throw DOWNSTAIRS;
 		}
 
-		if(!object_in_range(this->ID, Obj, 1)){
+		if (!object_in_range(this->ID, Obj, 1)) {
 			this->ToDoGo(ObjX, ObjY, ObjZ, false, INT_MAX);
 		}
 	}
@@ -1187,30 +1161,30 @@ void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 R
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType Type1, uint8 RNum1,
-						uint8 Dummy, int ObjX2, int ObjY2, int ObjZ2, ObjectType Type2, uint8 RNum2){
+void TCreature::ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType Type1, uint8 RNum1, uint8 Dummy,
+						int ObjX2, int ObjY2, int ObjZ2, ObjectType Type2, uint8 RNum2) {
 	Object Obj1 = get_object(this->ID, ObjX1, ObjY1, ObjZ1, RNum1, Type1);
-	if(!Obj1.exists()){
+	if (!Obj1.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
 	Object Obj2 = NONE;
-	if(Count >= 2){
+	if (Count >= 2) {
 		Obj2 = get_object(this->ID, ObjX2, ObjY2, ObjZ2, RNum2, Type2);
-		if(!Obj2.exists()){
+		if (!Obj2.exists()) {
 			throw NOTACCESSIBLE;
 		}
 	}
 
 	// TODO(fusion): This could be an inlined function.
-	if(ObjX1 != 0xFFFF){ // SPECIAL_COORDINATE ?
-		if(this->posz > ObjZ1){
+	if (ObjX1 != 0xFFFF) { // SPECIAL_COORDINATE ?
+		if (this->posz > ObjZ1) {
 			throw UPSTAIRS;
-		}else if(this->posz < ObjZ1){
+		} else if (this->posz < ObjZ1) {
 			throw DOWNSTAIRS;
 		}
 
-		if(!object_in_range(this->ID, Obj1, 1)){
+		if (!object_in_range(this->ID, Obj1, 1)) {
 			this->ToDoGo(ObjX1, ObjY1, ObjZ1, false, INT_MAX);
 		}
 	}
@@ -1227,18 +1201,18 @@ void TCreature::ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoUse(uint8 Count, Object Obj1, Object Obj2){
-	if(!Obj1.exists()){
+void TCreature::ToDoUse(uint8 Count, Object Obj1, Object Obj2) {
+	if (!Obj1.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
-	if(Count <= 1){
+	if (Count <= 1) {
 		Obj2 = NONE;
-	}else if(!Obj2.exists()){
+	} else if (!Obj2.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
-	if(!object_in_range(this->ID, Obj1, 1)){
+	if (!object_in_range(this->ID, Obj1, 1)) {
 		int ObjX1, ObjY1, ObjZ1;
 		get_object_coordinates(Obj1, &ObjX1, &ObjY1, &ObjZ1);
 		this->ToDoGo(ObjX1, ObjY1, ObjZ1, false, INT_MAX);
@@ -1255,21 +1229,21 @@ void TCreature::ToDoUse(uint8 Count, Object Obj1, Object Obj2){
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum){
+void TCreature::ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum) {
 	Object Obj = get_object(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
-	if(!Obj.exists()){
+	if (!Obj.exists()) {
 		throw NOTACCESSIBLE;
 	}
 
 	// TODO(fusion): This could be an inlined function.
-	if(ObjX != 0xFFFF){ // SPECIAL_COORDINATE ?
-		if(this->posz > ObjZ){
+	if (ObjX != 0xFFFF) { // SPECIAL_COORDINATE ?
+		if (this->posz > ObjZ) {
 			throw UPSTAIRS;
-		}else if(this->posz < ObjZ){
+		} else if (this->posz < ObjZ) {
 			throw DOWNSTAIRS;
 		}
 
-		if(!object_in_range(this->ID, Obj, 1)){
+		if (!object_in_range(this->ID, Obj, 1)) {
 			this->ToDoGo(ObjX, ObjY, ObjZ, false, INT_MAX);
 		}
 	}
@@ -1282,9 +1256,9 @@ void TCreature::ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoAttack(void){
+void TCreature::ToDoAttack(void) {
 	this->Combat.CanToDoAttack();
-	if(this->Combat.GetDistance() != 1){
+	if (this->Combat.GetDistance() != 1) {
 		this->ToDoWait(100);
 	}
 
@@ -1293,23 +1267,23 @@ void TCreature::ToDoAttack(void){
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoTalk(int Mode, const char *Addressee, const char *Text, bool CheckSpamming){
+void TCreature::ToDoTalk(int Mode, const char *Addressee, const char *Text, bool CheckSpamming) {
 	ToDoEntry TD = {};
 
-	if(Text == NULL || Text[0] == 0){
+	if (Text == NULL || Text[0] == 0) {
 		error("TCreature::ToDoTalk: Text is NULL for %s.\n", this->Name);
 
 		// TODO(fusion): The original code would attempt to call `AddDynamicString`
 		// even after this check but it doesn't check whether `Text` is NULL and
 		// calls `strlen` immediately on it which could be a problem.
 		TD.Talk.Text = 0;
-	}else{
+	} else {
 		TD.Talk.Text = AddDynamicString(Text);
 	}
 
-	if(Addressee == NULL){
+	if (Addressee == NULL) {
 		TD.Talk.Addressee = 0;
-	}else{
+	} else {
 		TD.Talk.Addressee = AddDynamicString(Addressee);
 	}
 
@@ -1319,14 +1293,14 @@ void TCreature::ToDoTalk(int Mode, const char *Addressee, const char *Text, bool
 	this->ToDoAdd(TD);
 }
 
-void TCreature::ToDoChangeState(int NewState){
+void TCreature::ToDoChangeState(int NewState) {
 	ToDoEntry TD = {};
 	TD.Code = TDChangeState;
 	TD.ChangeState.NewState = NewState;
 	this->ToDoAdd(TD);
 }
 
-void TCreature::NotifyGo(void){
+void TCreature::NotifyGo(void) {
 	// IMPORTANT(fusion): This and the function that does move `this->CrObject`
 	// should be the only ones where the output of `get_object_coordinates` will
 	// differ from `this->posx`, `this->posy`, and `this->posz`.
@@ -1343,116 +1317,112 @@ void TCreature::NotifyGo(void){
 	// IMPORTANT(fusion): `SendFloors` and `SendRow` will use the current creature
 	// position to know where to pull fields from, so we need to keep them updated
 	// as we go.
-	if(this->Type == PLAYER && this->Connection != NULL){
+	if (this->Type == PLAYER && this->Connection != NULL) {
 		int DistanceX = std::abs(DestX - OrigX);
 		int DistanceY = std::abs(DestY - OrigY);
 		int DistanceZ = std::abs(DestZ - OrigZ);
-		if(DistanceX <= 1 && DistanceY <= 1 && DistanceZ <= 1){
-			while(this->posz < DestZ){
+		if (DistanceX <= 1 && DistanceY <= 1 && DistanceZ <= 1) {
+			while (this->posz < DestZ) {
 				this->posx -= 1;
 				this->posy -= 1;
 				this->posz += 1;
 				SendFloors(this->Connection, false);
 			}
 
-			while(this->posz > DestZ){
+			while (this->posz > DestZ) {
 				this->posx += 1;
 				this->posy += 1;
 				this->posz -= 1;
 				SendFloors(this->Connection, true);
 			}
 
-			while(this->posx < DestX){
+			while (this->posx < DestX) {
 				this->posx += 1;
 				SendRow(this->Connection, DIRECTION_EAST);
 			}
 
-			while(this->posx > DestX){
+			while (this->posx > DestX) {
 				this->posx -= 1;
 				SendRow(this->Connection, DIRECTION_WEST);
 			}
 
-			while(this->posy < DestY){
+			while (this->posy < DestY) {
 				this->posy += 1;
 				SendRow(this->Connection, DIRECTION_SOUTH);
 			}
 
-			while(this->posy > DestY){
+			while (this->posy > DestY) {
 				this->posy -= 1;
 				SendRow(this->Connection, DIRECTION_NORTH);
 			}
-		}else{
+		} else {
 			this->posx = DestX;
 			this->posy = DestY;
 			this->posz = DestZ;
 			SendFullScreen(this->Connection);
 		}
-	}else{
+	} else {
 		this->posx = DestX;
 		this->posy = DestY;
 		this->posz = DestZ;
 	}
 
-	if(this->Type == PLAYER){
+	if (this->Type == PLAYER) {
 		// NOTE(fusion): Check open containers.
-		for(int ContainerNr = 0;
-				ContainerNr < NARRAY(TPlayer::OpenContainer);
-				ContainerNr += 1){
-			Object Con = ((TPlayer*)this)->GetOpenContainer(ContainerNr);
-			if(Con == NONE){
+		for (int ContainerNr = 0; ContainerNr < NARRAY(TPlayer::OpenContainer); ContainerNr += 1) {
+			Object Con = ((TPlayer *)this)->GetOpenContainer(ContainerNr);
+			if (Con == NONE) {
 				continue;
 			}
 
-			if(!Con.exists()){
-				error("TCreature::NotifyGo: OpenContainer does not exist. (%s, [%d,%d,%d]->[%d,%d,%d])\n",
-						this->Name, OrigX, OrigY, OrigZ, DestX, DestY, DestZ);
+			if (!Con.exists()) {
+				error("TCreature::NotifyGo: OpenContainer does not exist. (%s, [%d,%d,%d]->[%d,%d,%d])\n", this->Name,
+					  OrigX, OrigY, OrigZ, DestX, DestY, DestZ);
 				continue;
 			}
 
-			if(!object_accessible(this->ID, Con, 1)){
-				((TPlayer*)this)->SetOpenContainer(ContainerNr, NONE);
+			if (!object_accessible(this->ID, Con, 1)) {
+				((TPlayer *)this)->SetOpenContainer(ContainerNr, NONE);
 				SendCloseContainer(this->Connection, ContainerNr);
 			}
 		}
 
 		// NOTE(fusion): Check trade.
-		Object TradeObject = ((TPlayer*)this)->TradeObject;
-		if(TradeObject != NONE){
-			TPlayer *Partner = get_player(((TPlayer*)this)->TradePartner);
-			if(!TradeObject.exists()){
+		Object TradeObject = ((TPlayer *)this)->TradeObject;
+		if (TradeObject != NONE) {
+			TPlayer *Partner = get_player(((TPlayer *)this)->TradePartner);
+			if (!TradeObject.exists()) {
 				error("TCreature::NotifyGo: Trade object no longer exists.\n");
 				error("# Trader %s at [%d,%d,%d]\n", this->Name, DestX, DestY, DestZ);
-				if(Partner != NULL){
-					error("# Partner %s at [%d,%d,%d]\n", Partner->Name,
-							Partner->posx, Partner->posy, Partner->posz);
+				if (Partner != NULL) {
+					error("# Partner %s at [%d,%d,%d]\n", Partner->Name, Partner->posx, Partner->posy, Partner->posz);
 				}
 			}
 
-			if(Partner == NULL || !object_accessible(this->ID, TradeObject, 1)
-					|| object_distance(this->CrObject, Partner->CrObject) > 2
-					|| !throw_possible(this->posx, this->posy, this->posz,
-							Partner->posx, Partner->posy, Partner->posz, 0)){
+			if (Partner == NULL || !object_accessible(this->ID, TradeObject, 1) ||
+				object_distance(this->CrObject, Partner->CrObject) > 2 ||
+				!throw_possible(this->posx, this->posy, this->posz, Partner->posx, Partner->posy, Partner->posz, 0)) {
 				SendCloseTrade(this->Connection);
 				SendMessage(this->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
-				((TPlayer*)this)->RejectTrade();
+				((TPlayer *)this)->RejectTrade();
 			}
 		}
 	}
 
 	int Waypoints = 0;
 	Object Bank = get_first_object(DestX, DestY, DestZ);
-	while(Bank != NONE){
+	while (Bank != NONE) {
 		ObjectType BankType = Bank.get_object_type();
-		if(BankType.get_flag(BANK)){
+		if (BankType.get_flag(BANK)) {
 			Waypoints = BankType.get_attribute(WAYPOINTS);
 			break;
 		}
 		Bank = Bank.get_next_object();
 	}
 
-	if(Bank != NONE){
+	if (Bank != NONE) {
 		// NOTE(fusion): Diagonal movement has three times the delay of a regular one.
-		if(DiagonalMove){
+		if (DiagonalMove) {
 			Waypoints *= 3;
 		}
 
@@ -1461,89 +1431,84 @@ void TCreature::NotifyGo(void){
 		int Delay = (Waypoints * 1000) / this->GetSpeed();
 		int BeatCount = (Delay + Beat - 1) / Beat;
 		this->EarliestWalkTime = ServerMilliseconds + BeatCount * Beat;
-	}else{
-		error("TCreature::NotifyGo: No bank on field [%d,%d,%d].\n",
-				DestX, DestY, DestZ);
+	} else {
+		error("TCreature::NotifyGo: No bank on field [%d,%d,%d].\n", DestX, DestY, DestZ);
 	}
 }
 
-void TCreature::NotifyTurn(Object DestCon){
+void TCreature::NotifyTurn(Object DestCon) {
 	int DestX, DestY, DestZ;
 	get_object_coordinates(DestCon, &DestX, &DestY, &DestZ);
 
 	// NOTE(fusion): This is somewhat similar to `TCreature::Rotate`.
 	int OffsetX = DestX - this->posx;
 	int OffsetY = DestY - this->posy;
-	if(OffsetX > 0){
+	if (OffsetX > 0) {
 		this->Direction = DIRECTION_EAST;
-	}else if(OffsetX < 0){
+	} else if (OffsetX < 0) {
 		this->Direction = DIRECTION_WEST;
-	}else if(OffsetY < 0){
+	} else if (OffsetY < 0) {
 		this->Direction = DIRECTION_NORTH;
-	}else if(OffsetY > 0){
+	} else if (OffsetY > 0) {
 		this->Direction = DIRECTION_SOUTH;
 	}
 }
 
-void TCreature::NotifyCreate(void){
-    insert_chain_creature(this, 0, 0);
+void TCreature::NotifyCreate(void) {
+	insert_chain_creature(this, 0, 0);
 }
 
-void TCreature::NotifyDelete(void){
-	if(this->Type == PLAYER){
-		if(this->Connection != NULL){
+void TCreature::NotifyDelete(void) {
+	if (this->Type == PLAYER) {
+		if (this->Connection != NULL) {
 			this->Connection->Logout(30, true);
 			this->LoggingOut = true;
 		}
 
-		((TPlayer*)this)->RejectTrade();
+		((TPlayer *)this)->RejectTrade();
 	}
 
 	delete_chain_creature(this);
 }
 
-void TCreature::NotifyChangeInventory(void){
-	if(this->CrObject == NONE){
+void TCreature::NotifyChangeInventory(void) {
+	if (this->CrObject == NONE) {
 		return;
 	}
 
-	if(!this->CrObject.exists()){
+	if (!this->CrObject.exists()) {
 		error("TCreature::NotifyChangeInventory: Creature object does not exist.\n");
-		error("# Creature: %s, Position: %d/%d/%d.\n",
-				this->Name, this->posx, this->posy, this->posz);
+		error("# Creature: %s, Position: %d/%d/%d.\n", this->Name, this->posx, this->posy, this->posz);
 		return;
 	}
 
 	this->Combat.CheckCombatValues();
-	if(this->Type == PLAYER){
+	if (this->Type == PLAYER) {
 		int NewDelta[NARRAY(this->Skills)] = {};
-		for(int Position = INVENTORY_FIRST;
-				Position <= INVENTORY_LAST;
-				Position += 1){
+		for (int Position = INVENTORY_FIRST; Position <= INVENTORY_LAST; Position += 1) {
 			Object Obj = get_body_object(this->ID, Position);
-			if(Obj == NONE){
+			if (Obj == NONE) {
 				continue;
 			}
 
 			ObjectType ObjType = Obj.get_object_type();
-			if(!ObjType.get_flag(SKILLBOOST)){
+			if (!ObjType.get_flag(SKILLBOOST)) {
 				continue;
 			}
 
-			if(!ObjType.get_flag(CLOTHES)){
-				error("TCreature::NotifyChangeInventory: Object %d has SKILLBOOST but not CLOTHES.\n",
-						ObjType.TypeID);
+			if (!ObjType.get_flag(CLOTHES)) {
+				error("TCreature::NotifyChangeInventory: Object %d has SKILLBOOST but not CLOTHES.\n", ObjType.TypeID);
 				continue;
 			}
 
-			if((int)ObjType.get_attribute(BODYPOSITION) != Position){
+			if ((int)ObjType.get_attribute(BODYPOSITION) != Position) {
 				continue;
 			}
 
 			int SkillNr = (int)ObjType.get_attribute(SKILLNUMBER);
-			if(SkillNr < 0 || SkillNr >= NARRAY(this->Skills)){
-				error("TCreature::NotifyChangeInventory: Object %d has invalid SKILLNUMBER %d.\n",
-						ObjType.TypeID, SkillNr);
+			if (SkillNr < 0 || SkillNr >= NARRAY(this->Skills)) {
+				error("TCreature::NotifyChangeInventory: Object %d has invalid SKILLNUMBER %d.\n", ObjType.TypeID,
+					  SkillNr);
 				continue;
 			}
 
@@ -1555,24 +1520,22 @@ void TCreature::NotifyChangeInventory(void){
 		}
 
 		bool SkillsChanged = false;
-		for(int SkillNr = 0;
-				SkillNr < NARRAY(this->Skills);
-				SkillNr += 1){
+		for (int SkillNr = 0; SkillNr < NARRAY(this->Skills); SkillNr += 1) {
 			TSkill *Skill = this->Skills[SkillNr];
-			if(Skill->DAct != NewDelta[SkillNr]){
+			if (Skill->DAct != NewDelta[SkillNr]) {
 				SkillsChanged = true;
 				Skill->DAct = NewDelta[SkillNr];
-				if(SkillNr == SKILL_GO_STRENGTH){
+				if (SkillNr == SKILL_GO_STRENGTH) {
 					announce_changed_creature(this->ID, CREATURE_SPEED_CHANGED);
-				}else if(SkillNr == SKILL_ILLUSION){
-					if(NewDelta[SKILL_ILLUSION] > 0){
-						if(!this->IsInvisible()){
-							if(Skill->TimerValue() != 0){
+				} else if (SkillNr == SKILL_ILLUSION) {
+					if (NewDelta[SKILL_ILLUSION] > 0) {
+						if (!this->IsInvisible()) {
+							if (Skill->TimerValue() != 0) {
 								this->SetTimer(SKILL_ILLUSION, 0, 0, 0, -1);
 							}
 							this->Outfit = TOutfit::Invisible();
 						}
-					}else if(Skill->TimerValue() == 0){
+					} else if (Skill->TimerValue() == 0) {
 						this->Outfit = this->OrgOutfit;
 					}
 					announce_changed_creature(this->ID, CREATURE_OUTFIT_CHANGED);
@@ -1580,9 +1543,9 @@ void TCreature::NotifyChangeInventory(void){
 			}
 		}
 
-		if(SkillsChanged){
+		if (SkillsChanged) {
 			SendPlayerSkills(this->Connection);
-			((TPlayer*)this)->CheckState();
+			((TPlayer *)this)->CheckState();
 		}
 
 		SendPlayerData(this->Connection);

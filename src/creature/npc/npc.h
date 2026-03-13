@@ -76,7 +76,7 @@ struct BehaviourDatabase {
 	int Behaviours;
 };
 
-struct TNPC: Nonplayer {
+struct TNPC : Nonplayer {
 	TNPC(const char *FileName);
 	void GiveTo(ObjectType Type, int Amount);
 	void GetFrom(ObjectType Type, int Amount);
@@ -97,7 +97,7 @@ struct TNPC: Nonplayer {
 
 	// DATA
 	// =================
-	//Nonplayer super_TNonplayer; 	// IMPLICIT
+	// Nonplayer super_TNonplayer; 	// IMPLICIT
 	uint32 Interlocutor;
 	int Topic;
 	int Price;

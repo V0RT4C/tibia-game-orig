@@ -9,13 +9,13 @@ struct TCreature;
 
 // TCombat
 // =============================================================================
-struct CombatEntry{
+struct CombatEntry {
 	uint32 ID;
 	uint32 Damage;
 	uint32 TimeStamp;
 };
 
-struct TCombat{
+struct TCombat {
 	TCombat(void);
 	void GetWeapon(void);
 	void GetAmmo(void);
@@ -43,7 +43,6 @@ struct TCombat{
 	uint32 GetMostDangerousAttacker(void);
 	void DistributeExperiencePoints(uint32 Exp);
 
-
 	// DATA
 	// =================
 	TCreature *Master;
@@ -69,4 +68,4 @@ struct TCombat{
 	int LearningPoints;
 };
 
-#endif //TIBIA_CREATURE_COMBAT_H_
+#endif // TIBIA_CREATURE_COMBAT_H_

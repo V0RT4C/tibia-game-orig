@@ -4,16 +4,16 @@
 #include "common.h"
 #include "connections.h"
 #include "containers.h"
+#include "creature/combat/combat.h"
+#include "creature/skill/skill.h"
 #include "enums.h"
 #include "map.h"
-#include "creature/skill/skill.h"
-#include "creature/combat/combat.h"
 
 // Creature Data
 // =============================================================================
-struct TOutfit{
+struct TOutfit {
 	int OutfitID;
-	union{
+	union {
 		int ObjectType;
 		uint8 Colors[4];
 	};
@@ -24,22 +24,19 @@ struct TOutfit{
 		// otherwise when smaller active fields leave trailing bytes of the
 		// union filled with whatever data was there before.
 		static_assert(sizeof(this->ObjectType) == sizeof(this->Colors));
-		return this->OutfitID == Other.OutfitID
-			&& this->ObjectType == Other.ObjectType;
+		return this->OutfitID == Other.OutfitID && this->ObjectType == Other.ObjectType;
 	}
 
-	static constexpr TOutfit Invisible(void){
-		return TOutfit{};
-	}
+	static constexpr TOutfit Invisible(void) { return TOutfit{}; }
 };
 
 // FindCreatures
 // =============================================================================
 enum : int {
-	FIND_PLAYERS	= 0x01,
-	FIND_NPCS		= 0x02,
-	FIND_MONSTERS	= 0x04,
-	FIND_ALL		= FIND_PLAYERS | FIND_NPCS | FIND_MONSTERS,
+	FIND_PLAYERS = 0x01,
+	FIND_NPCS = 0x02,
+	FIND_MONSTERS = 0x04,
+	FIND_ALL = FIND_PLAYERS | FIND_NPCS | FIND_MONSTERS,
 };
 
 struct FindCreatures {
@@ -66,29 +63,29 @@ struct FindCreatures {
 // TCreature
 // =============================================================================
 enum : int {
-	LOSE_INVENTORY_NONE		= 0,
-	LOSE_INVENTORY_SOME		= 1,
-	LOSE_INVENTORY_ALL		= 2,
+	LOSE_INVENTORY_NONE = 0,
+	LOSE_INVENTORY_SOME = 1,
+	LOSE_INVENTORY_ALL = 2,
 };
 
 struct ToDoEntry {
 	ToDoType Code;
-	union{
-		struct{
+	union {
+		struct {
 			uint32 Time;
 		} Wait;
 
-		struct{
+		struct {
 			int x;
 			int y;
 			int z;
 		} Go;
 
-		struct{
+		struct {
 			int Direction;
 		} Rotate;
 
-		struct{
+		struct {
 			uint32 Obj;
 			int x;
 			int y;
@@ -96,35 +93,35 @@ struct ToDoEntry {
 			int Count;
 		} Move;
 
-		struct{
+		struct {
 			uint32 Obj;
 			uint32 Partner;
 		} Trade;
 
-		struct{
+		struct {
 			uint32 Obj1;
 			uint32 Obj2;
 			int Dummy;
 		} Use;
 
-		struct{
+		struct {
 			uint32 Obj;
 		} Turn;
 
-		struct{
+		struct {
 			uint32 Text;
 			int Mode;
 			uint32 Addressee;
 			bool CheckSpamming;
 		} Talk;
 
-		struct{
+		struct {
 			int NewState;
 		} ChangeState;
 	};
 };
 
-struct TCreature: SkillBase {
+struct TCreature : SkillBase {
 	// crmain.cc
 	TCreature(void);
 	void SetID(uint32 CharacterID);
@@ -160,13 +157,12 @@ struct TCreature: SkillBase {
 	void ToDoWaitUntil(uint32 Time);
 	void ToDoGo(int DestX, int DestY, int DestZ, bool MustReach, int MaxSteps);
 	void ToDoRotate(int Direction);
-	void ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum,
-				int DestX, int DestY, int DestZ, uint8 Count);
+	void ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum, int DestX, int DestY, int DestZ,
+				  uint8 Count);
 	void ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Count);
-	void ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum,
-				uint32 TradePartner);
-	void ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType Type1, uint8 RNum1,
-				uint8 Dummy, int ObjX2, int ObjY2, int ObjZ2, ObjectType Type2, uint8 RNum2);
+	void ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum, uint32 TradePartner);
+	void ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType Type1, uint8 RNum1, uint8 Dummy, int ObjX2,
+				 int ObjY2, int ObjZ2, ObjectType Type2, uint8 RNum2);
 	void ToDoUse(uint8 Count, Object Obj1, Object Obj2);
 	void ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum);
 	void ToDoAttack(void);
@@ -178,41 +174,39 @@ struct TCreature: SkillBase {
 	void NotifyDelete(void);
 	void NotifyChangeInventory(void);
 
-	void Kill(void){
+	void Kill(void) {
 		this->Skills[SKILL_HITPOINTS]->Set(0);
 		this->Death();
 	}
 
-	bool IsInvisible(void){
-		return this->Outfit == TOutfit::Invisible();
-	}
+	bool IsInvisible(void) { return this->Outfit == TOutfit::Invisible(); }
 
-	bool CanSeeFloor(int FloorZ){
-		if(this->posz <= 7){
+	bool CanSeeFloor(int FloorZ) {
+		if (this->posz <= 7) {
 			return FloorZ <= 7;
-		}else{
+		} else {
 			return std::abs(this->posz - FloorZ) <= 2;
 		}
 	}
 
 	// VIRTUAL FUNCTIONS
 	// =================
-	virtual ~TCreature(void);															// VTABLE[ 0]
+	virtual ~TCreature(void); // VTABLE[ 0]
 	// Duplicate destructor that also calls operator delete.							// VTABLE[ 1]
-	virtual void Death(void);															// VTABLE[ 2]
-	virtual bool MovePossible(int x, int y, int z, bool Execute, bool Jump);			// VTABLE[ 3]
-	virtual bool IsPeaceful(void);														// VTABLE[ 4]
-	virtual uint32 GetMaster(void);														// VTABLE[ 5]
-	virtual void TalkStimulus(uint32 SpeakerID, const char *Text);						// VTABLE[ 6]
-	virtual void DamageStimulus(uint32 AttackerID, int Damage, int DamageType);			// VTABLE[ 7]
-	virtual void IdleStimulus(void);													// VTABLE[ 8]
-	virtual void CreatureMoveStimulus(uint32 CreatureID, int Type);						// VTABLE[ 9]
-	virtual void AttackStimulus(uint32 AttackerID);										// VTABLE[10]
+	virtual void Death(void);                                                   // VTABLE[ 2]
+	virtual bool MovePossible(int x, int y, int z, bool Execute, bool Jump);    // VTABLE[ 3]
+	virtual bool IsPeaceful(void);                                              // VTABLE[ 4]
+	virtual uint32 GetMaster(void);                                             // VTABLE[ 5]
+	virtual void TalkStimulus(uint32 SpeakerID, const char *Text);              // VTABLE[ 6]
+	virtual void DamageStimulus(uint32 AttackerID, int Damage, int DamageType); // VTABLE[ 7]
+	virtual void IdleStimulus(void);                                            // VTABLE[ 8]
+	virtual void CreatureMoveStimulus(uint32 CreatureID, int Type);             // VTABLE[ 9]
+	virtual void AttackStimulus(uint32 AttackerID);                             // VTABLE[10]
 
 	// DATA
 	// =================
-	//void *VTABLE;					// IMPLICIT
-	//SkillBase super_TSkillBase;	// IMPLICIT
+	// void *VTABLE;					// IMPLICIT
+	// SkillBase super_TSkillBase;	// IMPLICIT
 	TCombat Combat;
 	uint32 ID;
 	TCreature *NextHashEntry;

@@ -3,7 +3,7 @@
 
 #include "creature/creature/creature.h"
 
-struct Nonplayer: TCreature {
+struct Nonplayer : TCreature {
 	Nonplayer(void);
 	~Nonplayer(void) override;
 	void SetInList(void);
@@ -11,7 +11,7 @@ struct Nonplayer: TCreature {
 
 	// DATA
 	// =================
-	//TCreature super_TCreature;	// IMPLICIT
+	// TCreature super_TCreature;	// IMPLICIT
 	STATE State;
 };
 

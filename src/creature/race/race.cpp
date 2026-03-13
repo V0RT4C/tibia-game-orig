@@ -1,5 +1,5 @@
-#include "cr.h"
 #include "config.h"
+#include "cr.h"
 #include "enums.h"
 #include "info.h"
 #include "writer.h"
@@ -8,12 +8,7 @@
 
 // Race
 // =============================================================================
-RaceData::RaceData(void) :
-		Skill(1, 5, 5),
-		Talk(1, 5, 5),
-		Item(1, 5, 5),
-		Spell(1, 5, 5)
-{
+RaceData::RaceData(void) : Skill(1, 5, 5), Talk(1, 5, 5), Item(1, 5, 5), Spell(1, 5, 5) {
 	this->Name[0] = 0;
 	this->Article[0] = 0;
 	this->Outfit = TOutfit{};
@@ -50,14 +45,14 @@ RaceData::RaceData(void) :
 	this->Spells = 0;
 }
 
-bool is_race_valid(int Race){
+bool is_race_valid(int Race) {
 	return Race >= 1 && Race < MAX_RACES;
 }
 
-int get_race_by_name(const char *RaceName){
+int get_race_by_name(const char *RaceName) {
 	int Result = 0;
-	for(int Race = 1; Race < MAX_RACES; Race += 1){
-		if(stricmp(RaceName, race_data[Race].Name) == 0){
+	for (int Race = 1; Race < MAX_RACES; Race += 1) {
+		if (stricmp(RaceName, race_data[Race].Name) == 0) {
 			Result = Race;
 			break;
 		}
@@ -65,8 +60,8 @@ int get_race_by_name(const char *RaceName){
 	return Result;
 }
 
-const char *get_race_name(int Race){
-	if(!is_race_valid(Race)){
+const char *get_race_name(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_name: Invalid race number %d.\n", Race);
 		return NULL;
 	}
@@ -74,8 +69,8 @@ const char *get_race_name(int Race){
 	return race_data[Race].Name;
 }
 
-TOutfit get_race_outfit(int Race){
-	if(!is_race_valid(Race)){
+TOutfit get_race_outfit(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_outfit: Invalid race number %d.\n", Race);
 		return race_data[1].Outfit;
 	}
@@ -83,8 +78,8 @@ TOutfit get_race_outfit(int Race){
 	return race_data[Race].Outfit;
 }
 
-bool get_race_no_summon(int Race){
-	if(!is_race_valid(Race)){
+bool get_race_no_summon(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_no_summon: Invalid race number %d.\n", Race);
 		return true;
 	}
@@ -92,8 +87,8 @@ bool get_race_no_summon(int Race){
 	return race_data[Race].NoSummon;
 }
 
-bool get_race_no_convince(int Race){
-	if(!is_race_valid(Race)){
+bool get_race_no_convince(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_no_convince: Invalid race number %d.\n", Race);
 		return true;
 	}
@@ -101,8 +96,8 @@ bool get_race_no_convince(int Race){
 	return race_data[Race].NoConvince;
 }
 
-bool get_race_no_illusion(int Race){
-	if(!is_race_valid(Race)){
+bool get_race_no_illusion(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_no_illusion: Invalid race number %d.\n", Race);
 		return true;
 	}
@@ -110,8 +105,8 @@ bool get_race_no_illusion(int Race){
 	return race_data[Race].NoIllusion;
 }
 
-bool get_race_no_paralyze(int Race){
-	if(!is_race_valid(Race)){
+bool get_race_no_paralyze(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_no_paralyze: Invalid race number %d.\n", Race);
 		return true;
 	}
@@ -119,8 +114,8 @@ bool get_race_no_paralyze(int Race){
 	return race_data[Race].NoParalyze;
 }
 
-int get_race_summon_cost(int Race){
-	if(!is_race_valid(Race)){
+int get_race_summon_cost(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_summon_cost: Invalid race number %d.\n", Race);
 		return 0;
 	}
@@ -128,8 +123,8 @@ int get_race_summon_cost(int Race){
 	return race_data[Race].SummonCost;
 }
 
-int get_race_poison(int Race){
-	if(!is_race_valid(Race)){
+int get_race_poison(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_poison: Invalid race number %d.\n", Race);
 		return 0;
 	}
@@ -137,8 +132,8 @@ int get_race_poison(int Race){
 	return race_data[Race].Poison;
 }
 
-bool get_race_unpushable(int Race){
-	if(!is_race_valid(Race)){
+bool get_race_unpushable(int Race) {
+	if (!is_race_valid(Race)) {
 		error("get_race_unpushable: Invalid race number %d.\n", Race);
 		return true;
 	}
@@ -147,14 +142,14 @@ bool get_race_unpushable(int Race){
 }
 
 // TODO(fusion): Probably move this somewhere else?
-TOutfit read_outfit(ReadScriptFile *Script){
+TOutfit read_outfit(ReadScriptFile *Script) {
 	TOutfit Outfit = {};
 	Script->read_symbol('(');
 	Outfit.OutfitID = Script->read_number();
 	Script->read_symbol(',');
-	if(Outfit.OutfitID == 0){
+	if (Outfit.OutfitID == 0) {
 		Outfit.ObjectType = Script->read_number();
-	}else{
+	} else {
 		memcpy(Outfit.Colors, Script->read_bytesequence(), sizeof(Outfit.Colors));
 	}
 	Script->read_symbol(')');
@@ -162,47 +157,47 @@ TOutfit read_outfit(ReadScriptFile *Script){
 }
 
 // TODO(fusion): Probably move this somewhere else?
-void write_outfit(WriteScriptFile *Script, TOutfit Outfit){
+void write_outfit(WriteScriptFile *Script, TOutfit Outfit) {
 	Script->write_text("(");
 	Script->write_number(Outfit.OutfitID);
 	Script->write_text(",");
-	if(Outfit.OutfitID == 0){
+	if (Outfit.OutfitID == 0) {
 		Script->write_number(Outfit.ObjectType);
-	}else{
+	} else {
 		Script->write_bytesequence(Outfit.Colors, sizeof(Outfit.Colors));
 	}
 	Script->write_text(")");
 }
 
-void load_race(const char *FileName){
+void load_race(const char *FileName) {
 	ReadScriptFile Script;
 
 	Script.open(FileName);
 
 	// NOTE(fusion): It seems we expect `RaceNumber` to be the first attribute
 	// declared in a race file.
-	if(strcmp(Script.read_identifier(), "racenumber") != 0){
+	if (strcmp(Script.read_identifier(), "racenumber") != 0) {
 		Script.error("race number expected");
 	}
 
 	Script.read_symbol('=');
 
 	int RaceNumber = Script.read_number();
-	if(!is_race_valid(RaceNumber)){
+	if (!is_race_valid(RaceNumber)) {
 		Script.error("illegal race number");
 	}
 
 	RaceData *Race = &race_data[RaceNumber];
-	if(Race->Name[0] != 0){
+	if (Race->Name[0] != 0) {
 		Script.error("race already defined");
 	}
 
 	Race->Outfit = TOutfit{};
 	Race->Outfit.OutfitID = RaceNumber;
 
-	while(true){
+	while (true) {
 		Script.next_token();
-		if(Script.Token == ENDOFFILE){
+		if (Script.Token == ENDOFFILE) {
 			Script.close();
 			break;
 		}
@@ -211,52 +206,52 @@ void load_race(const char *FileName){
 		strcpy(Identifier, Script.get_identifier());
 		Script.read_symbol('=');
 
-		if(strcmp(Identifier, "name") == 0){
+		if (strcmp(Identifier, "name") == 0) {
 			strcpy(Race->Name, Script.read_string());
-		}else if(strcmp(Identifier, "article") == 0){
+		} else if (strcmp(Identifier, "article") == 0) {
 			strcpy(Race->Article, Script.read_string());
-		}else if(strcmp(Identifier, "outfit") == 0){
+		} else if (strcmp(Identifier, "outfit") == 0) {
 			Race->Outfit = read_outfit(&Script);
-		}else if(strcmp(Identifier, "corpse") == 0){
+		} else if (strcmp(Identifier, "corpse") == 0) {
 			int CorpseTypeID = Script.read_number();
 			Race->MaleCorpse = CorpseTypeID;
 			Race->FemaleCorpse = CorpseTypeID;
-		}else if(strcmp(Identifier, "corpses") == 0){
+		} else if (strcmp(Identifier, "corpses") == 0) {
 			Race->MaleCorpse = Script.read_number();
 			Script.read_symbol(',');
 			Race->FemaleCorpse = Script.read_number();
-		}else if(strcmp(Identifier, "blood") == 0){
+		} else if (strcmp(Identifier, "blood") == 0) {
 			const char *Blood = Script.read_identifier();
-			if(strcmp(Blood, "blood") == 0){
+			if (strcmp(Blood, "blood") == 0) {
 				Race->Blood = BT_BLOOD;
-			}else if(strcmp(Blood, "slime") == 0){
+			} else if (strcmp(Blood, "slime") == 0) {
 				Race->Blood = BT_SLIME;
-			}else if(strcmp(Blood, "bones") == 0){
+			} else if (strcmp(Blood, "bones") == 0) {
 				Race->Blood = BT_BONES;
-			}else if(strcmp(Blood, "fire") == 0){
+			} else if (strcmp(Blood, "fire") == 0) {
 				Race->Blood = BT_FIRE;
-			}else if(strcmp(Blood, "energy") == 0){
+			} else if (strcmp(Blood, "energy") == 0) {
 				Race->Blood = BT_ENERGY;
-			}else{
+			} else {
 				Script.error("unknown blood type");
 			}
-		}else if(strcmp(Identifier, "experience") == 0){
+		} else if (strcmp(Identifier, "experience") == 0) {
 			Race->ExperiencePoints = Script.read_number();
-		}else if(strcmp(Identifier, "summoncost") == 0){
+		} else if (strcmp(Identifier, "summoncost") == 0) {
 			Race->SummonCost = Script.read_number();
-		}else if(strcmp(Identifier, "fleethreshold") == 0){
+		} else if (strcmp(Identifier, "fleethreshold") == 0) {
 			Race->FleeThreshold = Script.read_number();
-		}else if(strcmp(Identifier, "attack") == 0){
+		} else if (strcmp(Identifier, "attack") == 0) {
 			Race->Attack = Script.read_number();
-		}else if(strcmp(Identifier, "defend") == 0){
+		} else if (strcmp(Identifier, "defend") == 0) {
 			Race->Defend = Script.read_number();
-		}else if(strcmp(Identifier, "armor") == 0){
+		} else if (strcmp(Identifier, "armor") == 0) {
 			Race->Armor = Script.read_number();
-		}else if(strcmp(Identifier, "poison") == 0){
+		} else if (strcmp(Identifier, "poison") == 0) {
 			Race->Poison = Script.read_number();
-		}else if(strcmp(Identifier, "losetarget") == 0){
+		} else if (strcmp(Identifier, "losetarget") == 0) {
 			Race->LoseTarget = Script.read_number();
-		}else if(strcmp(Identifier, "strategy") == 0){
+		} else if (strcmp(Identifier, "strategy") == 0) {
 			Script.read_symbol('(');
 			Race->Strategy[0] = Script.read_number();
 			Script.read_symbol(',');
@@ -266,48 +261,48 @@ void load_race(const char *FileName){
 			Script.read_symbol(',');
 			Race->Strategy[3] = Script.read_number();
 			Script.read_symbol(')');
-		}else if(strcmp(Identifier, "flags") == 0){
+		} else if (strcmp(Identifier, "flags") == 0) {
 			Script.read_symbol('{');
-			do{
+			do {
 				const char *Flag = Script.read_identifier();
-				if(strcmp(Flag, "kickboxes") == 0){
+				if (strcmp(Flag, "kickboxes") == 0) {
 					Race->KickBoxes = true;
-				}else if(strcmp(Flag, "kickcreatures") == 0){
+				} else if (strcmp(Flag, "kickcreatures") == 0) {
 					Race->KickCreatures = true;
-				}else if(strcmp(Flag, "seeinvisible") == 0){
+				} else if (strcmp(Flag, "seeinvisible") == 0) {
 					Race->SeeInvisible = true;
-				}else if(strcmp(Flag, "unpushable") == 0){
+				} else if (strcmp(Flag, "unpushable") == 0) {
 					Race->Unpushable = true;
-				}else if(strcmp(Flag, "distancefighting") == 0){
+				} else if (strcmp(Flag, "distancefighting") == 0) {
 					Race->DistanceFighting = true;
-				}else if(strcmp(Flag, "nosummon") == 0){
+				} else if (strcmp(Flag, "nosummon") == 0) {
 					Race->NoSummon = true;
-				}else if(strcmp(Flag, "noconvince") == 0){
+				} else if (strcmp(Flag, "noconvince") == 0) {
 					Race->NoConvince = true;
-				}else if(strcmp(Flag, "noillusion") == 0){
+				} else if (strcmp(Flag, "noillusion") == 0) {
 					Race->NoIllusion = true;
-				}else if(strcmp(Flag, "noburning") == 0){
+				} else if (strcmp(Flag, "noburning") == 0) {
 					Race->NoBurning = true;
-				}else if(strcmp(Flag, "nopoison") == 0){
+				} else if (strcmp(Flag, "nopoison") == 0) {
 					Race->NoPoison = true;
-				}else if(strcmp(Flag, "noenergy") == 0){
+				} else if (strcmp(Flag, "noenergy") == 0) {
 					Race->NoEnergy = true;
-				}else if(strcmp(Flag, "nohit") == 0){
+				} else if (strcmp(Flag, "nohit") == 0) {
 					Race->NoHit = true;
-				}else if(strcmp(Flag, "nolifedrain") == 0){
+				} else if (strcmp(Flag, "nolifedrain") == 0) {
 					Race->NoLifeDrain = true;
-				}else if(strcmp(Flag, "noparalyze") == 0){
+				} else if (strcmp(Flag, "noparalyze") == 0) {
 					Race->NoParalyze = true;
-				}else{
+				} else {
 					Script.error("unknown flag");
 				}
-			}while(Script.read_special() != '}');
-		}else if(strcmp(Identifier, "skills") == 0){
+			} while (Script.read_special() != '}');
+		} else if (strcmp(Identifier, "skills") == 0) {
 			Script.read_symbol('{');
-			do{
+			do {
 				Script.read_symbol('(');
 				int SkillNr = get_skill_by_name(Script.read_identifier());
-				if(SkillNr == -1){
+				if (SkillNr == -1) {
 					Script.error("unknown skill name");
 				}
 
@@ -328,17 +323,17 @@ void load_race(const char *FileName){
 				Script.read_symbol(',');
 				SkillData->AddLevel = Script.read_number();
 				Script.read_symbol(')');
-			}while(Script.read_special() != '}');
-		}else if(strcmp(Identifier, "talk") == 0){
+			} while (Script.read_special() != '}');
+		} else if (strcmp(Identifier, "talk") == 0) {
 			Script.read_symbol('{');
-			do{
+			do {
 				// NOTE(fusion): Talks are indexed from 1.
 				Race->Talks += 1;
 				*Race->Talk.at(Race->Talks) = AddDynamicString(Script.read_string());
-			}while(Script.read_special() != '}');
-		}else if(strcmp(Identifier, "inventory") == 0){
+			} while (Script.read_special() != '}');
+		} else if (strcmp(Identifier, "inventory") == 0) {
 			Script.read_symbol('{');
-			do{
+			do {
 				// NOTE(fusion): Items are indexed from 1.
 				Race->Items += 1;
 				ItemData *ItemData = Race->Item.at(Race->Items);
@@ -349,10 +344,10 @@ void load_race(const char *FileName){
 				Script.read_symbol(',');
 				ItemData->Probability = Script.read_number();
 				Script.read_symbol(')');
-			}while(Script.read_special() != '}');
-		}else if(strcmp(Identifier, "spells") == 0){
+			} while (Script.read_special() != '}');
+		} else if (strcmp(Identifier, "spells") == 0) {
 			Script.read_symbol('{');
-			do{
+			do {
 				// NOTE(fusion): Spells are indexed from 1.
 				Race->Spells += 1;
 				SpellData *SpellData = Race->Spell.at(Race->Spells);
@@ -360,12 +355,12 @@ void load_race(const char *FileName){
 				// NOTE(fusion): Spell shape.
 				{
 					const char *SpellShape = Script.read_identifier();
-					if(strcmp(SpellShape, "actor") == 0){
+					if (strcmp(SpellShape, "actor") == 0) {
 						SpellData->Shape = SHAPE_ACTOR;
 						Script.read_symbol('(');
 						SpellData->ShapeParam1 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellShape, "victim") == 0){
+					} else if (strcmp(SpellShape, "victim") == 0) {
 						SpellData->Shape = SHAPE_VICTIM;
 						Script.read_symbol('(');
 						SpellData->ShapeParam1 = Script.read_number();
@@ -374,14 +369,14 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ShapeParam3 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellShape, "origin") == 0){
+					} else if (strcmp(SpellShape, "origin") == 0) {
 						SpellData->Shape = SHAPE_ORIGIN;
 						Script.read_symbol('(');
 						SpellData->ShapeParam1 = Script.read_number();
 						Script.read_symbol(',');
 						SpellData->ShapeParam2 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellShape, "destination") == 0){
+					} else if (strcmp(SpellShape, "destination") == 0) {
 						SpellData->Shape = SHAPE_DESTINATION;
 						Script.read_symbol('(');
 						SpellData->ShapeParam1 = Script.read_number();
@@ -392,7 +387,7 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ShapeParam4 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellShape, "angle") == 0){
+					} else if (strcmp(SpellShape, "angle") == 0) {
 						SpellData->Shape = SHAPE_ANGLE;
 						Script.read_symbol('(');
 						SpellData->ShapeParam1 = Script.read_number();
@@ -401,7 +396,7 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ShapeParam3 = Script.read_number();
 						Script.read_symbol(')');
-					}else{
+					} else {
 						Script.error("unknown spell shape");
 					}
 				}
@@ -411,7 +406,7 @@ void load_race(const char *FileName){
 				// NOTE(fusion): Spell impact.
 				{
 					const char *SpellImpact = Script.read_identifier();
-					if(strcmp(SpellImpact, "damage") == 0){
+					if (strcmp(SpellImpact, "damage") == 0) {
 						SpellData->Impact = IMPACT_DAMAGE;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
@@ -420,19 +415,19 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ImpactParam3 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "field") == 0){
+					} else if (strcmp(SpellImpact, "field") == 0) {
 						SpellData->Impact = IMPACT_FIELD;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "healing") == 0){
+					} else if (strcmp(SpellImpact, "healing") == 0) {
 						SpellData->Impact = IMPACT_HEALING;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
 						Script.read_symbol(',');
 						SpellData->ImpactParam2 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "speed") == 0){
+					} else if (strcmp(SpellImpact, "speed") == 0) {
 						SpellData->Impact = IMPACT_SPEED;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
@@ -441,7 +436,7 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ImpactParam3 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "drunken") == 0){
+					} else if (strcmp(SpellImpact, "drunken") == 0) {
 						SpellData->Impact = IMPACT_DRUNKEN;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
@@ -450,7 +445,7 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ImpactParam3 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "strength") == 0){
+					} else if (strcmp(SpellImpact, "strength") == 0) {
 						SpellData->Impact = IMPACT_STRENGTH;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
@@ -461,7 +456,7 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ImpactParam4 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "outfit") == 0){
+					} else if (strcmp(SpellImpact, "outfit") == 0) {
 						SpellData->Impact = IMPACT_OUTFIT;
 						Script.read_symbol('(');
 						TOutfit Outfit = read_outfit(&Script);
@@ -470,14 +465,14 @@ void load_race(const char *FileName){
 						Script.read_symbol(',');
 						SpellData->ImpactParam3 = Script.read_number();
 						Script.read_symbol(')');
-					}else if(strcmp(SpellImpact, "summon") == 0){
+					} else if (strcmp(SpellImpact, "summon") == 0) {
 						SpellData->Impact = IMPACT_SUMMON;
 						Script.read_symbol('(');
 						SpellData->ImpactParam1 = Script.read_number();
 						Script.read_symbol(',');
 						SpellData->ImpactParam2 = Script.read_number();
 						Script.read_symbol(')');
-					}else{
+					} else {
 						Script.error("unknown spell impact");
 					}
 				}
@@ -487,18 +482,18 @@ void load_race(const char *FileName){
 				// NOTE(fusion): Spell delay.
 				{
 					SpellData->Delay = Script.read_number();
-					if(SpellData->Delay == 0){
+					if (SpellData->Delay == 0) {
 						Script.error("zero spell delay");
 					}
 				}
-			}while(Script.read_special() != '}');
-		}else{
+			} while (Script.read_special() != '}');
+		} else {
 			Script.error("unknown race property");
 		}
 	}
 }
 
-void load_races(void){
+void load_races(void) {
 	// TODO(fusion): It is possible to leak `MonsterDir` if `load_race` throws on
 	// errors (which it does). This is usually not a problem because failing here
 	// means we're cascading back to `InitAll` which will report the error and
@@ -506,19 +501,19 @@ void load_races(void){
 	// exceptions with non-RAII resources.
 
 	DIR *MonsterDir = opendir(MONSTERPATH);
-	if(MonsterDir == NULL){
+	if (MonsterDir == NULL) {
 		error("load_races: Subdirectory %s not found\n", MONSTERPATH);
 		throw "Cannot load races";
 	}
 
 	char FileName[4096];
-	while(dirent *DirEntry = readdir(MonsterDir)){
-		if(DirEntry->d_type != DT_REG){
+	while (dirent *DirEntry = readdir(MonsterDir)) {
+		if (DirEntry->d_type != DT_REG) {
 			continue;
 		}
 
 		const char *FileExt = findLast(DirEntry->d_name, '.');
-		if(FileExt == NULL || strcmp(FileExt, ".mon") != 0){
+		if (FileExt == NULL || strcmp(FileExt, ".mon") != 0) {
 			continue;
 		}
 

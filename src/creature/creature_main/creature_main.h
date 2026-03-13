@@ -1,9 +1,9 @@
 #ifndef TIBIA_CREATURE_MAIN_H_
 #define TIBIA_CREATURE_MAIN_H_ 1
 
+#include "containers.h"
 #include "creature/creature/creature.h"
 #include "creature/race/race.h"
-#include "containers.h"
 
 // AttackWave
 // =============================================================================
@@ -47,8 +47,7 @@ void init_kill_statistics(void);
 void exit_kill_statistics(void);
 
 // Monster raids
-void load_monster_raid(const char *FileName, int Start,
-		bool *Type, int *Date, int *Interval, int *Duration);
+void load_monster_raid(const char *FileName, int Start, bool *Type, int *Date, int *Interval, int *Duration);
 void load_monster_raids(void);
 void process_monster_raids(void);
 
