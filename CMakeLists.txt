@@ -31,7 +31,7 @@ set(SOURCES
     src/game_data/houses/houses.cpp
     src/game_data/info/info.cpp
     src/game_data/magic/magic.cpp
-    src/main.cpp
+    src/main/main.cpp
     src/game_data/map/map.cpp
     src/game_data/moveuse/moveuse.cpp
     src/game_data/objects/objects.cpp
