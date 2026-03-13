@@ -226,3 +226,10 @@ target_include_directories(test_char_race PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAK
 target_compile_features(test_char_race PRIVATE cxx_std_17)
 target_compile_definitions(test_char_race PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_char_race COMMAND test_char_race)
+
+add_executable(test_tcp_transport test_tcp_transport.cpp
+    ${CMAKE_SOURCE_DIR}/src/network/transport/tcp_transport/tcp_transport.cpp)
+target_include_directories(test_tcp_transport PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_tcp_transport PRIVATE cxx_std_17)
+target_compile_definitions(test_tcp_transport PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_tcp_transport COMMAND test_tcp_transport)
