@@ -39,7 +39,7 @@ set(SOURCES
     src/query/query_client/query_client.cpp
     src/query/query_connection_pool/query_connection_pool.cpp
     src/game_data/reader/reader.cpp
-    src/receiving.cpp
+    src/protocol/receiving/receiving.cpp
     src/game_data/script/script.cpp
     src/protocol/sending/sending.cpp
     src/shm/shm.cpp

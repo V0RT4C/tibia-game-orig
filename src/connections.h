@@ -5,12 +5,7 @@
 #include "network/connection_pool/connection_pool.h"
 #include "protocol/protocol_enums.h"
 #include "protocol/sending/sending.h"
+#include "protocol/receiving/receiving.h"
 #include "map.h"
-
-// receiving.cc
-void ReceiveData(TConnection *Connection);
-void ReceiveData(void);
-void InitReceiving(void);
-void ExitReceiving(void);
 
 #endif // TIBIA_CONNECTIONS_H_
