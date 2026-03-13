@@ -27,7 +27,7 @@ set(SOURCES
     src/info.cpp
     src/magic.cpp
     src/main.cpp
-    src/map.cpp
+    src/game_data/map/map.cpp
     src/moveuse.cpp
     src/game_data/objects/objects.cpp
     src/operate.cpp
