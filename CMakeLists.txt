@@ -14,7 +14,7 @@ set(SOURCES
     src/logging/logging.cpp
     src/communication.cpp
     src/config/config.cpp
-    src/connections.cpp
+    src/network/connection_pool/connection_pool.cpp
     src/network/connection/connection.cpp
     src/creature/actions/actions.cpp
     src/creature/combat/combat.cpp

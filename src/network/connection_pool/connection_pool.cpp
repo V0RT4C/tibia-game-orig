@@ -1,19 +1,12 @@
+// src/network/connection_pool/connection_pool.cpp
+#include "network/connection_pool/connection_pool.h"
 #include "connections.h"
-#include "cr.h"
-#include "info.h"
-#include "threads.h"
-#include "writer.h"
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <signal.h>
+#include "threads/semaphore/semaphore.h"
 
 static Semaphore ConnectionMutex(1);
 static int ConnectionIterator;
 static TConnection Connections[MAX_CONNECTIONS];
 
-// Connection Utility
-// =============================================================================
 TConnection *AssignFreeConnection(void){
 	TConnection *Connection = NULL;
 	ConnectionMutex.down();

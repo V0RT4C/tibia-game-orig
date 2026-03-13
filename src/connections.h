@@ -2,21 +2,9 @@
 #define TIBIA_CONNECTIONS_H_ 1
 
 #include "network/connection/connection.h"
+#include "network/connection_pool/connection_pool.h"
 #include "protocol/protocol_enums.h"
 #include "map.h"
-
-// TODO(fusion): The maximum number of connections should probably be kept in
-// sync with the maximum number of communication threads, or maybe it is the
-// same constant.
-#define MAX_CONNECTIONS 1100
-
-// connections.cc
-TConnection *AssignFreeConnection(void);
-TConnection *GetFirstConnection(void);
-TConnection *GetNextConnection(void);
-void ProcessConnections(void);
-void InitConnections(void);
-void ExitConnections(void);
 
 // sending.cc
 void SendAll(void);
