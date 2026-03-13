@@ -22,7 +22,7 @@ set(SOURCES
     src/creature/monster/monster.cpp
     src/creature/npc/npc.cpp
     src/creature/nonplayer/nonplayer.cpp
-    src/crplayer.cpp
+    src/creature/player/player.cpp
     src/creature/skill/skill.cpp
     src/crypto/xtea/xtea.cpp
     src/crypto/rsa/rsa.cpp

@@ -204,3 +204,10 @@ target_include_directories(test_char_npc PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE
 target_compile_features(test_char_npc PRIVATE cxx_std_17)
 target_compile_definitions(test_char_npc PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 add_test(NAME test_char_npc COMMAND test_char_npc)
+
+add_executable(test_char_player test_char_player.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_char_player PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_char_player PRIVATE cxx_std_17)
+target_compile_definitions(test_char_player PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_char_player COMMAND test_char_player)
