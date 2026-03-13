@@ -3,3 +3,5 @@ bin
 build
 local
 *.log
+build_test
+build-test

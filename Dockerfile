@@ -1,7 +1,7 @@
 # Stage 1: Build
 FROM alpine:3.19 AS builder
 
-RUN apk add --no-cache build-base cmake openssl-dev linux-headers
+RUN apk add --no-cache build-base cmake openssl-dev linux-headers zlib-dev
 
 WORKDIR /src
 COPY gameserver/ gameserver/
@@ -15,7 +15,7 @@ RUN cd gameserver/build && ctest --output-on-failure
 # Stage 2: Runtime
 FROM alpine:3.19
 
-RUN apk add --no-cache libssl3 libstdc++ libgcc netcat-openbsd
+RUN apk add --no-cache libssl3 libstdc++ libgcc zlib netcat-openbsd
 
 WORKDIR /home/tibia
 
@@ -40,6 +40,6 @@ COPY core/dottibia_example /initial-data/.tibia
 COPY gameserver/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 7172
+EXPOSE 7172 7979
 
 ENTRYPOINT ["/entrypoint.sh"]
