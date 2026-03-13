@@ -170,21 +170,21 @@ static void SendOutfit(TConnection *Connection, TOutfit Outfit){
 }
 
 static void SendItem(TConnection *Connection, Object Obj){
-	ObjectType ObjType = Obj.getObjectType();
-	SendWord(Connection, (uint16)ObjType.getDisguise().TypeID);
+	ObjectType ObjType = Obj.get_object_type();
+	SendWord(Connection, (uint16)ObjType.get_disguise().TypeID);
 
-	if(ObjType.getFlag(LIQUIDCONTAINER)){
-		int LiquidType = (int)Obj.getAttribute(CONTAINERLIQUIDTYPE);
-		SendByte(Connection, GetLiquidColor(LiquidType));
+	if(ObjType.get_flag(LIQUIDCONTAINER)){
+		int LiquidType = (int)Obj.get_attribute(CONTAINERLIQUIDTYPE);
+		SendByte(Connection, get_liquid_color(LiquidType));
 	}
 
-	if(ObjType.getFlag(LIQUIDPOOL)){
-		int LiquidType = (int)Obj.getAttribute(POOLLIQUIDTYPE);
-		SendByte(Connection, GetLiquidColor(LiquidType));
+	if(ObjType.get_flag(LIQUIDPOOL)){
+		int LiquidType = (int)Obj.get_attribute(POOLLIQUIDTYPE);
+		SendByte(Connection, get_liquid_color(LiquidType));
 	}
 
-	if(ObjType.getFlag(CUMULATIVE)){
-		SendByte(Connection, (uint8)Obj.getAttribute(AMOUNT));
+	if(ObjType.get_flag(CUMULATIVE)){
+		SendByte(Connection, (uint8)Obj.get_attribute(AMOUNT));
 	}
 }
 
@@ -203,7 +203,7 @@ void SendMapObject(TConnection *Connection, Object Obj){
 		return;
 	}
 
-	if(!Obj.getObjectType().isCreatureContainer()){
+	if(!Obj.get_object_type().is_creature_container()){
 		SendItem(Connection, Obj);
 		return;
 	}
@@ -247,7 +247,7 @@ void SendMapObject(TConnection *Connection, Object Obj){
 		}
 
 		int Brightness, Color;
-		GetCreatureLight(Creature->ID, &Brightness, &Color);
+		get_creature_light(Creature->ID, &Brightness, &Color);
 
 		int PlayerkillingMark = SKULL_NONE;
 		int PartyMark = PARTY_SHIELD_NONE;
@@ -270,13 +270,13 @@ void SendMapObject(TConnection *Connection, Object Obj){
 }
 
 void SendMapPoint(TConnection *Connection, int x, int y, int z){
-	Object Obj = GetFirstObject(x, y, z);
+	Object Obj = get_first_object(x, y, z);
 	if(Obj != NONE){
 		SkipFlush(Connection);
 		int ObjCount = 0;
 		while(Obj != NONE && ObjCount < MAX_OBJECTS_PER_POINT){
 			SendMapObject(Connection, Obj);
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 			ObjCount += 1;
 		}
 	}
@@ -372,7 +372,7 @@ void SendInitGame(TConnection *Connection, uint32 CreatureID){
 	SendByte(Connection, SV_CMD_INIT_GAME);
 	SendQuad(Connection, CreatureID);
 	SendWord(Connection, (uint16)Beat);
-	SendByte(Connection, CheckRight(CreatureID, SEND_BUGREPORTS) ? 1 : 0);
+	SendByte(Connection, check_right(CreatureID, SEND_BUGREPORTS) ? 1 : 0);
 	FinishSendData(Connection);
 }
 
@@ -383,19 +383,19 @@ void SendRights(TConnection *Connection){
 
 	SendByte(Connection, SV_CMD_RIGHTS);
 
-	// NOTE(fusion): See `CheckBanishmentRight`.
+	// NOTE(fusion): See `check_banishment_right`.
 	bool Count = 0;
 	for(int Reason = 0; Reason <= 31; Reason += 1){
 		uint8 Actions = 0;
-		if(CheckRight(Connection->CharacterID, (RIGHT)(Reason + 18))){
+		if(check_right(Connection->CharacterID, (RIGHT)(Reason + 18))){
 			for(int Action = 0; Action <= 6; Action += 1){
-				if(CheckBanishmentRight(Connection->CharacterID, Reason, Action)){
+				if(check_banishment_right(Connection->CharacterID, Reason, Action)){
 					Actions |= (1 << Action);
 				}
 			}
 
 			if(Actions != 0){
-				if(CheckRight(Connection->CharacterID, IP_BANISHMENT)){
+				if(check_right(Connection->CharacterID, IP_BANISHMENT)){
 					Actions |= 0x80;
 				}
 				Count += 1;
@@ -425,7 +425,7 @@ void SendFullScreen(TConnection *Connection){
 	}
 
 	int PlayerX, PlayerY, PlayerZ;
-	Connection->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
+	Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
 	int MinX = PlayerX - Connection->TerminalOffsetX;
 	int MinY = PlayerY - Connection->TerminalOffsetY;
 	int MaxX = MinX + Connection->TerminalWidth - 1;
@@ -467,7 +467,7 @@ void SendRow(TConnection *Connection, int Direction){
 	}
 
 	int PlayerX, PlayerY, PlayerZ;
-	Connection->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
+	Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
 	int MinX = PlayerX - Connection->TerminalOffsetX;
 	int MinY = PlayerY - Connection->TerminalOffsetY;
 	int MaxX = MinX + Connection->TerminalWidth - 1;
@@ -521,7 +521,7 @@ void SendFloors(TConnection *Connection, bool Up){
 	}
 
 	int PlayerX, PlayerY, PlayerZ;
-	Connection->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
+	Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
 
 	// NOTE(fusion): `EndZ` is exclusive.
 	int StartZ = -1;
@@ -623,7 +623,7 @@ void SendChangeField(TConnection *Connection, int x, int y, int z, Object Obj){
 		return;
 	}
 
-	int ObjIndex = GetObjectRNum(Obj);
+	int ObjIndex = get_object_rnum(Obj);
 	if(ObjIndex < MAX_OBJECTS_PER_POINT){
 		SendByte(Connection, SV_CMD_CHANGE_FIELD);
 		SendWord(Connection, (uint16)x);
@@ -645,7 +645,7 @@ void SendDeleteField(TConnection *Connection, int x, int y, int z, Object Obj){
 		return;
 	}
 
-	int ObjIndex = GetObjectRNum(Obj);
+	int ObjIndex = get_object_rnum(Obj);
 	if(ObjIndex < MAX_OBJECTS_PER_POINT){
 		SendByte(Connection, SV_CMD_DELETE_FIELD);
 		SendWord(Connection, (uint16)x);
@@ -671,7 +671,7 @@ void SendMoveCreature(TConnection *Connection,
 	int OrigX = Creature->posx;
 	int OrigY = Creature->posy;
 	int OrigZ = Creature->posz;
-	int OrigIndex = GetObjectRNum(Creature->CrObject);
+	int OrigIndex = get_object_rnum(Creature->CrObject);
 	bool IsVisible = Connection->IsVisible(DestX, DestY, DestZ);
 	bool WasVisible = OrigIndex < MAX_OBJECTS_PER_POINT
 			&& Connection->IsVisible(OrigX, OrigY, OrigZ);
@@ -711,27 +711,27 @@ void SendContainer(TConnection *Connection, int ContainerNr){
 		return;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	bool HasUpContainer = (Con.getContainer() != NONE
-			&& !Con.getContainer().getObjectType().isBodyContainer());
+	ObjectType ConType = Con.get_object_type();
+	bool HasUpContainer = (Con.get_container() != NONE
+			&& !Con.get_container().get_object_type().is_body_container());
 
-	int ConObjects = CountObjectsInContainer(Con);
+	int ConObjects = count_objects_in_container(Con);
 	if(ConObjects > MAX_OBJECTS_PER_CONTAINER){
 		ConObjects = MAX_OBJECTS_PER_CONTAINER;
 	}
 
 	SendByte(Connection, SV_CMD_CONTAINER);
 	SendByte(Connection, (uint8)ContainerNr);
-	SendWord(Connection, (uint16)ConType.getDisguise().TypeID);
-	SendString(Connection, ConType.getName(-1));
-	SendByte(Connection, (uint8)ConType.getAttribute(CAPACITY));
+	SendWord(Connection, (uint16)ConType.get_disguise().TypeID);
+	SendString(Connection, ConType.get_name(-1));
+	SendByte(Connection, (uint8)ConType.get_attribute(CAPACITY));
 	SendByte(Connection, HasUpContainer ? 1 : 0);
 	SendByte(Connection, (uint8)ConObjects);
 
-	Object Obj = GetFirstContainerObject(Con);
+	Object Obj = get_first_container_object(Con);
 	while(Obj != NONE && ConObjects > 0){
 		SendItem(Connection, Obj);
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 		ConObjects -= 1;
 	}
 
@@ -769,7 +769,7 @@ void SendChangeInContainer(TConnection *Connection, int ContainerNr, Object Obj)
 		return;
 	}
 
-	int ObjIndex = GetObjectRNum(Obj);
+	int ObjIndex = get_object_rnum(Obj);
 	if(ObjIndex < MAX_OBJECTS_PER_CONTAINER){
 		SendByte(Connection, SV_CMD_CHANGE_IN_CONTAINER);
 		SendByte(Connection, (uint8)ContainerNr);
@@ -789,7 +789,7 @@ void SendDeleteInContainer(TConnection *Connection, int ContainerNr, Object Obj)
 		return;
 	}
 
-	int ObjIndex = GetObjectRNum(Obj);
+	int ObjIndex = get_object_rnum(Obj);
 	if(ObjIndex < MAX_OBJECTS_PER_CONTAINER){
 		SendByte(Connection, SV_CMD_DELETE_IN_CONTAINER);
 		SendByte(Connection, (uint8)ContainerNr);
@@ -802,7 +802,7 @@ void SendBodyInventory(TConnection *Connection, uint32 CreatureID){
 	for(int Position = INVENTORY_FIRST;
 			Position <= INVENTORY_LAST;
 			Position += 1){
-		Object Obj = GetBodyObject(CreatureID, Position);
+		Object Obj = get_body_object(CreatureID, Position);
 		if(Obj != NONE){
 			SendSetInventory(Connection, Position, Obj);
 		}
@@ -841,11 +841,11 @@ static void SendTradeObjects(TConnection *Connection, Object Obj){
 	}
 
 	SendItem(Connection, Obj);
-	if(Obj.getObjectType().getFlag(CONTAINER)){
-		Object Help = GetFirstContainerObject(Obj);
+	if(Obj.get_object_type().get_flag(CONTAINER)){
+		Object Help = get_first_container_object(Obj);
 		while(Help != NONE){
 			SendTradeObjects(Connection, Help);
-			Help = Help.getNextObject();
+			Help = Help.get_next_object();
 		}
 	}
 }
@@ -865,7 +865,7 @@ void SendTradeOffer(TConnection *Connection, const char *Name, bool OwnOffer, Ob
 		return;
 	}
 
-	int ObjCount = CountObjects(Obj);
+	int ObjCount = count_objects(Obj);
 	if(ObjCount > UINT8_MAX){
 		error("SendTradeOffer: Too many objects.\n");
 		return;
@@ -1000,7 +1000,7 @@ void SendCreatureLight(TConnection *Connection, uint32 CreatureID){
 	}
 
 	int Brightness, Color;
-	GetCreatureLight(CreatureID, &Brightness, &Color);
+	get_creature_light(CreatureID, &Brightness, &Color);
 
 	SendByte(Connection, SV_CMD_CREATURE_LIGHT);
 	SendQuad(Connection, CreatureID);
@@ -1087,33 +1087,33 @@ void SendEditText(TConnection *Connection, Object Obj){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	int TypeID = ObjType.getDisguise().TypeID;
+	ObjectType ObjType = Obj.get_object_type();
+	int TypeID = ObjType.get_disguise().TypeID;
 	int MaxLength = 0;
 	const char *Text = NULL;
 	const char *Editor = NULL;
 	char SpellbookBuffer[4096] = {};
-	if(ObjType.getFlag(WRITE) || ObjType.getFlag(WRITEONCE)){
-		MaxLength = (ObjType.getFlag(WRITE)
-				? (int)ObjType.getAttribute(MAXLENGTH)
-				: (int)ObjType.getAttribute(MAXLENGTHONCE));
+	if(ObjType.get_flag(WRITE) || ObjType.get_flag(WRITEONCE)){
+		MaxLength = (ObjType.get_flag(WRITE)
+				? (int)ObjType.get_attribute(MAXLENGTH)
+				: (int)ObjType.get_attribute(MAXLENGTHONCE));
 		MaxLength -= 1;
-		Text = GetDynamicString(Obj.getAttribute(TEXTSTRING));
-		Editor = GetDynamicString(Obj.getAttribute(EDITOR));
-	}else if(ObjType.getFlag(INFORMATION)
-			&& ObjType.getAttribute(INFORMATIONTYPE) == 4){ // INFORMATION_SPELLBOOK ?
+		Text = GetDynamicString(Obj.get_attribute(TEXTSTRING));
+		Editor = GetDynamicString(Obj.get_attribute(EDITOR));
+	}else if(ObjType.get_flag(INFORMATION)
+			&& ObjType.get_attribute(INFORMATIONTYPE) == 4){ // INFORMATION_SPELLBOOK ?
 		TPlayer *Player = Connection->GetPlayer();
 		if(Player == NULL){
 			error("SendEditText: No player belongs to this connection.\n");
 			return;
 		}
 
-		GetSpellbook(Player->ID, SpellbookBuffer);
+		get_spellbook(Player->ID, SpellbookBuffer);
 		Text = SpellbookBuffer;
 		MaxLength = strlen(Text);
 	}else{
-		Text = GetDynamicString(Obj.getAttribute(TEXTSTRING));
-		Editor = GetDynamicString(Obj.getAttribute(EDITOR));
+		Text = GetDynamicString(Obj.get_attribute(TEXTSTRING));
+		Editor = GetDynamicString(Obj.get_attribute(EDITOR));
 		if(Text != NULL){
 			MaxLength = strlen(Text);
 		}
@@ -1202,8 +1202,8 @@ void SendPlayerData(TConnection *Connection){
 	}
 
 	if(Player->Skills[SKILL_CARRY_STRENGTH] != NULL
-			&& !CheckRight(Player->ID, ZERO_CAPACITY)){
-		int InventoryWeight = GetInventoryWeight(Player->ID);
+			&& !check_right(Player->ID, ZERO_CAPACITY)){
+		int InventoryWeight = get_inventory_weight(Player->ID);
 		int MaxWeight = Player->Skills[SKILL_CARRY_STRENGTH]->Get() * 100;
 		Capacity = (MaxWeight - InventoryWeight) / 100;
 	}
@@ -1446,12 +1446,12 @@ void SendChannels(TConnection *Connection){
 		return;
 	}
 
-	int Channels = GetNumberOfChannels();
-	bool OwnChannel = MayOpenChannel(Player->ID);
+	int Channels = get_number_of_channels();
+	bool OwnChannel = may_open_channel(Player->ID);
 	int NumAvailable = 0;
 	bool *Available = (bool*)alloca(Channels * sizeof(bool));
 	for(int Channel = 0; Channel < Channels; Channel += 1){
-		Available[Channel] = ChannelAvailable(Channel, Player->ID);
+		Available[Channel] = channel_available(Channel, Player->ID);
 		if(Available[Channel]){
 			NumAvailable += 1;
 		}
@@ -1487,7 +1487,7 @@ void SendChannels(TConnection *Connection){
 
 		if(Available[Channel]){
 			SendWord(Connection, (uint16)Channel);
-			SendString(Connection, GetChannelName(Channel, Player->ID));
+			SendString(Connection, get_channel_name(Channel, Player->ID));
 			NumAvailable -= 1;
 		}
 	}
@@ -1505,7 +1505,7 @@ void SendOpenChannel(TConnection *Connection, int Channel){
 		return;
 	}
 
-	if(Channel < 0 || Channel >= GetNumberOfChannels()){
+	if(Channel < 0 || Channel >= get_number_of_channels()){
 		error("SendOpenChannel: Invalid channel %d.\n", Channel);
 		return;
 	}
@@ -1517,7 +1517,7 @@ void SendOpenChannel(TConnection *Connection, int Channel){
 
 	SendByte(Connection, SV_CMD_OPEN_CHANNEL);
 	SendWord(Connection, (uint16)Channel);
-	SendString(Connection, GetChannelName(Channel, Player->ID));
+	SendString(Connection, get_channel_name(Channel, Player->ID));
 	FinishSendData(Connection);
 }
 
@@ -1590,7 +1590,7 @@ void SendOpenOwnChannel(TConnection *Connection, int Channel){
 		return;
 	}
 
-	if(Channel < 0 || Channel >= GetNumberOfChannels()){
+	if(Channel < 0 || Channel >= get_number_of_channels()){
 		error("SendOpenOwnChannel: Invalid channel %d.\n", Channel);
 		return;
 	}
@@ -1602,7 +1602,7 @@ void SendOpenOwnChannel(TConnection *Connection, int Channel){
 
 	SendByte(Connection, SV_CMD_OPEN_OWN_CHANNEL);
 	SendWord(Connection, (uint16)Channel);
-	SendString(Connection, GetChannelName(Channel, Player->ID));
+	SendString(Connection, get_channel_name(Channel, Player->ID));
 	FinishSendData(Connection);
 }
 
@@ -1671,7 +1671,7 @@ void SendOutfit(TConnection *Connection){
 
 	uint16 FirstOutfit = (Player->Sex == 1) ? 128 : 136;
 	uint16 LastOutfit  = (Player->Sex == 1) ? 131 : 139;
-	if(CheckRight(Player->ID, PREMIUM_ACCOUNT)){
+	if(check_right(Player->ID, PREMIUM_ACCOUNT)){
 		LastOutfit += 3;
 	}
 
@@ -1743,7 +1743,7 @@ void CreateGamemasterRequest(const char *Name, const char *Text){
 	while(Connection != NULL){
 		if(Connection->Live()){
 			TPlayer *Player = Connection->GetPlayer();
-			if(Player != NULL && ChannelSubscribed(CHANNEL_RULEVIOLATIONS, Player->ID)){
+			if(Player != NULL && channel_subscribed(CHANNEL_RULEVIOLATIONS, Player->ID)){
 				SendTalk(Connection, 0, Name, TALK_GAMEMASTER_REQUEST, Text, 0);
 			}
 		}
@@ -1761,7 +1761,7 @@ void DeleteGamemasterRequest(const char *Name){
 	while(Connection != NULL){
 		if(Connection->Live()){
 			TPlayer *Player = Connection->GetPlayer();
-			if(Player != NULL && ChannelSubscribed(CHANNEL_RULEVIOLATIONS, Player->ID)){
+			if(Player != NULL && channel_subscribed(CHANNEL_RULEVIOLATIONS, Player->ID)){
 				SendDeleteRequest(Connection, Name);
 			}
 		}

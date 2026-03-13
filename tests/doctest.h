@@ -5060,7 +5060,7 @@ namespace {
 
             ~ScopedElement();
 
-            ScopedElement& writeText( std::string const& text, bool indent = true );
+            ScopedElement& write_text( std::string const& text, bool indent = true );
 
             template<typename T>
             ScopedElement& writeAttribute( std::string const& name, T const& attribute ) {
@@ -5101,7 +5101,7 @@ namespace {
             return writeAttribute( name, rss.str() );
         }
 
-        XmlWriter& writeText( std::string const& text, bool indent = true );
+        XmlWriter& write_text( std::string const& text, bool indent = true );
 
         //XmlWriter& writeComment( std::string const& text );
 
@@ -5296,8 +5296,8 @@ namespace {
             m_writer->endElement();
     }
 
-    XmlWriter::ScopedElement& XmlWriter::ScopedElement::writeText( std::string const& text, bool indent ) {
-        m_writer->writeText( text, indent );
+    XmlWriter::ScopedElement& XmlWriter::ScopedElement::write_text( std::string const& text, bool indent ) {
+        m_writer->write_text( text, indent );
         return *this;
     }
 
@@ -5359,7 +5359,7 @@ namespace {
         return *this;
     }
 
-    XmlWriter& XmlWriter::writeText( std::string const& text, bool indent ) {
+    XmlWriter& XmlWriter::write_text( std::string const& text, bool indent ) {
         if( !text.empty() ){
             bool tagWasOpen = m_tagIsOpen;
             ensureTagClosed();
@@ -5432,7 +5432,7 @@ namespace {
                 std::stringstream ss;
                 for(int i = 0; i < num_contexts; ++i) {
                     contexts[i]->stringify(&ss);
-                    xml.scopedElement("Info").writeText(ss.str());
+                    xml.scopedElement("Info").write_text(ss.str());
                     ss.str("");
                 }
             }
@@ -5581,7 +5581,7 @@ namespace {
 
             xml.scopedElement("Exception")
                     .writeAttribute("crash", e.is_crash)
-                    .writeText(e.error_string.c_str());
+                    .write_text(e.error_string.c_str());
         }
 
         void subcase_start(const SubcaseSignature& in) override {
@@ -5606,17 +5606,17 @@ namespace {
                     .writeAttribute("filename", skipPathFromFilename(rb.m_file))
                     .writeAttribute("line", line(rb.m_line));
 
-            xml.scopedElement("Original").writeText(rb.m_expr);
+            xml.scopedElement("Original").write_text(rb.m_expr);
 
             if(rb.m_threw)
-                xml.scopedElement("Exception").writeText(rb.m_exception.c_str());
+                xml.scopedElement("Exception").write_text(rb.m_exception.c_str());
 
             if(rb.m_at & assertType::is_throws_as)
-                xml.scopedElement("ExpectedException").writeText(rb.m_exception_type);
+                xml.scopedElement("ExpectedException").write_text(rb.m_exception_type);
             if(rb.m_at & assertType::is_throws_with)
-                xml.scopedElement("ExpectedExceptionString").writeText(rb.m_exception_string.c_str());
+                xml.scopedElement("ExpectedExceptionString").write_text(rb.m_exception_string.c_str());
             if((rb.m_at & assertType::is_normal) && !rb.m_threw)
-                xml.scopedElement("Expanded").writeText(rb.m_decomp.c_str());
+                xml.scopedElement("Expanded").write_text(rb.m_decomp.c_str());
 
             log_contexts();
 
@@ -5631,7 +5631,7 @@ namespace {
                     .writeAttribute("filename", skipPathFromFilename(mb.m_file))
                     .writeAttribute("line", line(mb.m_line));
 
-            xml.scopedElement("Text").writeText(mb.m_string.c_str());
+            xml.scopedElement("Text").write_text(mb.m_string.c_str());
 
             log_contexts();
 
@@ -5845,13 +5845,13 @@ namespace {
                     xml.scopedElement("failure")
                         .writeAttribute("message", failure.message)
                         .writeAttribute("type", failure.type)
-                        .writeText(failure.details, false);
+                        .write_text(failure.details, false);
                 }
 
                 for(const auto& error : testCase.errors) {
                     xml.scopedElement("error")
                         .writeAttribute("message", error.message)
-                        .writeText(error.details);
+                        .write_text(error.details);
                 }
 
                 xml.endElement();

@@ -26,9 +26,9 @@ uint32 TReadStream::readQuad(void){
 			| ((uint32)Byte1 << 8) | (uint32)Byte0;
 }
 
-void TReadStream::readString(char *Buffer, int MaxLength){
+void TReadStream::read_string(char *Buffer, int MaxLength){
 	if(Buffer == NULL || MaxLength == 0){
-		error("TReadStream::readString: Provided buffer does not exist.\n");
+		error("TReadStream::read_string: Provided buffer does not exist.\n");
 		throw "internal error";
 	}
 

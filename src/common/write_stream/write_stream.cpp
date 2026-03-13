@@ -22,7 +22,7 @@ void TWriteStream::writeQuad(uint32 Quad){
 	this->writeByte((uint8)(Quad >> 24));
 }
 
-void TWriteStream::writeString(const char *String){
+void TWriteStream::write_string(const char *String){
 	if(String == NULL){
 		this->writeWord(0);
 		return;

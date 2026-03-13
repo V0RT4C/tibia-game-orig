@@ -22,11 +22,11 @@ TEST_CASE("TReadBuffer: readQuad little-endian") {
     CHECK(buf.readQuad() == 0x12345678);
 }
 
-TEST_CASE("TReadBuffer: readString") {
+TEST_CASE("TReadBuffer: read_string") {
     uint8 data[] = {0x05, 0x00, 'h', 'e', 'l', 'l', 'o'};
     TReadBuffer buf(data, 7);
     char str[32];
-    buf.readString(str, sizeof(str));
+    buf.read_string(str, sizeof(str));
     CHECK(strcmp(str, "hello") == 0);
 }
 

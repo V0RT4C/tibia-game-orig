@@ -6,13 +6,13 @@
 
 static ThreadHandle ReaderThread;
 
-static TReaderThreadOrder OrderBuffer[200];
+static ReaderThreadOrder OrderBuffer[200];
 static int OrderPointerWrite;
 static int OrderPointerRead;
 static Semaphore OrderBufferEmpty(NARRAY(OrderBuffer));
 static Semaphore OrderBufferFull(0);
 
-static TReaderThreadReply ReplyBuffer[200];
+static ReaderThreadReply ReplyBuffer[200];
 static int ReplyPointerWrite;
 static int ReplyPointerRead;
 
@@ -20,18 +20,18 @@ static TDynamicWriteBuffer HelpBuffer(kb(64));
 
 // Reader Orders
 // =============================================================================
-void InitReaderBuffers(void){
+void init_reader_buffers(void){
 	OrderPointerWrite = 0;
 	OrderPointerRead = 0;
 	ReplyPointerWrite = 0;
 	ReplyPointerRead = 0;
 }
 
-void InsertOrder(TReaderThreadOrderType OrderType,
+void insert_order(ReaderThreadOrderType OrderType,
 		int SectorX, int SectorY, int SectorZ, uint32 CharacterID){
 	int Orders = (OrderPointerWrite - OrderPointerRead);
 	if(Orders >= NARRAY(OrderBuffer)){
-		error("InsertOrder (Reader): Order buffer is full => needs resizing.\n");
+		error("insert_order (Reader): Order buffer is full => needs resizing.\n");
 	}
 
 	OrderBufferEmpty.down();
@@ -45,26 +45,26 @@ void InsertOrder(TReaderThreadOrderType OrderType,
 	OrderBufferFull.up();
 }
 
-void GetOrder(TReaderThreadOrder *Order){
+void get_order(ReaderThreadOrder *Order){
 	OrderBufferFull.down();
 	*Order = OrderBuffer[OrderPointerRead % NARRAY(OrderBuffer)];
 	OrderPointerRead += 1;
 	OrderBufferEmpty.up();
 }
 
-void TerminateReaderOrder(void){
-	InsertOrder(READER_ORDER_TERMINATE, 0, 0, 0, 0);
+void terminate_reader_order(void){
+	insert_order(READER_ORDER_TERMINATE, 0, 0, 0, 0);
 }
 
-void LoadSectorOrder(int SectorX, int SectorY, int SectorZ){
-	InsertOrder(READER_ORDER_LOADSECTOR, SectorX, SectorY, SectorZ, 0);
+void load_sector_order(int SectorX, int SectorY, int SectorZ){
+	insert_order(READER_ORDER_LOADSECTOR, SectorX, SectorY, SectorZ, 0);
 }
 
-void LoadCharacterOrder(uint32 CharacterID){
-	InsertOrder(READER_ORDER_LOADCHARACTER, 0, 0, 0, CharacterID);
+void load_character_order(uint32 CharacterID){
+	insert_order(READER_ORDER_LOADCHARACTER, 0, 0, 0, CharacterID);
 }
 
-void ProcessLoadSectorOrder(int SectorX, int SectorY, int SectorZ){
+void process_load_sector_order(int SectorX, int SectorY, int SectorZ){
 	// TODO(fusion): We parsed sector files way too many times now. And there
 	// is also a drop in loader quality.
 	char FileName[4096];
@@ -79,42 +79,42 @@ void ProcessLoadSectorOrder(int SectorX, int SectorY, int SectorZ){
 	bool Refreshable = false;
 	HelpBuffer.Position = 0;
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 	while(true){
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token == ENDOFFILE){
 			Script.close();
 			break;
 		}
 
-		if(Script.Token == SPECIAL && Script.getSpecial() == ','){
+		if(Script.Token == SPECIAL && Script.get_special() == ','){
 			continue;
 		}
 
 		if(Script.Token == BYTES){
-			uint8 *Offset = Script.getBytesequence();
+			uint8 *Offset = Script.get_bytesequence();
 			OffsetX = (int)Offset[0];
 			OffsetY = (int)Offset[1];
 			Refreshable = false;
-			Script.readSymbol(':');
+			Script.read_symbol(':');
 		}else if(Script.Token == IDENTIFIER){
 			if(OffsetX == -1 || OffsetY == -1){
 				Script.error("coordinate expected");
 			}
 
-			const char *Identifier = Script.getIdentifier();
+			const char *Identifier = Script.get_identifier();
 			if(strcmp(Identifier, "refresh") == 0){
 				Refreshable = true;
 			}else if(strcmp(Identifier, "content") == 0){
-				Script.readSymbol('=');
+				Script.read_symbol('=');
 
 				if(Refreshable){
 					HelpBuffer.writeByte((uint8)OffsetX);
 					HelpBuffer.writeByte((uint8)OffsetY);
 				}
 
-				LoadObjects(&Script, &HelpBuffer, !Refreshable);
+				load_objects(&Script, &HelpBuffer, !Refreshable);
 			}
 		}
 	}
@@ -123,15 +123,15 @@ void ProcessLoadSectorOrder(int SectorX, int SectorY, int SectorZ){
 	if(Size > 0){
 		uint8 *Data = new uint8[Size];
 		memcpy(Data, HelpBuffer.Data, Size);
-		SectorReply(SectorX, SectorY, SectorZ, Data, Size);
+		sector_reply(SectorX, SectorY, SectorZ, Data, Size);
 	}
 }
 
-void ProcessLoadCharacterOrder(uint32 CharacterID){
+void process_load_character_order(uint32 CharacterID){
 	while(true){
 		TPlayerData *Slot = AssignPlayerPoolSlot(CharacterID, true);
 		if(Slot == NULL){
-			error("ProcessLoadCharacterOrder: Cannot assign a slot for player data.\n");
+			error("process_load_character_order: Cannot assign a slot for player data.\n");
 			break;
 		}
 
@@ -142,7 +142,7 @@ void ProcessLoadCharacterOrder(uint32 CharacterID){
 		if(Slot->Locked == gettid()){
 			IncreasePlayerPoolSlotSticky(Slot);
 			ReleasePlayerPoolSlot(Slot);
-			CharacterReply(CharacterID);
+			character_reply(CharacterID);
 			break;
 		}
 
@@ -150,27 +150,27 @@ void ProcessLoadCharacterOrder(uint32 CharacterID){
 	}
 }
 
-int ReaderThreadLoop(void *Unused){
-	TReaderThreadOrder Order = {};
+int reader_thread_loop(void *Unused){
+	ReaderThreadOrder Order = {};
 	while(true){
-		GetOrder(&Order);
+		get_order(&Order);
 		if(Order.OrderType == READER_ORDER_TERMINATE){
 			break;
 		}
 
 		switch(Order.OrderType){
 			case READER_ORDER_LOADSECTOR:{
-				ProcessLoadSectorOrder(Order.SectorX, Order.SectorY, Order.SectorZ);
+				process_load_sector_order(Order.SectorX, Order.SectorY, Order.SectorZ);
 				break;
 			}
 
 			case READER_ORDER_LOADCHARACTER:{
-				ProcessLoadCharacterOrder(Order.CharacterID);
+				process_load_character_order(Order.CharacterID);
 				break;
 			}
 
 			default:{
-				error("ReaderThreadLoop: Unknown command %d.\n", Order.OrderType);
+				error("reader_thread_loop: Unknown command %d.\n", Order.OrderType);
 				break;
 			}
 		}
@@ -181,11 +181,11 @@ int ReaderThreadLoop(void *Unused){
 
 // Reader Replies
 // =============================================================================
-void InsertReply(TReaderThreadReplyType ReplyType,
+void insert_reply(ReaderThreadReplyType ReplyType,
 		int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size){
 	int Replies = (ReplyPointerWrite - ReplyPointerRead);
 	while(Replies > NARRAY(ReplyBuffer)){
-		error("InsertReply (Reader): Buffer is full; waiting...\n");
+		error("insert_reply (Reader): Buffer is full; waiting...\n");
 		DelayThread(5, 0);
 	}
 
@@ -199,7 +199,7 @@ void InsertReply(TReaderThreadReplyType ReplyType,
 	ReplyPointerWrite += 1;
 }
 
-bool GetReply(TReaderThreadReply *Reply){
+bool get_reply(ReaderThreadReply *Reply){
 	bool Result = (ReplyPointerRead < ReplyPointerWrite);
 	if(Result){
 		*Reply = ReplyBuffer[ReplyPointerRead % NARRAY(ReplyBuffer)];
@@ -208,50 +208,50 @@ bool GetReply(TReaderThreadReply *Reply){
 	return Result;
 }
 
-void SectorReply(int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size){
-	InsertReply(READER_REPLY_SECTORDATA, SectorX, SectorY, SectorZ, Data, Size);
+void sector_reply(int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size){
+	insert_reply(READER_REPLY_SECTORDATA, SectorX, SectorY, SectorZ, Data, Size);
 }
 
-void CharacterReply(uint32 CharacterID){
-	InsertReply(READER_REPLY_CHARACTERDATA, 0, 0, 0, NULL, (int)CharacterID);
+void character_reply(uint32 CharacterID){
+	insert_reply(READER_REPLY_CHARACTERDATA, 0, 0, 0, NULL, (int)CharacterID);
 }
 
-void ProcessSectorReply(TRefreshSectorFunction *RefreshSector,
+void process_sector_reply(RefreshSectorFunction *refresh_sector,
 		int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size){
-	RefreshSector(SectorX, SectorY, SectorZ, Data, Size);
+	refresh_sector(SectorX, SectorY, SectorZ, Data, Size);
 	delete[] Data;
 }
 
-void ProcessCharacterReply(TSendMailsFunction *SendMails, uint32 CharacterID){
+void process_character_reply(SendMailsFunction *send_mails, uint32 CharacterID){
 	TPlayerData *Slot = AttachPlayerPoolSlot(CharacterID, true);
 	if(Slot == NULL){
 		DecreasePlayerPoolSlotSticky(Slot);
 		return;
 	}
 
-	SendMails(Slot);
+	send_mails(Slot);
 	DecreasePlayerPoolSlotSticky(Slot);
 	ReleasePlayerPoolSlot(Slot);
 }
 
-void ProcessReaderThreadReplies(TRefreshSectorFunction *RefreshSector, TSendMailsFunction *SendMails){
-	TReaderThreadReply Reply = {};
-	while(GetReply(&Reply)){
+void process_reader_thread_replies(RefreshSectorFunction *refresh_sector, SendMailsFunction *send_mails){
+	ReaderThreadReply Reply = {};
+	while(get_reply(&Reply)){
 		switch(Reply.ReplyType){
 			case READER_REPLY_SECTORDATA:{
-				ProcessSectorReply(RefreshSector,
+				process_sector_reply(refresh_sector,
 						Reply.SectorX, Reply.SectorY, Reply.SectorZ,
 						Reply.Data, Reply.Size);
 				break;
 			}
 
 			case READER_REPLY_CHARACTERDATA:{
-				ProcessCharacterReply(SendMails, (uint32)Reply.Size);
+				process_character_reply(send_mails, (uint32)Reply.Size);
 				break;
 			}
 
 			default:{
-				error("ProcessReaderThreadReplies: Unknown reply type %d.\n", Reply.ReplyType);
+				error("process_reader_thread_replies: Unknown reply type %d.\n", Reply.ReplyType);
 				break;
 			}
 		}
@@ -260,17 +260,17 @@ void ProcessReaderThreadReplies(TRefreshSectorFunction *RefreshSector, TSendMail
 
 // Initialization
 // =============================================================================
-void InitReader(void){
-	InitReaderBuffers();
-	ReaderThread = StartThread(ReaderThreadLoop, NULL, false);
+void init_reader(void){
+	init_reader_buffers();
+	ReaderThread = StartThread(reader_thread_loop, NULL, false);
 	if(ReaderThread == INVALID_THREAD_HANDLE){
 		throw "cannot start reader thread";
 	}
 }
 
-void ExitReader(void){
+void exit_reader(void){
 	if(ReaderThread != INVALID_THREAD_HANDLE){
-		TerminateReaderOrder();
+		terminate_reader_order();
 		JoinThread(ReaderThread);
 		ReaderThread = INVALID_THREAD_HANDLE;
 	}

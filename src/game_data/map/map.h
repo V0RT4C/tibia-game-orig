@@ -34,15 +34,15 @@ struct Object {
 	constexpr explicit Object(uint32 ObjectID): ObjectID(ObjectID) {}
 
 	bool exists(void);
-	ObjectType getObjectType(void);
-	void setObjectType(ObjectType Type);
-	Object getNextObject(void);
-	void setNextObject(Object NextObject);
-	Object getContainer(void);
-	void setContainer(Object Con);
-	uint32 getCreatureID(void);
-	uint32 getAttribute(INSTANCEATTRIBUTE Attribute);
-	void setAttribute(INSTANCEATTRIBUTE Attribute, uint32 Value);
+	ObjectType get_object_type(void);
+	void set_object_type(ObjectType Type);
+	Object get_next_object(void);
+	void set_next_object(Object NextObject);
+	Object get_container(void);
+	void set_container(Object Con);
+	uint32 get_creature_id(void);
+	uint32 get_attribute(INSTANCEATTRIBUTE Attribute);
+	void set_attribute(INSTANCEATTRIBUTE Attribute, uint32 Value);
 
 	constexpr bool operator==(const Object &Other) const {
 		return this->ObjectID == Other.ObjectID;
@@ -59,7 +59,7 @@ struct Object {
 
 constexpr Object NONE;
 
-struct TObject {
+struct MapObject {
 	uint32 ObjectID;
 	Object NextObject;
 	Object Container;
@@ -67,30 +67,30 @@ struct TObject {
 	uint32 Attributes[4];
 };
 
-struct TObjectBlock {
-	TObject Object[32768];
+struct ObjectBlock {
+	MapObject Object[32768];
 };
 
-struct TSector {
+struct Sector {
 	Object MapCon[32][32];
 	uint32 TimeStamp;
 	uint8 Status;
 	uint8 MapFlags;
 };
 
-struct TDepotInfo {
+struct DepotInfo {
 	char Town[20];
 	int Size;
 };
 
-struct TMark {
+struct Mark {
 	char Name[20];
 	int x;
 	int y;
 	int z;
 };
 
-struct TCronEntry {
+struct CronEntry {
 	Object Obj;
 	uint32 RoundNr;
 	int Previous;
@@ -113,67 +113,67 @@ extern int VeteranStartPositionY;
 extern int VeteranStartPositionZ;
 
 // NOTE(fusion): Cron management functions. Most for internal use.
-Object CronCheck(void);
-void CronExpire(Object Obj, int Delay);
-void CronChange(Object Obj, int NewDelay);
-uint32 CronInfo(Object Obj, bool Delete);
-uint32 CronStop(Object Obj);
+Object cron_check(void);
+void cron_expire(Object Obj, int Delay);
+void cron_change(Object Obj, int NewDelay);
+uint32 cron_info(Object Obj, bool delete_op);
+uint32 cron_stop(Object Obj);
 
 // NOTE(fusion): Map management functions. Most for internal use.
-void SwapObject(TWriteBinaryFile *File, Object Obj, uintptr FileNumber);
-void SwapSector(void);
-void UnswapSector(uintptr FileNumber);
-void DeleteSwappedSectors(void);
-void LoadObjects(TReadScriptFile *Script, TWriteStream *Stream, bool Skip);
-void LoadObjects(TReadStream *Stream, Object Con);
-void InitSector(int SectorX, int SectorY, int SectorZ);
-void LoadSector(const char *FileName, int SectorX, int SectorY, int SectorZ);
-void LoadMap(void);
-void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop);
-void SaveObjects(TReadStream *Stream, TWriteScriptFile *Script);
-void SaveSector(char *FileName, int SectorX, int SectorY, int SectorZ);
-void SaveMap(void);
-void RefreshSector(int SectorX, int SectorY, int SectorZ, TReadStream *Stream);
-void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
-		TReadScriptFile *Script, bool SaveHouses);
-void InitMap(void);
-void ExitMap(bool Save);
+void swap_object(TWriteBinaryFile *File, Object Obj, uintptr FileNumber);
+void swap_sector(void);
+void unswap_sector(uintptr FileNumber);
+void delete_swapped_sectors(void);
+void load_objects(ReadScriptFile *Script, TWriteStream *Stream, bool Skip);
+void load_objects(TReadStream *Stream, Object Con);
+void init_sector(int SectorX, int SectorY, int SectorZ);
+void load_sector(const char *FileName, int SectorX, int SectorY, int SectorZ);
+void load_map(void);
+void save_objects(Object Obj, TWriteStream *Stream, bool Stop);
+void save_objects(TReadStream *Stream, WriteScriptFile *Script);
+void save_sector(char *FileName, int SectorX, int SectorY, int SectorZ);
+void save_map(void);
+void refresh_sector(int SectorX, int SectorY, int SectorZ, TReadStream *Stream);
+void patch_sector(int SectorX, int SectorY, int SectorZ, bool FullSector,
+		ReadScriptFile *Script, bool SaveHouses);
+void init_map(void);
+void exit_map(bool Save);
 
 // NOTE(fusion): Object related functions.
-TObject *AccessObject(Object Obj);
-Object CreateObject(void);
-void DeleteObject(Object Obj);
-void ChangeObject(Object Obj, ObjectType NewType);
-void ChangeObject(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value);
-int GetObjectPriority(Object Obj);
-void PlaceObject(Object Obj, Object Con, bool Append);
-void CutObject(Object Obj);
-void MoveObject(Object Obj, Object Con);
-Object AppendObject(Object Con, ObjectType Type);
-Object SetObject(Object Con, ObjectType Type, uint32 CreatureID);
-Object CopyObject(Object Con, Object Source);
-Object SplitObject(Object Obj, int Count);
-void MergeObjects(Object Obj, Object Dest);
-Object GetFirstContainerObject(Object Con);
-Object GetContainerObject(Object Con, int Index);
-Object GetMapContainer(int x, int y, int z);
-Object GetMapContainer(Object Obj);
-Object GetFirstObject(int x, int y, int z);
-Object GetFirstSpecObject(int x, int y, int z, ObjectType Type);
-uint8 GetMapContainerFlags(Object Obj);
-void GetObjectCoordinates(Object Obj, int *x, int *y, int *z);
-bool CoordinateFlag(int x, int y, int z, FLAG Flag);
-bool IsOnMap(int x, int y, int z);
-bool IsPremiumArea(int x, int y, int z);
-bool IsNoLogoutField(int x, int y, int z);
-bool IsProtectionZone(int x, int y, int z);
-bool IsHouse(int x, int y, int z);
-uint16 GetHouseID(int x, int y, int z);
-void SetHouseID(int x, int y, int z, uint16 ID);
-int GetDepotNumber(const char *Town);
-const char *GetDepotName(int DepotNumber);
-int GetDepotSize(int DepotNumber, bool PremiumAccount);
-bool GetMarkPosition(const char *Name, int *x, int *y, int *z);
-void GetStartPosition(int *x, int *y, int *z, bool Newbie);
+MapObject *access_object(Object Obj);
+Object create_object(void);
+void delete_object(Object Obj);
+void change_object(Object Obj, ObjectType NewType);
+void change_object(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value);
+int get_object_priority(Object Obj);
+void place_object(Object Obj, Object Con, bool Append);
+void cut_object(Object Obj);
+void move_object(Object Obj, Object Con);
+Object append_object(Object Con, ObjectType Type);
+Object set_object(Object Con, ObjectType Type, uint32 CreatureID);
+Object copy_object(Object Con, Object Source);
+Object split_object(Object Obj, int Count);
+void merge_objects(Object Obj, Object Dest);
+Object get_first_container_object(Object Con);
+Object get_container_object(Object Con, int Index);
+Object get_map_container(int x, int y, int z);
+Object get_map_container(Object Obj);
+Object get_first_object(int x, int y, int z);
+Object get_first_spec_object(int x, int y, int z, ObjectType Type);
+uint8 get_map_container_flags(Object Obj);
+void get_object_coordinates(Object Obj, int *x, int *y, int *z);
+bool coordinate_flag(int x, int y, int z, FLAG Flag);
+bool is_on_map(int x, int y, int z);
+bool is_premium_area(int x, int y, int z);
+bool is_no_logout_field(int x, int y, int z);
+bool is_protection_zone(int x, int y, int z);
+bool is_house(int x, int y, int z);
+uint16 get_house_id(int x, int y, int z);
+void set_house_id(int x, int y, int z, uint16 ID);
+int get_depot_number(const char *Town);
+const char *get_depot_name(int DepotNumber);
+int get_depot_size(int DepotNumber, bool PremiumAccount);
+bool get_mark_position(const char *Name, int *x, int *y, int *z);
+void get_start_position(int *x, int *y, int *z, bool Newbie);
 
 #endif //TIBIA_MAP_H_

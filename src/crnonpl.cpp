@@ -272,28 +272,28 @@ void TBehaviour::operator=(const TBehaviour &Other){
 }
 
 
-TBehaviourDatabase::TBehaviourDatabase(TReadScriptFile *Script) :
+TBehaviourDatabase::TBehaviourDatabase(ReadScriptFile *Script) :
 		Behaviour(0, 50, 25)
 {
 	this->Behaviours = 0;
-	Script->readSymbol('{');
-	Script->nextToken();
-	while(Script->Token != SPECIAL || Script->getSpecial() != '}'){
+	Script->read_symbol('{');
+	Script->next_token();
+	while(Script->Token != SPECIAL || Script->get_special() != '}'){
 		TBehaviour *Behaviour = this->Behaviour.at(this->Behaviours);
 
 		// NOTE(fusion): Optional conditions.
-		if(Script->Token != SPECIAL || Script->getSpecial() != 'I'){
+		if(Script->Token != SPECIAL || Script->get_special() != 'I'){
 			while(true){
 				bool Ok = false;
 				if(Script->Token == STRING){
-					Ok = Behaviour->addCondition(BEHAVIOUR_CONDITION_TEXT, Script->getString());
+					Ok = Behaviour->addCondition(BEHAVIOUR_CONDITION_TEXT, Script->get_string());
 				}else if(Script->Token == IDENTIFIER){
-					Ok = Behaviour->addCondition(BEHAVIOUR_CONDITION_PROPERTY, Script->getIdentifier());
+					Ok = Behaviour->addCondition(BEHAVIOUR_CONDITION_PROPERTY, Script->get_identifier());
 				}else if(Script->Token == SPECIAL){
-					if(Script->getSpecial() == '!'){
+					if(Script->get_special() == '!'){
 						Ok = Behaviour->addCondition(BEHAVIOUR_CONDITION_SHORTCIRCUIT, NULL);
-					}else if(Script->getSpecial() == '%'){
-						int Parameter = Script->readNumber();
+					}else if(Script->get_special() == '%'){
+						int Parameter = Script->read_number();
 						if(Parameter != 1 && Parameter != 2){
 							Script->error("illegal ordinal number");
 						}
@@ -308,7 +308,7 @@ TBehaviourDatabase::TBehaviourDatabase(TReadScriptFile *Script) :
 					}
 
 					int Operator = BEHAVIOUR_NODE_NONE;
-					switch(Script->getSpecial()){
+					switch(Script->get_special()){
 						case '<': Operator = BEHAVIOUR_NODE_CMP_LT; break;
 						case '>': Operator = BEHAVIOUR_NODE_CMP_GT; break;
 						case '=': Operator = BEHAVIOUR_NODE_CMP_EQ; break;
@@ -321,36 +321,36 @@ TBehaviourDatabase::TBehaviourDatabase(TReadScriptFile *Script) :
 						}
 					}
 
-					Script->nextToken();
+					Script->next_token();
 					TBehaviourNode *Right = this->readTerm(Script);
 					Behaviour->addCondition(BEHAVIOUR_CONDITION_EXPRESSION,
 							NewBehaviourNode(Operator, Left, Right));
 				}else{
-					Script->nextToken();
+					Script->next_token();
 				}
 
-				if(Script->Token == SPECIAL && Script->getSpecial() == ','){
-					Script->nextToken();
+				if(Script->Token == SPECIAL && Script->get_special() == ','){
+					Script->next_token();
 				}else{
 					break;
 				}
 			}
 		}
 
-		if(Script->Token != SPECIAL || Script->getSpecial() != 'I'){
+		if(Script->Token != SPECIAL || Script->get_special() != 'I'){
 			Script->error("'->' expected");
 		}
 
 		// NOTE(fusion): Required Actions.
-		Script->nextToken();
+		Script->next_token();
 		while(true){
 			if(Script->Token == STRING){
-				Behaviour->addAction(BEHAVIOUR_ACTION_REPLY, Script->getString(), NULL, NULL, NULL);
-				Script->nextToken();
+				Behaviour->addAction(BEHAVIOUR_ACTION_REPLY, Script->get_string(), NULL, NULL, NULL);
+				Script->next_token();
 			}else if(Script->Token == IDENTIFIER){
 				int Type = -1;
 				int Data = 0;
-				const char *Identifier = Script->getIdentifier();
+				const char *Identifier = Script->get_identifier();
 				if(strcmp(Identifier, "topic") == 0){
 					Type = BEHAVIOUR_ACTION_SET_VARIABLE;
 					Data = 1; // BEHAVIOUR_VARIABLE_TOPIC ?
@@ -424,74 +424,74 @@ TBehaviourDatabase::TBehaviourDatabase(TReadScriptFile *Script) :
 
 				switch(Type){
 					case BEHAVIOUR_ACTION_NONE:{
-						Script->nextToken();
+						Script->next_token();
 						break;
 					}
 
 					case BEHAVIOUR_ACTION_SET_VARIABLE:
 					case BEHAVIOUR_ACTION_SET_SKILL:{
-						Script->readSymbol('=');
-						Script->nextToken();
+						Script->read_symbol('=');
+						Script->next_token();
 						TBehaviourNode *Value = this->readTerm(Script);
 						Behaviour->addAction(Type, &Data, Value, NULL, NULL);
 						break;
 					}
 
 					case BEHAVIOUR_ACTION_FUNCTION1:{
-						Script->readSymbol('(');
-						Script->nextToken();
+						Script->read_symbol('(');
+						Script->next_token();
 						TBehaviourNode *Param = this->readTerm(Script);
-						if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+						if(Script->Token != SPECIAL || Script->get_special() != ')'){
 							Script->error(") expected");
 						}
-						Script->nextToken();
+						Script->next_token();
 						Behaviour->addAction(Type, &Data, Param, NULL, NULL);
 						break;
 					}
 
 					case BEHAVIOUR_ACTION_FUNCTION2:
 					case BEHAVIOUR_ACTION_SET_SKILL_TIMER:{
-						Script->readSymbol('(');
-						Script->nextToken();
+						Script->read_symbol('(');
+						Script->next_token();
 						TBehaviourNode *Param1 = this->readTerm(Script);
-						if(Script->Token != SPECIAL || Script->getSpecial() != ','){
+						if(Script->Token != SPECIAL || Script->get_special() != ','){
 							Script->error(", expected");
 						}
-						Script->nextToken();
+						Script->next_token();
 						TBehaviourNode *Param2 = this->readTerm(Script);
-						if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+						if(Script->Token != SPECIAL || Script->get_special() != ')'){
 							Script->error(") expected");
 						}
-						Script->nextToken();
+						Script->next_token();
 						Behaviour->addAction(Type, &Data, Param1, Param2, NULL);
 						break;
 					}
 
 					case BEHAVIOUR_ACTION_FUNCTION0:
 					case BEHAVIOUR_ACTION_CHANGESTATE:{
-						Script->nextToken();
+						Script->next_token();
 						Behaviour->addAction(Type, &Data, NULL, NULL, NULL);
 						break;
 					}
 
 					case BEHAVIOUR_ACTION_FUNCTION3:{
-						Script->readSymbol('(');
-						Script->nextToken();
+						Script->read_symbol('(');
+						Script->next_token();
 						TBehaviourNode *Param1 = this->readTerm(Script);
-						if(Script->Token != SPECIAL || Script->getSpecial() != ','){
+						if(Script->Token != SPECIAL || Script->get_special() != ','){
 							Script->error(", expected");
 						}
-						Script->nextToken();
+						Script->next_token();
 						TBehaviourNode *Param2 = this->readTerm(Script);
-						if(Script->Token != SPECIAL || Script->getSpecial() != ','){
+						if(Script->Token != SPECIAL || Script->get_special() != ','){
 							Script->error(", expected");
 						}
-						Script->nextToken();
+						Script->next_token();
 						TBehaviourNode *Param3 = this->readTerm(Script);
-						if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+						if(Script->Token != SPECIAL || Script->get_special() != ')'){
 							Script->error(") expected");
 						}
-						Script->nextToken();
+						Script->next_token();
 						Behaviour->addAction(Type, &Data, Param1, Param2, Param3);
 						break;
 					}
@@ -502,18 +502,18 @@ TBehaviourDatabase::TBehaviourDatabase(TReadScriptFile *Script) :
 					}
 				}
 
-			}else if(Script->Token == SPECIAL && Script->getSpecial() == '*'){
+			}else if(Script->Token == SPECIAL && Script->get_special() == '*'){
 				if(this->Behaviours == 0){
 					Script->error("no previous pattern");
 				}
-				Script->nextToken();
+				Script->next_token();
 				Behaviour->addAction(BEHAVIOUR_ACTION_REPEAT, NULL, NULL, NULL, NULL);
 			}else{
 				Script->error("illegal action");
 			}
 
-			if(Script->Token == SPECIAL && Script->getSpecial() == ','){
-				Script->nextToken();
+			if(Script->Token == SPECIAL && Script->get_special() == ','){
+				Script->next_token();
 			}else{
 				break;
 			}
@@ -523,12 +523,12 @@ TBehaviourDatabase::TBehaviourDatabase(TReadScriptFile *Script) :
 	}
 }
 
-TBehaviourNode *TBehaviourDatabase::readValue(TReadScriptFile *Script){
+TBehaviourNode *TBehaviourDatabase::readValue(ReadScriptFile *Script){
 	TBehaviourNode *Node = NULL;
 	if(Script->Token == NUMBER){
-		Node = NewBehaviourNode(BEHAVIOUR_NODE_NUMBER, Script->getNumber());
+		Node = NewBehaviourNode(BEHAVIOUR_NODE_NUMBER, Script->get_number());
 	}else if(Script->Token == IDENTIFIER){
-		const char *Identifier = Script->getIdentifier();
+		const char *Identifier = Script->get_identifier();
 		if(strcmp(Identifier, "topic") == 0){
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_TOPIC, 0);
 		}else if(strcmp(Identifier, "price") == 0){
@@ -546,10 +546,10 @@ TBehaviourNode *TBehaviourDatabase::readValue(TReadScriptFile *Script){
 		}else if(strcmp(Identifier, "burning") == 0){
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_SKILL, SKILL_BURNING);
 		}else if(strcmp(Identifier, "count") == 0){
-			Script->readSymbol('(');
-			Script->nextToken();
+			Script->read_symbol('(');
+			Script->next_token();
 			TBehaviourNode *Left = this->readTerm(Script);
-			if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
 
@@ -561,54 +561,54 @@ TBehaviourNode *TBehaviourDatabase::readValue(TReadScriptFile *Script){
 		}else if(strcmp(Identifier, "data") == 0){
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_DATA, 0);
 		}else if(strcmp(Identifier, "spellknown") == 0){
-			Script->readSymbol('(');
-			Script->nextToken();
+			Script->read_symbol('(');
+			Script->next_token();
 			TBehaviourNode *Left = this->readTerm(Script);
-			if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
 
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_SPELLKNOWN, Left, NULL);
 		}else if(strcmp(Identifier, "spelllevel") == 0){
-			Script->readSymbol('(');
-			Script->nextToken();
+			Script->read_symbol('(');
+			Script->next_token();
 			TBehaviourNode *Left = this->readTerm(Script);
-			if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
 
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_SPELLLEVEL, Left, NULL);
 		}else if(strcmp(Identifier, "random") == 0){
-			Script->readSymbol('(');
+			Script->read_symbol('(');
 
-			Script->nextToken();
+			Script->next_token();
 			TBehaviourNode *Left = this->readTerm(Script);
-			if(Script->Token != SPECIAL || Script->getSpecial() != ','){
+			if(Script->Token != SPECIAL || Script->get_special() != ','){
 				Script->error(", expected");
 			}
 
-			Script->nextToken();
+			Script->next_token();
 			TBehaviourNode *Right = this->readTerm(Script);
-			if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
 
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_RANDOM, Left, Right);
 		}else if(strcmp(Identifier, "questvalue") == 0){
-			Script->readSymbol('(');
-			Script->nextToken();
+			Script->read_symbol('(');
+			Script->next_token();
 			TBehaviourNode *Left = this->readTerm(Script);
-			if(Script->Token != SPECIAL || Script->getSpecial() != ')'){
+			if(Script->Token != SPECIAL || Script->get_special() != ')'){
 				Script->error(") expected");
 			}
 
 			Node = NewBehaviourNode(BEHAVIOUR_NODE_QUESTVALUE, Left, NULL);
 		}
 	}else if(Script->Token == SPECIAL){
-		if(Script->getSpecial() != '%'){
+		if(Script->get_special() != '%'){
 			Script->error("illegal character");
 		}
-		Node = NewBehaviourNode(BEHAVIOUR_NODE_PARAMETER, Script->readNumber());
+		Node = NewBehaviourNode(BEHAVIOUR_NODE_PARAMETER, Script->read_number());
 	}else{
 		Script->error("illegal value");
 	}
@@ -617,32 +617,32 @@ TBehaviourNode *TBehaviourDatabase::readValue(TReadScriptFile *Script){
 		Script->error("unknown value");
 	}
 
-	Script->nextToken();
+	Script->next_token();
 	return Node;
 }
 
-TBehaviourNode *TBehaviourDatabase::readFactor(TReadScriptFile *Script){
+TBehaviourNode *TBehaviourDatabase::readFactor(ReadScriptFile *Script){
 	TBehaviourNode *Node = this->readValue(Script);
-	while(Script->Token == SPECIAL && Script->getSpecial() == '*'){
-		Script->nextToken();
+	while(Script->Token == SPECIAL && Script->get_special() == '*'){
+		Script->next_token();
 		Node = NewBehaviourNode(BEHAVIOUR_NODE_MUL, Node, this->readValue(Script));
 	}
 	return Node;
 }
 
-TBehaviourNode *TBehaviourDatabase::readTerm(TReadScriptFile *Script){
+TBehaviourNode *TBehaviourDatabase::readTerm(ReadScriptFile *Script){
 	TBehaviourNode *Node = this->readFactor(Script);
 	while(Script->Token == SPECIAL){
 		int Type = BEHAVIOUR_NODE_NONE;
-		if(Script->getSpecial() == '+'){
+		if(Script->get_special() == '+'){
 			Type = BEHAVIOUR_NODE_ADD;
-		}else if(Script->getSpecial() == '-'){
+		}else if(Script->get_special() == '-'){
 			Type = BEHAVIOUR_NODE_SUB;
 		}else{
 			break;
 		}
 
-		Script->nextToken();
+		Script->next_token();
 		Node = NewBehaviourNode(Type, Node, this->readFactor(Script));
 	}
 	return Node;
@@ -784,12 +784,12 @@ int TBehaviourDatabase::evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameter
 
 		case BEHAVIOUR_NODE_COUNT:{
 			int TypeID = this->evaluate(Npc, Node->Left, Parameters);
-			Result = CountInventoryObjects(InterlocutorID, TypeID, Npc->Data);
+			Result = count_inventory_objects(InterlocutorID, TypeID, Npc->Data);
 			break;
 		}
 
 		case BEHAVIOUR_NODE_COUNTMONEY:{
-			Result = CountInventoryMoney(InterlocutorID);
+			Result = count_inventory_money(InterlocutorID);
 			break;
 		}
 
@@ -811,7 +811,7 @@ int TBehaviourDatabase::evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameter
 
 		case BEHAVIOUR_NODE_SPELLLEVEL:{
 			int SpellNr = this->evaluate(Npc, Node->Left, Parameters);
-			Result = GetSpellLevel(SpellNr);
+			Result = get_spell_level(SpellNr);
 			break;
 		}
 
@@ -874,7 +874,7 @@ static bool CheckBehaviourProperty(int Property, SITUATION Situation, TPlayer *I
 			Result = (Interlocutor->GetEffectiveProfession() == PROFESSION_DRUID);
 			break;
 		case BEHAVIOUR_PROPERTY_PREMIUM:
-			Result = CheckRight(Interlocutor->ID, PREMIUM_ACCOUNT);
+			Result = check_right(Interlocutor->ID, PREMIUM_ACCOUNT);
 			break;
 		case BEHAVIOUR_PROPERTY_PROMOTED:
 			Result = Interlocutor->GetActivePromotion();
@@ -1166,8 +1166,8 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 					int FunctionNr = Action->Number;
 					int Param = this->evaluate(Npc, Action->Expression, Parameters);
 					switch(FunctionNr){
-						case 1: GraphicalEffect(Npc->CrObject, Param); break;
-						case 2: GraphicalEffect(Interlocutor->CrObject, Param); break;
+						case 1: graphical_effect(Npc->CrObject, Param); break;
+						case 2: graphical_effect(Interlocutor->CrObject, Param); break;
 						case 3: Interlocutor->SetProfession(Param); break;
 						case 4: Interlocutor->LearnSpell(Param); break;
 						case 5: CreateMonster(Param, Npc->posx, Npc->posy, Npc->posz, 0, 0, true); break;
@@ -1250,8 +1250,8 @@ void TBehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation)
 							print(3, "NPC teleports interlocutor to [%d,%d,%d].\n",
 									Param1, Param2, Param3);
 							try{
-								Object Dest = GetMapContainer(Param1, Param2, Param3);
-								Move(0, Interlocutor->CrObject, Dest, -1, false, NONE);
+								Object Dest = get_map_container(Param1, Param2, Param3);
+								move(0, Interlocutor->CrObject, Dest, -1, false, NONE);
 							}catch(RESULT r){
 								error("TBehaviourDatabase::react (10): Exception %d.\n", r);
 							}
@@ -1325,12 +1325,12 @@ void LoadMonsterhomes(void){
 	char FileName[4096];
 	snprintf(FileName, sizeof(FileName), "%s/monster.db", DATAPATH);
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 
 	Monsterhomes = 0;
 	while(true){
-		int Race = Script.readNumber();
+		int Race = Script.read_number();
 		if(Race == 0){
 			break;
 		}
@@ -1338,16 +1338,16 @@ void LoadMonsterhomes(void){
 		Monsterhomes += 1;
 		TMonsterhome *MH = Monsterhome.at(Monsterhomes);
 		MH->Race = Race;
-		MH->x = Script.readNumber();
-		MH->y = Script.readNumber();
-		MH->z = Script.readNumber();
-		MH->Radius = Script.readNumber();
-		MH->MaxMonsters = Script.readNumber();
+		MH->x = Script.read_number();
+		MH->y = Script.read_number();
+		MH->z = Script.read_number();
+		MH->Radius = Script.read_number();
+		MH->MaxMonsters = Script.read_number();
 		MH->ActMonsters = 0;
-		MH->RegenerationTime = Script.readNumber();
+		MH->RegenerationTime = Script.read_number();
 		MH->Timer = 0;
 
-		if(!IsOnMap(MH->x, MH->y, MH->z)){
+		if(!is_on_map(MH->x, MH->y, MH->z)){
 			print(1, "WARNING: Monsterhome [%d,%d,%d] is outside the map.\n", MH->x, MH->y, MH->z);
 		}
 	}
@@ -1372,12 +1372,12 @@ void LoadMonsterhomes(void){
 					SpawnRadius = 10;
 				}
 
-				// NOTE(fusion): `SearchSpawnField` performs an extended search
+				// NOTE(fusion): `search_spawn_field` performs an extended search
 				// if the radius is negative.
 				SpawnRadius = -SpawnRadius;
 			}
 
-			if(SearchSpawnField(&SpawnX, &SpawnY, &SpawnZ, SpawnRadius, false)){
+			if(search_spawn_field(&SpawnX, &SpawnY, &SpawnZ, SpawnRadius, false)){
 				CreateMonster(MH->Race, SpawnX, SpawnY, SpawnZ, i, 0, false);
 				MH->ActMonsters += 1;
 			}
@@ -1447,12 +1447,12 @@ void ProcessMonsterhomes(void){
 					SpawnRadius = 1;
 				}
 			}else{
-				// NOTE(fusion): `SearchSpawnField` performs an extended search
+				// NOTE(fusion): `search_spawn_field` performs an extended search
 				// if the radius is negative.
 				SpawnRadius = -SpawnRadius;
 			}
 
-			if(SearchSpawnField(&SpawnX, &SpawnY, &SpawnZ, SpawnRadius, false)){
+			if(search_spawn_field(&SpawnX, &SpawnY, &SpawnZ, SpawnRadius, false)){
 				CreateMonster(MH->Race, SpawnX, SpawnY, SpawnZ, i, 0, false);
 				MH->ActMonsters += 1;
 
@@ -1562,10 +1562,10 @@ TNPC::TNPC(const char *FileName) :
 	this->QueueLength = 0;
 	this->Behaviour = NULL;
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 	while(true){
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token == ENDOFFILE){
 			Script.close();
 			break;
@@ -1576,13 +1576,13 @@ TNPC::TNPC(const char *FileName) :
 		}
 
 		char Identifier[MAX_IDENT_LENGTH];
-		strcpy(Identifier, Script.getIdentifier());
-		Script.readSymbol('=');
+		strcpy(Identifier, Script.get_identifier());
+		Script.read_symbol('=');
 
 		if(strcmp(Identifier, "name") == 0){
-			strcpy(this->Name, Script.readString());
+			strcpy(this->Name, Script.read_string());
 		}else if(strcmp(Identifier, "sex") == 0){
-			const char *Sex = Script.readIdentifier();
+			const char *Sex = Script.read_identifier();
 			if(strcmp(Sex, "male") == 0){
 				this->Sex = 1;
 			}else if(strcmp(Sex, "female") == 0){
@@ -1591,23 +1591,23 @@ TNPC::TNPC(const char *FileName) :
 				Script.error("unknown constant");
 			}
 		}else if(strcmp(Identifier, "race") == 0){
-			this->Race = Script.readNumber();
+			this->Race = Script.read_number();
 			this->SetSkills(this->Race);
 		}else if(strcmp(Identifier, "outfit") == 0){
 			this->OrgOutfit = ReadOutfit(&Script);
 			this->Outfit = this->OrgOutfit;
 		}else if(strcmp(Identifier, "home") == 0){
-			Script.readCoordinate(&this->startx, &this->starty, &this->startz);
+			Script.read_coordinate(&this->startx, &this->starty, &this->startz);
 			this->posx = this->startx;
 			this->posy = this->starty;
 			this->posz = this->startz;
 		}else if(strcmp(Identifier, "radius") == 0){
-			this->Radius = Script.readNumber();
+			this->Radius = Script.read_number();
 		}else if(strcmp(Identifier, "gostrength") == 0){
 			if(this->Race == 0){
 				Script.error("gostrength before race in npc-script-file");
 			}
-			int GoStrength = Script.readNumber();
+			int GoStrength = Script.read_number();
 			this->Skills[SKILL_GO_STRENGTH]->Act = GoStrength;
 			this->Skills[SKILL_GO_STRENGTH]->Max = GoStrength;
 		}else if(strcmp(Identifier, "behaviour") == 0){
@@ -1632,7 +1632,7 @@ TNPC::TNPC(const char *FileName) :
 		throw "no behaviour database specified for NPC";
 	}
 
-	if(!IsOnMap(this->posx, this->posy, this->posz)){
+	if(!is_on_map(this->posx, this->posy, this->posz)){
 		print(1, "WARNING: NPC '%s' is outside the map.\n", this->Name);
 		return;
 	}
@@ -1652,13 +1652,13 @@ TNPC::~TNPC(void){
 }
 
 bool TNPC::MovePossible(int x, int y, int z, bool Execute, bool Jump){
-	return CoordinateFlag(x, y, z, BANK)
-		&& !CoordinateFlag(x, y, z, UNPASS)
-		&& !CoordinateFlag(x, y, z, AVOID)
+	return coordinate_flag(x, y, z, BANK)
+		&& !coordinate_flag(x, y, z, UNPASS)
+		&& !coordinate_flag(x, y, z, AVOID)
 		&& z == this->startz
 		&& std::abs(x - this->startx) <= this->Radius
 		&& std::abs(y - this->starty) <= this->Radius
-		&& !IsHouse(x, y, z);
+		&& !is_house(x, y, z);
 }
 
 void TNPC::TalkStimulus(uint32 SpeakerID, const char *Text){
@@ -1846,23 +1846,23 @@ void TNPC::GiveTo(ObjectType Type, int Amount){
 		return;
 	}
 
-	if(Type.isMapContainer() || Type.getName(1) == NULL){
+	if(Type.is_map_container() || Type.get_name(1) == NULL){
 		error("TNPC::GiveTo: %s wants to create objects of type %d.\n",
 				this->Name, Type.TypeID);
 		return;
 	}
 
-	Log("npc", "%s -> %u: %d %s\n", this->Name, this->Interlocutor, Amount, Type.getName(1));
+	log_message("npc", "%s -> %u: %d %s\n", this->Name, this->Interlocutor, Amount, Type.get_name(1));
 
-	if(Type.getFlag(CUMULATIVE)){
+	if(Type.get_flag(CUMULATIVE)){
 		while(Amount > 0){
 			int StackAmount = std::min<int>(Amount, 100);
-			CreateAtCreature(this->Interlocutor, Type, StackAmount);
+			create_at_creature(this->Interlocutor, Type, StackAmount);
 			Amount -= StackAmount;
 		}
 	}else{
 		while(Amount > 0){
-			CreateAtCreature(this->Interlocutor, Type, this->Data);
+			create_at_creature(this->Interlocutor, Type, this->Data);
 			Amount -= 1;
 		}
 	}
@@ -1870,8 +1870,8 @@ void TNPC::GiveTo(ObjectType Type, int Amount){
 
 void TNPC::GetFrom(ObjectType Type, int Amount){
 	if(Amount > 0){
-		Log("npc", "%s <- %u: %d %s\n", this->Name, this->Interlocutor, Amount, Type.getName(1));
-		DeleteAtCreature(this->Interlocutor, Type, Amount, this->Data);
+		log_message("npc", "%s <- %u: %d %s\n", this->Name, this->Interlocutor, Amount, Type.get_name(1));
+		delete_at_creature(this->Interlocutor, Type, Amount, this->Data);
 	}
 }
 
@@ -1879,32 +1879,32 @@ void TNPC::GiveMoney(int Amount){
 	int Crystal  = (Amount / 10000);
 	int Platinum = (Amount % 10000) / 100;
 	int Gold     = (Amount % 10000) % 100;
-	this->GiveTo(GetSpecialObject(MONEY_TENTHOUSAND), Crystal);
-	this->GiveTo(GetSpecialObject(MONEY_HUNDRED), Platinum);
-	this->GiveTo(GetSpecialObject(MONEY_ONE), Gold);
+	this->GiveTo(get_special_object(MONEY_TENTHOUSAND), Crystal);
+	this->GiveTo(get_special_object(MONEY_HUNDRED), Platinum);
+	this->GiveTo(get_special_object(MONEY_ONE), Gold);
 }
 
 void TNPC::GetMoney(int Amount){
-	int Crystal  = CountInventoryObjects(this->Interlocutor, GetSpecialObject(MONEY_TENTHOUSAND), 0);
-	int Platinum = CountInventoryObjects(this->Interlocutor, GetSpecialObject(MONEY_HUNDRED), 0);
-	int Gold     = CountInventoryObjects(this->Interlocutor, GetSpecialObject(MONEY_ONE), 0);
-	CalculateChange(Amount, &Gold, &Platinum, &Crystal);
+	int Crystal  = count_inventory_objects(this->Interlocutor, get_special_object(MONEY_TENTHOUSAND), 0);
+	int Platinum = count_inventory_objects(this->Interlocutor, get_special_object(MONEY_HUNDRED), 0);
+	int Gold     = count_inventory_objects(this->Interlocutor, get_special_object(MONEY_ONE), 0);
+	calculate_change(Amount, &Gold, &Platinum, &Crystal);
 
 	if(Gold > 0){
-		this->GetFrom(GetSpecialObject(MONEY_ONE), Gold);
+		this->GetFrom(get_special_object(MONEY_ONE), Gold);
 	}else if(Gold < 0){
-		this->GiveTo(GetSpecialObject(MONEY_ONE), -Gold);
+		this->GiveTo(get_special_object(MONEY_ONE), -Gold);
 	}
 
 	if(Platinum > 0){
-		this->GetFrom(GetSpecialObject(MONEY_HUNDRED), Platinum);
+		this->GetFrom(get_special_object(MONEY_HUNDRED), Platinum);
 	}else if(Platinum < 0){
-		this->GiveTo(GetSpecialObject(MONEY_HUNDRED), -Platinum);
+		this->GiveTo(get_special_object(MONEY_HUNDRED), -Platinum);
 	}
 
 	ASSERT(Crystal >= 0);
 	if(Crystal > 0){
-		this->GetFrom(GetSpecialObject(MONEY_TENTHOUSAND), Crystal);
+		this->GetFrom(get_special_object(MONEY_TENTHOUSAND), Crystal);
 	}
 }
 
@@ -2022,8 +2022,8 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 	// adding extra items to spawned monsters.
 	try{
 		if(this->Master == 0 && RaceData[Race].Items > 0){
-			Object Bag = Create(GetBodyContainer(this->ID, INVENTORY_BAG),
-								GetSpecialObject(DEFAULT_CONTAINER),
+			Object Bag = create(get_body_container(this->ID, INVENTORY_BAG),
+								get_special_object(DEFAULT_CONTAINER),
 								0);
 			for(int i = 1; i <= RaceData[Race].Items; i += 1){
 				TItemData *ItemData = RaceData[Race].Item.at(i);
@@ -2034,7 +2034,7 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 				ObjectType ItemType = ItemData->Type;
 				int Amount = random(1, ItemData->Maximum);
 				int Repeat = 1;
-				if(!ItemType.getFlag(CUMULATIVE)){
+				if(!ItemType.get_flag(CUMULATIVE)){
 					Repeat = Amount;
 					Amount = 0;
 				}
@@ -2042,17 +2042,17 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 				for(int j = 0; j < Repeat; j += 1){
 					Object Item = NONE;
 					try{
-						if(ItemType.getFlag(WEAPON)
-								|| ItemType.getFlag(SHIELD)
-								|| ItemType.getFlag(BOW)
-								|| ItemType.getFlag(THROW)
-								|| ItemType.getFlag(WAND)
-								|| ItemType.getFlag(WEAROUT)
-								|| ItemType.getFlag(EXPIRE)
-								|| ItemType.getFlag(EXPIRESTOP)){
-							Item = Create(Bag, ItemType, 0);
+						if(ItemType.get_flag(WEAPON)
+								|| ItemType.get_flag(SHIELD)
+								|| ItemType.get_flag(BOW)
+								|| ItemType.get_flag(THROW)
+								|| ItemType.get_flag(WAND)
+								|| ItemType.get_flag(WEAROUT)
+								|| ItemType.get_flag(EXPIRE)
+								|| ItemType.get_flag(EXPIRESTOP)){
+							Item = create(Bag, ItemType, 0);
 						}else{
-							Item = CreateAtCreature(this->ID, ItemType, Amount);
+							Item = create_at_creature(this->ID, ItemType, Amount);
 						}
 					}catch(RESULT r){
 						error("TMonster::TMonster: Exception %d for race %d, consider"
@@ -2061,18 +2061,18 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 					}
 
 					// NOTE(fusion): Prevent items from being dropped onto the map.
-					if(Item.getContainer().getObjectType().isMapContainer()){
+					if(Item.get_container().get_object_type().is_map_container()){
 						error("TMonster::TMonster: Object falls on the map."
 								" Increase CarryStrength for race %d.\n", Race);
-						Delete(Item, -1);
+						delete_op(Item, -1);
 					}
 				}
 			}
 
 			// NOTE(fusion): `Bag` could be empty if we failed to add any
 			// items to it in the loop above.
-			if(GetFirstContainerObject(Bag) == NONE){
-				Delete(Bag, -1);
+			if(get_first_container_object(Bag) == NONE){
+				delete_op(Bag, -1);
 			}
 		}
 	}catch(RESULT r){
@@ -2086,7 +2086,7 @@ TMonster::TMonster(int Race, int x, int y, int z, int Home, uint32 MasterID) :
 
 TMonster::~TMonster(void){
 	if(!this->IsDead){
-		GraphicalEffect(this->posx, this->posy, this->posz, EFFECT_POFF);
+		graphical_effect(this->posx, this->posy, this->posz, EFFECT_POFF);
 	}else if(this->Master == 0){
 		this->Combat.DistributeExperiencePoints(RaceData[this->Race].ExperiencePoints);
 	}
@@ -2130,7 +2130,7 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 		return false;
 	}
 
-	if(IsProtectionZone(x, y, z) || IsHouse(x, y, z)){
+	if(is_protection_zone(x, y, z) || is_house(x, y, z)){
 		return false;
 	}
 
@@ -2148,14 +2148,14 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 	// NOTE(fusion): Check destination and retry while we keep kicking blocking
 	// objects away.
 	for(int Attempt = 0; Attempt < 100; Attempt += 1){
-		Object Obj = GetFirstObject(x, y, z);
-		if(Obj == NONE || !Obj.getObjectType().getFlag(BANK)){
+		Object Obj = get_first_object(x, y, z);
+		if(Obj == NONE || !Obj.get_object_type().get_flag(BANK)){
 			return false;
 		}
 
 		while(Obj != NONE){
-			ObjectType ObjType = Obj.getObjectType();
-			if(ObjType.isCreatureContainer()){
+			ObjectType ObjType = Obj.get_object_type();
+			if(ObjType.is_creature_container()){
 				if(this->State != ATTACKING && this->State != PANIC){
 					return false;
 				}
@@ -2192,7 +2192,7 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 				}
 
 				if(Creature->Type == PLAYER){
-					if(this->Master != 0 || CheckRight(Creature->ID, IGNORED_BY_MONSTERS)){
+					if(this->Master != 0 || check_right(Creature->ID, IGNORED_BY_MONSTERS)){
 						return false;
 					}
 				}
@@ -2211,8 +2211,8 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 					break;
 				}
 			}else{
-				if(ObjType.getFlag(UNPASS)){
-					if(ObjType.getFlag(UNMOVE) || !this->CanKickBoxes()){
+				if(ObjType.get_flag(UNPASS)){
+					if(ObjType.get_flag(UNMOVE) || !this->CanKickBoxes()){
 						return false;
 					}
 
@@ -2224,14 +2224,14 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 					}
 				}
 
-				if(ObjType.getFlag(AVOID)){
-					int AvoidDamageTypes = (int)ObjType.getAttribute(AVOIDDAMAGETYPES);
+				if(ObjType.get_flag(AVOID)){
+					int AvoidDamageTypes = (int)ObjType.get_attribute(AVOIDDAMAGETYPES);
 					bool IgnoreHazard = (this->State == PANIC && AvoidDamageTypes != 0)
 						|| (RaceData[this->Race].NoPoison  && AvoidDamageTypes == DAMAGE_POISON)
 						|| (RaceData[this->Race].NoBurning && AvoidDamageTypes == DAMAGE_FIRE)
 						|| (RaceData[this->Race].NoEnergy  && AvoidDamageTypes == DAMAGE_ENERGY);
 					if(!IgnoreHazard){
-						if(ObjType.getFlag(UNMOVE) || !this->CanKickBoxes()){
+						if(ObjType.get_flag(UNMOVE) || !this->CanKickBoxes()){
 							return false;
 						}
 
@@ -2244,7 +2244,7 @@ bool TMonster::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 					}
 				}
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 
 		if(Obj == NONE){
@@ -2364,8 +2364,8 @@ void TMonster::IdleStimulus(void){
 			|| std::abs(Target->posx - this->posx) > 10
 			|| std::abs(Target->posy - this->posy) > 10
 			// FIELD CHECK
-			|| IsProtectionZone(Target->posx, Target->posy, Target->posz)
-			|| IsHouse(Target->posx, Target->posy, Target->posz)
+			|| is_protection_zone(Target->posx, Target->posy, Target->posz)
+			|| is_house(Target->posx, Target->posy, Target->posz)
 			// INVISIBILITY CHECK
 			|| (Target->IsInvisible() && !RaceData[this->Race].SeeInvisible)
 			// LOSETARGET CHECK
@@ -2395,7 +2395,7 @@ void TMonster::IdleStimulus(void){
 			}
 
 			try{
-				Talk(this->ID, Mode, NULL, Text, false);
+				talk(this->ID, Mode, NULL, Text, false);
 			}catch(RESULT r){
 				error("TMonster::IdleStimulus: Exception %d during Talk.\n", r);
 			}
@@ -2450,10 +2450,10 @@ void TMonster::IdleStimulus(void){
 				int DistanceX = std::abs(Target->posx - this->posx);
 				int DistanceY = std::abs(Target->posy - this->posy);
 				if((Target->posz != this->posz || DistanceX > 10 || DistanceY > 10)
-						||(Target->Type == PLAYER && CheckRight(Target->ID, IGNORED_BY_MONSTERS))
+						||(Target->Type == PLAYER && check_right(Target->ID, IGNORED_BY_MONSTERS))
 						|| (Target->IsInvisible() && !RaceData[this->Race].SeeInvisible)
-						|| IsProtectionZone(Target->posx, Target->posy, Target->posz)
-						|| IsHouse(Target->posx, Target->posy, Target->posz)
+						|| is_protection_zone(Target->posx, Target->posy, Target->posz)
+						|| is_house(Target->posx, Target->posy, Target->posz)
 						|| std::abs(Target->posx - this->posx) > 10
 						|| std::abs(Target->posy - this->posy) > 10){
 					continue;
@@ -2522,28 +2522,28 @@ void TMonster::IdleStimulus(void){
 				continue;
 			}
 
-			TImpact *Impact = NULL;
+			Impact *Impact = NULL;
 			switch(SpellData->Impact){
 				case IMPACT_DAMAGE:{
 					int DamageType = SpellData->ImpactParam1;
 					int Damage = SpellData->ImpactParam2;
 					int Variation = SpellData->ImpactParam3;
-					Damage = ComputeDamage(this, 0, Damage, Variation);
-					Impact = new TDamageImpact(this, DamageType, Damage, true);
+					Damage = compute_damage(this, 0, Damage, Variation);
+					Impact = new DamageImpact(this, DamageType, Damage, true);
 					break;
 				}
 
 				case IMPACT_FIELD:{
 					int FieldType = SpellData->ImpactParam1;
-					Impact = new TFieldImpact(this, FieldType);
+					Impact = new FieldImpact(this, FieldType);
 					break;
 				}
 
 				case IMPACT_HEALING:{
 					int Amount = SpellData->ImpactParam1;
 					int Variation = SpellData->ImpactParam2;
-					Amount = ComputeDamage(this, 0, Amount, Variation);
-					Impact = new THealingImpact(this, Amount);
+					Amount = compute_damage(this, 0, Amount, Variation);
+					Impact = new HealingImpact(this, Amount);
 					break;
 				}
 
@@ -2551,8 +2551,8 @@ void TMonster::IdleStimulus(void){
 					int Percent = SpellData->ImpactParam1;
 					int Variation = SpellData->ImpactParam2;
 					int Duration = SpellData->ImpactParam3;
-					Percent = ComputeDamage(this, 0, Percent, Variation);
-					Impact = new TSpeedImpact(this, Percent, Duration);
+					Percent = compute_damage(this, 0, Percent, Variation);
+					Impact = new SpeedImpact(this, Percent, Duration);
 					break;
 				}
 
@@ -2560,8 +2560,8 @@ void TMonster::IdleStimulus(void){
 					int Strength = SpellData->ImpactParam1;
 					int Variation = SpellData->ImpactParam2;
 					int Duration = SpellData->ImpactParam3;
-					Strength = ComputeDamage(this, 0, Strength, Variation);
-					Impact = new TDrunkenImpact(this, Strength, Duration);
+					Strength = compute_damage(this, 0, Strength, Variation);
+					Impact = new DrunkenImpact(this, Strength, Duration);
 					break;
 				}
 
@@ -2570,8 +2570,8 @@ void TMonster::IdleStimulus(void){
 					int Percent = SpellData->ImpactParam2;
 					int Variation = SpellData->ImpactParam3;
 					int Duration = SpellData->ImpactParam4;
-					Percent = ComputeDamage(this, 0, Percent, Variation);
-					Impact = new TStrengthImpact(this, Skills, Percent, Duration);
+					Percent = compute_damage(this, 0, Percent, Variation);
+					Impact = new StrengthImpact(this, Skills, Percent, Duration);
 					break;
 				}
 
@@ -2580,7 +2580,7 @@ void TMonster::IdleStimulus(void){
 					Outfit.OutfitID = SpellData->ImpactParam1;
 					Outfit.ObjectType = SpellData->ImpactParam2;
 					int Duration = SpellData->ImpactParam3;
-					Impact = new TOutfitImpact(this, Outfit, Duration);
+					Impact = new OutfitImpact(this, Outfit, Duration);
 					break;
 				}
 
@@ -2588,7 +2588,7 @@ void TMonster::IdleStimulus(void){
 					if(this->Master == 0){
 						int SummonRace = SpellData->ImpactParam1;
 						int MaxSummons = SpellData->ImpactParam2;
-						Impact = new TSummonImpact(this, SummonRace, MaxSummons);
+						Impact = new SummonImpact(this, SummonRace, MaxSummons);
 					}
 					break;
 				}
@@ -2599,7 +2599,7 @@ void TMonster::IdleStimulus(void){
 					switch(SpellData->Shape){
 						case SHAPE_ACTOR:{
 							int Effect = SpellData->ShapeParam1;
-							ActorShapeSpell(this, Impact, Effect);
+							actor_shape_spell(this, Impact, Effect);
 							break;
 						}
 
@@ -2610,7 +2610,7 @@ void TMonster::IdleStimulus(void){
 								int Range = SpellData->ShapeParam1;
 								int Animation = SpellData->ShapeParam2;
 								int Effect = SpellData->ShapeParam3;
-								VictimShapeSpell(this, Target, Range,
+								victim_shape_spell(this, Target, Range,
 										Animation, Impact, Effect);
 							}
 							break;
@@ -2619,7 +2619,7 @@ void TMonster::IdleStimulus(void){
 						case SHAPE_ORIGIN:{
 							int Radius = SpellData->ShapeParam1;
 							int Effect = SpellData->ShapeParam2;
-							OriginShapeSpell(this, Radius, Impact, Effect);
+							origin_shape_spell(this, Radius, Impact, Effect);
 							break;
 						}
 
@@ -2631,7 +2631,7 @@ void TMonster::IdleStimulus(void){
 								int Animation = SpellData->ShapeParam2;
 								int Radius = SpellData->ShapeParam3;
 								int Effect  = SpellData->ShapeParam4;
-								DestinationShapeSpell(this, Target, Range,
+								destination_shape_spell(this, Target, Range,
 										Animation, Radius, Impact, Effect);
 							}
 							break;
@@ -2645,7 +2645,7 @@ void TMonster::IdleStimulus(void){
 							int Angle = SpellData->ShapeParam1;
 							int Range = SpellData->ShapeParam2;
 							int Effect = SpellData->ShapeParam3;
-							AngleShapeSpell(this, Angle, Range, Impact, Effect);
+							angle_shape_spell(this, Angle, Range, Impact, Effect);
 							break;
 						}
 					}
@@ -2667,7 +2667,7 @@ void TMonster::IdleStimulus(void){
 		if(Target != NULL){
 			if(this->IsFleeing()){
 				int DestX, DestY, DestZ;
-				if(SearchFlightField(this->ID, this->Target, &DestX, &DestY, &DestZ)){
+				if(search_flight_field(this->ID, this->Target, &DestX, &DestY, &DestZ)){
 					this->ToDoGo(DestX, DestY, DestZ, true, INT_MAX);
 					this->ToDoStart();
 					return;
@@ -2709,7 +2709,7 @@ void TMonster::IdleStimulus(void){
 						std::abs(Target->posx - this->posx),
 						std::abs(Target->posy - this->posy));
 				if(!RaceData[this->Race].DistanceFighting
-						|| !ThrowPossible(this->posx, this->posy, this->posz,
+						|| !throw_possible(this->posx, this->posy, this->posz,
 								Target->posx, Target->posy, Target->posz, 0)){
 					this->Combat.SetChaseMode(CHASE_MODE_CLOSE);
 					if(Distance > 1){
@@ -2745,7 +2745,7 @@ void TMonster::IdleStimulus(void){
 				}else{
 					if(Distance < 4){
 						int DestX, DestY, DestZ;
-						if(SearchFlightField(this->ID, this->Target, &DestX, &DestY, &DestZ)){
+						if(search_flight_field(this->ID, this->Target, &DestX, &DestY, &DestZ)){
 							this->ToDoGo(DestX, DestY, DestZ, true, INT_MAX);
 						}else{
 							this->ToDoWait(1000);
@@ -2888,7 +2888,7 @@ void TMonster::KickBoxes(Object Obj){
 	}
 
 	int ObjX, ObjY, ObjZ;
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 
 	try{
 		bool ObjMoved = false;
@@ -2902,22 +2902,22 @@ void TMonster::KickBoxes(Object Obj){
 				continue;
 			}
 
-			if(CoordinateFlag(DestX, DestY, DestZ, BANK)
-			&& !CoordinateFlag(DestX, DestY, DestZ, UNPASS)){
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
-				::Move(this->ID, Obj, Dest, -1, false, NONE);
+			if(coordinate_flag(DestX, DestY, DestZ, BANK)
+			&& !coordinate_flag(DestX, DestY, DestZ, UNPASS)){
+				Object Dest = get_map_container(DestX, DestY, DestZ);
+				::move(this->ID, Obj, Dest, -1, false, NONE);
 				ObjMoved = true;
 				break;
 			}
 		}
 
 		if(!ObjMoved){
-			GraphicalEffect(Obj, EFFECT_BLOCK_HIT);
-			Delete(Obj, -1);
+			graphical_effect(Obj, EFFECT_BLOCK_HIT);
+			delete_op(Obj, -1);
 		}
 	}catch(RESULT r){
 		error("TMonster::KickBoxes: Exception %d, Object %d.\n",
-				r, Obj.getObjectType().TypeID);
+				r, Obj.get_object_type().TypeID);
 		error("# own position: [%d,%d,%d] - object position: [%d,%d,%d]\n",
 				this->posx, this->posy, this->posz, ObjX, ObjY, ObjZ);
 	}
@@ -2954,9 +2954,9 @@ bool TMonster::KickCreature(TCreature *Creature){
 			}
 
 			if(Creature->MovePossible(DestX, DestY, DestZ, true, false)
-					&& !CoordinateFlag(DestX, DestY, DestZ, AVOID)){
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
-				::Move(this->ID, Creature->CrObject, Dest, -1, false, NONE);
+					&& !coordinate_flag(DestX, DestY, DestZ, AVOID)){
+				Object Dest = get_map_container(DestX, DestY, DestZ);
+				::move(this->ID, Creature->CrObject, Dest, -1, false, NONE);
 				CreatureMoved = true;
 				break;
 			}
@@ -2964,7 +2964,7 @@ bool TMonster::KickCreature(TCreature *Creature){
 
 		if(!CreatureMoved){
 			print(3, "No space to displace => killing.\n");
-			GraphicalEffect(Creature->CrObject, EFFECT_BLOCK_HIT);
+			graphical_effect(Creature->CrObject, EFFECT_BLOCK_HIT);
 			Creature->Combat.AddDamageToCombatList(this->ID,
 					Creature->Skills[SKILL_HITPOINTS]->Get());
 			Creature->Kill();
@@ -2977,10 +2977,10 @@ bool TMonster::KickCreature(TCreature *Creature){
 				Creature->posx, Creature->posy, Creature->posz);
 
 		error("# Objects on destination field [%d,%d,%d]:\n", DestX, DestY, DestZ);
-		Object Obj = GetFirstObject(DestX, DestY, DestZ);
+		Object Obj = get_first_object(DestX, DestY, DestZ);
 		while(Obj != NONE){
-			error("# %d\n", Obj.getObjectType().TypeID);
-			Obj = Obj.getNextObject();
+			error("# %d\n", Obj.get_object_type().TypeID);
+			Obj = Obj.get_next_object();
 		}
 	}
 
@@ -3056,10 +3056,10 @@ TCreature *CreateMonster(int Race, int x, int y, int z, int Home, uint32 MasterI
 		return NULL;
 	}
 
-	SearchFreeField(&x, &y, &z, 2, 0, false);
+	search_free_field(&x, &y, &z, 2, 0, false);
 	TMonster *Monster = new TMonster(Race, x, y, z, Home, MasterID);
 	if(ShowEffect){
-		GraphicalEffect(x, y, z, EFFECT_ENERGY);
+		graphical_effect(x, y, z, EFFECT_ENERGY);
 	}
 	return Monster;
 }

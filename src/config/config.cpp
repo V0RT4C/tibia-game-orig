@@ -122,10 +122,10 @@ void ReadConfig(void){
 		throw "cannot find config-file";
 	}
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 	while(true){
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token == ENDOFFILE){
 			// NOTE(fusion): This is the only graceful exit point of the function.
 			// Errors are transmitted back through exceptions.
@@ -134,144 +134,144 @@ void ReadConfig(void){
 		}
 
 		char Identifier[MAX_IDENT_LENGTH];
-		strcpy(Identifier, Script.getIdentifier());
-		Script.readSymbol('=');
+		strcpy(Identifier, Script.get_identifier());
+		Script.read_symbol('=');
 
 		// TODO(fusion): Ughh... Get rid of all `strcpy`s. A malicious configuration
 		// file could do a lot of damage.
 		if(strcmp(Identifier, "binpath") == 0){
-			strcpy(BINPATH, Script.readString());
+			strcpy(BINPATH, Script.read_string());
 		}else if(strcmp(Identifier, "mappath") == 0){
-			strcpy(MAPPATH, Script.readString());
+			strcpy(MAPPATH, Script.read_string());
 		}else if(strcmp(Identifier, "origmappath") == 0){
-			strcpy(ORIGMAPPATH, Script.readString());
+			strcpy(ORIGMAPPATH, Script.read_string());
 		}else if(strcmp(Identifier, "datapath") == 0){
-			strcpy(DATAPATH, Script.readString());
+			strcpy(DATAPATH, Script.read_string());
 		}else if(strcmp(Identifier, "monsterpath") == 0){
-			strcpy(MONSTERPATH, Script.readString());
+			strcpy(MONSTERPATH, Script.read_string());
 		}else if(strcmp(Identifier, "npcpath") == 0){
-			strcpy(NPCPATH, Script.readString());
+			strcpy(NPCPATH, Script.read_string());
 		}else if(strcmp(Identifier, "userpath") == 0){
-			strcpy(USERPATH, Script.readString());
+			strcpy(USERPATH, Script.read_string());
 		}else if(strcmp(Identifier, "logpath") == 0){
-			strcpy(LOGPATH, Script.readString());
+			strcpy(LOGPATH, Script.read_string());
 		}else if(strcmp(Identifier, "savepath") == 0){
-			strcpy(SAVEPATH, Script.readString());
+			strcpy(SAVEPATH, Script.read_string());
 		}else if(strcmp(Identifier, "shm") == 0){
-			SHMKey = Script.readNumber();
+			SHMKey = Script.read_number();
 		}else if(strcmp(Identifier, "adminport") == 0){
-			AdminPort = Script.readNumber();
+			AdminPort = Script.read_number();
 		}else if(strcmp(Identifier, "adminaddress") == 0){
-			strcpy(AdminAddress, Script.readString());
+			strcpy(AdminAddress, Script.read_string());
 		}else if(strcmp(Identifier, "querymanagerport") == 0){
-			QueryManagerPort = Script.readNumber();
+			QueryManagerPort = Script.read_number();
 		}else if(strcmp(Identifier, "querymanageraddress") == 0){
-			strcpy(QueryManagerAddress, Script.readString());
+			strcpy(QueryManagerAddress, Script.read_string());
 		}else if(strcmp(Identifier, "querymanageradminpw") == 0){
-			strcpy(QueryManagerAdminPW, Script.readString());
+			strcpy(QueryManagerAdminPW, Script.read_string());
 		}else if(strcmp(Identifier, "querymanagergamepw") == 0){
-			strcpy(QueryManagerGamePW, Script.readString());
+			strcpy(QueryManagerGamePW, Script.read_string());
 		}else if(strcmp(Identifier, "querymanagerwebpw") == 0){
-			strcpy(QueryManagerWebPW, Script.readString());
+			strcpy(QueryManagerWebPW, Script.read_string());
 		}else if(strcmp(Identifier, "debuglevel") == 0){
-			DebugLevel = Script.readNumber();
+			DebugLevel = Script.read_number();
 		}else if(strcmp(Identifier, "state") == 0){
-			PrivateWorld = (strcmp(Script.readIdentifier(), "private") == 0);
+			PrivateWorld = (strcmp(Script.read_identifier(), "private") == 0);
 		}else if(strcmp(Identifier, "world") == 0){
-			strcpy(WorldName, Script.readString());
+			strcpy(WorldName, Script.read_string());
 		}else if(strcmp(Identifier, "beat") == 0){
-			Beat = Script.readNumber();
+			Beat = Script.read_number();
 		}else if(strcmp(Identifier, "admindatabase") == 0){
-			Script.readSymbol('(');
-			strcpy(ADMIN_DATABASE.Product, Script.readIdentifier());
-			Script.readSymbol(',');
-			strcpy(ADMIN_DATABASE.Database, Script.readString());
-			Script.readSymbol(',');
-			strcpy(ADMIN_DATABASE.Login, Script.readString());
-			Script.readSymbol(',');
-			strcpy(ADMIN_DATABASE.Password, Script.readString());
+			Script.read_symbol('(');
+			strcpy(ADMIN_DATABASE.Product, Script.read_identifier());
+			Script.read_symbol(',');
+			strcpy(ADMIN_DATABASE.Database, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(ADMIN_DATABASE.Login, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(ADMIN_DATABASE.Password, Script.read_string());
 			DisguisePassword(ADMIN_DATABASE.Password, PasswordKey);
-			Script.readSymbol(',');
-			strcpy(ADMIN_DATABASE.Host, Script.readString());
-			Script.readSymbol(',');
-			strcpy(ADMIN_DATABASE.Port, Script.readString());
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			strcpy(ADMIN_DATABASE.Host, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(ADMIN_DATABASE.Port, Script.read_string());
+			Script.read_symbol(')');
 		}else if(strcmp(Identifier, "volatiledatabase") == 0){
-			Script.readSymbol('(');
-			strcpy(VOLATILE_DATABASE.Product, Script.readIdentifier());
-			Script.readSymbol(',');
-			strcpy(VOLATILE_DATABASE.Database, Script.readString());
-			Script.readSymbol(',');
-			strcpy(VOLATILE_DATABASE.Login, Script.readString());
-			Script.readSymbol(',');
-			strcpy(VOLATILE_DATABASE.Password, Script.readString());
+			Script.read_symbol('(');
+			strcpy(VOLATILE_DATABASE.Product, Script.read_identifier());
+			Script.read_symbol(',');
+			strcpy(VOLATILE_DATABASE.Database, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(VOLATILE_DATABASE.Login, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(VOLATILE_DATABASE.Password, Script.read_string());
 			DisguisePassword(VOLATILE_DATABASE.Password, PasswordKey);
-			Script.readSymbol(',');
-			strcpy(VOLATILE_DATABASE.Host, Script.readString());
-			Script.readSymbol(',');
-			strcpy(VOLATILE_DATABASE.Port, Script.readString());
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			strcpy(VOLATILE_DATABASE.Host, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(VOLATILE_DATABASE.Port, Script.read_string());
+			Script.read_symbol(')');
 		}else if(strcmp(Identifier, "webdatabase") == 0){
-			Script.readSymbol('(');
-			strcpy(WEB_DATABASE.Product, Script.readIdentifier());
-			Script.readSymbol(',');
-			strcpy(WEB_DATABASE.Database, Script.readString());
-			Script.readSymbol(',');
-			strcpy(WEB_DATABASE.Login, Script.readString());
-			Script.readSymbol(',');
-			strcpy(WEB_DATABASE.Password, Script.readString());
+			Script.read_symbol('(');
+			strcpy(WEB_DATABASE.Product, Script.read_identifier());
+			Script.read_symbol(',');
+			strcpy(WEB_DATABASE.Database, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(WEB_DATABASE.Login, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(WEB_DATABASE.Password, Script.read_string());
 			DisguisePassword(WEB_DATABASE.Password, PasswordKey);
-			Script.readSymbol(',');
-			strcpy(WEB_DATABASE.Host, Script.readString());
-			Script.readSymbol(',');
-			strcpy(WEB_DATABASE.Port, Script.readString());
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			strcpy(WEB_DATABASE.Host, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(WEB_DATABASE.Port, Script.read_string());
+			Script.read_symbol(')');
 		}else if(strcmp(Identifier, "forumdatabase") == 0){
-			Script.readSymbol('(');
-			strcpy(FORUM_DATABASE.Product, Script.readIdentifier());
-			Script.readSymbol(',');
-			strcpy(FORUM_DATABASE.Database, Script.readString());
-			Script.readSymbol(',');
-			strcpy(FORUM_DATABASE.Login, Script.readString());
-			Script.readSymbol(',');
-			strcpy(FORUM_DATABASE.Password, Script.readString());
+			Script.read_symbol('(');
+			strcpy(FORUM_DATABASE.Product, Script.read_identifier());
+			Script.read_symbol(',');
+			strcpy(FORUM_DATABASE.Database, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(FORUM_DATABASE.Login, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(FORUM_DATABASE.Password, Script.read_string());
 			DisguisePassword(FORUM_DATABASE.Password, PasswordKey);
-			Script.readSymbol(',');
-			strcpy(FORUM_DATABASE.Host, Script.readString());
-			Script.readSymbol(',');
-			strcpy(FORUM_DATABASE.Port, Script.readString());
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			strcpy(FORUM_DATABASE.Host, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(FORUM_DATABASE.Port, Script.read_string());
+			Script.read_symbol(')');
 		}else if(strcmp(Identifier, "managerdatabase") == 0){
-			Script.readSymbol('(');
-			strcpy(MANAGER_DATABASE.Product, Script.readIdentifier());
-			Script.readSymbol(',');
-			strcpy(MANAGER_DATABASE.Database, Script.readString());
-			Script.readSymbol(',');
-			strcpy(MANAGER_DATABASE.Login, Script.readString());
-			Script.readSymbol(',');
-			strcpy(MANAGER_DATABASE.Password, Script.readString());
+			Script.read_symbol('(');
+			strcpy(MANAGER_DATABASE.Product, Script.read_identifier());
+			Script.read_symbol(',');
+			strcpy(MANAGER_DATABASE.Database, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(MANAGER_DATABASE.Login, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(MANAGER_DATABASE.Password, Script.read_string());
 			DisguisePassword(MANAGER_DATABASE.Password, PasswordKey);
-			Script.readSymbol(',');
-			strcpy(MANAGER_DATABASE.Host, Script.readString());
-			Script.readSymbol(',');
-			strcpy(MANAGER_DATABASE.Port, Script.readString());
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			strcpy(MANAGER_DATABASE.Host, Script.read_string());
+			Script.read_symbol(',');
+			strcpy(MANAGER_DATABASE.Port, Script.read_string());
+			Script.read_symbol(')');
 		}else if(strcmp(Identifier, "querymanager") == 0){
-			Script.readSymbol('{');
+			Script.read_symbol('{');
 			do{
 				if(NumberOfQueryManagers >= NARRAY(QUERY_MANAGER)){
 					Script.error("Cannot handle more query managers");
 				}
-				Script.readSymbol('(');
-				strcpy(QUERY_MANAGER[NumberOfQueryManagers].Host, Script.readString());
-				Script.readSymbol(',');
-				QUERY_MANAGER[NumberOfQueryManagers].Port = Script.readNumber();
-				Script.readSymbol(',');
-				strcpy(QUERY_MANAGER[NumberOfQueryManagers].Password, Script.readString());
+				Script.read_symbol('(');
+				strcpy(QUERY_MANAGER[NumberOfQueryManagers].Host, Script.read_string());
+				Script.read_symbol(',');
+				QUERY_MANAGER[NumberOfQueryManagers].Port = Script.read_number();
+				Script.read_symbol(',');
+				strcpy(QUERY_MANAGER[NumberOfQueryManagers].Password, Script.read_string());
 				DisguisePassword(QUERY_MANAGER[NumberOfQueryManagers].Password, PasswordKey);
-				Script.readSymbol(')');
+				Script.read_symbol(')');
 				NumberOfQueryManagers += 1;
-			}while(Script.readSpecial() != '}');
+			}while(Script.read_special() != '}');
 		}else{
 			// TODO(fusion):
 			//error("Unknown configuration key \"%s\"", Identifier);

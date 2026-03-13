@@ -26,13 +26,13 @@ void TConnection::Process(void){
 		}
 
 		uint32 LastAction = (RoundNr - this->TimeStampAction);
-		if(LastAction == 900 && !CheckRight(this->CharacterID, NO_LOGOUT_BLOCK)){
+		if(LastAction == 900 && !check_right(this->CharacterID, NO_LOGOUT_BLOCK)){
 			SendMessage(this, TALK_ADMIN_MESSAGE,
 					"You have been idle for %d minutes. You will be disconnected"
 					" in one minute if you are still idle then.", 15);
 		}
 
-		if(LastAction >= 960 && !CheckRight(this->CharacterID, NO_LOGOUT_BLOCK)){
+		if(LastAction >= 960 && !check_right(this->CharacterID, NO_LOGOUT_BLOCK)){
 			this->Logout(0, true);
 		}else if(!GameRunning() || !this->ConnectionIsOk || (LastCommand >= 90)){
 			this->Logout(0, false);
@@ -230,13 +230,13 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 		}
 	}else{
 		if(Player->IsDead){
-			Log("game", "Player %s is currently dying - login failed.\n", Player->Name);
+			log_message("game", "Player %s is currently dying - login failed.\n", Player->Name);
 			DecreasePlayerPoolSlotSticky(this->CharacterID);
 			return false;
 		}
 
 		if(Player->LoggingOut && Player->LogoutPossible() == 0){
-			Log("game", "Player %s is currently logging out - login failed.\n", Player->Name);
+			log_message("game", "Player %s is currently logging out - login failed.\n", Player->Name);
 			DecreasePlayerPoolSlotSticky(this->CharacterID);
 			return false;
 		}
@@ -248,7 +248,7 @@ bool TConnection::JoinGame(TReadBuffer *Buffer){
 			OldConnection->Logout(0, true);
 		}
 
-		DecrementIsOnlineOrder(this->CharacterID);
+		decrement_is_online_order(this->CharacterID);
 		Player->TakeOver(this);
 	}
 
@@ -332,16 +332,16 @@ TPlayer *TConnection::GetPlayer(void){
 	return Player;
 }
 
-const char *TConnection::GetName(void){
+const char *TConnection::get_name(void){
 	if(!this->Live()){
-		error("TConnection::GetName: Invalid connection state %d.\n", this->State);
+		error("TConnection::get_name: Invalid connection state %d.\n", this->State);
 		return "";
 	}
 
 	return this->Name;
 }
 
-void TConnection::GetPosition(int *x, int *y, int *z){
+void TConnection::get_position(int *x, int *y, int *z){
 	TPlayer *Player = this->GetPlayer();
 	if(Player != NULL){
 		*x = Player->posx;
@@ -356,7 +356,7 @@ void TConnection::GetPosition(int *x, int *y, int *z){
 
 bool TConnection::IsVisible(int x, int y, int z){
 	int PlayerX, PlayerY, PlayerZ;
-	this->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
+	this->get_position(&PlayerX, &PlayerY, &PlayerZ);
 
 	// TODO(fusion): Have a standalone version of `TCreature::CanSeeFloor`?
 	if(PlayerZ <= 7){

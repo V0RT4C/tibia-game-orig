@@ -5,35 +5,35 @@
 // point to invalid data when actually parsed. It is the reason `ErrorString` is
 // declared statically, or else you'd need to throw some heap allocated string
 // which then becomes ambiguous whether you should free it or not. Used in:
-//	- TReadScriptFile::error
-//	- TWriteScriptFile::error
+//	- ReadScriptFile::error
+//	- WriteScriptFile::error
 // (TReadBinaryFile and TWriteBinaryFile have been extracted to common/binary_file/)
 static char ErrorString[100];
 
-// TReadScriptFile
+// ReadScriptFile
 //==============================================================================
-TReadScriptFile::TReadScriptFile(void){
+ReadScriptFile::ReadScriptFile(void){
 	this->RecursionDepth = -1;
 	this->Bytes = (uint8*)this->String;
 }
 
-TReadScriptFile::~TReadScriptFile(void){
+ReadScriptFile::~ReadScriptFile(void){
 	if(this->RecursionDepth != -1){
-		::error("TReadScriptFile::~TReadScriptFile: File is still open.\n");
+		::error("ReadScriptFile::~ReadScriptFile: File is still open.\n");
 		for(int Depth = this->RecursionDepth; Depth >= 0; Depth -= 1){
-			// TODO(fusion): Probably `TReadScriptFile::close` inlined?
+			// TODO(fusion): Probably `ReadScriptFile::close` inlined?
 			if(fclose(this->File[Depth]) != 0){
-				::error("TReadScriptFile::close: Error %d closing file.\n", errno);
+				::error("ReadScriptFile::close: Error %d closing file.\n", errno);
 			}
 		}
 		this->RecursionDepth = -1;
 	}
 }
 
-void TReadScriptFile::open(const char *FileName){
+void ReadScriptFile::open(const char *FileName){
 	int Depth = this->RecursionDepth + 1;
 	if((Depth + 1) >= NARRAY(this->File)){
-		::error("TReadScriptFile::open: Recursion depth too large.\n");
+		::error("ReadScriptFile::open: Recursion depth too large.\n");
 		throw "Recursion depth too high";
 	}
 
@@ -54,7 +54,7 @@ void TReadScriptFile::open(const char *FileName){
 	this->File[Depth] = fopen(this->Filename[Depth], "rb");
 	if(this->File[Depth] == NULL){
 		int ErrCode = errno;
-		::error("TReadScriptFile::open: Cannot open file %s.\n", this->Filename[Depth]);
+		::error("ReadScriptFile::open: Cannot open file %s.\n", this->Filename[Depth]);
 		::error("Error %d: %s.\n", ErrCode, strerror(ErrCode));
 		throw "Cannot open script-file";
 	}
@@ -63,21 +63,21 @@ void TReadScriptFile::open(const char *FileName){
 	this->RecursionDepth = Depth;
 }
 
-void TReadScriptFile::close(void){
+void ReadScriptFile::close(void){
 	int Depth = this->RecursionDepth;
 	if(Depth <= -1){
-		::error("TReadScriptFile::close: No file open.\n");
+		::error("ReadScriptFile::close: No file open.\n");
 		return;
 	}
 
 	ASSERT(Depth < NARRAY(this->File));
 	if(fclose(this->File[Depth]) != 0){
-		::error("TReadScriptFile::close: Error %d closing file.\n", errno);
+		::error("ReadScriptFile::close: Error %d closing file.\n", errno);
 	}
 	this->RecursionDepth -= 1;
 }
 
-void TReadScriptFile::error(const char *Text){
+void ReadScriptFile::error(const char *Text){
 	int Depth = this->RecursionDepth;
 	ASSERT(Depth >= 0 && Depth <= NARRAY(this->File));
 
@@ -90,10 +90,10 @@ void TReadScriptFile::error(const char *Text){
 			"error in script-file \"%s\", line %d: %s",
 			Filename, this->Line[Depth], Text);
 
-	// TODO(fusion): Reset? Also seems like `TReadScriptFile::close` was inlined.
+	// TODO(fusion): Reset? Also seems like `ReadScriptFile::close` was inlined.
 	for(; Depth >= 0; Depth -= 1){
 		if(fclose(this->File[Depth]) != 0){
-			::error("TReadScriptFile::close: Error %d closing file.\n", errno);
+			::error("ReadScriptFile::close: Error %d closing file.\n", errno);
 		}
 	}
 	this->RecursionDepth = -1;
@@ -107,9 +107,9 @@ void TReadScriptFile::error(const char *Text){
 // parsing strings and numbers multiple times here, whereas a simple lexer and
 // parser would simplify the work tremendously.
 // TODO(fusion): This needs to be tested to make sure it behaves like the original.
-void TReadScriptFile::nextToken(void){
+void ReadScriptFile::next_token(void){
 	if(this->RecursionDepth == -1){
-		::error("TReadScriptFile::nextToken: No script open for reading.\n");
+		::error("ReadScriptFile::next_token: No script open for reading.\n");
 		this->Token = ENDOFFILE;
 		return;
 	}
@@ -122,7 +122,7 @@ void TReadScriptFile::nextToken(void){
 	this->CoordZ = 0;
 	this->Special = 0;
 
-	// NOTE(fusion): `TReadScriptFile::error` will format and throw an error
+	// NOTE(fusion): `ReadScriptFile::error` will format and throw an error
 	// string that must be handled up the call stack. It must be considered
 	// an exit point for parsing errors in this function.
 
@@ -449,7 +449,7 @@ void TReadScriptFile::nextToken(void){
 	}
 }
 
-char *TReadScriptFile::getIdentifier(void){
+char *ReadScriptFile::get_identifier(void){
 	if(this->Token != IDENTIFIER){
 		this->error("identifier expected");
 	}
@@ -457,28 +457,28 @@ char *TReadScriptFile::getIdentifier(void){
 	return this->String;
 }
 
-int TReadScriptFile::getNumber(void){
+int ReadScriptFile::get_number(void){
 	if(this->Token != NUMBER){
 		this->error("number expected");
 	}
 	return this->Number;
 }
 
-char *TReadScriptFile::getString(void){
+char *ReadScriptFile::get_string(void){
 	if(this->Token != STRING){
 		this->error("string expected");
 	}
 	return this->String;
 }
 
-uint8 *TReadScriptFile::getBytesequence(void){
+uint8 *ReadScriptFile::get_bytesequence(void){
 	if(this->Token != BYTES){
 		this->error("byte-sequence expected");
 	}
 	return this->Bytes;
 }
 
-void TReadScriptFile::getCoordinate(int *x, int *y, int *z){
+void ReadScriptFile::get_coordinate(int *x, int *y, int *z){
 	if(this->Token != COORDINATE){
 		this->error("coordinates expected");
 	}
@@ -487,33 +487,33 @@ void TReadScriptFile::getCoordinate(int *x, int *y, int *z){
 	*z = this->CoordZ;
 }
 
-char TReadScriptFile::getSpecial(void){
+char ReadScriptFile::get_special(void){
 	if(this->Token != SPECIAL){
 		this->error("special-char expected");
 	}
 	return this->Special;
 }
 
-// TWriteScriptFile
+// WriteScriptFile
 //==============================================================================
-TWriteScriptFile::TWriteScriptFile(void){
+WriteScriptFile::WriteScriptFile(void){
 	this->File = NULL;
 }
 
-TWriteScriptFile::~TWriteScriptFile(void){
+WriteScriptFile::~WriteScriptFile(void){
 	if(this->File != NULL){
-		::error("TWriteScriptFile::~TWriteScriptFile: File %s is still open.\n", this->Filename);
+		::error("WriteScriptFile::~WriteScriptFile: File %s is still open.\n", this->Filename);
 		if(fclose(this->File) != 0){
-			::error("TWriteScriptFile::~TWriteScriptFile: Error %d closing file.\n", errno);
+			::error("WriteScriptFile::~WriteScriptFile: Error %d closing file.\n", errno);
 		}
 	}
 }
 
-void TWriteScriptFile::open(const char *FileName){
+void WriteScriptFile::open(const char *FileName){
 	if(this->File != NULL){
-		::error("TWriteScriptFile::open: Old script is still open.\n");
+		::error("WriteScriptFile::open: Old script is still open.\n");
 		if(fclose(this->File) != 0){
-			::error("TWriteScriptFile::open: Error %d closing file.\n", errno);
+			::error("WriteScriptFile::open: Error %d closing file.\n", errno);
 		}
 		this->File = NULL;
 	}
@@ -521,7 +521,7 @@ void TWriteScriptFile::open(const char *FileName){
 	this->File = fopen(FileName, "wb");
 	if(this->File == NULL){
 		int ErrCode = errno;
-		::error("TWriteScriptFile: Cannot create file %s.\n", FileName);
+		::error("WriteScriptFile: Cannot create file %s.\n", FileName);
 		::error("Error %d: %s.\n", ErrCode, strerror(ErrCode));
 		throw "Cannot create script-file";
 	}
@@ -530,22 +530,22 @@ void TWriteScriptFile::open(const char *FileName){
 	this->Line = 0;
 }
 
-void TWriteScriptFile::close(void){
+void WriteScriptFile::close(void){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::close: No script open.\n");
+		::error("WriteScriptFile::close: No script open.\n");
 		return;
 	}
 
 	if(fclose(this->File) != 0){
-		::error("TWriteScriptFile::close: Error %d closing file.\n", errno);
+		::error("WriteScriptFile::close: Error %d closing file.\n", errno);
 	}
 	this->File = NULL;
 }
 
-void TWriteScriptFile::error(const char *Text){
+void WriteScriptFile::error(const char *Text){
 	if(this->File != NULL){
 		if(fclose(this->File) != 0){
-			::error("TWriteScriptFile::error: Error %d closing file.\n", errno);
+			::error("WriteScriptFile::error: Error %d closing file.\n", errno);
 		}
 		this->File = NULL;
 	}
@@ -557,23 +557,23 @@ void TWriteScriptFile::error(const char *Text){
 	throw ErrorString;
 }
 
-void TWriteScriptFile::writeLn(void){
+void WriteScriptFile::write_ln(void){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::writeLn: No script open for writing.\n");
+		::error("WriteScriptFile::write_ln: No script open for writing.\n");
 		throw "Cannot write linefeed";
 	}
 
 	putc('\n', this->File);
 }
 
-void TWriteScriptFile::writeText(const char *Text){
+void WriteScriptFile::write_text(const char *Text){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::writeText: No script open for writing.\n");
+		::error("WriteScriptFile::write_text: No script open for writing.\n");
 		throw "Cannot write text";
 	}
 
 	if(Text == NULL){
-		::error("TWriteScriptFile::writeText: Text is NULL.\n");
+		::error("WriteScriptFile::write_text: Text is NULL.\n");
 		throw "Cannot write text";
 	}
 
@@ -582,25 +582,25 @@ void TWriteScriptFile::writeText(const char *Text){
 	}
 }
 
-void TWriteScriptFile::writeNumber(int Number){
+void WriteScriptFile::write_number(int Number){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::writeNumber: No script open for writing.\n");
+		::error("WriteScriptFile::write_number: No script open for writing.\n");
 		throw "Cannot write number";
 	}
 
 	char s[32];
 	snprintf(s, sizeof(s), "%d", Number);
-	this->writeText(s);
+	this->write_text(s);
 }
 
-void TWriteScriptFile::writeString(const char *Text){
+void WriteScriptFile::write_string(const char *Text){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::writeString: No script open for writing.\n");
+		::error("WriteScriptFile::write_string: No script open for writing.\n");
 		throw "Cannot write string";
 	}
 
 	if(Text == NULL){
-		::error("TWriteScriptFile::writeString: Text is NULL.\n");
+		::error("WriteScriptFile::write_string: Text is NULL.\n");
 		throw "Cannot write string";
 	}
 
@@ -619,36 +619,36 @@ void TWriteScriptFile::writeString(const char *Text){
 	putc('"', this->File);
 }
 
-void TWriteScriptFile::writeCoordinate(int x ,int y ,int z){
+void WriteScriptFile::write_coordinate(int x ,int y ,int z){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::writeCoordinate: No script open for writing.\n");
+		::error("WriteScriptFile::write_coordinate: No script open for writing.\n");
 		throw "Cannot write coordinate";
 	}
 
 	// TODO(fusion): This is weird because we support loading negative coordinates values.
 	if(x < 0 || y < 0 || z < 0){
-		::error("TWriteScriptFile::writeCoordinate: Invalid coordinates [%d,%d,%d].\n", x, y, z);
+		::error("WriteScriptFile::write_coordinate: Invalid coordinates [%d,%d,%d].\n", x, y, z);
 		throw "Invalid coordinates";
 	}
 
 	char s[64];
 	snprintf(s, sizeof(s), "[%u,%u,%u]", x, y, z);
-	this->writeText(s);
+	this->write_text(s);
 }
 
-void TWriteScriptFile::writeBytesequence(const uint8 *Sequence, int Length){
+void WriteScriptFile::write_bytesequence(const uint8 *Sequence, int Length){
 	if(this->File == NULL){
-		::error("TWriteScriptFile::writeBytesequence: No script open for writing.\n");
+		::error("WriteScriptFile::write_bytesequence: No script open for writing.\n");
 		throw "Cannot write bytesequence";
 	}
 
 	if(Sequence == NULL){
-		::error("TWriteScriptFile::writeBytesequence: Sequence is NULL.\n");
+		::error("WriteScriptFile::write_bytesequence: Sequence is NULL.\n");
 		throw "Cannot write bytesequence";
 	}
 
 	if(Length <= 0){
-		::error("TWriteScriptFile::writeBytesequence: Invalid sequence length.\n");
+		::error("WriteScriptFile::write_bytesequence: Invalid sequence length.\n");
 		throw "Cannot write bytesequence";
 	}
 
@@ -659,7 +659,7 @@ void TWriteScriptFile::writeBytesequence(const uint8 *Sequence, int Length){
 
 		char s[32];
 		snprintf(s, sizeof(s), "%u", Sequence[i]);
-		this->writeText(s);
+		this->write_text(s);
 	}
 }
 

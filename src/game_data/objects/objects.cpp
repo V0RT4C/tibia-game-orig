@@ -110,9 +110,9 @@ static const char FlagNames[66][30] = {
 	"ForceUse",					// FORCEUSE
 	"MultiUse",					// MULTIUSE
 	"DistUse",					// DISTUSE
-	"MovementEvent",			// MOVEMENTEVENT
-	"CollisionEvent",			// COLLISIONEVENT
-	"SeparationEvent",			// SEPARATIONEVENT
+	"movement_event",			// MOVEMENTEVENT
+	"collision_event",			// COLLISIONEVENT
+	"separation_event",			// SEPARATIONEVENT
 	"Key",						// KEY
 	"KeyDoor",					// KEYDOOR
 	"NameDoor",					// NAMEDOOR
@@ -254,23 +254,23 @@ static const char InstanceAttributeNames[18][30] = {
 
 // ObjectType
 // =============================================================================
-void ObjectType::setTypeID(int TypeID){
-	if(!ObjectTypeExists(TypeID)){
-		error("ObjectType::setTypeID: Invalid type %d.\n", TypeID);
+void ObjectType::set_type_id(int TypeID){
+	if(!object_type_exists(TypeID)){
+		error("ObjectType::set_type_id: Invalid type %d.\n", TypeID);
 		TypeID = 0;
 	}
 
 	this->TypeID = TypeID;
 }
 
-bool ObjectType::getFlag(FLAG Flag){
+bool ObjectType::get_flag(FLAG Flag){
 	TObjectType *TypeP = ObjectTypes.at(this->TypeID);
 	return CheckBit(TypeP->Flags, (int)Flag);
 }
 
-uint32 ObjectType::getAttribute(TYPEATTRIBUTE Attribute){
-	if(!this->getFlag(TypeAttributeFlags[Attribute])){
-		error("ObjectType::getAttribute: Type %d does not have flag %d for attribute %d.\n",
+uint32 ObjectType::get_attribute(TYPEATTRIBUTE Attribute){
+	if(!this->get_flag(TypeAttributeFlags[Attribute])){
+		error("ObjectType::get_attribute: Type %d does not have flag %d for attribute %d.\n",
 				this->TypeID, TypeAttributeFlags[Attribute], Attribute);
 		return 0;
 	}
@@ -279,11 +279,11 @@ uint32 ObjectType::getAttribute(TYPEATTRIBUTE Attribute){
 	return TypeP->Attributes[Attribute];
 }
 
-int ObjectType::getAttributeOffset(INSTANCEATTRIBUTE Attribute){
-	if(!this->getFlag(InstanceAttributeFlags[Attribute])){
+int ObjectType::get_attribute_offset(INSTANCEATTRIBUTE Attribute){
+	if(!this->get_flag(InstanceAttributeFlags[Attribute])){
 		// NOTE(fusion): The CONTENT attribute seems to be the only one that maps
 		// to two object flags, which is why we have this extra check here.
-		if(!(Attribute == CONTENT && this->getFlag(CHEST))){
+		if(!(Attribute == CONTENT && this->get_flag(CHEST))){
 			return -1;
 		}
 	}
@@ -292,9 +292,9 @@ int ObjectType::getAttributeOffset(INSTANCEATTRIBUTE Attribute){
 	return TypeP->AttributeOffsets[Attribute];
 }
 
-const char *ObjectType::getName(int Count){
-	if(this->isCreatureContainer()){
-		error("ObjectType::getName: The creature type has no name.\n");
+const char *ObjectType::get_name(int Count){
+	if(this->is_creature_container()){
+		error("ObjectType::get_name: The creature type has no name.\n");
 		return NULL;
 	}
 
@@ -307,14 +307,14 @@ const char *ObjectType::getName(int Count){
 	return Plural(Name, Count);
 }
 
-const char *ObjectType::getDescription(void){
+const char *ObjectType::get_description(void){
 	TObjectType *TypeP = ObjectTypes.at(this->TypeID);
 	return TypeP->Description;
 }
 
 // Object Type Related Functions
 // =============================================================================
-int GetFlagByName(const char *Name){
+int get_flag_by_name(const char *Name){
 	int Result = -1;
 	for(int i = 0; i < NARRAY(FlagNames); i += 1){
 		if(stricmp(FlagNames[i], Name) == 0){
@@ -325,7 +325,7 @@ int GetFlagByName(const char *Name){
 	return Result;
 }
 
-int GetTypeAttributeByName(const char *Name){
+int get_type_attribute_by_name(const char *Name){
 	int Result = -1;
 	for(int i = 0; i < NARRAY(TypeAttributeNames); i += 1){
 		if(stricmp(TypeAttributeNames[i], Name) == 0){
@@ -336,7 +336,7 @@ int GetTypeAttributeByName(const char *Name){
 	return Result;
 }
 
-int GetInstanceAttributeByName(const char *Name){
+int get_instance_attribute_by_name(const char *Name){
 	int Result = -1;
 	for(int i = 0; i < NARRAY(InstanceAttributeNames); i += 1){
 		if(stricmp(InstanceAttributeNames[i], Name) == 0){
@@ -347,22 +347,22 @@ int GetInstanceAttributeByName(const char *Name){
 	return Result;
 }
 
-const char *GetFlagName(int Flag){
+const char *get_flag_name(int Flag){
 	ASSERT(Flag >= 0 && Flag < NARRAY(FlagNames));
 	return FlagNames[Flag];
 }
 
-const char *GetTypeAttributeName(int Attribute){
+const char *get_type_attribute_name(int Attribute){
 	ASSERT(Attribute >= 0 && Attribute < NARRAY(TypeAttributeFlags));
 	return TypeAttributeNames[Attribute];
 }
 
-const char *GetInstanceAttributeName(int Attribute){
+const char *get_instance_attribute_name(int Attribute){
 	ASSERT(Attribute >= 0 && Attribute < NARRAY(InstanceAttributeNames));
 	return InstanceAttributeNames[Attribute];
 }
 
-bool ObjectTypeExists(int TypeID){
+bool object_type_exists(int TypeID){
 	return ObjectTypes.min <= TypeID && TypeID <= ObjectTypes.max;
 }
 
@@ -372,24 +372,24 @@ static uint16 GetNewTypeIndex(uint8 Group, uint8 Number){
 	return ((uint16)Group << 8) | (uint16)Number;
 }
 
-bool ObjectTypeExists(uint8 Group, uint8 Number){
+bool object_type_exists(uint8 Group, uint8 Number){
 	// TODO(fusion): Check bounds?
 	return NewType[GetNewTypeIndex(Group, Number)] >= 0;
 }
 
-ObjectType GetNewObjectType(uint8 Group, uint8 Number){
+ObjectType get_new_object_type(uint8 Group, uint8 Number){
 	int TypeID = NewType[GetNewTypeIndex(Group, Number)];
 	if(TypeID < 0){
-		error("GetNewObjectType: Object type %u/%u does not exist.\n", Group, Number);
+		error("get_new_object_type: Object type %u/%u does not exist.\n", Group, Number);
 		TypeID = 0;
 	}
 
 	return ObjectType(TypeID);
 }
 
-void GetOldObjectType(ObjectType Type, uint8 *Group, uint8 *Number){
-	if(!ObjectTypeExists(Type.TypeID)){
-		error("GetOldObjectType: Invalid type %d.\n", Type.TypeID);
+void get_old_object_type(ObjectType Type, uint8 *Group, uint8 *Number){
+	if(!object_type_exists(Type.TypeID)){
+		error("get_old_object_type: Invalid type %d.\n", Type.TypeID);
 		return;
 	}
 
@@ -398,22 +398,22 @@ void GetOldObjectType(ObjectType Type, uint8 *Group, uint8 *Number){
 	*Number = OldNumber[Type.TypeID];
 }
 
-ObjectType GetSpecialObject(SPECIALMEANING Meaning){
+ObjectType get_special_object(SPECIALMEANING Meaning){
 	int TypeID = 0;
 	if(Meaning > 0 && Meaning < NARRAY(SpecialObjects)){
 		TypeID = SpecialObjects[Meaning].TypeID;
 		if(TypeID == 0){
-			error("GetSpecialObject: No object type with meaning %d defined.\n", Meaning);
+			error("get_special_object: No object type with meaning %d defined.\n", Meaning);
 		}
 	}else{
-		error("GetSpecialObject: Invalid meaning %d.\n", Meaning);
+		error("get_special_object: Invalid meaning %d.\n", Meaning);
 	}
 	return ObjectType(TypeID);
 }
 
-ObjectType GetObjectTypeByName(const char *SearchName, bool Movable){
+ObjectType get_object_type_by_name(const char *SearchName, bool Movable){
 	if(SearchName == NULL){
-		error("GetObjectTypeByName: SearchName is NULL.\n");
+		error("get_object_type_by_name: SearchName is NULL.\n");
 		return ObjectType();
 	}
 
@@ -428,8 +428,8 @@ ObjectType GetObjectTypeByName(const char *SearchName, bool Movable){
 			TypeID <= ObjectTypes.max;
 			TypeID += 1){
 		ObjectType Type = TypeID;
-		if(!Movable || !Type.getFlag(UNMOVE)){
-			const char *TypeName = Type.getName(-1);
+		if(!Movable || !Type.get_flag(UNMOVE)){
+			const char *TypeName = Type.get_name(-1);
 			if(TypeName && TypeName[0] != 0){
 				if(stricmp(SearchName, TypeName) == 0){
 					BestMatch = Type;
@@ -449,15 +449,15 @@ ObjectType GetObjectTypeByName(const char *SearchName, bool Movable){
 	return BestMatch;
 }
 
-static void LoadObjects(void){
+static void load_objects(void){
 	char FileName[4096];
 	snprintf(FileName, sizeof(FileName), "%s/objects.srv", DATAPATH);
 
 	int TypeID = -1;
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 	while(true){
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token == ENDOFFILE){
 			Script.close();
 			break;
@@ -468,11 +468,11 @@ static void LoadObjects(void){
 		}
 
 		char Identifier[MAX_IDENT_LENGTH];
-		strcpy(Identifier, Script.getIdentifier());
-		Script.readSymbol('=');
+		strcpy(Identifier, Script.get_identifier());
+		Script.read_symbol('=');
 
 		if(strcmp(Identifier, "typeid") == 0){
-			TypeID = Script.readNumber();
+			TypeID = Script.read_number();
 			// NOTE(fusion): Initialize object type.
 			TObjectType *TypeP = ObjectTypes.at(TypeID);
 			memset(TypeP, 0, sizeof(TObjectType));
@@ -486,20 +486,20 @@ static void LoadObjects(void){
 
 			TObjectType *TypeP = ObjectTypes.at(TypeID);
 			if(strcmp(Identifier, "name") == 0){
-				TypeP->Name = AddStaticString(Script.readString());
+				TypeP->Name = AddStaticString(Script.read_string());
 			}else if(strcmp(Identifier, "description") == 0){
-				TypeP->Description = AddStaticString(Script.readString());
+				TypeP->Description = AddStaticString(Script.read_string());
 			}else if(strcmp(Identifier, "flags") == 0){
-				Script.readSymbol('{');
+				Script.read_symbol('{');
 				while(true){
-					Script.nextToken();
+					Script.next_token();
 					if(Script.Token == SPECIAL){
-						char Special = Script.getSpecial();
+						char Special = Script.get_special();
 						if(Special == ',') continue;
 						if(Special == '}') break;
 					}
 
-					int Flag = GetFlagByName(Script.getIdentifier());
+					int Flag = get_flag_by_name(Script.get_identifier());
 					if(Flag == -1){
 						Script.error("Unknown flag");
 					}
@@ -523,22 +523,22 @@ static void LoadObjects(void){
 					}
 				}
 			}else if(strcmp(Identifier, "attributes") == 0){
-				Script.readSymbol('{');
+				Script.read_symbol('{');
 				while(true){
-					Script.nextToken();
+					Script.next_token();
 					if(Script.Token == SPECIAL){
-						char Special = Script.getSpecial();
+						char Special = Script.get_special();
 						if(Special == ',') continue;
 						if(Special == '}') break;
 					}
 
-					int TypeAttribute = GetTypeAttributeByName(Script.getIdentifier());
+					int TypeAttribute = get_type_attribute_by_name(Script.get_identifier());
 					if(TypeAttribute == -1){
 						Script.error("Unknown attribute");
 					}
 
-					Script.readSymbol('=');
-					uint32 Value = (uint32)Script.readNumber();
+					Script.read_symbol('=');
+					uint32 Value = (uint32)Script.read_number();
 					TypeP->Attributes[TypeAttribute] = Value;
 					if(TypeAttribute == MEANING){
 						if(Value == 0 || Value >= NARRAY(SpecialObjects)){
@@ -549,7 +549,7 @@ static void LoadObjects(void){
 							Script.error("Special object already defined");
 						}
 
-						SpecialObjects[Value].setTypeID(TypeID);
+						SpecialObjects[Value].set_type_id(TypeID);
 					}
 				}
 			}else{
@@ -613,11 +613,11 @@ static void LoadConversionList(void){
 	NewType[GetNewTypeIndex(250, 0)] = 99;
 }
 
-void InitObjects(void){
-	LoadObjects();
+void init_objects(void){
+	load_objects();
 	LoadConversionList();
 }
 
-void ExitObjects(void){
+void exit_objects(void){
 	// no-op
 }

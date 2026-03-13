@@ -702,7 +702,7 @@ struct TBehaviour {
 	bool addCondition(int Type, void *Data);
 	bool addAction(int Type, void *Data, void *Data2, void *Data3, void *Data4);
 
-	// TODO(fusion): Same as `TChannel` in `operate.hh`.
+	// TODO(fusion): Same as `Channel` in `operate.hh`.
 	TBehaviour(const TBehaviour &Other);
 	void operator=(const TBehaviour &Other);
 
@@ -715,12 +715,12 @@ struct TBehaviour {
 };
 
 struct TBehaviourDatabase {
-	TBehaviourDatabase(TReadScriptFile *Script);
+	TBehaviourDatabase(ReadScriptFile *Script);
 
 	// TODO(fusion): These could/should be standalone functions.
-	TBehaviourNode *readValue(TReadScriptFile *Script);
-	TBehaviourNode *readFactor(TReadScriptFile *Script);
-	TBehaviourNode *readTerm(TReadScriptFile *Script);
+	TBehaviourNode *readValue(ReadScriptFile *Script);
+	TBehaviourNode *readFactor(ReadScriptFile *Script);
+	TBehaviourNode *readTerm(ReadScriptFile *Script);
 	int evaluate(TNPC *Npc, TBehaviourNode *Node, int *Parameters);
 
 	void react(TNPC *Npc, const char *Text, SITUATION Situation);
@@ -962,8 +962,8 @@ bool GetRaceNoParalyze(int Race);
 int GetRaceSummonCost(int Race);
 int GetRacePoison(int Race);
 bool GetRaceUnpushable(int Race);
-TOutfit ReadOutfit(TReadScriptFile *Script);
-void WriteOutfit(TWriteScriptFile *Script, TOutfit Outfit);
+TOutfit ReadOutfit(ReadScriptFile *Script);
+void WriteOutfit(WriteScriptFile *Script, TOutfit Outfit);
 void LoadRace(const char *FileName);
 void LoadRaces(void);
 

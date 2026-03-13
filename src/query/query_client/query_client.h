@@ -29,11 +29,11 @@ struct QueryClient {
 	void sendString(const char *String);
 	void sendBytes(const uint8 *Buffer, int Count);
 
-	bool getFlag(void);
+	bool get_flag(void);
 	uint8 getByte(void);
 	uint16 getWord(void);
 	uint32 getQuad(void);
-	void getString(char *Buffer, int MaxLength);
+	void get_string(char *Buffer, int MaxLength);
 	void getBytes(uint8 *Buffer, int Count);
 
 	int executeQuery(int Timeout, bool AutoReconnect);
@@ -107,7 +107,7 @@ struct QueryClient {
 			int *NumberOfPlayers, uint32 *CharacterIDs);
 	int createHighscores(int NumberOfPlayers, uint32 *CharacterIDs,
 		int *ExpPoints, int *ExpLevel, int *Fist, int *Club, int *Axe,
-		int *Sword, int *Distance, int *Shielding, int *Magic, int *Fishing);
+		int *Sword, int *Distance, int *shielding, int *Magic, int *Fishing);
 	int createCensus(void);
 	int createKillStatistics(void);
 	int getPlayersOnline(int *NumberOfWorlds, char (*Names)[30], uint16 *Players);

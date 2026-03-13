@@ -99,32 +99,32 @@ static bool IsAggressionValid(TCreature *Actor, TCreature *Victim){
 		return false;
 	}
 
-	if(Victim->Type == PLAYER && CheckRight(Victim->ID, INVULNERABLE)){
+	if(Victim->Type == PLAYER && check_right(Victim->ID, INVULNERABLE)){
 		return false;
 	}
 
 	return true;
 }
 
-// TImpact
+// Impact
 // =============================================================================
-void TImpact::handleField(int a, int b, int c){
+void Impact::handleField(int a, int b, int c){
 	// no-op
 }
 
-void TImpact::handleCreature(TCreature *Victim){
+void Impact::handleCreature(TCreature *Victim){
 	// no-op
 }
 
-bool TImpact::isAggressive(void){
+bool Impact::isAggressive(void){
 	return true;
 }
 
-// TDamageImpact
+// DamageImpact
 // =============================================================================
-TDamageImpact::TDamageImpact(TCreature *Actor, int DamageType, int Power, bool AllowDefense){
+DamageImpact::DamageImpact(TCreature *Actor, int DamageType, int Power, bool AllowDefense){
 	if(Actor == NULL){
-		error("TDamageImpact::TDamageImpact: Actor is NULL.\n");
+		error("DamageImpact::DamageImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -133,9 +133,9 @@ TDamageImpact::TDamageImpact(TCreature *Actor, int DamageType, int Power, bool A
 	this->AllowDefense = AllowDefense;
 }
 
-void TDamageImpact::handleCreature(TCreature *Victim){
+void DamageImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TDamageImpact::handleCreature: Victim does not exist.\n");
+		error("DamageImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -153,34 +153,34 @@ void TDamageImpact::handleCreature(TCreature *Victim){
 	}
 }
 
-// TFieldImpact
+// FieldImpact
 // =============================================================================
-TFieldImpact::TFieldImpact(TCreature *Actor, int FieldType){
+FieldImpact::FieldImpact(TCreature *Actor, int FieldType){
 	if(Actor == NULL){
-		error("TFieldImpact::TFieldImpact: Actor is NULL.\n");
+		error("FieldImpact::FieldImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
 	this->FieldType = FieldType;
 }
 
-void TFieldImpact::handleField(int x, int y, int z){
+void FieldImpact::handleField(int x, int y, int z){
 	TCreature *Actor = this->Actor;
 	if(Actor != NULL){
 		bool Peaceful = (WorldType == NON_PVP && Actor->IsPeaceful());
-		CreateField(x, y, z, this->FieldType, Actor->ID, Peaceful);
+		create_field(x, y, z, this->FieldType, Actor->ID, Peaceful);
 	}
 }
 
-// THealingImpact
+// HealingImpact
 // =============================================================================
-THealingImpact::THealingImpact(TCreature *Actor, int Power){
+HealingImpact::HealingImpact(TCreature *Actor, int Power){
 	if(Actor == NULL){
-		error("THealingImpact::THealingImpact: Actor is NULL.\n");
+		error("HealingImpact::HealingImpact: Actor is NULL.\n");
 	}
 
 	if(Power < 0){
-		error("THealingImpact::THealingImpact: Power is negative (Actor: %s).\n",
+		error("HealingImpact::HealingImpact: Power is negative (Actor: %s).\n",
 				(Actor != NULL ? Actor->Name : "(unknown)"));
 	}
 
@@ -188,9 +188,9 @@ THealingImpact::THealingImpact(TCreature *Actor, int Power){
 	this->Power = Power;
 }
 
-void THealingImpact::handleCreature(TCreature *Victim){
+void HealingImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("THealingImpact::handleCreature: Victim does not exist.\n");
+		error("HealingImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -207,15 +207,15 @@ void THealingImpact::handleCreature(TCreature *Victim){
 	}
 }
 
-bool THealingImpact::isAggressive(void){
+bool HealingImpact::isAggressive(void){
 	return false;
 }
 
-// TSpeedImpact
+// SpeedImpact
 // =============================================================================
-TSpeedImpact::TSpeedImpact(TCreature *Actor, int Percent, int Duration){
+SpeedImpact::SpeedImpact(TCreature *Actor, int Percent, int Duration){
 	if(Actor == NULL){
-		error("TSpeedImpact::TSpeedImpact: Actor is NULL.\n");
+		error("SpeedImpact::SpeedImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -223,9 +223,9 @@ TSpeedImpact::TSpeedImpact(TCreature *Actor, int Percent, int Duration){
 	this->Duration = Duration;
 }
 
-void TSpeedImpact::handleCreature(TCreature *Victim){
+void SpeedImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TSpeedImpact::handleCreature: Victim does not exist.\n");
+		error("SpeedImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -250,15 +250,15 @@ void TSpeedImpact::handleCreature(TCreature *Victim){
 	Victim->SetTimer(SKILL_GO_STRENGTH, this->Duration, 1, 1, -1);
 }
 
-// TDrunkenImpact
+// DrunkenImpact
 // =============================================================================
-TDrunkenImpact::TDrunkenImpact(TCreature *Actor, int Power, int Duration){
+DrunkenImpact::DrunkenImpact(TCreature *Actor, int Power, int Duration){
 	if(Actor == NULL){
-		error("TDrunkenImpact::TDrunkenImpact: Actor is NULL.\n");
+		error("DrunkenImpact::DrunkenImpact: Actor is NULL.\n");
 	}
 
 	if(Power > 6){
-		error("TDrunkenImpact::TDrunkenImpact: Power is too large (%d).\n", Power);
+		error("DrunkenImpact::DrunkenImpact: Power is too large (%d).\n", Power);
 		Power = 6;
 	}
 
@@ -267,9 +267,9 @@ TDrunkenImpact::TDrunkenImpact(TCreature *Actor, int Power, int Duration){
 	this->Duration = Duration;
 }
 
-void TDrunkenImpact::handleCreature(TCreature *Victim){
+void DrunkenImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TDrunkenImpact::handleCreature: Victim does not exist.\n");
+		error("DrunkenImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -286,11 +286,11 @@ void TDrunkenImpact::handleCreature(TCreature *Victim){
 	}
 }
 
-// TStrengthImpact
+// StrengthImpact
 // =============================================================================
-TStrengthImpact::TStrengthImpact(TCreature *Actor, int Skills, int Percent, int Duration){
+StrengthImpact::StrengthImpact(TCreature *Actor, int Skills, int Percent, int Duration){
 	if(Actor == NULL){
-		error("TStrengthImpact::TStrengthImpact: Actor is NULL.\n");
+		error("StrengthImpact::StrengthImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -299,9 +299,9 @@ TStrengthImpact::TStrengthImpact(TCreature *Actor, int Skills, int Percent, int 
 	this->Duration = Duration;
 }
 
-void TStrengthImpact::handleCreature(TCreature *Victim){
+void StrengthImpact::handleCreature(TCreature *Victim){
 	if(Victim  == NULL){
-		error("TStrengthImpact::handleCreature: Victim does not exist.\n");
+		error("StrengthImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -344,11 +344,11 @@ void TStrengthImpact::handleCreature(TCreature *Victim){
 	}
 }
 
-// TOutfitImpact
+// OutfitImpact
 // =============================================================================
-TOutfitImpact::TOutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration){
+OutfitImpact::OutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration){
 	if(Actor == NULL){
-		error("TOutfitImpact::TOutfitImpact: Actor is NULL.\n");
+		error("OutfitImpact::OutfitImpact: Actor is NULL.\n");
 	}
 
 	this->Actor = Actor;
@@ -356,9 +356,9 @@ TOutfitImpact::TOutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration){
 	this->Duration = Duration;
 }
 
-void TOutfitImpact::handleCreature(TCreature *Victim){
+void OutfitImpact::handleCreature(TCreature *Victim){
 	if(Victim == NULL){
-		error("TOutfitImpact::handleCreature: Victim does not exist.\n");
+		error("OutfitImpact::handleCreature: Victim does not exist.\n");
 		return;
 	}
 
@@ -366,15 +366,15 @@ void TOutfitImpact::handleCreature(TCreature *Victim){
 	Victim->SetTimer(SKILL_ILLUSION, 1, this->Duration, this->Duration, -1);
 }
 
-// TSummonImpact
+// SummonImpact
 // =============================================================================
-TSummonImpact::TSummonImpact(TCreature *Actor, int Race, int Maximum){
+SummonImpact::SummonImpact(TCreature *Actor, int Race, int Maximum){
 	if(Actor == NULL){
-		error("TSummonImpact::TSummonImpact: Actor is NULL.\n");
+		error("SummonImpact::SummonImpact: Actor is NULL.\n");
 	}
 
 	if(!IsRaceValid(Race)){
-		error("TSummonImpact::TSummonImpact: Invalid race number %d.\n", Race);
+		error("SummonImpact::SummonImpact: Invalid race number %d.\n", Race);
 	}
 
 	this->Actor = Actor;
@@ -382,14 +382,14 @@ TSummonImpact::TSummonImpact(TCreature *Actor, int Race, int Maximum){
 	this->Maximum = Maximum;
 }
 
-void TSummonImpact::handleField(int x, int y, int z){
+void SummonImpact::handleField(int x, int y, int z){
 	TCreature *Actor = this->Actor;
 	int Race = this->Race;
 	int Maximum = this->Maximum;
 	if(Actor != NULL
 			&& IsRaceValid(Race)
 			&& Actor->SummonedCreatures < Maximum){
-		if(SearchSummonField(&x, &y, &z, 2)){
+		if(search_summon_field(&x, &y, &z, 2)){
 			CreateMonster(Race, x, y, z, 0, Actor->ID, true);
 		}
 	}
@@ -397,26 +397,26 @@ void TSummonImpact::handleField(int x, int y, int z){
 
 // Spell Primitives
 // =============================================================================
-void ActorShapeSpell(TCreature *Actor, TImpact *Impact, int Effect){
+void actor_shape_spell(TCreature *Actor, Impact *Impact, int Effect){
 	if(Actor == NULL){
-		error("ActorShapeSpell: Caster does not exist.\n");
+		error("actor_shape_spell: Caster does not exist.\n");
 		return;
 	}
 
-	if(Impact->isAggressive() && IsProtectionZone(Actor->posx, Actor->posy, Actor->posz)){
+	if(Impact->isAggressive() && is_protection_zone(Actor->posx, Actor->posy, Actor->posz)){
 		return;
 	}
 
 	Impact->handleCreature(Actor);
 	if(Effect != EFFECT_NONE){
-		GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, Effect);
+		graphical_effect(Actor->posx, Actor->posy, Actor->posz, Effect);
 	}
 }
 
-void VictimShapeSpell(TCreature *Actor, TCreature *Victim,
-		int Range, int Animation, TImpact *Impact, int Effect){
+void victim_shape_spell(TCreature *Actor, TCreature *Victim,
+		int Range, int Animation, Impact *Impact, int Effect){
 	if(Actor == NULL){
-		error("VictimShapeSpell: Caster does not exist.\n");
+		error("victim_shape_spell: Caster does not exist.\n");
 		return;
 	}
 
@@ -433,31 +433,31 @@ void VictimShapeSpell(TCreature *Actor, TCreature *Victim,
 
 	// TODO(fusion): We don't check whether `Actor` is inside a protection zone.
 	// It might be checked elsewhere.
-	if(Impact->isAggressive() && IsProtectionZone(Victim->posx, Victim->posy, Victim->posz)){
+	if(Impact->isAggressive() && is_protection_zone(Victim->posx, Victim->posy, Victim->posz)){
 		return;
 	}
 
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz,
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz,
 			Victim->posx, Victim->posy, Victim->posz, 0)){
 		return;
 	}
 
 	if(Animation != ANIMATION_NONE && Distance > 0){
-		Missile(Actor->CrObject, Victim->CrObject, Animation);
+		missile(Actor->CrObject, Victim->CrObject, Animation);
 	}
 
 	Impact->handleCreature(Victim);
 
 	if(Effect != EFFECT_NONE){
-		GraphicalEffect(Victim->posx, Victim->posy, Victim->posz, Effect);
+		graphical_effect(Victim->posx, Victim->posy, Victim->posz, Effect);
 	}
 }
 
 // TODO(fusion): This function wasn't in the debug symbols but it was repeated
-// in both `OriginShapeSpell` and `CircleShapeSpell` so I'm almost sure it was
+// in both `origin_shape_spell` and `circle_shape_spell` so I'm almost sure it was
 // inlined there.
 static void ExecuteCircleSpell(int DestX, int DestY, int DestZ,
-						int Radius, TImpact *Impact, int Effect){
+						int Radius, Impact *Impact, int Effect){
 	// TODO(fusion): This clamping wasn't present in the original function but
 	// it is probably a good idea.
 	if(Radius >= NARRAY(Circle)){
@@ -472,47 +472,47 @@ static void ExecuteCircleSpell(int DestX, int DestY, int DestZ,
 			int FieldY = DestY + Circle[R].y[Point];
 			int FieldZ = DestZ;
 
-			if(Aggressive && IsProtectionZone(FieldX, FieldY, FieldZ)){
+			if(Aggressive && is_protection_zone(FieldX, FieldY, FieldZ)){
 				continue;
 			}
 
-			if(!ThrowPossible(DestX, DestY, DestZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(DestX, DestY, DestZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
 			Impact->handleField(FieldX, FieldY, FieldZ);
 
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while(Obj != NONE){
-				if(Obj.getObjectType().isCreatureContainer()){
+				if(Obj.get_object_type().is_creature_container()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim != NULL){
 						Impact->handleCreature(Victim);
 					}
 				}
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 
 			if(Effect != EFFECT_NONE){
-				GraphicalEffect(FieldX, FieldY, FieldZ, Effect);
+				graphical_effect(FieldX, FieldY, FieldZ, Effect);
 			}
 		}
 	}
 }
 
-void OriginShapeSpell(TCreature *Actor, int Radius, TImpact *Impact, int Effect){
+void origin_shape_spell(TCreature *Actor, int Radius, Impact *Impact, int Effect){
 	if(Actor == NULL){
-		error("OriginShapeSpell: Passed creature does not exist.\n");
+		error("origin_shape_spell: Passed creature does not exist.\n");
 		return;
 	}
 
 	ExecuteCircleSpell(Actor->posx, Actor->posy, Actor->posz, Radius, Impact, Effect);
 }
 
-void CircleShapeSpell(TCreature *Actor, int DestX, int DestY, int DestZ,
-		int Range, int Animation, int Radius, TImpact *Impact, int Effect){
+void circle_shape_spell(TCreature *Actor, int DestX, int DestY, int DestZ,
+		int Range, int Animation, int Radius, Impact *Impact, int Effect){
 	if(Actor == NULL){
-		error("CircleShapeSpell: Caster does not exist.\n");
+		error("circle_shape_spell: Caster does not exist.\n");
 		return;
 	}
 
@@ -523,33 +523,33 @@ void CircleShapeSpell(TCreature *Actor, int DestX, int DestY, int DestZ,
 		return;
 	}
 
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz, DestX, DestY, DestZ, 0)){
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz, DestX, DestY, DestZ, 0)){
 		return;
 	}
 
 	if(Animation != ANIMATION_NONE && Distance > 0){
-		Missile(Actor->CrObject, GetMapContainer(DestX, DestY, DestZ), Animation);
+		missile(Actor->CrObject, get_map_container(DestX, DestY, DestZ), Animation);
 	}
 
 	ExecuteCircleSpell(DestX, DestY, DestZ, Radius, Impact, Effect);
 }
 
-void DestinationShapeSpell(TCreature *Actor, TCreature *Victim,
-		int Range, int Animation, int Radius, TImpact *Impact, int Effect){
+void destination_shape_spell(TCreature *Actor, TCreature *Victim,
+		int Range, int Animation, int Radius, Impact *Impact, int Effect){
 	if(Actor == NULL){
-		error("DestinationShapeSpell: Caster does not exist.\n");
+		error("destination_shape_spell: Caster does not exist.\n");
 		return;
 	}
 
 	if(Victim != NULL){
-		CircleShapeSpell(Actor, Victim->posx, Victim->posy, Victim->posz,
+		circle_shape_spell(Actor, Victim->posx, Victim->posy, Victim->posz,
 				Range, Animation, Radius, Impact, Effect);
 	}
 }
 
-void AngleShapeSpell(TCreature *Actor, int Angle, int Range, TImpact *Impact, int Effect){
+void angle_shape_spell(TCreature *Actor, int Angle, int Range, Impact *Impact, int Effect){
 	if(Actor == NULL){
-		error("AngleShapeSpell: Passed creature does not exist.\n");
+		error("angle_shape_spell: Passed creature does not exist.\n");
 		return;
 	}
 
@@ -578,78 +578,78 @@ void AngleShapeSpell(TCreature *Actor, int Angle, int Range, TImpact *Impact, in
 				FieldX -= Forward;
 				FieldY -= Across;
 			}else{
-				error("AngleShapeSpell: Invalid viewing direction %d.\n", Direction);
+				error("angle_shape_spell: Invalid viewing direction %d.\n", Direction);
 				return;
 			}
 
-			if(Aggressive && IsProtectionZone(FieldX, FieldY, FieldZ)){
+			if(Aggressive && is_protection_zone(FieldX, FieldY, FieldZ)){
 				continue;
 			}
 
-			if(!ThrowPossible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
 			Impact->handleField(FieldX, FieldY, FieldZ);
 
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while(Obj != NONE){
-				if(Obj.getObjectType().isCreatureContainer()){
+				if(Obj.get_object_type().is_creature_container()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim != NULL){
 						Impact->handleCreature(Victim);
 					}
 				}
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 
 			if(Effect != EFFECT_NONE){
-				GraphicalEffect(FieldX, FieldY, FieldZ, Effect);
+				graphical_effect(FieldX, FieldY, FieldZ, Effect);
 			}
 		}
 	}
 }
 
-void CheckSpellbook(TCreature *Actor, int SpellNr){
+void check_spellbook(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckSpellbook: Passed creature does not exist.\n");
+		error("check_spellbook: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
-	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ALL_SPELLS)
+	if(Actor->Type == PLAYER && !check_right(Actor->ID, ALL_SPELLS)
 			&& !((TPlayer*)Actor)->SpellKnown(SpellNr)){
 		throw SPELLUNKNOWN;
 	}
 }
 
-void CheckAccount(TCreature *Actor, int SpellNr){
+void check_account(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckAccount: Passed creature does not exist.\n");
+		error("check_account: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	// TODO(fusion): Why is this the only function that checks the spell number?
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("CheckAccount: Invalid spell number %d.\n", SpellNr);
+		error("check_account: Invalid spell number %d.\n", SpellNr);
 		throw ERROR;
 	}
 
 	if(Actor->Type == PLAYER && (SpellList[SpellNr].Flags & 2) != 0
-			&& !CheckRight(Actor->ID, PREMIUM_ACCOUNT)){
+			&& !check_right(Actor->ID, PREMIUM_ACCOUNT)){
 		throw NOPREMIUMACCOUNT;
 	}
 }
 
-void CheckLevel(TCreature *Actor, int SpellNr){
+void check_level(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckLevel: Passed creature does not exist.\n");
+		error("check_level: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
-	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ALL_SPELLS)){
+	if(Actor->Type == PLAYER && !check_right(Actor->ID, ALL_SPELLS)){
 		TSkill *Level = Actor->Skills[SKILL_LEVEL];
 		if(Level == NULL){
-			error("CheckLevel: No skill LEVEL.\n");
+			error("check_level: No skill LEVEL.\n");
 			throw ERROR;
 		}
 
@@ -659,16 +659,16 @@ void CheckLevel(TCreature *Actor, int SpellNr){
 	}
 }
 
-void CheckRuneLevel(TCreature *Actor, int SpellNr){
+void check_rune_level(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckRuneLevel: Passed creature does not exist.\n");
+		error("check_rune_level: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
-	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ALL_SPELLS)){
+	if(Actor->Type == PLAYER && !check_right(Actor->ID, ALL_SPELLS)){
 		TSkill *MagicLevel = Actor->Skills[SKILL_MAGIC_LEVEL];
 		if(MagicLevel == NULL){
-			error("CheckLevel: No skill MAGLEVEL.\n");
+			error("check_level: No skill MAGLEVEL.\n");
 			throw ERROR;
 		}
 
@@ -678,21 +678,21 @@ void CheckRuneLevel(TCreature *Actor, int SpellNr){
 	}
 }
 
-void CheckMagicItem(TCreature *Actor, ObjectType Type){
+void check_magic_item(TCreature *Actor, ObjectType Type){
 	if(Actor == NULL){
 		error("CheckMagicObject: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
-	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ALL_SPELLS)
-			&& CountInventoryObjects(Actor->ID, Type, 0) == 0){
+	if(Actor->Type == PLAYER && !check_right(Actor->ID, ALL_SPELLS)
+			&& count_inventory_objects(Actor->ID, Type, 0) == 0){
 		throw MAGICITEM;
 	}
 }
 
-void CheckRing(TCreature *Actor, int SpellNr){
+void check_ring(TCreature *Actor, int SpellNr){
 	if(Actor == NULL){
-		error("CheckRing: Passed creature does not exist.\n");
+		error("check_ring: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -700,37 +700,37 @@ void CheckRing(TCreature *Actor, int SpellNr){
 	// what is the purpose of this function.
 #if 0
 	if(Actor->Type == PLAYER){
-		CheckRight(Actor->ID, ALL_SPELLS);
+		check_right(Actor->ID, ALL_SPELLS);
 	}
 #endif
 }
 
-void CheckAffectedPlayers(TCreature *Actor, int x, int y, int z){
+void check_affected_players(TCreature *Actor, int x, int y, int z){
 	if(Actor == NULL){
-		error("CheckAffectedPlayers: Passed creature does not exist.\n");
+		error("check_affected_players: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(WorldType == NORMAL
 			&& Actor->Type == PLAYER
 			&& Actor->Combat.SecureMode == SECURE_MODE_ENABLED){
-		Object Obj = GetFirstObject(x, y, z);
+		Object Obj = get_first_object(x, y, z);
 		while(Obj != NONE){
-			if(Obj.getObjectType().isCreatureContainer()){
-				uint32 TargetID = Obj.getCreatureID();
+			if(Obj.get_object_type().is_creature_container()){
+				uint32 TargetID = Obj.get_creature_id();
 				if(IsCreaturePlayer(TargetID) && Actor->ID != TargetID
 						&& !((TPlayer*)Actor)->IsAttackJustified(TargetID)){
 					throw SECUREMODE;
 				}
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 	}
 }
 
-void CheckMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay){
+void check_mana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay){
 	if(Actor == NULL){
-		error("CheckMana: Passed creature does not exist.\n");
+		error("check_mana: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -740,17 +740,17 @@ void CheckMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay){
 
 	TSkill *Mana = Actor->Skills[SKILL_MANA];
 	if(Mana == NULL){
-		error("CheckMana: No skill MANA!\n");
+		error("check_mana: No skill MANA!\n");
 		throw ERROR;
 	}
 
 	TSkill *Soul = Actor->Skills[SKILL_SOUL];
 	if(Soul == NULL){
-		error("CheckMana: No skill SOULPOINTS!\n");
+		error("check_mana: No skill SOULPOINTS!\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, UNLIMITED_MANA)){
+	if(!check_right(Actor->ID, UNLIMITED_MANA)){
 		if(Mana->Get() < ManaPoints){
 			throw NOTENOUGHMANA;
 		}
@@ -773,7 +773,7 @@ void CheckMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay){
 	}
 }
 
-int ComputeDamage(TCreature *Actor, int SpellNr, int Damage, int Variation){
+int compute_damage(TCreature *Actor, int SpellNr, int Damage, int Variation){
 	if(Variation != 0){
 		Damage += random(-Variation, Variation);
 	}
@@ -797,47 +797,47 @@ int ComputeDamage(TCreature *Actor, int SpellNr, int Damage, int Variation){
 	return Damage;
 }
 
-bool IsAggressiveSpell(int SpellNr){
+bool is_aggressive_spell(int SpellNr){
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("IsAggressiveSpell: Invalid spell number %d.\n", SpellNr);
+		error("is_aggressive_spell: Invalid spell number %d.\n", SpellNr);
 		return false;
 	}
 
 	return (SpellList[SpellNr].Flags & 1) != 0;
 }
 
-void MassCombat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
+void mass_combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Radius, int DamageType, int Animation){
 	if(!Target.exists()){
-		error("MassCombat: Passed target does not exist.\n");
+		error("mass_combat: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor == NULL){
-		error("MassCombat: Passed creature does not exist.\n");
+		error("mass_combat: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	CheckAffectedPlayers(Actor, TargetX, TargetY, TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz,
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	check_affected_players(Actor, TargetX, TargetY, TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz,
 				TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
-	TDamageImpact Impact(Actor, DamageType, Damage, false);
-	CircleShapeSpell(Actor, TargetX, TargetY, TargetZ,
+	DamageImpact Impact(Actor, DamageType, Damage, false);
+	circle_shape_spell(Actor, TargetX, TargetY, TargetZ,
 			INT_MAX, Animation, Radius, &Impact, Effect);
 }
 
-void AngleCombat(TCreature *Actor, int ManaPoints, int SoulPoints,
+void angle_combat(TCreature *Actor, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Range, int Angle, int DamageType){
 	if(Actor == NULL){
-		error("AngleCombat: Passed creature does not exist.\n");
+		error("angle_combat: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -845,49 +845,49 @@ void AngleCombat(TCreature *Actor, int ManaPoints, int SoulPoints,
 	if(WorldType == PVP_ENFORCED || (Range == 1 && Angle == 0)){
 		Delay = 1000;
 	}
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
-	TDamageImpact Impact(Actor, DamageType, Damage, false);
-	AngleShapeSpell(Actor, Angle, Range, &Impact, Effect);
+	DamageImpact Impact(Actor, DamageType, Damage, false);
+	angle_shape_spell(Actor, Angle, Range, &Impact, Effect);
 }
 
-void Combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
+void combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Animation, int DamageType){
 	if(!Target.exists()){
-		error("Combat: Passed target does not exist.\n");
+		error("combat: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor == NULL){
-		error("Combat: Passed creature does not exist.\n");
+		error("combat: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	if(!Target.getObjectType().isCreatureContainer()){
-		Target = GetFirstSpecObject(TargetX, TargetY, TargetZ, TYPEID_CREATURE_CONTAINER);
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	if(!Target.get_object_type().is_creature_container()){
+		Target = get_first_spec_object(TargetX, TargetY, TargetZ, TYPEID_CREATURE_CONTAINER);
 	}
 
 	if(Target == NONE){
 		throw NOCREATURE;
 	}
 
-	CheckAffectedPlayers(Actor, TargetX, TargetY, TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz,
+	check_affected_players(Actor, TargetX, TargetY, TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz,
 			TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
-	TDamageImpact Impact(Actor, DamageType, Damage, false);
-	CircleShapeSpell(Actor, TargetX, TargetY, TargetZ,
+	DamageImpact Impact(Actor, DamageType, Damage, false);
+	circle_shape_spell(Actor, TargetX, TargetY, TargetZ,
 			INT_MAX, Animation, 0, &Impact, Effect);
 }
 
-int GetDirection(int dx, int dy){
+int get_direction(int dx, int dy){
 	// TODO(fusion): This function originally returned directions different from
 	// the ones used by creatures. I've converted it to use the same values which
 	// are also defined in `enums.hh` for simplicity.
@@ -926,18 +926,18 @@ int GetDirection(int dx, int dy){
 
 // Spell Functions
 // =============================================================================
-void KillAllMonsters(TCreature *Actor, int Effect, int Radius){
+void kill_all_monsters(TCreature *Actor, int Effect, int Radius){
 	if(Actor == NULL){
-		error("KillAllMonsters: Passed creature does not exist.\n");
+		error("kill_all_monsters: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
-	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, CREATE_MONSTERS)){
+	if(Actor->Type == PLAYER && !check_right(Actor->ID, CREATE_MONSTERS)){
 		return;
 	}
 
 	// TODO(fusion): This is similar to `ExecuteCircleSpell` which makes me think
-	// it got inlined and whatever `TImpact` this is got devirtualized.
+	// it got inlined and whatever `Impact` this is got devirtualized.
 	if(Radius >= NARRAY(Circle)){
 		Radius = NARRAY(Circle) - 1;
 	}
@@ -952,37 +952,37 @@ void KillAllMonsters(TCreature *Actor, int Effect, int Radius){
 			int FieldY = CenterY + Circle[R].y[Point];
 			int FieldZ = CenterZ;
 
-			if(IsProtectionZone(FieldX, FieldY, FieldZ)){
+			if(is_protection_zone(FieldX, FieldY, FieldZ)){
 				continue;
 			}
 
-			if(!ThrowPossible(CenterX, CenterY, CenterZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(CenterX, CenterY, CenterZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while(Obj != NONE){
-				if(Obj.getObjectType().isCreatureContainer()){
+				if(Obj.get_object_type().is_creature_container()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim == NULL){
-						error("KillAllMonsters: Invalid creature.\n");
+						error("kill_all_monsters: Invalid creature.\n");
 					}else if(Actor != Victim && Victim->Type == MONSTER){
 						print(3, "Killing %s...\n", Victim->Name);
 						Victim->Kill();
 					}
 				}
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 
 			if(Effect != EFFECT_NONE){
-				GraphicalEffect(FieldX, FieldY, FieldZ, Effect);
+				graphical_effect(FieldX, FieldY, FieldZ, Effect);
 			}
 		}
 	}
 }
 
-void CreateField(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful){
-	if(!FieldPossible(x, y, z, FieldType)){
+void create_field(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful){
+	if(!field_possible(x, y, z, FieldType)){
 		return;
 	}
 
@@ -1026,25 +1026,25 @@ void CreateField(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful
 		}
 
 		default:{
-			error("CreateField: Invalid field type %d.\n", FieldType);
+			error("create_field: Invalid field type %d.\n", FieldType);
 			throw ERROR;
 		}
 	}
 
-	// NOTE(fusion): Delete other magic fields?
-	Object Obj = GetFirstObject(x, y, z);
+	// NOTE(fusion): delete_op other magic fields?
+	Object Obj = get_first_object(x, y, z);
 	while(Obj != NONE){
-		Object Next = Obj.getNextObject();
-		if(Obj.getObjectType().getFlag(MAGICFIELD)){
-			Delete(Obj, -1);
+		Object Next = Obj.get_next_object();
+		if(Obj.get_object_type().get_flag(MAGICFIELD)){
+			delete_op(Obj, -1);
 		}
 		Obj = Next;
 	}
 
-	// NOTE(fusion): Create field, at last.
+	// NOTE(fusion): create field, at last.
 	try{
-		Create(GetMapContainer(x, y, z),
-				GetSpecialObject(Meaning),
+		create(get_map_container(x, y, z),
+				get_special_object(Meaning),
 				Owner);
 	}catch(RESULT r){
 		if(r != DESTROYED){
@@ -1053,40 +1053,40 @@ void CreateField(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful
 	}
 }
 
-void CreateField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType){
+void create_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType){
 	if(Actor == NULL){
-		error("CreateField: Invalid creature passed.\n");
+		error("create_field: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CreateField: Passed object does not exist.\n");
+		error("create_field: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	if(!FieldPossible(TargetX, TargetY, TargetZ, FieldType)){
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	if(!field_possible(TargetX, TargetY, TargetZ, FieldType)){
 		throw NOROOM;
 	}
 
-	CheckAffectedPlayers(Actor, TargetX, TargetY, TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz,
+	check_affected_players(Actor, TargetX, TargetY, TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz,
 			TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
 	int Animation = ANIMATION_ENERGY;
 	if(FieldType == FIELD_TYPE_FIRE){
 		Animation = ANIMATION_FIRE;
 	}
-	Missile(Actor->CrObject, Target, Animation);
+	missile(Actor->CrObject, Target, Animation);
 
 	bool Peaceful = (WorldType == NON_PVP && Actor->IsPeaceful());
-	CreateField(TargetX, TargetY, TargetZ, FieldType, Actor->ID, Peaceful);
+	create_field(TargetX, TargetY, TargetZ, FieldType, Actor->ID, Peaceful);
 
 	if(FieldType == FIELD_TYPE_FIRE
 			|| FieldType == FIELD_TYPE_POISON
@@ -1095,9 +1095,9 @@ void CreateField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints
 	}
 }
 
-void CreateField(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType){
+void create_field(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType){
 	if(Actor == NULL){
-		error("CreateField: Invalid creature passed.\n");
+		error("create_field: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -1112,47 +1112,47 @@ void CreateField(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType
 		case DIRECTION_WEST:	TargetX -= 1; break;
 	}
 
-	if(Actor->Type == PLAYER && !CheckRight(Actor->ID, ATTACK_EVERYWHERE)
-			&& IsProtectionZone(TargetX, TargetY, TargetZ)){
+	if(Actor->Type == PLAYER && !check_right(Actor->ID, ATTACK_EVERYWHERE)
+			&& is_protection_zone(TargetX, TargetY, TargetZ)){
 		throw PROTECTIONZONE;
 	}
 
-	Object Target = GetMapContainer(TargetX, TargetY, TargetZ);
-	CreateField(Actor, Target, ManaPoints, SoulPoints, FieldType);
+	Object Target = get_map_container(TargetX, TargetY, TargetZ);
+	create_field(Actor, Target, ManaPoints, SoulPoints, FieldType);
 }
 
-void MassCreateField(TCreature *Actor, Object Target,
+void mass_create_field(TCreature *Actor, Object Target,
 		int ManaPoints, int SoulPoints, int FieldType, int Radius){
 	if(Actor == NULL){
-		error("MassCreateField: Invalid creature passed.\n");
+		error("mass_create_field: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("MassCreateField: Passed object does not exist.\n");
+		error("mass_create_field: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	CheckAffectedPlayers(Actor, TargetX, TargetY, TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz,
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	check_affected_players(Actor, TargetX, TargetY, TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz,
 			TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
 	if(Actor->posx != TargetX || Actor->posy != TargetY || Actor->posz != TargetZ){
 		int Animation = ANIMATION_ENERGY;
 		if(FieldType == FIELD_TYPE_FIRE){
 			Animation = ANIMATION_FIRE;
 		}
-		Missile(Actor->CrObject, Target, Animation);
+		missile(Actor->CrObject, Target, Animation);
 	}
 
-	// TODO(fusion): Same as `KillAllMonsters`.
+	// TODO(fusion): Same as `kill_all_monsters`.
 	if(Radius >= NARRAY(Circle)){
 		Radius = NARRAY(Circle) - 1;
 	}
@@ -1165,15 +1165,15 @@ void MassCreateField(TCreature *Actor, Object Target,
 			int FieldY = TargetY + Circle[R].y[Point];
 			int FieldZ = TargetZ;
 
-			if(IsProtectionZone(FieldX, FieldY, FieldZ)){
+			if(is_protection_zone(FieldX, FieldY, FieldZ)){
 				continue;
 			}
 
-			if(!ThrowPossible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
-			CreateField(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
+			create_field(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
 		}
 	}
 
@@ -1184,15 +1184,15 @@ void MassCreateField(TCreature *Actor, Object Target,
 	}
 }
 
-void CreateFieldWall(TCreature *Actor, Object Target,
+void create_field_wall(TCreature *Actor, Object Target,
 		int ManaPoints, int SoulPoints, int FieldType, int Width){
 	if(Actor == NULL){
-		error("CreateFieldWall: Invalid creature passed.\n");
+		error("create_field_wall: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CreateFieldWall: Passed object does not exist.\n");
+		error("create_field_wall: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1200,25 +1200,25 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 	int ActorY = Actor->posy;
 	int ActorZ = Actor->posz;
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	CheckAffectedPlayers(Actor, TargetX, TargetY, TargetZ);
-	if(!ThrowPossible(ActorX, ActorY, ActorZ, TargetX, TargetY, TargetZ, 0)){
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	check_affected_players(Actor, TargetX, TargetY, TargetZ);
+	if(!throw_possible(ActorX, ActorY, ActorZ, TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
 	if(ActorX != TargetX || ActorY != TargetY || ActorZ != TargetZ){
 		int Animation = ANIMATION_ENERGY;
 		if(FieldType == FIELD_TYPE_FIRE){
 			Animation = ANIMATION_FIRE;
 		}
-		Missile(Actor->CrObject, Target, Animation);
+		missile(Actor->CrObject, Target, Animation);
 	}
 
 	int StepX, StepY;
-	int Direction = GetDirection(TargetX - ActorX, TargetY - ActorY);
+	int Direction = get_direction(TargetX - ActorX, TargetY - ActorY);
 	switch(Direction){
 		case DIRECTION_NORTH:
 		case DIRECTION_SOUTH:{
@@ -1253,22 +1253,22 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 		}
 
 		default:{
-			error("CreateFieldWall: Invalid direction %d.\n", Direction);
+			error("create_field_wall: Invalid direction %d.\n", Direction);
 			throw ERROR;
 		}
 	}
 
 	bool Peaceful = (WorldType == NON_PVP && Actor->IsPeaceful());
-	CreateField(TargetX, TargetY, TargetZ, FieldType, Actor->ID, Peaceful);
+	create_field(TargetX, TargetY, TargetZ, FieldType, Actor->ID, Peaceful);
 	for(int i = 1; i <= Width; i += 1){
 		// NOTE(fusion): Forward.
 		{
 			int FieldX = TargetX + i * StepX;
 			int FieldY = TargetY + i * StepY;
 			int FieldZ = TargetZ;
-			if(ThrowPossible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
-					&& !IsProtectionZone(FieldX, FieldY, FieldZ)){
-				CreateField(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
+			if(throw_possible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
+					&& !is_protection_zone(FieldX, FieldY, FieldZ)){
+				create_field(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
 			}
 		}
 
@@ -1277,9 +1277,9 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 			int FieldX = TargetX + i * StepX;
 			int FieldY = TargetY + (i - 1) * StepY;
 			int FieldZ = TargetZ;
-			if(ThrowPossible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
-					&& !IsProtectionZone(FieldX, FieldY, FieldZ)){
-				CreateField(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
+			if(throw_possible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
+					&& !is_protection_zone(FieldX, FieldY, FieldZ)){
+				create_field(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
 			}
 		}
 
@@ -1288,9 +1288,9 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 			int FieldX = TargetX - i * StepX;
 			int FieldY = TargetY - i * StepY;
 			int FieldZ = TargetZ;
-			if(ThrowPossible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
-					&& !IsProtectionZone(FieldX, FieldY, FieldZ)){
-				CreateField(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
+			if(throw_possible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
+					&& !is_protection_zone(FieldX, FieldY, FieldZ)){
+				create_field(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
 			}
 		}
 
@@ -1299,9 +1299,9 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 			int FieldX = TargetX - i * StepX;
 			int FieldY = TargetY - (i - 1) * StepY;
 			int FieldZ = TargetZ;
-			if(ThrowPossible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
-					&& !IsProtectionZone(FieldX, FieldY, FieldZ)){
-				CreateField(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
+			if(throw_possible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)
+					&& !is_protection_zone(FieldX, FieldY, FieldZ)){
+				create_field(FieldX, FieldY, FieldZ, FieldType, Actor->ID, Peaceful);
 			}
 		}
 	}
@@ -1313,50 +1313,50 @@ void CreateFieldWall(TCreature *Actor, Object Target,
 	}
 }
 
-void DeleteField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
+void delete_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("DeleteField: Invalid creature passed.\n");
+		error("delete_field: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("DeleteField: Passed object does not exist.\n");
+		error("delete_field: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	if(!FieldPossible(TargetX, TargetY, TargetZ, 0)){
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	if(!field_possible(TargetX, TargetY, TargetZ, 0)){
 		throw NOROOM;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
-	Object Obj = GetFirstObject(TargetX, TargetY, TargetZ);
+	Object Obj = get_first_object(TargetX, TargetY, TargetZ);
 	while(Obj != NONE){
-		Object Next = Obj.getNextObject();
-		if(Obj.getObjectType().getFlag(MAGICFIELD)){
-			Delete(Obj, -1);
+		Object Next = Obj.get_next_object();
+		if(Obj.get_object_type().get_flag(MAGICFIELD)){
+			delete_op(Obj, -1);
 		}
 		Obj = Next;
 	}
 
-	GraphicalEffect(TargetX, TargetY, TargetZ, EFFECT_POFF);
+	graphical_effect(TargetX, TargetY, TargetZ, EFFECT_POFF);
 }
 
-void CleanupField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
+void cleanup_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("CleanupField: Invalid creature passed.\n");
+		error("cleanup_field: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CleanupField: Passed object does not exist.\n");
+		error("cleanup_field: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
 
 	int Distance = std::max<int>(
 			std::abs(Actor->posx - TargetX),
@@ -1365,36 +1365,36 @@ void CleanupField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoint
 		throw OUTOFRANGE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
-	Object Obj = GetFirstObject(TargetX, TargetY, TargetZ);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
+	Object Obj = get_first_object(TargetX, TargetY, TargetZ);
 	while(Obj != NONE){
-		Object Next = Obj.getNextObject();
-		ObjectType ObjType = Obj.getObjectType();
+		Object Next = Obj.get_next_object();
+		ObjectType ObjType = Obj.get_object_type();
 		// TODO(fusion): It seems that corpse type can be either 0 for human
 		// corpses or 1 for other/monster corpses, so we're avoiding deleting
 		// human corpses here.
-		if(!ObjType.getFlag(UNMOVE) && !ObjType.isCreatureContainer()
-		&& (!ObjType.getFlag(CORPSE) || ObjType.getAttribute(CORPSETYPE) != 0)){
-			Delete(Obj, -1);
+		if(!ObjType.get_flag(UNMOVE) && !ObjType.is_creature_container()
+		&& (!ObjType.get_flag(CORPSE) || ObjType.get_attribute(CORPSETYPE) != 0)){
+			delete_op(Obj, -1);
 		}
 		Obj = Next;
 	}
-	GraphicalEffect(TargetX, TargetY, TargetZ, EFFECT_POFF);
+	graphical_effect(TargetX, TargetY, TargetZ, EFFECT_POFF);
 	Actor->BlockLogout(60, true);
 }
 
-void CleanupField(TCreature *Actor){
+void cleanup_field(TCreature *Actor){
 	if(Actor == NULL){
-		error("CleanupField: Invalid creature passed.\n");
+		error("cleanup_field: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CleanupField: Spell can only be used by players.\n");
+		error("cleanup_field: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, CLEANUP_FIELDS)){
+	if(!check_right(Actor->ID, CLEANUP_FIELDS)){
 		return;
 	}
 
@@ -1409,55 +1409,55 @@ void CleanupField(TCreature *Actor){
 		case DIRECTION_WEST:	TargetX -= 1; break;
 	}
 
-	Object Target = GetMapContainer(TargetX, TargetY, TargetZ);
-	CleanupField(Actor, Target, 0, 0);
+	Object Target = get_map_container(TargetX, TargetY, TargetZ);
+	cleanup_field(Actor, Target, 0, 0);
 }
 
-void Teleport(TCreature *Actor, const char *Param){
+void teleport(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("Teleport: Invalid creature passed.\n");
+		error("teleport: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("Teleport: Param is NULL.\n");
+		error("teleport: Param is NULL.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("Teleport: Spell can only be used by players.\n");
+		error("teleport: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
 	int DestX = Actor->posx;
 	int DestY = Actor->posy;
 	int DestZ = Actor->posz;
-	uint16 HouseID = 0xFFFF; // NOTE(fusion): See `SearchFreeField`.
+	uint16 HouseID = 0xFFFF; // NOTE(fusion): See `search_free_field`.
 	int MDGoStrength = Actor->Skills[SKILL_GO_STRENGTH]->MDAct;
 
 	if(stricmp(Param, "up") == 0){
-		if(!CheckRight(Actor->ID, TELEPORT_VERTICAL)){
+		if(!check_right(Actor->ID, TELEPORT_VERTICAL)){
 			return;
 		}
 		DestZ -= 1;
 	}else if(stricmp(Param, "down") == 0){
-		if(!CheckRight(Actor->ID, TELEPORT_VERTICAL)){
+		if(!check_right(Actor->ID, TELEPORT_VERTICAL)){
 			return;
 		}
 		DestZ += 1;
 	}else if(stricmp(Param, "fast") == 0){
-		if(!CheckRight(Actor->ID, MODIFY_GOSTRENGTH)){
+		if(!check_right(Actor->ID, MODIFY_GOSTRENGTH)){
 			return;
 		}
 		MDGoStrength = 100;
 	}else if(stricmp(Param, "fastest") == 0){
-		if(!CheckRight(Actor->ID, MODIFY_GOSTRENGTH)){
+		if(!check_right(Actor->ID, MODIFY_GOSTRENGTH)){
 			return;
 		}
 		MDGoStrength = 200;
 	}else if(stricmp(Param, "slow") == 0
 			|| stricmp(Param, "normal") == 0){
-		if(!CheckRight(Actor->ID, MODIFY_GOSTRENGTH)){
+		if(!check_right(Actor->ID, MODIFY_GOSTRENGTH)){
 			return;
 		}
 		MDGoStrength = 0;
@@ -1465,15 +1465,15 @@ void Teleport(TCreature *Actor, const char *Param){
 		int ParamX, ParamY, ParamZ;
 		if(sscanf(Param, "%d,%d,%d", &ParamX, &ParamY, &ParamZ) == 3
 		|| sscanf(Param, "[%d,%d,%d]", &ParamX, &ParamY, &ParamZ) == 3){
-			if(!CheckRight(Actor->ID, TELEPORT_TO_COORDINATE)){
+			if(!check_right(Actor->ID, TELEPORT_TO_COORDINATE)){
 				return;
 			}
 
-			if(IsOnMap(ParamX, ParamY, ParamZ)){
+			if(is_on_map(ParamX, ParamY, ParamZ)){
 				DestX = ParamX;
 				DestY = ParamY;
 				DestZ = ParamZ;
-			}else if(IsOnMap(DestX + ParamX, DestY + ParamY, DestZ + ParamZ)){
+			}else if(is_on_map(DestX + ParamX, DestY + ParamY, DestZ + ParamZ)){
 				DestX += ParamX;
 				DestY += ParamY;
 				DestZ += ParamZ;
@@ -1482,17 +1482,17 @@ void Teleport(TCreature *Actor, const char *Param){
 				return;
 			}
 		}else{
-			if(!CheckRight(Actor->ID, TELEPORT_TO_MARK)){
+			if(!check_right(Actor->ID, TELEPORT_TO_MARK)){
 				return;
 			}
 
-			if(GetMarkPosition(Param, &ParamX, &ParamY, &ParamZ)){
+			if(get_mark_position(Param, &ParamX, &ParamY, &ParamZ)){
 				DestX = ParamX;
 				DestY = ParamY;
 				DestZ = ParamZ;
 				// TODO(fusion): Not sure why we do this here. Maybe `TELEPORT_TO_MARK`
 				// was also assigned to a couple of non GM characters?
-				HouseID = GetHouseID(DestX, DestY, DestZ);
+				HouseID = get_house_id(DestX, DestY, DestZ);
 			}else{
 				SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "There is no mark of this name.");
 				return;
@@ -1501,31 +1501,31 @@ void Teleport(TCreature *Actor, const char *Param){
 	}
 
 	if(DestX != Actor->posx || DestY != Actor->posy || DestZ != Actor->posz){
-		if(!SearchFreeField(&DestX, &DestY, &DestZ, 1, HouseID, true)){
+		if(!search_free_field(&DestX, &DestY, &DestZ, 1, HouseID, true)){
 			throw NOROOM;
 		}
-		Object Dest = GetMapContainer(DestX, DestY, DestZ);
-		Move(0, Actor->CrObject, Dest, -1, false, NONE);
-		GraphicalEffect(DestX, DestY, DestZ, EFFECT_ENERGY);
+		Object Dest = get_map_container(DestX, DestY, DestZ);
+		move(0, Actor->CrObject, Dest, -1, false, NONE);
+		graphical_effect(DestX, DestY, DestZ, EFFECT_ENERGY);
 	}else if(MDGoStrength != Actor->Skills[SKILL_GO_STRENGTH]->MDAct){
 		Actor->Skills[SKILL_GO_STRENGTH]->SetMDAct(MDGoStrength);
-		AnnounceChangedCreature(Actor->ID, CREATURE_SPEED_CHANGED);
-		GraphicalEffect(DestX, DestY, DestZ, EFFECT_MAGIC_BLUE);
+		announce_changed_creature(Actor->ID, CREATURE_SPEED_CHANGED);
+		graphical_effect(DestX, DestY, DestZ, EFFECT_MAGIC_BLUE);
 	}
 }
 
-void TeleportToCreature(TCreature *Actor, const char *Name){
+void teleport_to_creature(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("TeleportToCreature: Invalid creature passed.\n");
+		error("teleport_to_creature: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("TeleportToCreature: Spell can only be used by players.\n");
+		error("teleport_to_creature: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, TELEPORT_TO_CHARACTER)){
+	if(!check_right(Actor->ID, TELEPORT_TO_CHARACTER)){
 		return;
 	}
 
@@ -1535,54 +1535,54 @@ void TeleportToCreature(TCreature *Actor, const char *Name){
 	}
 
 	TPlayer *Player;
-	bool IgnoreGamemasters = !CheckRight(Actor->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)){
 		case  0:	break; // PLAYERFOUND ?
 		case -1:	throw PLAYERNOTONLINE;
 		case -2:	throw NAMEAMBIGUOUS;
 		default:{
-			error("TeleportToCreature: Invalid return value from IdentifyPlayer.\n");
+			error("teleport_to_creature: Invalid return value from IdentifyPlayer.\n");
 			throw ERROR;
 		}
 	}
 
 	if(Actor == Player){
-		GraphicalEffect(Actor->CrObject, EFFECT_ENERGY);
+		graphical_effect(Actor->CrObject, EFFECT_ENERGY);
 		return;
 	}
 
-	GraphicalEffect(Actor->CrObject, EFFECT_POFF);
+	graphical_effect(Actor->CrObject, EFFECT_POFF);
 
-	// TODO(fusion): I assume `SearchFreeField` won't modify the input position
+	// TODO(fusion): I assume `search_free_field` won't modify the input position
 	// so we're either teleporting to a nearby free position or to the player's
 	// position if it's not protection zone.
 	int DestX = Player->posx;
 	int DestY = Player->posy;
 	int DestZ = Player->posz;
-	uint16 HouseID = GetHouseID(DestX, DestY, DestZ);
-	if(!SearchFreeField(&DestX, &DestY, &DestZ, 1, HouseID, true)
-			|| IsProtectionZone(DestX, DestY, DestZ)){
+	uint16 HouseID = get_house_id(DestX, DestY, DestZ);
+	if(!search_free_field(&DestX, &DestY, &DestZ, 1, HouseID, true)
+			|| is_protection_zone(DestX, DestY, DestZ)){
 		throw NOROOM;
 	}
 
-	Object Dest = GetMapContainer(DestX, DestY, DestZ);
-	Move(0, Actor->CrObject, Dest, -1, false, NONE);
-	GraphicalEffect(DestX, DestY, DestZ, EFFECT_ENERGY);
-	Log("banish", "%s teleported to %s.\n", Actor->Name, Player->Name);
+	Object Dest = get_map_container(DestX, DestY, DestZ);
+	move(0, Actor->CrObject, Dest, -1, false, NONE);
+	graphical_effect(DestX, DestY, DestZ, EFFECT_ENERGY);
+	log_message("banish", "%s teleported to %s.\n", Actor->Name, Player->Name);
 }
 
-void TeleportPlayerToMe(TCreature *Actor, const char *Name){
+void teleport_player_to_me(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("TeleportPlayerToMe: Invalid creature passed.\n");
+		error("teleport_player_to_me: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("TeleportPlayerToMe: Spell can only be used by players.\n");
+		error("teleport_player_to_me: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, RETRIEVE)){
+	if(!check_right(Actor->ID, RETRIEVE)){
 		return;
 	}
 
@@ -1592,60 +1592,60 @@ void TeleportPlayerToMe(TCreature *Actor, const char *Name){
 	}
 
 	TPlayer *Player;
-	bool IgnoreGamemasters = !CheckRight(Actor->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)){
 		case  0:	break; // PLAYERFOUND ?
 		case -1:	throw PLAYERNOTONLINE;
 		case -2:	throw NAMEAMBIGUOUS;
 		default:{
-			error("TeleportPlayerToMe: Invalid return value from IdentifyPlayer.\n");
+			error("teleport_player_to_me: Invalid return value from IdentifyPlayer.\n");
 			throw ERROR;
 		}
 	}
 
-	GraphicalEffect(Player->CrObject, EFFECT_POFF);
+	graphical_effect(Player->CrObject, EFFECT_POFF);
 
 	int DestX = Actor->posx;
 	int DestY = Actor->posy;
 	int DestZ = Actor->posz;
-	uint16 HouseID = GetHouseID(DestX, DestY, DestZ);
-	if(!SearchFreeField(&DestX, &DestY, &DestZ, 1, HouseID, false)){
+	uint16 HouseID = get_house_id(DestX, DestY, DestZ);
+	if(!search_free_field(&DestX, &DestY, &DestZ, 1, HouseID, false)){
 		throw NOROOM;
 	}
 
-	Object Dest = GetMapContainer(DestX, DestY, DestZ);
-	Move(0, Player->CrObject, Dest, -1, false, NONE);
-	GraphicalEffect(DestX, DestY, DestZ, EFFECT_ENERGY);
+	Object Dest = get_map_container(DestX, DestY, DestZ);
+	move(0, Player->CrObject, Dest, -1, false, NONE);
+	graphical_effect(DestX, DestY, DestZ, EFFECT_ENERGY);
 }
 
-void MagicRope(TCreature *Actor, int ManaPoints, int SoulPoints){
+void magic_rope(TCreature *Actor, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("MagicRope: Invalid creature passed.\n");
+		error("magic_rope: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	int OrigX = Actor->posx;
 	int OrigY = Actor->posy;
 	int OrigZ = Actor->posz;
-	if(!CoordinateFlag(OrigX, OrigY, OrigZ, ROPESPOT)){
+	if(!coordinate_flag(OrigX, OrigY, OrigZ, ROPESPOT)){
 		throw NOTACCESSIBLE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
-	Object Dest = GetMapContainer(OrigX, OrigY + 1, OrigZ - 1);
-	Move(0, Actor->CrObject, Dest, -1, false, NONE);
-	GraphicalEffect(OrigX, OrigY, OrigZ, EFFECT_ENERGY);
+	Object Dest = get_map_container(OrigX, OrigY + 1, OrigZ - 1);
+	move(0, Actor->CrObject, Dest, -1, false, NONE);
+	graphical_effect(OrigX, OrigY, OrigZ, EFFECT_ENERGY);
 }
 
-void MagicClimbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Param){
+void magic_climbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Param){
 	if(Actor == NULL){
-		error("MagicClimbing: Invalid creature passed.\n");
+		error("magic_climbing: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("MagicClimbing: Invalid direction passed.\n");
+		error("magic_climbing: Invalid direction passed.\n");
 		throw ERROR;
 	}
 
@@ -1665,14 +1665,14 @@ void MagicClimbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char 
 	}
 
 	if(stricmp(Param, "up") == 0){
-		if(OrigZ > 0 && !CoordinateFlag(OrigX, OrigY, OrigZ - 1, BANK)
-				&& !CoordinateFlag(OrigX, OrigY, OrigZ - 1, UNPASS)
+		if(OrigZ > 0 && !coordinate_flag(OrigX, OrigY, OrigZ - 1, BANK)
+				&& !coordinate_flag(OrigX, OrigY, OrigZ - 1, UNPASS)
 				&& Actor->MovePossible(DestX, DestY, OrigZ - 1, true, true)){
 			DestZ -= 1;
 		}
 	}else if(stricmp(Param, "down") == 0){
-		if(OrigZ < 15 && !CoordinateFlag(DestX, DestY, OrigZ, BANK)
-				&& !CoordinateFlag(DestX, DestY, OrigZ, UNPASS)
+		if(OrigZ < 15 && !coordinate_flag(DestX, DestY, OrigZ, BANK)
+				&& !coordinate_flag(DestX, DestY, OrigZ, UNPASS)
 				&& Actor->MovePossible(DestX, DestY, OrigZ + 1, true, true)){
 			DestZ += 1;
 		}
@@ -1682,63 +1682,63 @@ void MagicClimbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char 
 		throw NOTACCESSIBLE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
-	Object Dest = GetMapContainer(DestX, DestY, DestZ);
-	Move(0, Actor->CrObject, Dest, -1, false, NONE);
-	GraphicalEffect(OrigX, OrigY, OrigZ, EFFECT_ENERGY);
+	Object Dest = get_map_container(DestX, DestY, DestZ);
+	move(0, Actor->CrObject, Dest, -1, false, NONE);
+	graphical_effect(OrigX, OrigY, OrigZ, EFFECT_ENERGY);
 }
 
-void MagicClimbing(TCreature *Actor, const char *Param){
+void magic_climbing(TCreature *Actor, const char *Param){
 	// TODO(fusion): I think this is a version used by GM characters.
 	if(Actor == NULL){
-		error("MagicClimbing: Invalid creature passed.\n");
+		error("magic_climbing: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("MagicClimbing: Invalid direction passed.\n");
+		error("magic_climbing: Invalid direction passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("MagicClimbing: Spell can only be used by players.\n");
+		error("magic_climbing: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, LEVITATE)){
-		MagicClimbing(Actor, 0, 0, Param);
+	if(check_right(Actor->ID, LEVITATE)){
+		magic_climbing(Actor, 0, 0, Param);
 	}
 }
 
-void CreateThing(TCreature *Actor, const char *Param1, const char *Param2){
+void create_thing(TCreature *Actor, const char *Param1, const char *Param2){
 	if(Actor == NULL){
-		error("CreateThing: Invalid creature passed.\n");
+		error("create_thing: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param1 == NULL){
-		error("CreateThing: Invalid parameter \"Param1\".\n");
+		error("create_thing: Invalid parameter \"Param1\".\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CreateThing: Spell can only be used by players.\n");
+		error("create_thing: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, CREATE_OBJECTS)){
+	if(!check_right(Actor->ID, CREATE_OBJECTS)){
 		return;
 	}
 
 	int TypeID = atoi(Param1);
 	if(TypeID != 0){
-		if(TypeID < 100 || !ObjectTypeExists(TypeID)
-				|| ObjectType(TypeID).getFlag(UNMOVE)){
+		if(TypeID < 100 || !object_type_exists(TypeID)
+				|| ObjectType(TypeID).get_flag(UNMOVE)){
 			TypeID = 0;
 		}
 	}else{
-		TypeID = GetObjectTypeByName(Param1, true).TypeID;
+		TypeID = get_object_type_by_name(Param1, true).TypeID;
 	}
 
 	if(TypeID == 0){
@@ -1755,40 +1755,40 @@ void CreateThing(TCreature *Actor, const char *Param1, const char *Param2){
 	}
 
 	ObjectType ObjType(TypeID);
-	if(!ObjType.getFlag(TAKE) && Count > 0){
+	if(!ObjType.get_flag(TAKE) && Count > 0){
 		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
 				"You may only create one untakeable object.");
 		return;
 	}
 
-	if(!ObjType.getFlag(CUMULATIVE)){
+	if(!ObjType.get_flag(CUMULATIVE)){
 		for(int i = 0; i < Count; i += 1){
-			CreateAtCreature(Actor->ID, ObjType, 1);
+			create_at_creature(Actor->ID, ObjType, 1);
 		}
 	}else{
-		CreateAtCreature(Actor->ID, ObjType, Count);
+		create_at_creature(Actor->ID, ObjType, Count);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 }
 
-void CreateMoney(TCreature *Actor, const char *Param){
+void create_money(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("CreateMoney: Invalid creature passed.\n");
+		error("create_money: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("CreateMoney: Invalid parameter \"Param1\".\n");
+		error("create_money: Invalid parameter \"Param1\".\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CreateMoney: Spell can only be used by players.\n");
+		error("create_money: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, CREATE_MONEY)){
+	if(!check_right(Actor->ID, CREATE_MONEY)){
 		return;
 	}
 
@@ -1804,27 +1804,27 @@ void CreateMoney(TCreature *Actor, const char *Param){
 	int Gold		= (Amount % 10000) % 100;
 
 	if(Crystal > 0){
-		CreateAtCreature(Actor->ID, GetSpecialObject(MONEY_TENTHOUSAND), Crystal);
+		create_at_creature(Actor->ID, get_special_object(MONEY_TENTHOUSAND), Crystal);
 	}
 
 	if(Platinum > 0){
-		CreateAtCreature(Actor->ID, GetSpecialObject(MONEY_HUNDRED), Platinum);
+		create_at_creature(Actor->ID, get_special_object(MONEY_HUNDRED), Platinum);
 	}
 
 	if(Gold > 0){
-		CreateAtCreature(Actor->ID, GetSpecialObject(MONEY_ONE), Gold);
+		create_at_creature(Actor->ID, get_special_object(MONEY_ONE), Gold);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 }
 
-void CreateFood(TCreature *Actor, int ManaPoints, int SoulPoints){
+void create_food(TCreature *Actor, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("CreateFood: Invalid creature passed.\n");
+		error("create_food: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	int Count = (rand() % 2) + 1;
 	for(int i = 0; i < Count; i += 1){
@@ -1839,19 +1839,19 @@ void CreateFood(TCreature *Actor, int ManaPoints, int SoulPoints){
 			case 5: Group = 131; Number =  9; break;
 			case 6: Group = 134; Number =  1; break;
 		}
-		CreateAtCreature(Actor->ID, GetNewObjectType(Group, Number), 1);
+		create_at_creature(Actor->ID, get_new_object_type(Group, Number), 1);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 }
 
-void CreateArrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowType, int Count){
+void create_arrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowType, int Count){
 	if(Actor == NULL){
-		error("CreateArrows: Invalid creature passed.\n");
+		error("create_arrows: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	uint8 Number;
 	switch(ArrowType){
@@ -1861,23 +1861,23 @@ void CreateArrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowTyp
 		case 3: Number = 0; break;
 		case 4: Number = 4; break;
 		default:{
-			error("CreateArrows: Invalid arrow type %d.\n", ArrowType);
+			error("create_arrows: Invalid arrow type %d.\n", ArrowType);
 			throw ERROR;
 		}
 	}
 
-	CreateAtCreature(Actor->ID, GetNewObjectType(94, Number), Count);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	create_at_creature(Actor->ID, get_new_object_type(94, Number), Count);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God){
+void summon_creature(TCreature *Actor, int ManaPoints, int Race, bool God){
 	if(Actor == NULL){
-		error("SummonCreature: Invalid creature passed.\n");
+		error("summon_creature: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!IsRaceValid(Race)){
-		error("SummonCreature: Invalid race number %d passed.\n", Race);
+		error("summon_creature: Invalid race number %d passed.\n", Race);
 		throw ERROR;
 	}
 
@@ -1885,12 +1885,12 @@ void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God){
 	// function in two?
 	if(God){
 		// TODO(fusion): What happened to checking if the creature is a player
-		// before using `CheckRight`?
-		if(!CheckRight(Actor->ID, CREATE_MONSTERS)){
+		// before using `check_right`?
+		if(!check_right(Actor->ID, CREATE_MONSTERS)){
 			return;
 		}
 	}else if(Actor->Type == PLAYER){
-		if(!CheckRight(Actor->ID, CREATE_MONSTERS) && GetRaceNoSummon(Race)){
+		if(!check_right(Actor->ID, CREATE_MONSTERS) && GetRaceNoSummon(Race)){
 			throw NOTACCESSIBLE;
 		}
 
@@ -1902,7 +1902,7 @@ void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God){
 	int SummonX = Actor->posx;
 	int SummonY = Actor->posy;
 	int SummonZ = Actor->posz;
-	if(!SearchSummonField(&SummonX, &SummonY, &SummonZ, 2)){
+	if(!search_summon_field(&SummonX, &SummonY, &SummonZ, 2)){
 		throw NOROOM;
 	}
 
@@ -1910,22 +1910,22 @@ void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God){
 	if(!God){
 		int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
 		ManaPoints += GetRaceSummonCost(Race);
-		CheckMana(Actor, ManaPoints, 0, Delay);
+		check_mana(Actor, ManaPoints, 0, Delay);
 		Master = Actor->ID;
 	}
 
 	CreateMonster(Race, SummonX, SummonY, SummonZ, 0, Master, true);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void SummonCreature(TCreature *Actor, int ManaPoints, const char *RaceName, bool God){
+void summon_creature(TCreature *Actor, int ManaPoints, const char *RaceName, bool God){
 	if(Actor == NULL){
-		error("SummonCreature: Invalid creature passed.\n");
+		error("summon_creature: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(RaceName == NULL){
-		error("SummonCreature: Invalid race name passed.\n");
+		error("summon_creature: Invalid race name passed.\n");
 		throw ERROR;
 	}
 
@@ -1934,23 +1934,23 @@ void SummonCreature(TCreature *Actor, int ManaPoints, const char *RaceName, bool
 		throw CREATURENOTEXISTING;
 	}
 
-	SummonCreature(Actor, ManaPoints, Race, God);
+	summon_creature(Actor, ManaPoints, Race, God);
 }
 
-void StartMonsterraid(TCreature *Actor, const char *RaidName){
+void start_monsterraid(TCreature *Actor, const char *RaidName){
 	if(Actor == NULL){
-		error("StartMonsterraid: Invalid creature passed.\n");
+		error("start_monsterraid: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(RaidName == NULL){
-		error("StartMonsterraid: Invalid raid name passed.\n");
+		error("start_monsterraid: Invalid raid name passed.\n");
 		throw ERROR;
 	}
 
 	// TODO(fusion): What happened to checking if the creature is a player
-	// before using `CheckRight`?
-	if(!CheckRight(Actor->ID, CREATE_MONSTERS)){
+	// before using `check_right`?
+	if(!check_right(Actor->ID, CREATE_MONSTERS)){
 		return;
 	}
 
@@ -1962,25 +1962,25 @@ void StartMonsterraid(TCreature *Actor, const char *RaidName){
 	snprintf(FileName, sizeof(FileName), "%s/%s.evt", MONSTERPATH, RaidNameLower);
 	if(FileExists(FileName)){
 		LoadMonsterRaid(FileName, RoundNr, NULL, NULL, NULL, NULL);
-		GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+		graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 	}else{
-		GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
+		graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
 	}
 }
 
-void RaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
+void raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("RaiseDead: Invalid creature passed.\n");
+		error("raise_dead: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("RaiseDead: Passed object does not exist.\n");
+		error("raise_dead: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
 
 	// TODO(fusion): Could this be some `CheckRange` function inlined?
 	int Distance = std::max<int>(
@@ -1990,62 +1990,62 @@ void RaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints){
 		throw OUTOFRANGE;
 	}
 
-	Object Obj = GetFirstObject(TargetX, TargetY, TargetZ);
+	Object Obj = get_first_object(TargetX, TargetY, TargetZ);
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		// TODO(fusion): Same as in `CleanupField` except we're looking for a
+		ObjectType ObjType = Obj.get_object_type();
+		// TODO(fusion): Same as in `cleanup_field` except we're looking for a
 		// non human corpse to summon a skeleton from.
-		if(ObjType.getFlag(CORPSE) && ObjType.getAttribute(CORPSETYPE) == 1){
+		if(ObjType.get_flag(CORPSE) && ObjType.get_attribute(CORPSETYPE) == 1){
 			break;
 		}
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 
 	if(Obj == NONE){
 		throw NOTUSABLE;
 	}
 
-	if(!SearchFreeField(&TargetX, &TargetY, &TargetZ, 1, 0, false)
-			|| IsProtectionZone(TargetX, TargetY, TargetZ)){
+	if(!search_free_field(&TargetX, &TargetY, &TargetZ, 1, 0, false)
+			|| is_protection_zone(TargetX, TargetY, TargetZ)){
 		throw NOROOM;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
-	Delete(Obj, -1);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
+	delete_op(Obj, -1);
 
 	// NOTE(fusion): The race of a common skeleton is 33 but it should probably
 	// be a constant somewhere.
 	CreateMonster(33, TargetX, TargetY, TargetZ, 0, Actor->ID, true);
 }
 
-void MassRaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius){
+void mass_raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius){
 	if(Actor == NULL){
-		error("MassRaiseDead: Invalid creature passed.\n");
+		error("mass_raise_dead: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("MassRaiseDead: Passed object does not exist.\n");
+		error("mass_raise_dead: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	// TODO(fusion): Unless `ThrowPossible` also does some max range check, this
+	// TODO(fusion): Unless `throw_possible` also does some max range check, this
 	// spell doesn't check range or floor.
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz, TargetX, TargetY, TargetZ, 0)){
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz, TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, ManaPoints, SoulPoints, Delay);
+	check_mana(Actor, ManaPoints, SoulPoints, Delay);
 
 	if(Actor->posx != TargetX || Actor->posy != TargetY || Actor->posz != TargetZ){
-		Missile(Actor->CrObject, Target, ANIMATION_ENERGY);
+		missile(Actor->CrObject, Target, ANIMATION_ENERGY);
 	}
 
-	// TODO(fusion): Same as `KillAllMonsters`.
+	// TODO(fusion): Same as `kill_all_monsters`.
 	if(Radius >= NARRAY(Circle)){
 		Radius = NARRAY(Circle) - 1;
 	}
@@ -2057,23 +2057,23 @@ void MassRaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoin
 			int FieldY = TargetY + Circle[R].y[Point];
 			int FieldZ = TargetZ;
 
-			if(!ThrowPossible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
-			GraphicalEffect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			graphical_effect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while(Obj != NONE){
-				Object Next = Obj.getNextObject();
-				ObjectType ObjType = Obj.getObjectType();
-				// NOTE(fusion): Same as `RaiseDead`.
-				if(ObjType.getFlag(CORPSE) && ObjType.getAttribute(CORPSETYPE) == 1){
+				Object Next = Obj.get_next_object();
+				ObjectType ObjType = Obj.get_object_type();
+				// NOTE(fusion): Same as `raise_dead`.
+				if(ObjType.get_flag(CORPSE) && ObjType.get_attribute(CORPSETYPE) == 1){
 					int SummonX = FieldX;
 					int SummonY = FieldY;
 					int SummonZ = FieldZ;
-					if(SearchFreeField(&SummonX, &SummonY, &SummonZ, 1, 0, false)
-							&& !IsProtectionZone(SummonX, SummonY, SummonZ)){
-						Delete(Obj, -1);
+					if(search_free_field(&SummonX, &SummonY, &SummonZ, 1, 0, false)
+							&& !is_protection_zone(SummonX, SummonY, SummonZ)){
+						delete_op(Obj, -1);
 						CreateMonster(33, SummonX, SummonY, SummonZ, 0, Actor->ID, false);
 					}
 				}
@@ -2083,9 +2083,9 @@ void MassRaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoin
 	}
 }
 
-void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
+void heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 	if(Actor == NULL){
-		error("Heal: Invalid creature passed.\n");
+		error("heal: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
@@ -2096,17 +2096,17 @@ void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 		throw NOTACCESSIBLE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	TSkill *HitPoints = Actor->Skills[SKILL_HITPOINTS];
 	if(HitPoints == NULL){
-		error("Heal: Skill HITPOINTS does not exist.\n");
+		error("heal: Skill HITPOINTS does not exist.\n");
 		throw ERROR;
 	}
 
 	if(HitPoints->Get() > 0){
-		// TODO(fusion): This looks a lot like `THealingImpact::handleCreature`
-		// and I'm starting to think most of these spells use a single `TImpact`
+		// TODO(fusion): This looks a lot like `HealingImpact::handleCreature`
+		// and I'm starting to think most of these spells use a single `Impact`
 		// on the stack to execute their effects. We don't see any sign of them
 		// because they either get devirtualized by the optimizer or don't exist.
 		HitPoints->Change(Amount);
@@ -2114,35 +2114,35 @@ void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 			Actor->SetTimer(SKILL_GO_STRENGTH, 0, 0, 0, -1);
 		}
 
-		GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+		graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 	}
 }
 
-void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Amount, int Radius){
+void mass_heal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Amount, int Radius){
 	if(Actor == NULL){
-		error("MassHeal: Invalid creature passed.\n");
+		error("mass_heal: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("MassHeal: Passed target does not exist.\n");
+		error("mass_heal: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
-	// TODO(fusion): Same as `MassRaiseDead`.
+	// TODO(fusion): Same as `mass_raise_dead`.
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz, TargetX, TargetY, TargetZ, 0)){
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz, TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	if(Actor->posx != TargetX || Actor->posy != TargetY || Actor->posz != TargetZ){
-		Missile(Actor->CrObject, Target, ANIMATION_ENERGY);
+		missile(Actor->CrObject, Target, ANIMATION_ENERGY);
 	}
 
-	// TODO(fusion): Same as `KillAllMonsters`.
+	// TODO(fusion): Same as `kill_all_monsters`.
 	if(Radius >= NARRAY(Circle)){
 		Radius = NARRAY(Circle) - 1;
 	}
@@ -2154,25 +2154,25 @@ void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, i
 			int FieldY = TargetY + Circle[R].y[Point];
 			int FieldZ = TargetZ;
 
-			if(!ThrowPossible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
-			GraphicalEffect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			graphical_effect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while(Obj != NONE){
-				ObjectType ObjType = Obj.getObjectType();
-				if(ObjType.isCreatureContainer()){
+				ObjectType ObjType = Obj.get_object_type();
+				if(ObjType.is_creature_container()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim == NULL){
-						error("MassHeal: Invalid creature.\n");
+						error("mass_heal: Invalid creature.\n");
 					}else if(WorldType != NON_PVP || Victim->IsPeaceful()){
 						// TODO(fusion): Do we really want to throw here? If not
 						// having hitpoints is a problem, it should have been
 						// enforced ealier for all creatures.
 						TSkill *HitPoints = Victim->Skills[SKILL_HITPOINTS];
 						if(HitPoints == NULL){
-							error("MassHeal: Skill HITPOINTS does not exist.\n");
+							error("mass_heal: Skill HITPOINTS does not exist.\n");
 							throw ERROR;
 						}
 
@@ -2184,20 +2184,20 @@ void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, i
 						}
 					}
 				}
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 		}
 	}
 }
 
-void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int SoulPoints, int Amount){
+void heal_friend(TCreature *Actor, const char *TargetName, int ManaPoints, int SoulPoints, int Amount){
 	if(Actor == NULL){
-		error("HealFriend: Invalid creature passed.\n");
+		error("heal_friend: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(TargetName == NULL){
-		error("HealFriend: Invalid name passed.\n");
+		error("heal_friend: Invalid name passed.\n");
 		throw ERROR;
 	}
 
@@ -2218,7 +2218,7 @@ void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int So
 
 	TSkill *HitPoints = Target->Skills[SKILL_HITPOINTS];
 	if(HitPoints == NULL){
-		error("HealFriend: Skill HITPOINTS does not exist.\n");
+		error("heal_friend: Skill HITPOINTS does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2226,43 +2226,43 @@ void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int So
 		throw PLAYERNOTONLINE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	HitPoints->Change(Amount);
 	if(Target->Skills[SKILL_GO_STRENGTH]->MDAct < 0){
 		Target->SetTimer(SKILL_GO_STRENGTH, 0, 0, 0, -1);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
-	GraphicalEffect(Target->posx, Target->posy, Target->posz, EFFECT_MAGIC_GREEN);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Target->posx, Target->posy, Target->posz, EFFECT_MAGIC_GREEN);
 }
 
-void RefreshMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
+void refresh_mana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount){
 	if(Actor == NULL){
-		error("RefreshMana: Invalid creature passed.\n");
+		error("refresh_mana: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	TSkill *Mana = Actor->Skills[SKILL_MANA];
 	if(Mana == NULL){
-		error("RefreshMana: Skill MANA does not exist.\n");
+		error("refresh_mana: Skill MANA does not exist.\n");
 		throw ERROR;
 	}
 
 	Mana->Change(Amount);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void MagicGoStrength(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints, int Percent, int Duration){
+void magic_go_strength(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints, int Percent, int Duration){
 	if(Actor == NULL){
-		error("MagicGoStrength: Passed creature does not exist.\n");
+		error("magic_go_strength: Passed creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Target == NULL){
-		error("MagicGoStrength: Passed target creature does not exist.\n");
+		error("magic_go_strength: Passed target creature does not exist.\n");
 		throw ERROR;
 	}
 
@@ -2276,7 +2276,7 @@ void MagicGoStrength(TCreature *Actor, TCreature *Target, int ManaPoints, int So
 		}
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	TSkill *GoStrength = Target->Skills[SKILL_GO_STRENGTH];
 	if(Percent < -100){
@@ -2294,86 +2294,86 @@ void MagicGoStrength(TCreature *Actor, TCreature *Target, int ManaPoints, int So
 		Actor->BlockLogout(60, Target->Type == PLAYER);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
-	GraphicalEffect(Target->posx, Target->posy, Target->posz, EFFECT_MAGIC_RED);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+	graphical_effect(Target->posx, Target->posy, Target->posz, EFFECT_MAGIC_RED);
 }
 
-void Shielding(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
+void shielding(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
 	if(Actor == NULL){
-		error("Shielding: Invalid creature passed.\n");
+		error("shielding: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	Actor->SetTimer(SKILL_MANASHIELD, 1, Duration, Duration, -1);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void NegatePoison(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints){
+void negate_poison(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints){
 	if(Actor == NULL){
-		error("NegatePoison: Invalid creature passed.\n");
+		error("negate_poison: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Target == NULL){
-		error("NegatePoison: Target creature does not exist.\n");
+		error("negate_poison: Target creature does not exist.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	Target->SetTimer(SKILL_POISON, 0, 0, 0, -1);
-	GraphicalEffect(Target->posx, Target->posy, Target->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Target->posx, Target->posy, Target->posz, EFFECT_MAGIC_BLUE);
 }
 
-void Enlight(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius, int Duration){
+void enlight(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius, int Duration){
 	if(Actor == NULL){
-		error("Enlight: Invalid creature passed.\n");
+		error("enlight: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	if(Actor->Skills[SKILL_LIGHT]->TimerValue() <= Radius){
 		Actor->SetTimer(SKILL_LIGHT, Radius, Duration / Radius, Duration / Radius, -1);
 	}
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void Invisibility(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
+void invisibility(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration){
 	if(Actor == NULL){
-		error("Invisibility: Invalid creature passed.\n");
+		error("invisibility: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	Actor->Outfit = TOutfit::Invisible();
 	Actor->SetTimer(SKILL_ILLUSION, 1, Duration, Duration, -1);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius){
+void cancel_invisibility(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius){
 	if(Actor == NULL){
-		error("CancelInvisibility: Invalid creature passed.\n");
+		error("cancel_invisibility: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("CancelInvisibility: Passed target does not exist.\n");
+		error("cancel_invisibility: Passed target does not exist.\n");
 		throw ERROR;
 	}
 
 	int TargetX, TargetY, TargetZ;
-	GetObjectCoordinates(Target, &TargetX, &TargetY, &TargetZ);
-	if(!ThrowPossible(Actor->posx, Actor->posy, Actor->posz, TargetX, TargetY, TargetZ, 0)){
+	get_object_coordinates(Target, &TargetX, &TargetY, &TargetZ);
+	if(!throw_possible(Actor->posx, Actor->posy, Actor->posz, TargetX, TargetY, TargetZ, 0)){
 		throw CANNOTTHROW;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	if(Actor->posx != TargetX || Actor->posy != TargetY || Actor->posz != TargetZ){
-		Missile(Actor->CrObject, Target, ANIMATION_ENERGY);
+		missile(Actor->CrObject, Target, ANIMATION_ENERGY);
 	}
 
-	// TODO(fusion): Same as `KillAllMonsters`.
+	// TODO(fusion): Same as `kill_all_monsters`.
 	if(Radius >= NARRAY(Circle)){
 		Radius = NARRAY(Circle) - 1;
 	}
@@ -2388,29 +2388,29 @@ void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int Sou
 			int FieldY = TargetY + Circle[R].y[Point];
 			int FieldZ = TargetZ;
 
-			if(IsProtectionZone(FieldX, FieldY, FieldZ)){
+			if(is_protection_zone(FieldX, FieldY, FieldZ)){
 				continue;
 			}
 
-			if(!ThrowPossible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(TargetX, TargetY, TargetZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
 			int Effect = EFFECT_MAGIC_BLUE;
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			while(Obj != NONE){
-				ObjectType ObjType = Obj.getObjectType();
-				if(ObjType.isCreatureContainer()){
+				ObjectType ObjType = Obj.get_object_type();
+				if(ObjType.is_creature_container()){
 					TCreature *Victim = GetCreature(Obj);
 					if(Victim == NULL){
-						error("CancelInvisibility: Invalid creature.\n");
+						error("cancel_invisibility: Invalid creature.\n");
 					}else if(Victim->IsInvisible()
 							&& (WorldType != NON_PVP || !Victim->IsPeaceful())){
 						Victim->SetTimer(SKILL_ILLUSION, 0, 0, 0, -1);
 						if(Victim->Skills[SKILL_ILLUSION]->Get() == 0){
 							Victim->Outfit = Victim->OrgOutfit;
-							AnnounceChangedCreature(Victim->ID, CREATURE_OUTFIT_CHANGED);
-							NotifyAllCreatures(Victim->CrObject, OBJECT_CHANGED, NONE);
+							announce_changed_creature(Victim->ID, CREATURE_OUTFIT_CHANGED);
+							notify_all_creatures(Victim->CrObject, OBJECT_CHANGED, NONE);
 						}else{
 							Effect = EFFECT_BLOCK_HIT;
 
@@ -2422,17 +2422,17 @@ void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int Sou
 								for(int Position = INVENTORY_FIRST;
 										Position <= INVENTORY_LAST;
 										Position += 1){
-									Object Item = GetBodyObject(Victim->ID, Position);
+									Object Item = get_body_object(Victim->ID, Position);
 									if(Item == NONE){
 										continue;
 									}
 
-									ObjectType ItemType = Item.getObjectType();
-									if(ItemType.getFlag(SKILLBOOST)
-									&& (int)ItemType.getAttribute(BODYPOSITION) == Position
-									&& (int)ItemType.getAttribute(SKILLNUMBER) == SKILL_ILLUSION){
+									ObjectType ItemType = Item.get_object_type();
+									if(ItemType.get_flag(SKILLBOOST)
+									&& (int)ItemType.get_attribute(BODYPOSITION) == Position
+									&& (int)ItemType.get_attribute(SKILLNUMBER) == SKILL_ILLUSION){
 										if(random(1, 5) == 1){
-											Delete(Item, -1);
+											delete_op(Item, -1);
 										}
 										break;
 									}
@@ -2441,22 +2441,22 @@ void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int Sou
 						}
 					}
 				}
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 
-			GraphicalEffect(FieldX, FieldY, FieldZ, Effect);
+			graphical_effect(FieldX, FieldY, FieldZ, Effect);
 		}
 	}
 }
 
-void CreatureIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, const char *RaceName, int Duration){
+void creature_illusion(TCreature *Actor, int ManaPoints, int SoulPoints, const char *RaceName, int Duration){
 	if(Actor == NULL){
-		error("CreatureIllusion: Invalid creature passed.\n");
+		error("creature_illusion: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(RaceName == NULL){
-		error("CreatureIllusion: Invalid race name passed.\n");
+		error("creature_illusion: Invalid race name passed.\n");
 		throw ERROR;
 	}
 
@@ -2469,63 +2469,63 @@ void CreatureIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, const ch
 		throw NOTACCESSIBLE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	if(Actor->Skills[SKILL_ILLUSION]->Get() == 0){
 		Actor->Outfit = GetRaceOutfit(Race);
 		Actor->SetTimer(SKILL_ILLUSION, 1, Duration, Duration, -1);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void ObjectIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, Object Target, int Duration){
+void object_illusion(TCreature *Actor, int ManaPoints, int SoulPoints, Object Target, int Duration){
 	if(Actor == NULL){
-		error("ObjectIllusion: Invalid creature passed.\n");
+		error("object_illusion: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(!Target.exists()){
-		error("ObjectIllusion: Passed object does not exist.\n");
+		error("object_illusion: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType TargetType = Target.getObjectType();
-	if(TargetType.isCreatureContainer() || TargetType.getFlag(UNMOVE)){
+	ObjectType TargetType = Target.get_object_type();
+	if(TargetType.is_creature_container() || TargetType.get_flag(UNMOVE)){
 		throw NOTMOVABLE;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 	if(Actor->Skills[SKILL_ILLUSION]->Get() == 0){
 		Actor->Outfit.OutfitID = 0;
-		Actor->Outfit.ObjectType = TargetType.getDisguise().TypeID;
+		Actor->Outfit.ObjectType = TargetType.get_disguise().TypeID;
 		Actor->SetTimer(SKILL_ILLUSION, 1, Duration, Duration, -1);
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void ChangeData(TCreature *Actor, const char *Param){
+void change_data(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("ChangeData: Invalid creature passed.\n");
+		error("change_data: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("ChangeData: Invalid parameter passed.\n");
+		error("change_data: Invalid parameter passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("ChangeData: Spell can only be used by players.\n");
+		error("change_data: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, CREATE_OBJECTS)){
+	if(!check_right(Actor->ID, CREATE_OBJECTS)){
 		return;
 	}
 
-	Object RightHand = GetBodyObject(Actor->ID, INVENTORY_RIGHTHAND);
-	Object LeftHand = GetBodyObject(Actor->ID, INVENTORY_LEFTHAND);
+	Object RightHand = get_body_object(Actor->ID, INVENTORY_RIGHTHAND);
+	Object LeftHand = get_body_object(Actor->ID, INVENTORY_LEFTHAND);
 	if(RightHand != NONE && LeftHand != NONE){
 		SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE, "First drop one object.");
 		return;
@@ -2537,69 +2537,69 @@ void ChangeData(TCreature *Actor, const char *Param){
 	}
 
 	if(Obj == NONE){
-		Obj = GetFirstObject(Actor->posx, Actor->posy, Actor->posz);
+		Obj = get_first_object(Actor->posx, Actor->posy, Actor->posz);
 		while(Obj != NONE){
-			if(Obj.getObjectType().getFlag(KEYDOOR)){
+			if(Obj.get_object_type().get_flag(KEYDOOR)){
 				break;
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 	}
 
 	if(Obj != NONE){
 		int Attribute = -1;
 		int Value = atoi(Param);
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(LIQUIDCONTAINER)){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(LIQUIDCONTAINER)){
 			Attribute = CONTAINERLIQUIDTYPE;
-		}else if(ObjType.getFlag(KEY)){
+		}else if(ObjType.get_flag(KEY)){
 			if(Value > 0){
 				Attribute = KEYNUMBER;
 			}
-		}else if(ObjType.getFlag(KEYDOOR)){
+		}else if(ObjType.get_flag(KEYDOOR)){
 			if(Value > 0){
 				Attribute = KEYHOLENUMBER;
 			}
-		}else if(ObjType.getFlag(CUMULATIVE)){
+		}else if(ObjType.get_flag(CUMULATIVE)){
 			if(Value > 0 && Value <= 100){
 				Attribute = AMOUNT;
 			}
-		}else if(ObjType.getFlag(RUNE)){
+		}else if(ObjType.get_flag(RUNE)){
 			if(Value > 0 && Value <= 99){
 				Attribute = CHARGES;
 			}
 		}
 
 		if(Attribute != -1){
-			Change(Obj, (INSTANCEATTRIBUTE)Attribute, Value);
-			GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+			change(Obj, (INSTANCEATTRIBUTE)Attribute, Value);
+			graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 		}else{
 			SendMessage(Actor->Connection, TALK_FAILURE_MESSAGE,
-					"You can't change %s in this way.", GetName(Obj));
+					"You can't change %s in this way.", get_name(Obj));
 		}
 	}
 }
 
-void EnchantObject(TCreature *Actor, int ManaPoints, int SoulPoints, ObjectType OldType, ObjectType NewType){
+void enchant_object(TCreature *Actor, int ManaPoints, int SoulPoints, ObjectType OldType, ObjectType NewType){
 	if(Actor == NULL){
-		error("EnchantObject: Invalid creature passed.\n");
+		error("enchant_object: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
-	Object Obj = GetBodyObject(Actor->ID, INVENTORY_RIGHTHAND);
-	if(Obj == NONE || Obj.getObjectType() != OldType){
-		Obj = GetBodyObject(Actor->ID, INVENTORY_LEFTHAND);
-		if(Obj == NONE || Obj.getObjectType() != OldType){
+	Object Obj = get_body_object(Actor->ID, INVENTORY_RIGHTHAND);
+	if(Obj == NONE || Obj.get_object_type() != OldType){
+		Obj = get_body_object(Actor->ID, INVENTORY_LEFTHAND);
+		if(Obj == NONE || Obj.get_object_type() != OldType){
 			throw MAGICITEM;
 		}
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
-	Change(Obj, NewType, 0);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
+	change(Obj, NewType, 0);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 }
 
-void Convince(TCreature *Actor, TCreature *Target){
+void convince(TCreature *Actor, TCreature *Target){
 	// TODO(fusion): All of a sudden we're not checking if `Actor` is NULL?
 
 	if(Target->Type != MONSTER){
@@ -2620,17 +2620,17 @@ void Convince(TCreature *Actor, TCreature *Target){
 
 	int SummonCost = GetRaceSummonCost(Target->Race);
 	int Delay = (WorldType == PVP_ENFORCED) ? 1000 : 2000;
-	CheckMana(Actor, SummonCost, 0, Delay);
+	check_mana(Actor, SummonCost, 0, Delay);
 	ConvinceMonster(Actor, Target);
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
-	GraphicalEffect(Target->posx, Target->posy, Target->posz, EFFECT_BONE_HIT);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Target->posx, Target->posy, Target->posz, EFFECT_BONE_HIT);
 }
 
-void Challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius){
+void challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius){
 	// TODO(fusion): All of a sudden we're not checking if `Actor` is NULL?
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
-	// TODO(fusion): Same as `KillAllMonsters`.
+	// TODO(fusion): Same as `kill_all_monsters`.
 	if(Radius >= NARRAY(Circle)){
 		Radius = NARRAY(Circle) - 1;
 	}
@@ -2645,16 +2645,16 @@ void Challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius){
 			int FieldY = ActorY + Circle[R].y[Point];
 			int FieldZ = ActorZ;
 
-			if(!ThrowPossible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)){
+			if(!throw_possible(ActorX, ActorY, ActorZ, FieldX, FieldY, FieldZ, 0)){
 				continue;
 			}
 
-			GraphicalEffect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
-			Object Obj = GetFirstSpecObject(FieldX, FieldY, FieldZ, TYPEID_CREATURE_CONTAINER);
+			graphical_effect(FieldX, FieldY, FieldZ, EFFECT_MAGIC_BLUE);
+			Object Obj = get_first_spec_object(FieldX, FieldY, FieldZ, TYPEID_CREATURE_CONTAINER);
 			if(Obj != NONE){
 				TCreature *Victim = GetCreature(Obj);
 				if(Victim == NULL){
-					error("Challenge: Invalid creature.\n");
+					error("challenge: Invalid creature.\n");
 				}else if(Victim->Type == MONSTER){
 					ChallengeMonster(Actor, Victim);
 				}
@@ -2663,25 +2663,25 @@ void Challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius){
 	}
 }
 
-void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *TargetName){
+void find_person(TCreature *Actor, int ManaPoints, int SoulPoints, const char *TargetName){
 	// TODO(fusion): And we're back.
 	if(Actor == NULL){
-		error("FindPerson: Invalid creature passed.\n");
+		error("find_person: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(TargetName == NULL){
-		error("FindPerson: Invalid name passed.\n");
+		error("find_person: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("FindPerson: Spell can only be used by players.\n");
+		error("find_person: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Target;
-	bool IgnoreGamemasters = !CheckRight(Actor->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(TargetName, false, IgnoreGamemasters, &Target)){
 		default:
 		case  0:	break; // PLAYERFOUND ?
@@ -2690,11 +2690,11 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 	}
 
 	if(Target == NULL){
-		error("FindPerson: Opp is NULL.\n");
+		error("find_person: Opp is NULL.\n");
 		throw ERROR;
 	}
 
-	CheckMana(Actor, ManaPoints, SoulPoints, 1000);
+	check_mana(Actor, ManaPoints, SoulPoints, 1000);
 
 	int Distance = std::max<int>(
 			std::abs(Actor->posx - Target->posx),
@@ -2709,7 +2709,7 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 		}
 	}else{
 		const char *Direction = "";
-		switch(GetDirection(Target->posx - Actor->posx, Target->posy - Actor->posy)){
+		switch(get_direction(Target->posx - Actor->posx, Target->posy - Actor->posy)){
 			case DIRECTION_NORTH:		Direction = "north"; break;
 			case DIRECTION_EAST:		Direction = "east"; break;
 			case DIRECTION_SOUTH:		Direction = "south"; break;
@@ -2719,7 +2719,7 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 			case DIRECTION_NORTHWEST:	Direction = "north-west"; break;
 			case DIRECTION_NORTHEAST:	Direction = "north-east"; break;
 			default:{
-				error("FindPerson: Direction is zero.\n");
+				error("find_person: Direction is zero.\n");
 				throw ERROR;
 			}
 		}
@@ -2739,44 +2739,44 @@ void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Ta
 		}
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void GetPosition(TCreature *Actor){
+void get_position(TCreature *Actor){
 	if(Actor == NULL){
-		error("GetPosition: Invalid creature passed.\n");
+		error("get_position: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("GetPosition: Spell can only be used by players.\n");
+		error("get_position: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, SHOW_COORDINATE)){
+	if(check_right(Actor->ID, SHOW_COORDINATE)){
 		SendMessage(Actor->Connection, TALK_EVENT_MESSAGE,
 				"Your position is [%d,%d,%d].",
 				Actor->posx, Actor->posy, Actor->posz);
 	}
 }
 
-void GetQuestValue(TCreature *Actor, const char *Param){
+void get_quest_value(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("GetQuestValue: Invalid creature passed.\n");
+		error("get_quest_value: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("GetQuestValue: Param is NULL.\n");
+		error("get_quest_value: Param is NULL.\n");
 		return; // TODO(fusion): Why don't we throw here?
 	}
 
 	if(Actor->Type != PLAYER){
-		error("GetQuestValue: Spell can only be used by players.\n");
+		error("get_quest_value: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, CHANGE_SKILLS)){
+	if(check_right(Actor->ID, CHANGE_SKILLS)){
 		int QuestNumber = atoi(Param);
 		if(QuestNumber >= 0 && QuestNumber < NARRAY(TPlayer::QuestValues)){
 			SendMessage(Actor->Connection, TALK_INFO_MESSAGE, "Quest value %d is %d.",
@@ -2787,28 +2787,28 @@ void GetQuestValue(TCreature *Actor, const char *Param){
 	}
 }
 
-void SetQuestValue(TCreature *Actor, const char *Param1, const char *Param2){
+void set_quest_value(TCreature *Actor, const char *Param1, const char *Param2){
 	if(Actor == NULL){
-		error("SetQuestValue: Invalid creature passed.\n");
+		error("set_quest_value: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param1 == NULL){
-		error("SetQuestValue: Param1 is NULL.\n");
+		error("set_quest_value: Param1 is NULL.\n");
 		return; // TODO(fusion): Why don't we throw here?
 	}
 
 	if(Param2 == NULL){
-		error("SetQuestValue: Param2 is NULL.\n");
+		error("set_quest_value: Param2 is NULL.\n");
 		return; // TODO(fusion): Why don't we throw here?
 	}
 
 	if(Actor->Type != PLAYER){
-		error("SetQuestValue: Spell can only be used by players.\n");
+		error("set_quest_value: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, CHANGE_SKILLS)){
+	if(check_right(Actor->ID, CHANGE_SKILLS)){
 		int QuestNumber = atoi(Param1);
 		int QuestValue = atoi(Param2);
 		if(QuestNumber >= 0 && QuestNumber < NARRAY(TPlayer::QuestValues)){
@@ -2821,18 +2821,18 @@ void SetQuestValue(TCreature *Actor, const char *Param1, const char *Param2){
 	}
 }
 
-void ClearQuestValues(TCreature *Actor){
+void clear_quest_values(TCreature *Actor){
 	if(Actor == NULL){
-		error("ClearQuestValues: Invalid creature passed.\n");
+		error("clear_quest_values: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("ClearQuestValues: Spell can only be used by players.\n");
+		error("clear_quest_values: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, CHANGE_SKILLS)){
+	if(check_right(Actor->ID, CHANGE_SKILLS)){
 		for(int QuestNumber = 0;
 				QuestNumber < NARRAY(TPlayer::QuestValues);
 				QuestNumber += 1){
@@ -2842,50 +2842,50 @@ void ClearQuestValues(TCreature *Actor){
 	}
 }
 
-void CreateKnowledge(TCreature *Actor, const char *Param1, const char *Param2){
+void create_knowledge(TCreature *Actor, const char *Param1, const char *Param2){
 	if(Actor == NULL){
-		error("CreateKnowledge: Invalid creature passed.\n");
+		error("create_knowledge: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param1 == NULL){
-		error("CreateKnowledge: Invalid parameter 1 passed.\n");
+		error("create_knowledge: Invalid parameter 1 passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("CreateKnowledge: Spell can only be used by players.\n");
+		error("create_knowledge: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, CHANGE_SKILLS)){
+	if(check_right(Actor->ID, CHANGE_SKILLS)){
 		int Skill = (Param2 != NULL) ? atoi(Param1) : 0;
 		int Amount = (Param2 != NULL) ? atoi(Param2) : atoi(Param1);
 		if(Skill < 0 || Skill >= NARRAY(Actor->Skills) || Amount < 1){
 			return;
 		}
 		Actor->Skills[Skill]->Increase(Amount);
-		GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
+		graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_GREEN);
 	}
 }
 
-void ChangeProfession(TCreature *Actor, const char *Param){
+void change_profession(TCreature *Actor, const char *Param){
 	if(Actor == NULL){
-		error("ChangeProfession: Invalid creature passed.\n");
+		error("change_profession: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Param == NULL){
-		error("ChangeProfession: Invalid parameter passed.\n");
+		error("change_profession: Invalid parameter passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("ChangeProfession: Spell can only be used by players.\n");
+		error("change_profession: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, CHANGE_PROFESSION)){
+	if(!check_right(Actor->ID, CHANGE_PROFESSION)){
 		return;
 	}
 
@@ -2920,21 +2920,21 @@ void ChangeProfession(TCreature *Actor, const char *Param){
 		return;
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_BLUE);
 }
 
-void EditGuests(TCreature *Actor){
+void edit_guests(TCreature *Actor){
 	if(Actor == NULL){
-		error("EditGuests: Invalid creature passed.\n");
+		error("edit_guests: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("EditGuests: Spell can only be used by players.\n");
+		error("edit_guests: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	uint16 HouseID = GetHouseID(Actor->posx, Actor->posy, Actor->posz);
+	uint16 HouseID = get_house_id(Actor->posx, Actor->posy, Actor->posz);
 	if(HouseID == 0){
 		throw NOTACCESSIBLE;
 	}
@@ -2942,22 +2942,22 @@ void EditGuests(TCreature *Actor){
 	// TODO(fusion): Now this can be problematic. If we don't sanitize house
 	// lists to be under 4KB, we can easily get a buffer overflow here.
 	char GuestList[4096];
-	ShowGuestList(HouseID, (TPlayer*)Actor, GuestList);
+	show_guest_list(HouseID, (TPlayer*)Actor, GuestList);
 	SendEditList(Actor->Connection, GUESTLIST, HouseID, GuestList);
 }
 
-void EditSubowners(TCreature *Actor){
+void edit_subowners(TCreature *Actor){
 	if(Actor == NULL){
-		error("EditSubowners: Invalid creature passed.\n");
+		error("edit_subowners: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("EditSubowners: Spell can only be used by players.\n");
+		error("edit_subowners: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	uint16 HouseID = GetHouseID(Actor->posx, Actor->posy, Actor->posz);
+	uint16 HouseID = get_house_id(Actor->posx, Actor->posy, Actor->posz);
 	if(HouseID == 0){
 		throw NOTACCESSIBLE;
 	}
@@ -2965,30 +2965,30 @@ void EditSubowners(TCreature *Actor){
 	// TODO(fusion): Now this can be problematic. If we don't sanitize house
 	// lists to be under 4KB, we can easily get a buffer overflow here.
 	char SubOwnerList[4096];
-	ShowSubownerList(HouseID, (TPlayer*)Actor, SubOwnerList);
+	show_subowner_list(HouseID, (TPlayer*)Actor, SubOwnerList);
 	SendEditList(Actor->Connection, SUBOWNERLIST, HouseID, SubOwnerList);
 }
 
-void EditNameDoor(TCreature *Actor){
+void edit_name_door(TCreature *Actor){
 	if(Actor == NULL){
-		error("EditNameDoor: Invalid creature passed.\n");
+		error("edit_name_door: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("EditNameDoor: Spell can only be used by players.\n");
+		error("edit_name_door: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
 	int DoorX = Actor->posx;
 	int DoorY = Actor->posy;
 	int DoorZ = Actor->posz;
-	Object Obj = GetFirstObject(DoorX, DoorY, DoorZ);
+	Object Obj = get_first_object(DoorX, DoorY, DoorZ);
 	while(Obj != NONE){
-		if(Obj.getObjectType().getFlag(NAMEDOOR)){
+		if(Obj.get_object_type().get_flag(NAMEDOOR)){
 			break;
 		}
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 
 	if(Obj == NONE){
@@ -3002,12 +3002,12 @@ void EditNameDoor(TCreature *Actor){
 
 		// TODO(fusion): This could be some inlined function to retrieve the
 		// first object with a given flag.
-		Obj = GetFirstObject(DoorX, DoorY, DoorZ);
+		Obj = get_first_object(DoorX, DoorY, DoorZ);
 		while(Obj != NONE){
-			if(Obj.getObjectType().getFlag(NAMEDOOR)){
+			if(Obj.get_object_type().get_flag(NAMEDOOR)){
 				break;
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 	}
 
@@ -3017,28 +3017,28 @@ void EditNameDoor(TCreature *Actor){
 	}
 
 	char DoorList[4096];
-	ShowNameDoor(Obj, (TPlayer*)Actor, DoorList);
+	show_name_door(Obj, (TPlayer*)Actor, DoorList);
 	SendEditList(Actor->Connection, DOORLIST, Obj.ObjectID, DoorList);
 }
 
-void KickGuest(TCreature *Actor, const char *GuestName){
+void kick_guest(TCreature *Actor, const char *GuestName){
 	if(Actor == NULL){
-		error("KickGuest(magic): Invalid creature passed.\n");
+		error("kick_guest(magic): Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(GuestName == NULL){
-		error("KickGuest(magic): Invalid guest passed.\n");
+		error("kick_guest(magic): Invalid guest passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("KickGuest(magic): Spell can only be used by players.\n");
+		error("kick_guest(magic): Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Guest;
-	bool IgnoreGamemasters = !CheckRight(Actor->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(GuestName, false, IgnoreGamemasters, &Guest)){
 		default:
 		case  0:	break; // PLAYERFOUND ?
@@ -3046,32 +3046,32 @@ void KickGuest(TCreature *Actor, const char *GuestName){
 		case -2:	throw NAMEAMBIGUOUS;
 	}
 
-	uint16 HouseID = GetHouseID(Guest->posx, Guest->posy, Guest->posz);
+	uint16 HouseID = get_house_id(Guest->posx, Guest->posy, Guest->posz);
 	if(HouseID == 0){
 		throw NOTACCESSIBLE;
 	}
 
-	KickGuest(HouseID, (TPlayer*)Actor, Guest);
+	kick_guest(HouseID, (TPlayer*)Actor, Guest);
 }
 
-void Notation(TCreature *Actor, const char *Name, const char *Comment){
+void notation(TCreature *Actor, const char *Name, const char *Comment){
 	if(Actor == NULL){
-		error("Notation: Invalid creature passed.\n");
+		error("notation: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("Notation: Invalid name passed.\n");
+		error("notation: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Comment == NULL){
-		error("Notation: Invalid remark passed.\n");
+		error("notation: Invalid remark passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("Notation: Spell can only be used by players.\n");
+		error("notation: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3079,19 +3079,19 @@ void Notation(TCreature *Actor, const char *Name, const char *Comment){
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void NameLock(TCreature *Actor, const char *Name){
+void name_lock(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("NameLock: Invalid creature passed.\n");
+		error("name_lock: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("NameLock: Invalid name passed.\n");
+		error("name_lock: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("NameLock: Spell can only be used by players.\n");
+		error("name_lock: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3099,24 +3099,24 @@ void NameLock(TCreature *Actor, const char *Name){
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void BanishAccount(TCreature *Actor, const char *Name, int Duration, const char *Reason){
+void banish_account(TCreature *Actor, const char *Name, int Duration, const char *Reason){
 	if(Actor == NULL){
-		error("BanishAccount: Invalid creature passed.\n");
+		error("banish_account: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("BanishAccount: Invalid name passed.\n");
+		error("banish_account: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("BanishAccount: Invalid reason passed.\n");
+		error("banish_account: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("BanishAccount: Spell can only be used by players.\n");
+		error("banish_account: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3124,24 +3124,24 @@ void BanishAccount(TCreature *Actor, const char *Name, int Duration, const char 
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void DeleteAccount(TCreature *Actor, const char *Name, const char *Reason){
+void delete_account(TCreature *Actor, const char *Name, const char *Reason){
 	if(Actor == NULL){
-		error("DeleteAccount: Invalid creature passed.\n");
+		error("delete_account: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("DeleteAccount: Invalid name passed.\n");
+		error("delete_account: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("DeleteAccount: Invalid reason passed.\n");
+		error("delete_account: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("DeleteAccount: Spell can only be used by players.\n");
+		error("delete_account: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3149,24 +3149,24 @@ void DeleteAccount(TCreature *Actor, const char *Name, const char *Reason){
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void BanishCharacter(TCreature *Actor, const char *Name, int Duration, const char *Reason){
+void banish_character(TCreature *Actor, const char *Name, int Duration, const char *Reason){
 	if(Actor == NULL){
-		error("BanishCharacter: Invalid creature passed.\n");
+		error("banish_character: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("BanishCharacter: Invalid name passed.\n");
+		error("banish_character: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("BanishCharacter: Invalid reason passed.\n");
+		error("banish_character: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("BanishCharacter: Spell can only be used by players.\n");
+		error("banish_character: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3174,24 +3174,24 @@ void BanishCharacter(TCreature *Actor, const char *Name, int Duration, const cha
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void DeleteCharacter(TCreature *Actor, const char *Name, const char *Reason){
+void delete_character(TCreature *Actor, const char *Name, const char *Reason){
 	if(Actor == NULL){
-		error("DeleteCharacter: Invalid creature passed.\n");
+		error("delete_character: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("DeleteCharacter: Invalid name passed.\n");
+		error("delete_character: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("DeleteCharacter: Invalid reason passed.\n");
+		error("delete_character: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("DeleteCharacter: Spell can only be used by players.\n");
+		error("delete_character: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3199,24 +3199,24 @@ void DeleteCharacter(TCreature *Actor, const char *Name, const char *Reason){
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void IPBanishment(TCreature *Actor, const char *Name, const char *Reason){
+void ip_banishment(TCreature *Actor, const char *Name, const char *Reason){
 	if(Actor == NULL){
-		error("IPBanishment: Invalid creature passed.\n");
+		error("ip_banishment: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("IPBanishment: Invalid name passed.\n");
+		error("ip_banishment: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Reason == NULL){
-		error("IPBanishment: Invalid reason passed.\n");
+		error("ip_banishment: Invalid reason passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("IPBanishment: Spell can only be used by players.\n");
+		error("ip_banishment: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3224,19 +3224,19 @@ void IPBanishment(TCreature *Actor, const char *Name, const char *Reason){
 			"Spell is not available any more. Press Ctrl+Y for the dialog.");
 }
 
-void SetNameRule(TCreature *Actor, const char *Name){
+void set_name_rule(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("SetNameRule: Invalid creature passed.\n");
+		error("set_name_rule: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("SetNameRule: Invalid name passed.\n");
+		error("set_name_rule: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("SetNameRule: Spell can only be used by players.\n");
+		error("set_name_rule: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
@@ -3244,28 +3244,28 @@ void SetNameRule(TCreature *Actor, const char *Name){
 			"Spell is not available any more.");
 }
 
-void KickPlayer(TCreature *Actor, const char *Name){
+void kick_player(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("KickPlayer: Invalid creature passed.\n");
+		error("kick_player: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL){
-		error("KickPlayer: Invalid name passed.\n");
+		error("kick_player: Invalid name passed.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("KickPlayer: Spell can only be used by players.\n");
+		error("kick_player: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, KICK)){
+	if(!check_right(Actor->ID, KICK)){
 		return;
 	}
 
 	TPlayer *Player;
-	bool IgnoreGamemasters = !CheckRight(Actor->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)){
 		default:
 		case  0:	break; // PLAYERFOUND ?
@@ -3273,35 +3273,35 @@ void KickPlayer(TCreature *Actor, const char *Name){
 		case -2:	throw NAMEAMBIGUOUS;
 	}
 
-	GraphicalEffect(Player->posx, Player->posy, Player->posz, EFFECT_MAGIC_GREEN);
+	graphical_effect(Player->posx, Player->posy, Player->posz, EFFECT_MAGIC_GREEN);
 	Player->StartLogout(true, true);
 	SendMessage(Actor->Connection, TALK_INFO_MESSAGE,
 			"Player %s kicked out of the game.", Player->Name);
-	Log("banish", "%s kicked %s.\n", Actor->Name, Player->Name);
+	log_message("banish", "%s kicked %s.\n", Actor->Name, Player->Name);
 }
 
-void HomeTeleport(TCreature *Actor, const char *Name){
+void home_teleport(TCreature *Actor, const char *Name){
 	if(Actor == NULL){
-		error("HomeTeleport: Invalid creature passed.\n");
+		error("home_teleport: Invalid creature passed.\n");
 		throw ERROR;
 	}
 
 	if(Name == NULL || Name[0] == 0){
-		error("HomeTeleport: Name does not exist.\n");
+		error("home_teleport: Name does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Actor->Type != PLAYER){
-		error("HomeTeleport: Spell can only be used by players.\n");
+		error("home_teleport: Spell can only be used by players.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(Actor->ID, HOME_TELEPORT)){
+	if(!check_right(Actor->ID, HOME_TELEPORT)){
 		return;
 	}
 
 	TPlayer *Player;
-	bool IgnoreGamemasters = !CheckRight(Actor->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Actor->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(Name, false, IgnoreGamemasters, &Player)){
 		default:
 		case  0:	break; // PLAYERFOUND ?
@@ -3309,14 +3309,14 @@ void HomeTeleport(TCreature *Actor, const char *Name){
 		case -2:	throw NAMEAMBIGUOUS;
 	}
 
-	Object Dest = GetMapContainer(Player->startx, Player->starty, Player->startz);
-	GraphicalEffect(Player->posx, Player->posy, Player->posz, EFFECT_POFF);
-	Move(0, Player->CrObject, Dest, -1, false, NONE);
-	GraphicalEffect(Player->posx, Player->posy, Player->posz, EFFECT_ENERGY);
+	Object Dest = get_map_container(Player->startx, Player->starty, Player->startz);
+	graphical_effect(Player->posx, Player->posy, Player->posz, EFFECT_POFF);
+	move(0, Player->CrObject, Dest, -1, false, NONE);
+	graphical_effect(Player->posx, Player->posy, Player->posz, EFFECT_ENERGY);
 
 	SendMessage(Actor->Connection, TALK_INFO_MESSAGE,
 			"Player %s has been moved to the temple.", Player->Name);
-	Log("banish", "%s teleported %s to the temple.\n", Actor->Name, Player->Name);
+	log_message("banish", "%s teleported %s to the temple.\n", Actor->Name, Player->Name);
 }
 
 // Spell Casting
@@ -3333,29 +3333,29 @@ static void CharacterRightSpell(uint32 CreatureID, int SpellNr, const char (*Spe
 	}
 
 	switch(SpellNr) {
-		case 34: CreateThing(Actor, SpellStr[2], SpellStr[3]); 		break;
-		case 35: CreateThing(Actor, SpellStr[2], NULL); 			break;
-		case 37: Teleport(Actor, SpellStr[2]); 						break;
-		case 40: CreateKnowledge(Actor, SpellStr[3], NULL); 		break;
-		case 41: ChangeData(Actor, SpellStr[2]); 					break;
-		case 46: CreateKnowledge(Actor, SpellStr[3], SpellStr[4]); 	break;
-		case 47: TeleportToCreature(Actor, SpellStr[3]); 			break;
-		case 52: TeleportPlayerToMe(Actor, SpellStr[3]); 			break;
-		case 53: SummonCreature(Actor, 0, SpellStr[3], true); 		break;
-		case 58: GetPosition(Actor); 								break;
-		case 63: CreateMoney(Actor, SpellStr[3]); 					break;
-		case 64: ChangeProfession(Actor, SpellStr[3]); 				break;
-		case 71: EditGuests(Actor); 								break;
-		case 72: EditSubowners(Actor); 								break;
-		case 73: KickGuest(Actor, SpellStr[3]); 					break;
-		case 74: EditNameDoor(Actor); 								break;
-		case 96: GetQuestValue(Actor, SpellStr[3]); 				break;
-		case 97: SetQuestValue(Actor, SpellStr[3], SpellStr[4]); 	break;
-		case 98: CleanupField(Actor); 								break;
-		case 99: MagicClimbing(Actor, SpellStr[3]); 				break;
-		case 100: ClearQuestValues(Actor); 							break;
-		case 101: KillAllMonsters(Actor, EFFECT_DEATH, 2); 			break;
-		case 102: StartMonsterraid(Actor, SpellStr[4]); 			break;
+		case 34: create_thing(Actor, SpellStr[2], SpellStr[3]); 		break;
+		case 35: create_thing(Actor, SpellStr[2], NULL); 			break;
+		case 37: teleport(Actor, SpellStr[2]); 						break;
+		case 40: create_knowledge(Actor, SpellStr[3], NULL); 		break;
+		case 41: change_data(Actor, SpellStr[2]); 					break;
+		case 46: create_knowledge(Actor, SpellStr[3], SpellStr[4]); 	break;
+		case 47: teleport_to_creature(Actor, SpellStr[3]); 			break;
+		case 52: teleport_player_to_me(Actor, SpellStr[3]); 			break;
+		case 53: summon_creature(Actor, 0, SpellStr[3], true); 		break;
+		case 58: get_position(Actor); 								break;
+		case 63: create_money(Actor, SpellStr[3]); 					break;
+		case 64: change_profession(Actor, SpellStr[3]); 				break;
+		case 71: edit_guests(Actor); 								break;
+		case 72: edit_subowners(Actor); 								break;
+		case 73: kick_guest(Actor, SpellStr[3]); 					break;
+		case 74: edit_name_door(Actor); 								break;
+		case 96: get_quest_value(Actor, SpellStr[3]); 				break;
+		case 97: set_quest_value(Actor, SpellStr[3], SpellStr[4]); 	break;
+		case 98: cleanup_field(Actor); 								break;
+		case 99: magic_climbing(Actor, SpellStr[3]); 				break;
+		case 100: clear_quest_values(Actor); 							break;
+		case 101: kill_all_monsters(Actor, EFFECT_DEATH, 2); 			break;
+		case 102: start_monsterraid(Actor, SpellStr[4]); 			break;
 	}
 }
 
@@ -3371,16 +3371,16 @@ static void AccountRightSpell(uint32 CreatureID, int SpellNr, const char (*Spell
 	}
 
 	switch(SpellNr) {
-		case 57: BanishAccount(Actor,  SpellStr[3], atoi(SpellStr[4]), SpellStr[5]);	break;
-		case 60: HomeTeleport(Actor, SpellStr[2]);										break;
-		case 61: DeleteAccount(Actor, SpellStr[4], SpellStr[5]);						break;
-		case 62: SetNameRule(Actor, SpellStr[2]);										break;
-		case 65: Notation(Actor, SpellStr[2], SpellStr[3]);								break;
-		case 66: NameLock(Actor, SpellStr[3]);											break;
-		case 67: KickPlayer(Actor, SpellStr[2]);										break;
-		case 68: DeleteCharacter(Actor, SpellStr[4], SpellStr[5]);						break;
-		case 69: IPBanishment(Actor, SpellStr[3], SpellStr[4]);							break;
-		case 70: BanishCharacter(Actor, SpellStr[3], atoi(SpellStr[4]), SpellStr[5]);	break;
+		case 57: banish_account(Actor,  SpellStr[3], atoi(SpellStr[4]), SpellStr[5]);	break;
+		case 60: home_teleport(Actor, SpellStr[2]);										break;
+		case 61: delete_account(Actor, SpellStr[4], SpellStr[5]);						break;
+		case 62: set_name_rule(Actor, SpellStr[2]);										break;
+		case 65: notation(Actor, SpellStr[2], SpellStr[3]);								break;
+		case 66: name_lock(Actor, SpellStr[3]);											break;
+		case 67: kick_player(Actor, SpellStr[2]);										break;
+		case 68: delete_character(Actor, SpellStr[4], SpellStr[5]);						break;
+		case 69: ip_banishment(Actor, SpellStr[3], SpellStr[4]);							break;
+		case 70: banish_character(Actor, SpellStr[3], atoi(SpellStr[4]), SpellStr[5]);	break;
 	}
 }
 
@@ -3391,18 +3391,18 @@ static void CastSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512
 		throw ERROR;
 	}
 
-	CheckSpellbook(Actor, SpellNr);
-	CheckAccount(Actor, SpellNr);
-	CheckLevel(Actor, SpellNr);
-	CheckRing(Actor, SpellNr);
+	check_spellbook(Actor, SpellNr);
+	check_account(Actor, SpellNr);
+	check_level(Actor, SpellNr);
+	check_ring(Actor, SpellNr);
 
 	if(Actor->EarliestSpellTime > ServerMilliseconds){
 		throw EXHAUSTED;
 	}
 
-	if(IsAggressiveSpell(SpellNr) && Actor->Type == PLAYER
-			&& !CheckRight(Actor->ID, ATTACK_EVERYWHERE)
-			&& IsProtectionZone(Actor->posx, Actor->posy, Actor->posz)){
+	if(is_aggressive_spell(SpellNr) && Actor->Type == PLAYER
+			&& !check_right(Actor->ID, ATTACK_EVERYWHERE)
+			&& is_protection_zone(Actor->posx, Actor->posy, Actor->posz)){
 		throw PROTECTIONZONE;
 	}
 
@@ -3410,230 +3410,230 @@ static void CastSpell(uint32 CreatureID, int SpellNr, const char (*SpellStr)[512
 	int SoulPoints = SpellList[SpellNr].SoulPoints;
 	switch(SpellNr) {
 		case 1:{
-			int Amount = ComputeDamage(Actor, SpellNr, 20, 10);
-			Heal(Actor, ManaPoints, SoulPoints, Amount);
+			int Amount = compute_damage(Actor, SpellNr, 20, 10);
+			heal(Actor, ManaPoints, SoulPoints, Amount);
 			break;
 		}
 
 		case 2:{
-			int Amount = ComputeDamage(Actor, SpellNr, 40, 20);
-			Heal(Actor, ManaPoints, SoulPoints, Amount);
+			int Amount = compute_damage(Actor, SpellNr, 40, 20);
+			heal(Actor, ManaPoints, SoulPoints, Amount);
 			break;
 		}
 
 		case 3:{
-			int Amount = ComputeDamage(Actor, SpellNr, 250, 50);
-			Heal(Actor, ManaPoints, SoulPoints, Amount);
+			int Amount = compute_damage(Actor, SpellNr, 250, 50);
+			heal(Actor, ManaPoints, SoulPoints, Amount);
 			break;
 		}
 
 		case 6:{
-			MagicGoStrength(Actor, Actor, ManaPoints, SoulPoints, 30, 3);
+			magic_go_strength(Actor, Actor, ManaPoints, SoulPoints, 30, 3);
 			break;
 		}
 
 		case 9:{
-			SummonCreature(Actor, ManaPoints, SpellStr[3], false);
+			summon_creature(Actor, ManaPoints, SpellStr[3], false);
 			break;
 		}
 
 		case 10:{
-			Enlight(Actor, ManaPoints, SoulPoints, 6, 500);
+			enlight(Actor, ManaPoints, SoulPoints, 6, 500);
 			break;
 		}
 
 		case 11:{
-			Enlight(Actor, ManaPoints, SoulPoints, 8, 1000);
+			enlight(Actor, ManaPoints, SoulPoints, 8, 1000);
 			break;
 		}
 
 		case 13:{
-			int Damage = ComputeDamage(Actor, SpellNr, 150, 50);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 150, 50);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_ENERGY, 5, 30, DAMAGE_ENERGY);
 			break;
 		}
 
 		case 19:{
-			int Damage = ComputeDamage(Actor, SpellNr, 30, 10);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 30, 10);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_FIRE_BURST, 4, 45, DAMAGE_FIRE);
 			break;
 		}
 
 		case 20:{
-			FindPerson(Actor, ManaPoints, SoulPoints, SpellStr[2]);
+			find_person(Actor, ManaPoints, SoulPoints, SpellStr[2]);
 			break;
 		}
 
 		case 22:{
-			int Damage = ComputeDamage(Actor, SpellNr, 60, 20);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 60, 20);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_FIRE_BLAST, 5, 0, DAMAGE_ENERGY);
 			break;
 		}
 
 		case 23:{
-			int Damage = ComputeDamage(Actor, SpellNr, 120, 80);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 120, 80);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_FIRE_BLAST, 8, 0, DAMAGE_ENERGY);
 			break;
 		}
 
 		case 24:{
-			int Damage = ComputeDamage(Actor, SpellNr, 250, 50);
-			MassCombat(Actor, Actor->CrObject, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 250, 50);
+			mass_combat(Actor, Actor->CrObject, ManaPoints, SoulPoints, Damage,
 					EFFECT_EXPLOSION, 6, DAMAGE_PHYSICAL, ANIMATION_FIRE);
 			break;
 		}
 
 		case 29:{
-			NegatePoison(Actor, Actor, ManaPoints, SoulPoints);
+			negate_poison(Actor, Actor, ManaPoints, SoulPoints);
 			break;
 		}
 
 		case 38:{
-			CreatureIllusion(Actor, ManaPoints, SoulPoints, SpellStr[4], 200);
+			creature_illusion(Actor, ManaPoints, SoulPoints, SpellStr[4], 200);
 			break;
 		}
 
 		case 39:{
-			MagicGoStrength(Actor, Actor, ManaPoints, SoulPoints, 70, 2);
+			magic_go_strength(Actor, Actor, ManaPoints, SoulPoints, 70, 2);
 			break;
 		}
 
 		case 42:{
-			CreateFood(Actor, ManaPoints, SoulPoints);
+			create_food(Actor, ManaPoints, SoulPoints);
 			break;
 		}
 
 		case 44:{
-			Shielding(Actor, ManaPoints, SoulPoints, 200);
+			shielding(Actor, ManaPoints, SoulPoints, 200);
 			break;
 		}
 
 		case 45:{
-			Invisibility(Actor, ManaPoints, SoulPoints, 200);
+			invisibility(Actor, ManaPoints, SoulPoints, 200);
 			break;
 		}
 
 		case 48:{
-			CreateArrows(Actor, ManaPoints, SoulPoints, 1, 5);
+			create_arrows(Actor, ManaPoints, SoulPoints, 1, 5);
 			break;
 		}
 
 		case 49:{
-			CreateArrows(Actor, ManaPoints, SoulPoints, 2, 3);
+			create_arrows(Actor, ManaPoints, SoulPoints, 2, 3);
 			break;
 		}
 
 		case 51:{
-			CreateArrows(Actor, ManaPoints, SoulPoints, 0, 10);
+			create_arrows(Actor, ManaPoints, SoulPoints, 0, 10);
 			break;
 		}
 
 		case 56:{
-			int Damage = ComputeDamage(Actor, SpellNr, 200, 50);
-			MassCombat(Actor, Actor->CrObject, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 200, 50);
+			mass_combat(Actor, Actor->CrObject, ManaPoints, SoulPoints, Damage,
 					EFFECT_POISON, 8, DAMAGE_POISON_PERIODIC, ANIMATION_NONE);
 			break;
 		}
 
 		case 75:{
-			Enlight(Actor, ManaPoints, SoulPoints, 9, 2000);
+			enlight(Actor, ManaPoints, SoulPoints, 9, 2000);
 			break;
 		}
 
 		case 76:{
-			MagicRope(Actor, ManaPoints, SoulPoints);
+			magic_rope(Actor, ManaPoints, SoulPoints);
 			break;
 		}
 
 		case 79:{
-			CreateArrows(Actor, ManaPoints, SoulPoints, 3, 5);
+			create_arrows(Actor, ManaPoints, SoulPoints, 3, 5);
 			break;
 		}
 
 		case 80:{
 			int Level = Actor->Skills[SKILL_LEVEL]->Get();
-			int Damage = (Level * ComputeDamage(Actor, SpellNr, 80, 20)) / 25;
-			MassCombat(Actor, Actor->CrObject, Level * 4, 0, Damage,
+			int Damage = (Level * compute_damage(Actor, SpellNr, 80, 20)) / 25;
+			mass_combat(Actor, Actor->CrObject, Level * 4, 0, Damage,
 					EFFECT_BONE_HIT, 2, DAMAGE_PHYSICAL, ANIMATION_NONE);
 			break;
 		}
 
 		case 81:{
-			MagicClimbing(Actor, ManaPoints, SoulPoints, SpellStr[3]);
+			magic_climbing(Actor, ManaPoints, SoulPoints, SpellStr[3]);
 			break;
 		}
 
 		case 82:{
-			int Amount = ComputeDamage(Actor, SpellNr, 200, 40);
-			MassHeal(Actor, Actor->CrObject, ManaPoints, SoulPoints, Amount, 4);
+			int Amount = compute_damage(Actor, SpellNr, 200, 40);
+			mass_heal(Actor, Actor->CrObject, ManaPoints, SoulPoints, Amount, 4);
 			break;
 		}
 
 		case 84:{
-			int Amount = ComputeDamage(Actor,SpellNr,120,40);
-			HealFriend(Actor, SpellStr[3], ManaPoints, SoulPoints, Amount);
+			int Amount = compute_damage(Actor,SpellNr,120,40);
+			heal_friend(Actor, SpellStr[3], ManaPoints, SoulPoints, Amount);
 			break;
 		}
 
 		case 85:{
-			MassRaiseDead(Actor, Actor->CrObject, ManaPoints, SoulPoints, 4);
+			mass_raise_dead(Actor, Actor->CrObject, ManaPoints, SoulPoints, 4);
 			break;
 		}
 
 		case 87:{
-			int Damage = ComputeDamage(Actor, SpellNr, 45, 10);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 45, 10);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_DEATH, 1, 0, DAMAGE_PHYSICAL);
 			break;
 		}
 
 		case 88:{
-			int Damage = ComputeDamage(Actor, SpellNr, 45, 10);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 45, 10);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_ENERGY, 1, 0, DAMAGE_ENERGY);
 			break;
 		}
 
 		case 89:{
-			int Damage = ComputeDamage(Actor, SpellNr, 45, 10);
-			AngleCombat(Actor, ManaPoints, SoulPoints, Damage,
+			int Damage = compute_damage(Actor, SpellNr, 45, 10);
+			angle_combat(Actor, ManaPoints, SoulPoints, Damage,
 					EFFECT_FIRE_BURST, 1, 0, DAMAGE_FIRE);
 			break;
 		}
 
 		case 90:{
-			CancelInvisibility(Actor, Actor->CrObject, ManaPoints, SoulPoints, 4);
+			cancel_invisibility(Actor, Actor->CrObject, ManaPoints, SoulPoints, 4);
 			break;
 		}
 
 		case 92:{
-			ObjectType OldType = GetNewObjectType(90, 25);
-			ObjectType NewType = GetNewObjectType(90, 57);
-			EnchantObject(Actor, ManaPoints, SoulPoints, OldType, NewType);
+			ObjectType OldType = get_new_object_type(90, 25);
+			ObjectType NewType = get_new_object_type(90, 57);
+			enchant_object(Actor, ManaPoints, SoulPoints, OldType, NewType);
 			break;
 		}
 
 		case 93:{
-			Challenge(Actor, ManaPoints, SoulPoints, 2);
+			challenge(Actor, ManaPoints, SoulPoints, 2);
 			break;
 		}
 
 		case 94:{
-			CreateField(Actor, ManaPoints, SoulPoints, FIELD_TYPE_WILDGROWTH);
+			create_field(Actor, ManaPoints, SoulPoints, FIELD_TYPE_WILDGROWTH);
 			break;
 		}
 
 		case 95:{
-			CreateArrows(Actor, ManaPoints, SoulPoints, 4, 1);
+			create_arrows(Actor, ManaPoints, SoulPoints, 4, 1);
 			break;
 		}
 	}
 
-	if(IsAggressiveSpell(SpellNr)){
+	if(is_aggressive_spell(SpellNr)){
 		Actor->BlockLogout(60, false);
 	}
 }
@@ -3656,34 +3656,34 @@ static void RuneSpell(uint32 CreatureID, int SpellNr){
 		throw ERROR;
 	}
 
-	CheckSpellbook(Actor, SpellNr);
-	CheckAccount(Actor, SpellNr);
-	CheckLevel(Actor, SpellNr);
-	CheckRing(Actor, SpellNr);
+	check_spellbook(Actor, SpellNr);
+	check_account(Actor, SpellNr);
+	check_level(Actor, SpellNr);
+	check_ring(Actor, SpellNr);
 	if(Actor->EarliestSpellTime > ServerMilliseconds){
 		throw EXHAUSTED;
 	}
 
 	bool RuneCreated = false;
-	ObjectType BlankType = GetSpecialObject(RUNE_BLANK);
+	ObjectType BlankType = get_special_object(RUNE_BLANK);
 
-	Object RightHand = GetBodyObject(Actor->ID, INVENTORY_RIGHTHAND);
-	if(RightHand.exists() && RightHand.getObjectType() == BlankType){
-		CheckMana(Actor, ManaPoints, SoulPoints, 1000);
-		ObjectType RuneType = GetNewObjectType(RuneGr, RuneNr);
-		Change(RightHand, RuneType, Amount);
+	Object RightHand = get_body_object(Actor->ID, INVENTORY_RIGHTHAND);
+	if(RightHand.exists() && RightHand.get_object_type() == BlankType){
+		check_mana(Actor, ManaPoints, SoulPoints, 1000);
+		ObjectType RuneType = get_new_object_type(RuneGr, RuneNr);
+		change(RightHand, RuneType, Amount);
 		RuneCreated = true;
 	}
 
-	Object LeftHand = GetBodyObject(Actor->ID, INVENTORY_LEFTHAND);
-	if(LeftHand.exists() && LeftHand.getObjectType() == BlankType){
+	Object LeftHand = get_body_object(Actor->ID, INVENTORY_LEFTHAND);
+	if(LeftHand.exists() && LeftHand.get_object_type() == BlankType){
 		// TODO(fusion): Ughh... I'm not sure why we're trying to cast the spell
 		// twice but we need to make so errors from the second cast are only
 		// relevant if there wasn't a first cast.
 		try{
-			CheckMana(Actor, ManaPoints, SoulPoints, 1000);
-			ObjectType RuneType = GetNewObjectType(RuneGr, RuneNr);
-			Change(LeftHand, RuneType, Amount);
+			check_mana(Actor, ManaPoints, SoulPoints, 1000);
+			ObjectType RuneType = get_new_object_type(RuneGr, RuneNr);
+			change(LeftHand, RuneType, Amount);
 			RuneCreated = true;
 		}catch(RESULT r){
 			if(!RuneCreated){
@@ -3696,13 +3696,13 @@ static void RuneSpell(uint32 CreatureID, int SpellNr){
 		throw MAGICITEM;
 	}
 
-	GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_RED);
+	graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_MAGIC_RED);
 }
 
 static int TypeOfSpell(const char *Text){
 	// NOTE(fusion): We're checking `Text` against the first 5 spell syllables
 	// which are "al", "ad", "ex", "ut", "om". They determine the type of the
-	// spell. See `CheckForSpell`.
+	// spell. See `check_for_spell`.
 	int SpellType = 0;
 	if(Text != NULL){
 		for(int SyllableNr = 1;
@@ -3757,8 +3757,8 @@ static int FindSpell(Object Obj){
 		return 0;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(RUNE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(RUNE)){
 		error("FindSpell: Passed object is not magical.\n");
 		return 0;
 	}
@@ -3768,7 +3768,7 @@ static int FindSpell(Object Obj){
 			SpellNr < NARRAY(SpellList);
 			SpellNr += 1){
 		TSpellList *Spell = &SpellList[SpellNr];
-		ObjectType RuneType = GetNewObjectType(Spell->RuneGr, Spell->RuneNr);
+		ObjectType RuneType = get_new_object_type(Spell->RuneGr, Spell->RuneNr);
 		if(ObjType == RuneType){
 			Result = SpellNr;
 			break;
@@ -3802,24 +3802,24 @@ static void GetSpellString(int SpellNr, char *Text){
 	}
 }
 
-void GetMagicItemDescription(Object Obj, char *SpellString, int *MagicLevel){
+void get_magic_item_description(Object Obj, char *SpellString, int *MagicLevel){
 	SpellString[0] = 0;
 	*MagicLevel = 0;
 
 	if(!Obj.exists()){
-		error("GetMagicItemDescription: Passed object does not exist.\n");
+		error("get_magic_item_description: Passed object does not exist.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(RUNE)){
-		error("GetMagicItemDescription: Passed object is not magical.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(RUNE)){
+		error("get_magic_item_description: Passed object is not magical.\n");
 		return;
 	}
 
 	int SpellNr = FindSpell(Obj);
 	if(SpellNr == 0){
-		error("GetMagicItemDescription: Object %d has no spell.\n", ObjType.TypeID);
+		error("get_magic_item_description: Object %d has no spell.\n", ObjType.TypeID);
 		return;
 	}
 
@@ -3827,15 +3827,15 @@ void GetMagicItemDescription(Object Obj, char *SpellString, int *MagicLevel){
 	*MagicLevel = (int)SpellList[SpellNr].RuneLevel;
 }
 
-void GetSpellbook(uint32 CharacterID, char *Buffer){
+void get_spellbook(uint32 CharacterID, char *Buffer){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("GetSpellbook: Player does not exist.\n");
+		error("get_spellbook: Player does not exist.\n");
 		return;
 	}
 
 	if(Buffer == NULL){
-		error("GetSpellbook: Passed buffer does not exist.\n");
+		error("get_spellbook: Passed buffer does not exist.\n");
 		return;
 	}
 
@@ -3874,7 +3874,7 @@ void GetSpellbook(uint32 CharacterID, char *Buffer){
 
 			GetSpellString(SpellNr, Help);
 			if(Help[0] == 0){
-				error("GetSpellbook: Spell %d has no spell formula.\n", SpellNr);
+				error("get_spellbook: Spell %d has no spell formula.\n", SpellNr);
 				continue;
 			}
 
@@ -3901,16 +3901,16 @@ void GetSpellbook(uint32 CharacterID, char *Buffer){
 	}
 }
 
-int GetSpellLevel(int SpellNr){
+int get_spell_level(int SpellNr){
 	if(SpellNr < 1 || SpellNr >= NARRAY(SpellList)){
-		error("GetSpellLevel: Invalid spell number %d.\n", SpellNr);
+		error("get_spell_level: Invalid spell number %d.\n", SpellNr);
 		return 1;
 	}
 
 	return (int)SpellList[SpellNr].Level;
 }
 
-int CheckForSpell(uint32 CreatureID, const char *Text){
+int check_for_spell(uint32 CreatureID, const char *Text){
 	// IMPORTANT(fusion): The first syllable also determines the type of the spell
 	// which is why we can quickly rule out a spell cast if it is unknown.
 	//	It is also handled separately in the parsing loop below to allow for the
@@ -3985,7 +3985,7 @@ int CheckForSpell(uint32 CreatureID, const char *Text){
 			case 4: CastSpell(CreatureID, SpellNr, SpellStr); break;
 			case 5: AccountRightSpell(CreatureID, SpellNr, SpellStr); break;
 			default:{
-				error("CheckForSpell: Spell class %d does not exist.\n", SpellType);
+				error("check_for_spell: Spell class %d does not exist.\n", SpellType);
 				break;
 			}
 		}
@@ -3999,7 +3999,7 @@ int CheckForSpell(uint32 CreatureID, const char *Text){
 			error("SpellFailed: Creature does not exist.\n");
 		}else{
 			if(r != ERROR){
-				GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
+				graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
 			}
 
 			if(Actor->Type == PLAYER){
@@ -4018,40 +4018,40 @@ static void DeleteRune(Object Obj){
 	}
 
 	// TODO(fusion): Should probably check if object is a rune?
-	uint32 Charges = Obj.getAttribute(CHARGES);
+	uint32 Charges = Obj.get_attribute(CHARGES);
 	if(Charges > 1){
-		Change(Obj, CHARGES, Charges - 1);
+		change(Obj, CHARGES, Charges - 1);
 	}else{
-		Delete(Obj, -1);
+		delete_op(Obj, -1);
 	}
 }
 
-void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
+void use_magic_item(uint32 CreatureID, Object Obj, Object Dest){
 	TPlayer *Actor = GetPlayer(CreatureID);
 	if(Actor == NULL){
-		error("UseMagicItem: Creature does not exist.\n");
+		error("use_magic_item: Creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Obj.exists()){
-		error("UseMagicItem: Passed object does not exist.\n");
+		error("use_magic_item: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Dest.exists()){
-		error("UseMagicItem: Passed target does not exist (object %d).\n",
-				Obj.getObjectType().TypeID);
+		error("use_magic_item: Passed target does not exist (object %d).\n",
+				Obj.get_object_type().TypeID);
 		throw ERROR;
 	}
 
-	if(CheckRight(Actor->ID, NO_RUNES)){
+	if(check_right(Actor->ID, NO_RUNES)){
 		throw NOTUSABLE;
 	}
 
 	int SpellNr = FindSpell(Obj);
 	if(SpellNr == 0){
-		error("UseMagicItem: No spell exists for object %d.\n",
-				Obj.getObjectType().TypeID);
+		error("use_magic_item: No spell exists for object %d.\n",
+				Obj.get_object_type().TypeID);
 		throw ERROR;
 	}
 
@@ -4060,16 +4060,16 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 	// obviously wrong candidates when there are multiple creatures on a single
 	// field.
 	TCreature *Target = NULL;
-	bool Aggressive = IsAggressiveSpell(SpellNr);
+	bool Aggressive = is_aggressive_spell(SpellNr);
 	{
-		if(Dest.getObjectType().isCreatureContainer()){
+		if(Dest.get_object_type().is_creature_container()){
 			Target = GetCreature(Dest);
 		}
 
-		Object Other = GetFirstContainerObject(Dest.getContainer());
+		Object Other = get_first_container_object(Dest.get_container());
 		while(Other != NONE){
-			if(Other.getObjectType().isCreatureContainer()){
-				uint32 OtherID = Other.getCreatureID();
+			if(Other.get_object_type().is_creature_container()){
+				uint32 OtherID = Other.get_creature_id();
 				if(Target == NULL
 						|| (Aggressive && OtherID != Actor->ID && OtherID != Target->ID)
 						|| (!Aggressive && OtherID == Actor->ID && OtherID != Target->ID)){
@@ -4077,12 +4077,12 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 					Dest = Other;
 				}
 			}
-			Other = Other.getNextObject();
+			Other = Other.get_next_object();
 		}
 	}
 
 	// NOTE(fusion): Rune check.
-	CheckRuneLevel(Actor, SpellNr);
+	check_rune_level(Actor, SpellNr);
 
 	if(Actor->EarliestSpellTime > ServerMilliseconds){
 		throw EXHAUSTED;
@@ -4090,14 +4090,14 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 
 	if(Aggressive){
 		int DestX, DestY, DestZ;
-		GetObjectCoordinates(Dest, &DestX, &DestY, &DestZ);
-		if(!CheckRight(Actor->ID, ATTACK_EVERYWHERE)
-				&& (IsProtectionZone(Actor->posx, Actor->posy, Actor->posz)
-					|| IsProtectionZone(DestX, DestY, DestZ))){
+		get_object_coordinates(Dest, &DestX, &DestY, &DestZ);
+		if(!check_right(Actor->ID, ATTACK_EVERYWHERE)
+				&& (is_protection_zone(Actor->posx, Actor->posy, Actor->posz)
+					|| is_protection_zone(DestX, DestY, DestZ))){
 			throw PROTECTIONZONE;
 		}
 
-		if(!Dest.getContainer().getObjectType().isMapContainer()){
+		if(!Dest.get_container().get_object_type().is_map_container()){
 			throw NOROOM;
 		}
 	}
@@ -4109,8 +4109,8 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 					throw NOCREATURE;
 				}
 
-				int Amount = ComputeDamage(Actor, SpellNr, 70, 30);
-				Heal(Target, -1, 0, Amount); // -1 ?
+				int Amount = compute_damage(Actor, SpellNr, 70, 30);
+				heal(Target, -1, 0, Amount); // -1 ?
 				break;
 			}
 
@@ -4119,21 +4119,21 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 					throw NOCREATURE;
 				}
 
-				int Amount = ComputeDamage(Actor, SpellNr, 250, 30);
-				Heal(Target, -1, 0, Amount); // -1 ?
+				int Amount = compute_damage(Actor, SpellNr, 250, 30);
+				heal(Target, -1, 0, Amount); // -1 ?
 				break;
 			}
 
 			case 7:{
-				int Damage = ComputeDamage(Actor, SpellNr, 15, 5);
-				Combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BLAST,
+				int Damage = compute_damage(Actor, SpellNr, 15, 5);
+				combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BLAST,
 						ANIMATION_FIRE, DAMAGE_ENERGY);
 				break;
 			}
 
 			case 8:{
-				int Damage = ComputeDamage(Actor, SpellNr, 30, 10);
-				Combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BLAST,
+				int Damage = compute_damage(Actor, SpellNr, 30, 10);
+				combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BLAST,
 						ANIMATION_FIRE, DAMAGE_ENERGY);
 				break;
 			}
@@ -4143,70 +4143,70 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 					throw NOCREATURE;
 				}
 
-				Convince(Actor, Target);
+				convince(Actor, Target);
 				break;
 			}
 
 			case 14:{
-				ObjectIllusion(Actor, 0, 0, Dest, 200);
+				object_illusion(Actor, 0, 0, Dest, 200);
 				break;
 			}
 
 			case 15:{
-				int Damage = ComputeDamage(Actor, SpellNr, 20, 5);
-				MassCombat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BURST,
+				int Damage = compute_damage(Actor, SpellNr, 20, 5);
+				mass_combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BURST,
 						3, DAMAGE_FIRE, ANIMATION_FIRE);
 				break;
 			}
 
 			case 16:{
-				int Damage = ComputeDamage(Actor, SpellNr, 50, 15);
-				MassCombat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BURST,
+				int Damage = compute_damage(Actor, SpellNr, 50, 15);
+				mass_combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE_BURST,
 						4, DAMAGE_FIRE, ANIMATION_FIRE);
 				break;
 			}
 
 			case 17:{
-				MassCreateField(Actor, Dest, 0, 0, FIELD_TYPE_FIRE, 2);
+				mass_create_field(Actor, Dest, 0, 0, FIELD_TYPE_FIRE, 2);
 				break;
 			}
 
 			case 18:{
-				int Damage = ComputeDamage(Actor, SpellNr, 60, 40);
-				MassCombat(Actor, Dest, 0, 0, Damage, EFFECT_EXPLOSION,
+				int Damage = compute_damage(Actor, SpellNr, 60, 40);
+				mass_combat(Actor, Dest, 0, 0, Damage, EFFECT_EXPLOSION,
 						1, DAMAGE_PHYSICAL, ANIMATION_FIRE);
 				break;
 			}
 
 			case 21:{
-				int Damage = ComputeDamage(Actor, SpellNr, 150, 20);
-				Combat(Actor, Dest, 0, 0, Damage, EFFECT_DEATH,
+				int Damage = compute_damage(Actor, SpellNr, 150, 20);
+				combat(Actor, Dest, 0, 0, Damage, EFFECT_DEATH,
 						ANIMATION_DEATH, DAMAGE_PHYSICAL);
 				break;
 			}
 
 			case 25:{
-				CreateField(Actor, Dest, 0, 0, FIELD_TYPE_FIRE);
+				create_field(Actor, Dest, 0, 0, FIELD_TYPE_FIRE);
 				break;
 			}
 
 			case 26:{
-				CreateField(Actor, Dest, 0, 0, FIELD_TYPE_POISON);
+				create_field(Actor, Dest, 0, 0, FIELD_TYPE_POISON);
 				break;
 			}
 
 			case 27:{
-				CreateField(Actor, Dest, 0, 0, FIELD_TYPE_ENERGY);
+				create_field(Actor, Dest, 0, 0, FIELD_TYPE_ENERGY);
 				break;
 			}
 
 			case 28:{
-				CreateFieldWall(Actor, Dest, 0, 0, FIELD_TYPE_FIRE, 2);
+				create_field_wall(Actor, Dest, 0, 0, FIELD_TYPE_FIRE, 2);
 				break;
 			}
 
 			case 30:{
-				DeleteField(Actor, Dest, 0, 0);
+				delete_field(Actor, Dest, 0, 0);
 				break;
 			}
 
@@ -4215,23 +4215,23 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 					throw NOCREATURE;
 				}
 
-				NegatePoison(Actor, Target, 0, 0);
+				negate_poison(Actor, Target, 0, 0);
 				break;
 			}
 
 			case 32:{
-				CreateFieldWall(Actor, Dest, 0, 0, FIELD_TYPE_POISON, 2);
+				create_field_wall(Actor, Dest, 0, 0, FIELD_TYPE_POISON, 2);
 				break;
 			}
 
 			case 33:{
-				CreateFieldWall(Actor, Dest, 0, 0, FIELD_TYPE_ENERGY, 3);
+				create_field_wall(Actor, Dest, 0, 0, FIELD_TYPE_ENERGY, 3);
 				break;
 			}
 
 			case 50:{
-				int Damage = ComputeDamage(Actor, SpellNr, 120, 20);
-				Combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE,
+				int Damage = compute_damage(Actor, SpellNr, 120, 20);
+				combat(Actor, Dest, 0, 0, Damage, EFFECT_FIRE,
 						ANIMATION_FIRE, DAMAGE_FIRE_PERIODIC);
 				break;
 			}
@@ -4247,50 +4247,50 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 
 				int ManaPoints = SpellList[SpellNr].Mana;
 				int SoulPoints = SpellList[SpellNr].SoulPoints;
-				MagicGoStrength(Actor, Target, ManaPoints, SoulPoints, -101, 1);
+				magic_go_strength(Actor, Target, ManaPoints, SoulPoints, -101, 1);
 				break;
 			}
 
 			case 55:{
-				MassCreateField(Actor, Dest, 0, 0, FIELD_TYPE_ENERGY, 2);
+				mass_create_field(Actor, Dest, 0, 0, FIELD_TYPE_ENERGY, 2);
 				break;
 			}
 
 			case 77:{
-				int Damage = ComputeDamage(Actor, SpellNr, 70, 20);
-				Combat(Actor, Dest, 0, 0, Damage, EFFECT_POISON_HIT,
+				int Damage = compute_damage(Actor, SpellNr, 70, 20);
+				combat(Actor, Dest, 0, 0, Damage, EFFECT_POISON_HIT,
 						ANIMATION_ENERGY, DAMAGE_POISON_PERIODIC);
 				break;
 			}
 
 			case 78:{
-				CleanupField(Actor, Dest, 0, 0);
+				cleanup_field(Actor, Dest, 0, 0);
 				break;
 			}
 
 			case 83:{
-				RaiseDead(Actor, Dest, 0, 0);
+				raise_dead(Actor, Dest, 0, 0);
 				break;
 			}
 
 			case 86:{
-				CreateField(Actor, Dest, 0, 0, FIELD_TYPE_MAGICWALL);
+				create_field(Actor, Dest, 0, 0, FIELD_TYPE_MAGICWALL);
 				break;
 			}
 
 			case 91:{
-				MassCreateField(Actor, Dest, 0, 0, FIELD_TYPE_POISON, 2);
+				mass_create_field(Actor, Dest, 0, 0, FIELD_TYPE_POISON, 2);
 				break;
 			}
 
 			default:{
-				error("UseMagicItem: Spell %d not yet implemented.\n", SpellNr);
+				error("use_magic_item: Spell %d not yet implemented.\n", SpellNr);
 				throw ERROR;
 			}
 		}
 	}catch(RESULT r){
 		if(r != ERROR){
-			GraphicalEffect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
+			graphical_effect(Actor->posx, Actor->posy, Actor->posz, EFFECT_POFF);
 		}
 
 		if(Actor->Type == PLAYER){
@@ -4306,37 +4306,37 @@ void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest){
 	}
 }
 
-void DrinkPotion(uint32 CreatureID, Object Obj){
+void drink_potion(uint32 CreatureID, Object Obj){
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("DrinkPotion: Creature does not exist.\n");
+		error("drink_potion: Creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Obj.exists()){
-		error("DrinkPotion: Passed object does not exist.\n");
+		error("drink_potion: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(LIQUIDCONTAINER)){
-		error("DrinkPotion: Passed object is not a liquid container.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(LIQUIDCONTAINER)){
+		error("drink_potion: Passed object is not a liquid container.\n");
 		throw ERROR;
 	}
 
-	int LiquidType = (int)Obj.getAttribute(CONTAINERLIQUIDTYPE);
+	int LiquidType = (int)Obj.get_attribute(CONTAINERLIQUIDTYPE);
 	if(LiquidType == LIQUID_MANA){
-		int Amount = ComputeDamage(NULL, 0, 100, 50);
-		RefreshMana(Player, 0, 0, Amount);
+		int Amount = compute_damage(NULL, 0, 100, 50);
+		refresh_mana(Player, 0, 0, Amount);
 	}else if(LiquidType == LIQUID_LIFE){
-		int Amount = ComputeDamage(NULL, 0, 50, 25);
-		Heal(Player, 0, 0, Amount);
+		int Amount = compute_damage(NULL, 0, 50, 25);
+		heal(Player, 0, 0, Amount);
 	}else{
-		error("DrinkPotion: Object does not contain a potion.\n");
+		error("drink_potion: Object does not contain a potion.\n");
 		throw ERROR;
 	}
 
-	Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+	change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
 }
 
 // Magic Init Functions
@@ -4471,7 +4471,7 @@ static void InitSpells(void){
 	Spell->Amount = 5;
 	Spell->RuneLevel = 0;
 	Spell->SoulPoints = 1;
-	Spell->Comment = "Light Magic Missile";
+	Spell->Comment = "Light Magic missile";
 
 	Spell = CreateSpell(8, "ad", "ori", "gran", "");
 	Spell->Mana = 280;
@@ -4482,7 +4482,7 @@ static void InitSpells(void){
 	Spell->Amount = 5;
 	Spell->RuneLevel = 4;
 	Spell->SoulPoints = 2;
-	Spell->Comment = "Heavy Magic Missile";
+	Spell->Comment = "Heavy Magic missile";
 
 	Spell = CreateSpell(9, "ut", "evo", "res", "para", "");
 	Spell->Mana = 0;
@@ -4511,7 +4511,7 @@ static void InitSpells(void){
 	Spell->Amount = 1;
 	Spell->RuneLevel = 5;
 	Spell->SoulPoints = 3;
-	Spell->Comment = "Convince Creature";
+	Spell->Comment = "convince Creature";
 
 	Spell = CreateSpell(13, "ex", "evo", "mort", "hur", "");
 	Spell->Mana = 250;
@@ -4725,7 +4725,7 @@ static void InitSpells(void){
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Move";
+	Spell->Comment = "move";
 
 	Spell = CreateSpell(38, "ut", "evo", "res", "ina", "para", "");
 	Spell->Mana = 100;
@@ -4749,7 +4749,7 @@ static void InitSpells(void){
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Change Data";
+	Spell->Comment = "change Data";
 
 	Spell = CreateSpell(42, "ex", "evo", "pan", "");
 	Spell->Mana = 120;
@@ -4780,7 +4780,7 @@ static void InitSpells(void){
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Teleport to Friend";
+	Spell->Comment = "teleport to Friend";
 
 	Spell = CreateSpell(48, "ex", "evo", "con", "pox", "");
 	Spell->Mana = 130;
@@ -4870,13 +4870,13 @@ static void InitSpells(void){
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Temple Teleport";
+	Spell->Comment = "Temple teleport";
 
 	Spell = CreateSpell(61, "om", "ana", "gran", "liber", "para", "para", "");
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Delete Account";
+	Spell->Comment = "delete_op Account";
 
 	Spell = CreateSpell(62, "om", "amo", "para", "");
 	Spell->Mana = 0;
@@ -4894,7 +4894,7 @@ static void InitSpells(void){
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Change Profession or Sex";
+	Spell->Comment = "change Profession or Sex";
 
 	Spell = CreateSpell(65, "om", "isa", "para", "para", "");
 	Spell->Mana = 0;
@@ -4918,7 +4918,7 @@ static void InitSpells(void){
 	Spell->Mana = 0;
 	Spell->Level = 0;
 	Spell->Flags = 0;
-	Spell->Comment = "Delete Character";
+	Spell->Comment = "delete_op Character";
 
 	Spell = CreateSpell(69, "om", "ana", "vis", "para", "para", "");
 	Spell->Mana = 0;
@@ -5030,7 +5030,7 @@ static void InitSpells(void){
 	Spell->Mana = 70;
 	Spell->Level = 18;
 	Spell->Flags = 10;
-	Spell->Comment = "Heal Friend";
+	Spell->Comment = "heal Friend";
 
 	Spell = CreateSpell(85, "ex", "ana", "mas", "mort", "");
 	Spell->Mana = 500;
@@ -5071,7 +5071,7 @@ static void InitSpells(void){
 	Spell->Mana = 200;
 	Spell->Level = 26;
 	Spell->Flags = 2;
-	Spell->Comment = "Cancel Invisibility";
+	Spell->Comment = "Cancel invisibility";
 
 	Spell = CreateSpell(91, "ad", "evo", "mas", "pox", "");
 	Spell->Mana = 520;
@@ -5094,7 +5094,7 @@ static void InitSpells(void){
 	Spell->Mana = 30;
 	Spell->Level = 20;
 	Spell->Flags = 3;
-	Spell->Comment = "Challenge";
+	Spell->Comment = "challenge";
 
 	Spell = CreateSpell(94, "ex", "evo", "grav", "vita", "");
 	Spell->Mana = 220;
@@ -5152,12 +5152,12 @@ static void InitSpells(void){
 	Spell->Comment = "Start Monsterraid";
 }
 
-void InitMagic(void){
+void init_magic(void){
 	InitCircles();
 	InitSpells();
-	InitLog("banish");
+	init_log("banish");
 }
 
-void ExitMagic(void){
+void exit_magic(void){
 	// no-op
 }

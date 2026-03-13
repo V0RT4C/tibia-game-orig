@@ -7,20 +7,20 @@
 #include "reader.h"
 #include "writer.h"
 
-static vector<TMoveUseCondition> MoveUseConditions(1, 1000, 1000);
+static vector<MoveUseCondition> MoveUseConditions(1, 1000, 1000);
 static int NumberOfMoveUseConditions;
 
-static vector<TMoveUseAction> MoveUseActions(1, 1000, 1000);
+static vector<MoveUseAction> MoveUseActions(1, 1000, 1000);
 static int NumberOfMoveUseActions;
 
-static TMoveUseDatabase MoveUseDatabases[5];
+static MoveUseDatabase MoveUseDatabases[5];
 
-static vector<TDelayedMail> DelayedMail(0, 10, 10);
+static vector<DelayedMail> DelayedMailArray(0, 10, 10);
 static int DelayedMails;
 
 // Coordinate Packing
 // =============================================================================
-int PackAbsoluteCoordinate(int x, int y, int z){
+int pack_absolute_coordinate(int x, int y, int z){
 	// DOMAIN: [24576, 40959] x [24576, 40959] x [0, 15]
 	int Packed = (((x - 24576) & 0x00003FFF) << 18)
 				| (((y - 24576) & 0x00003FFF) << 4)
@@ -28,13 +28,13 @@ int PackAbsoluteCoordinate(int x, int y, int z){
 	return Packed;
 }
 
-void UnpackAbsoluteCoordinate(int Packed, int *x, int *y, int *z){
+void unpack_absolute_coordinate(int Packed, int *x, int *y, int *z){
 	*x = ((Packed >> 18) & 0x00003FFF) + 24576;
 	*y = ((Packed >>  4) & 0x00003FFF) + 24576;
 	*z = ((Packed >>  0) & 0x0000000F);
 }
 
-int PackRelativeCoordinate(int x, int y, int z){
+int pack_relative_coordinate(int x, int y, int z){
 	// DOMAIN: [-8192, 8191] x [-8192, 8191] x [-8, 7]
 	int Packed = (((x + 8192) & 0x00003FFF) << 18)
 				| (((y + 8192) & 0x00003FFF) << 4)
@@ -42,7 +42,7 @@ int PackRelativeCoordinate(int x, int y, int z){
 	return Packed;
 }
 
-void UnpackRelativeCoordinate(int Packed, int *x, int *y, int *z){
+void unpack_relative_coordinate(int Packed, int *x, int *y, int *z){
 	*x = ((Packed >> 18) & 0x00003FFF) - 8192;
 	*y = ((Packed >>  4) & 0x00003FFF) - 8192;
 	*z = ((Packed >>  0) & 0x0000000F) - 8;
@@ -50,7 +50,7 @@ void UnpackRelativeCoordinate(int Packed, int *x, int *y, int *z){
 
 // Event Execution
 // =============================================================================
-Object GetEventObject(int Nr, Object User, Object Obj1, Object Obj2, Object Temp){
+Object get_event_object(int Nr, Object User, Object Obj1, Object Obj2, Object Temp){
 	Object Obj = NONE;
 	switch(Nr){
 		case 0: Obj = NONE; break;
@@ -59,14 +59,14 @@ Object GetEventObject(int Nr, Object User, Object Obj1, Object Obj2, Object Temp
 		case 3: Obj = User; break;
 		case 4: Obj = Temp; break;
 		default:{
-			error("GetEventObject: Unknown number %d.\n", Nr);
+			error("get_event_object: Unknown number %d.\n", Nr);
 			break;
 		}
 	}
 	return Obj;
 }
 
-bool Compare(int Value1, int Operator, int Value2){
+bool compare(int Value1, int Operator, int Value2){
 	bool Result = false;
 	switch(Operator){
 		case '<': Result = (Value1 <  Value2); break;
@@ -76,41 +76,41 @@ bool Compare(int Value1, int Operator, int Value2){
 		case 'L': Result = (Value1 <= Value2); break;
 		case 'G': Result = (Value1 >= Value2); break;
 		default:{
-			error("Compare: Invalid operator %d.\n", Operator);
+			error("compare: Invalid operator %d.\n", Operator);
 			break;
 		}
 	}
 	return Result;
 }
 
-bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
+bool check_condition(MoveUseEventType EventType, MoveUseCondition *Condition,
 		Object User, Object Obj1, Object Obj2, Object *Temp){
 	bool Result = false;
 	switch(Condition->Condition){
 		case MOVEUSE_CONDITION_ISPOSITION:{
 			int ObjX, ObjY, ObjZ, CoordX, CoordY, CoordZ;
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			UnpackAbsoluteCoordinate(Condition->Parameters[1], &CoordX, &CoordY, &CoordZ);
-			GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			unpack_absolute_coordinate(Condition->Parameters[1], &CoordX, &CoordY, &CoordZ);
+			get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 			Result = (ObjX == CoordX && ObjY == CoordY && ObjZ == CoordZ);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISTYPE:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			Result = (Obj.getObjectType().TypeID == Condition->Parameters[1]);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Result = (Obj.get_object_type().TypeID == Condition->Parameters[1]);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISCREATURE:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			Result = Obj.getObjectType().isCreatureContainer();
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Result = Obj.get_object_type().is_creature_container();
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISPLAYER:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			if(Obj.getObjectType().isCreatureContainer()){
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				Result = (Creature && Creature->Type == PLAYER);
 			}
@@ -118,40 +118,40 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		}
 
 		case MOVEUSE_CONDITION_HASFLAG:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			Result = Obj.getObjectType().getFlag((FLAG)Condition->Parameters[1]);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Result = Obj.get_object_type().get_flag((FLAG)Condition->Parameters[1]);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_HASTYPEATTRIBUTE:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			int Attribute = (int)Obj.getObjectType().getAttribute((TYPEATTRIBUTE)Condition->Parameters[1]);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			int Attribute = (int)Obj.get_object_type().get_attribute((TYPEATTRIBUTE)Condition->Parameters[1]);
 			int Operator = Condition->Parameters[2];
 			int Value = Condition->Parameters[3];
-			Result = Compare(Attribute, Operator, Value);
+			Result = compare(Attribute, Operator, Value);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_HASINSTANCEATTRIBUTE:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			int Attribute = (int)Obj.getAttribute((INSTANCEATTRIBUTE)Condition->Parameters[1]);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			int Attribute = (int)Obj.get_attribute((INSTANCEATTRIBUTE)Condition->Parameters[1]);
 			int Operator = Condition->Parameters[2];
 			int Value = Condition->Parameters[3];
-			Result = Compare(Attribute, Operator, Value);
+			Result = compare(Attribute, Operator, Value);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_HASTEXT:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			const char *Attribute = GetDynamicString(Obj.getAttribute(TEXTSTRING));
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			const char *Attribute = GetDynamicString(Obj.get_attribute(TEXTSTRING));
 			const char *Text = GetDynamicString(Condition->Parameters[1]);
 			Result = (strcmp(Attribute, Text) == 0);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISPEACEFUL:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			if(Obj.getObjectType().isCreatureContainer()){
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				Result = (Creature && Creature->IsPeaceful());
 			}
@@ -159,8 +159,8 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		}
 
 		case MOVEUSE_CONDITION_MAYLOGOUT:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			if(Obj.getObjectType().isCreatureContainer()){
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				Result = (Creature != NULL && Creature->Type == PLAYER
 					&& Creature->LogoutPossible() == 0);
@@ -169,9 +169,9 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		}
 
 		case MOVEUSE_CONDITION_HASPROFESSION:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			int Profession = Condition->Parameters[1];
-			if(Obj.getObjectType().isCreatureContainer()){
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				Result = (Creature != NULL && Creature->Type == PLAYER
 					&& ((TPlayer*)Creature)->GetEffectiveProfession() == Profession);
@@ -180,57 +180,57 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		}
 
 		case MOVEUSE_CONDITION_HASLEVEL:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			int Operator = Condition->Parameters[1];
 			int Value = Condition->Parameters[2];
-			if(Obj.getObjectType().isCreatureContainer()){
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				if(Creature != NULL){
 					int Level = Creature->Skills[SKILL_LEVEL]->Get();
-					Result = Compare(Level, Operator, Value);
+					Result = compare(Level, Operator, Value);
 				}
 			}
 			break;
 		}
 
 		case MOVEUSE_CONDITION_HASRIGHT:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			RIGHT Right = (RIGHT)Condition->Parameters[1];
-			if(Obj.getObjectType().isCreatureContainer()){
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				Result = (Creature != NULL && Creature->Type == PLAYER
-					&& CheckRight(Creature->ID, Right));
+					&& check_right(Creature->ID, Right));
 			}
 			break;
 		}
 
 		case MOVEUSE_CONDITION_HASQUESTVALUE:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			int QuestNr = Condition->Parameters[1];
 			int Operator = Condition->Parameters[2];
 			int Value = Condition->Parameters[3];
-			if(Obj.getObjectType().isCreatureContainer()){
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				if(Creature != NULL && Creature->Type == PLAYER){
 					int QuestValue = ((TPlayer*)Creature)->GetQuestValue(QuestNr);
-					Result = Compare(QuestValue, Operator, Value);
+					Result = compare(QuestValue, Operator, Value);
 				}
 			}
 			break;
 		}
 
 		case MOVEUSE_CONDITION_TESTSKILL:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			int SkillNr = Condition->Parameters[1];
 			int Difficulty = Condition->Parameters[2];
 			int Probability = Condition->Parameters[3];
-			if(Obj.getObjectType().isCreatureContainer()){
+			if(Obj.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Obj);
 				if(Creature != NULL){
 					if(SkillNr >= 0 && SkillNr < NARRAY(Creature->Skills)){
 						Result = Creature->Skills[SkillNr]->Probe(Difficulty, Probability, true);
 					}else{
-						error("CheckCondition (TestSkill): Invalid skill number %d.\n", SkillNr);
+						error("check_condition (TestSkill): Invalid skill number %d.\n", SkillNr);
 					}
 				}
 			}
@@ -239,40 +239,40 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 
 		// TODO(fusion): This also counts objects at the object's map location?
 		case MOVEUSE_CONDITION_COUNTOBJECTS:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			int Operator = Condition->Parameters[1];
 			int Value = Condition->Parameters[2];
-			Object MapCon = GetMapContainer(Obj);
-			int ObjCount = CountObjectsInContainer(MapCon);
-			Result = Compare(ObjCount, Operator, Value);
+			Object MapCon = get_map_container(Obj);
+			int ObjCount = count_objects_in_container(MapCon);
+			Result = compare(ObjCount, Operator, Value);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_COUNTOBJECTSONMAP:{
 			int CoordX, CoordY, CoordZ;
-			UnpackAbsoluteCoordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
+			unpack_absolute_coordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
 			int Operator = Condition->Parameters[1];
 			int Value = Condition->Parameters[2];
-			Object MapCon = GetMapContainer(CoordX, CoordY, CoordZ);
-			int ObjCount = CountObjectsInContainer(MapCon);
-			Result = Compare(ObjCount, Operator, Value);
+			Object MapCon = get_map_container(CoordX, CoordY, CoordZ);
+			int ObjCount = count_objects_in_container(MapCon);
+			Result = compare(ObjCount, Operator, Value);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISOBJECTTHERE:{
 			int CoordX, CoordY, CoordZ;
-			UnpackAbsoluteCoordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
+			unpack_absolute_coordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
 			ObjectType Type = Condition->Parameters[1];
-			*Temp = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+			*Temp = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 			Result = (*Temp != NONE);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISCREATURETHERE:{
 			int CoordX, CoordY, CoordZ;
-			UnpackAbsoluteCoordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
+			unpack_absolute_coordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
 			ObjectType Type = TYPEID_CREATURE_CONTAINER;
-			*Temp = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+			*Temp = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 			Result = (*Temp != NONE);
 			break;
 		}
@@ -281,9 +281,9 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		// could be more than one creature.
 		case MOVEUSE_CONDITION_ISPLAYERTHERE:{
 			int CoordX, CoordY, CoordZ;
-			UnpackAbsoluteCoordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
+			unpack_absolute_coordinate(Condition->Parameters[0], &CoordX, &CoordY, &CoordZ);
 			ObjectType Type = TYPEID_CREATURE_CONTAINER;
-			*Temp = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+			*Temp = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 			if(*Temp != NONE){
 				TCreature *Creature = GetCreature(*Temp);
 				Result = Creature && Creature->Type == PLAYER;
@@ -292,11 +292,11 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		}
 
 		case MOVEUSE_CONDITION_ISOBJECTININVENTORY:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
 			ObjectType Type = Condition->Parameters[1];
 			int Count = Condition->Parameters[2];
-			if(Obj.getObjectType().isCreatureContainer()){
-				*Temp = GetInventoryObject(Obj.getCreatureID(), Type, Count);
+			if(Obj.get_object_type().is_creature_container()){
+				*Temp = get_inventory_object(Obj.get_creature_id(), Type, Count);
 				Result = (*Temp != NONE);
 			}
 			break;
@@ -304,44 +304,44 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 
 		case MOVEUSE_CONDITION_ISPROTECTIONZONE:{
 			int ObjX, ObjY, ObjZ;
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-			Result = IsProtectionZone(ObjX, ObjY, ObjZ);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+			Result = is_protection_zone(ObjX, ObjY, ObjZ);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISHOUSE:{
 			int ObjX, ObjY, ObjZ;
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-			Result = IsHouse(ObjX, ObjY, ObjZ);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+			Result = is_house(ObjX, ObjY, ObjZ);
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISHOUSEOWNER:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			Object Cr = GetEventObject(Condition->Parameters[1], User, Obj1, Obj2, *Temp);
-			if(Cr.getObjectType().isCreatureContainer()){
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			Object Cr = get_event_object(Condition->Parameters[1], User, Obj1, Obj2, *Temp);
+			if(Cr.get_object_type().is_creature_container()){
 				TCreature *Creature = GetCreature(Cr);
 				if(Creature != NULL && Creature->Type == PLAYER){
 					int ObjX, ObjY, ObjZ;
-					GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-					uint16 HouseID = GetHouseID(ObjX, ObjY, ObjZ);
-					Result = IsOwner(HouseID, (TPlayer*)Creature);
+					get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+					uint16 HouseID = get_house_id(ObjX, ObjY, ObjZ);
+					Result = is_owner(HouseID, (TPlayer*)Creature);
 				}
 			}
 			break;
 		}
 
 		case MOVEUSE_CONDITION_ISDRESSED:{
-			Object Obj = GetEventObject(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
-			ObjectType ObjType = Obj.getObjectType();
-			if(ObjType.getFlag(CLOTHES)){
-				int CurPosition = GetObjectBodyPosition(Obj);
-				int ObjPosition = (int)ObjType.getAttribute(BODYPOSITION);
+			Object Obj = get_event_object(Condition->Parameters[0], User, Obj1, Obj2, *Temp);
+			ObjectType ObjType = Obj.get_object_type();
+			if(ObjType.get_flag(CLOTHES)){
+				int CurPosition = get_object_body_position(Obj);
+				int ObjPosition = (int)ObjType.get_attribute(BODYPOSITION);
 				Result = (CurPosition == ObjPosition);
 			}else{
-				error("CheckCondition (IsDressed): Object is not a clothing item.\n");
+				error("check_condition (IsDressed): Object is not a clothing item.\n");
 			}
 			break;
 		}
@@ -352,7 +352,7 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 		}
 
 		default:{
-			error("CheckCondition: Unknown condition %d.\n", Condition->Condition);
+			error("check_condition: Unknown condition %d.\n", Condition->Condition);
 			return false;
 		}
 	}
@@ -371,26 +371,26 @@ bool CheckCondition(MoveUseEventType EventType, TMoveUseCondition *Condition,
 	return Result;
 }
 
-Object CreateObject(Object Con, ObjectType Type, uint32 Value){
+Object create_object(Object Con, ObjectType Type, uint32 Value){
 	for(int Attempt = 0; true; Attempt += 1){
 		try{
 			Object Obj = NONE;
-			ObjectType ConType = Con.getObjectType();
-			if(ConType.isBodyContainer()){
-				uint32 CreatureID = GetObjectCreatureID(Con);
-				Obj = CreateAtCreature(CreatureID, Type, Value);
+			ObjectType ConType = Con.get_object_type();
+			if(ConType.is_body_container()){
+				uint32 CreatureID = get_object_creature_id(Con);
+				Obj = create_at_creature(CreatureID, Type, Value);
 			}else{
-				Obj = Create(Con, Type, Value);
+				Obj = create(Con, Type, Value);
 			}
 			return Obj;
 		}catch(RESULT r){
 			if(Attempt == 0 && (r == NOTTAKABLE || r == TOOHEAVY || r == CONTAINERFULL)){
 				// NOTE(fusion): Try to create object on the map, ONCE.
-				Con = GetMapContainer(Con);
+				Con = get_map_container(Con);
 			}else{
 				int ConX, ConY, ConZ;
-				GetObjectCoordinates(Con, &ConX, &ConY, &ConZ);
-				error("moveuse::CreateObject: Exception %d, object %d, position [%d,%d,%d].\n",
+				get_object_coordinates(Con, &ConX, &ConY, &ConZ);
+				error("moveuse::create_object: Exception %d, object %d, position [%d,%d,%d].\n",
 						r, Type.TypeID, ConX, ConY, ConZ);
 				return NONE;
 			}
@@ -398,37 +398,37 @@ Object CreateObject(Object Con, ObjectType Type, uint32 Value){
 	}
 }
 
-void ChangeObject(Object Obj, ObjectType NewType, uint32 Value){
+void change_object(Object Obj, ObjectType NewType, uint32 Value){
 	if(!Obj.exists()){
-		error("ChangeObject: Provided object does not exist (1, NewType=%d).\n", NewType.TypeID);
+		error("change_object: Provided object does not exist (1, NewType=%d).\n", NewType.TypeID);
 		return;
 	}
 
-	// NOTE(fusion): `Change` requires CUMULATIVE objects to have AMOUNT
+	// NOTE(fusion): `change` requires CUMULATIVE objects to have AMOUNT
 	// equal to ONE or it fails with `SPLITOBJECT`. This means might need
 	// to split the object and the split destination may change depending
 	// on how things go.
-	Object SplitDest = Obj.getContainer();
+	Object SplitDest = Obj.get_container();
 	for(int Attempt = 0; true; Attempt += 1){
 		if(!Obj.exists()){
-			error("ChangeObject: Provided object does not exist (2, NewType=%d).\n", NewType.TypeID);
+			error("change_object: Provided object does not exist (2, NewType=%d).\n", NewType.TypeID);
 			return;
 		}
 
 		try{
-			ObjectType ObjType = Obj.getObjectType();
-			if(ObjType.getFlag(CUMULATIVE)){
-				uint32 Amount = Obj.getAttribute(AMOUNT);
+			ObjectType ObjType = Obj.get_object_type();
+			if(ObjType.get_flag(CUMULATIVE)){
+				uint32 Amount = Obj.get_attribute(AMOUNT);
 				if(Amount > 1){
-					Move(0, Obj, SplitDest, Amount - 1, true, NONE);
+					move(0, Obj, SplitDest, Amount - 1, true, NONE);
 				}
 			}
 
-			Change(Obj, NewType, Value);
+			change(Obj, NewType, Value);
 			return;
 		}catch(RESULT r){
 			if(!Obj.exists()){
-				error("ChangeObject: Provided object does not exist (3, NewType=%d).\n", NewType.TypeID);
+				error("change_object: Provided object does not exist (3, NewType=%d).\n", NewType.TypeID);
 				return;
 			}
 
@@ -439,19 +439,19 @@ void ChangeObject(Object Obj, ObjectType NewType, uint32 Value){
 
 			if(r == CONTAINERFULL){
 				// NOTE(fusion): Set `SplitDest` to map.
-				SplitDest = GetMapContainer(Obj);
+				SplitDest = get_map_container(Obj);
 			}else if(r == TOOHEAVY){
-				// NOTE(fusion): Move object to map, keep `SplitDest`.
-				Object MapCon = GetMapContainer(Obj);
-				Move(0, Obj, MapCon, -1, true, NONE);
+				// NOTE(fusion): move object to map, keep `SplitDest`.
+				Object MapCon = get_map_container(Obj);
+				move(0, Obj, MapCon, -1, true, NONE);
 			}else if(r == NOROOM
-					&& Obj.getObjectType().getFlag(CUMULATIVE)
-					&& Obj.getAttribute(AMOUNT) > 1){
+					&& Obj.get_object_type().get_flag(CUMULATIVE)
+					&& Obj.get_attribute(AMOUNT) > 1){
 				// NOTE(fusion): Split to map directly. Similar to setting `SplitDest`
 				// to map, although failing here will throw us out of the function.
-				uint32 Amount = Obj.getAttribute(AMOUNT);
-				Object MapCon = GetMapContainer(SplitDest);
-				Move(0, Obj, MapCon, Amount - 1, true, NONE);
+				uint32 Amount = Obj.get_attribute(AMOUNT);
+				Object MapCon = get_map_container(SplitDest);
+				move(0, Obj, MapCon, Amount - 1, true, NONE);
 			}else{
 				throw;
 			}
@@ -459,127 +459,127 @@ void ChangeObject(Object Obj, ObjectType NewType, uint32 Value){
 	}
 }
 
-void MoveOneObject(Object Obj, Object Con){
+void move_one_object(Object Obj, Object Con){
 	if(!Obj.exists()){
-		error("MoveOneObject: Provided object does not exist.\n");
+		error("move_one_object: Provided object does not exist.\n");
 		return;
 	}
 
 	if(!Con.exists()){
-		error("MoveOneObject: Provided container does not exist.\n");
+		error("move_one_object: Provided container does not exist.\n");
 		return;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER)){
-		error("MoveOneObject: \"Con\" is not a container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER)){
+		error("move_one_object: \"Con\" is not a container.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isCreatureContainer() && !ConType.isMapContainer()){
-		error("MoveOneObject: \"Con\" is not a map container.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_creature_container() && !ConType.is_map_container()){
+		error("move_one_object: \"Con\" is not a map container.\n");
 		return;
 	}
 
 	try{
-		if(ObjType.getFlag(LIQUIDPOOL) || ObjType.getFlag(MAGICFIELD)){
-			Delete(Obj, -1);
+		if(ObjType.get_flag(LIQUIDPOOL) || ObjType.get_flag(MAGICFIELD)){
+			delete_op(Obj, -1);
 		}else{
-			Move(0, Obj, Con, -1, true, NONE);
+			move(0, Obj, Con, -1, true, NONE);
 		}
 	}catch(RESULT r){
 		if(r != DESTROYED){
 			int ConX, ConY, ConZ;
-			GetObjectCoordinates(Con, &ConX, &ConY, &ConZ);
-			error("MoveOneObject: Exception %d; coordinate [%d,%d,%d].\n",
+			get_object_coordinates(Con, &ConX, &ConY, &ConZ);
+			error("move_one_object: Exception %d; coordinate [%d,%d,%d].\n",
 					r, ConX, ConY, ConZ);
 		}
 
 		if(r == CONTAINERFULL){
-			Delete(Obj, -1);
+			delete_op(Obj, -1);
 		}
 	}
 }
 
-void MoveAllObjects(Object Obj, Object Dest, Object Exclude, bool MoveUnmovable){
+void move_all_objects(Object Obj, Object Dest, Object Exclude, bool MoveUnmovable){
 	if(Obj == NONE){
 		return;
 	}
 
-	if(!Dest.getObjectType().isMapContainer()){
-		error("MoveAllObjects: \"Dest\" is not a map container.\n");
+	if(!Dest.get_object_type().is_map_container()){
+		error("move_all_objects: \"Dest\" is not a map container.\n");
 		return;
 	}
 
 	// TODO(fusion): We probably use recursion to move objects in reverse order?
-	MoveAllObjects(Obj.getNextObject(), Dest, Exclude, MoveUnmovable);
+	move_all_objects(Obj.get_next_object(), Dest, Exclude, MoveUnmovable);
 
 	if(Obj != Exclude){
-		ObjectType ObjType = Obj.getObjectType();
+		ObjectType ObjType = Obj.get_object_type();
 		try{
-			if(ObjType.getFlag(LIQUIDPOOL) || ObjType.getFlag(MAGICFIELD)){
-				Delete(Obj, -1);
-			}else if(MoveUnmovable || !ObjType.getFlag(UNMOVE)){
-				Move(0, Obj, Dest, -1, true, NONE);
+			if(ObjType.get_flag(LIQUIDPOOL) || ObjType.get_flag(MAGICFIELD)){
+				delete_op(Obj, -1);
+			}else if(MoveUnmovable || !ObjType.get_flag(UNMOVE)){
+				move(0, Obj, Dest, -1, true, NONE);
 			}
 		}catch(RESULT r){
 			if(r != DESTROYED){
 				int DestX, DestY, DestZ;
-				GetObjectCoordinates(Dest, &DestX, &DestY, &DestZ);
-				error("MoveAllObjects: Exception %d; object %d, destination coordinate [%d,%d,%d].\n",
+				get_object_coordinates(Dest, &DestX, &DestY, &DestZ);
+				error("move_all_objects: Exception %d; object %d, destination coordinate [%d,%d,%d].\n",
 						r, ObjType.TypeID, DestX, DestY, DestZ);
 			}
 		}
 	}
 }
 
-void DeleteAllObjects(Object Obj, Object Exclude, bool DeleteUnmovable){
+void delete_all_objects(Object Obj, Object Exclude, bool DeleteUnmovable){
 	if(Obj == NONE){
 		return;
 	}
 
-	// TODO(fusion): Same as `MoveAllObjects`.
-	DeleteAllObjects(Obj.getNextObject(), Exclude, DeleteUnmovable);
+	// TODO(fusion): Same as `move_all_objects`.
+	delete_all_objects(Obj.get_next_object(), Exclude, DeleteUnmovable);
 
 	if(Obj != Exclude){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.isCreatureContainer()){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.is_creature_container()){
 			int ObjX, ObjY, ObjZ;
-			GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-			error("DeleteAllObjects: A creature at position [%d,%d,%d] is about to be deleted.\n",
+			get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+			error("delete_all_objects: A creature at position [%d,%d,%d] is about to be deleted.\n",
 					ObjX, ObjY, ObjZ);
 			return;
 		}
 
-		if(!DeleteUnmovable && ObjType.getFlag(UNMOVE)
-				&& !ObjType.getFlag(LIQUIDPOOL)
-				&& !ObjType.getFlag(MAGICFIELD)){
+		if(!DeleteUnmovable && ObjType.get_flag(UNMOVE)
+				&& !ObjType.get_flag(LIQUIDPOOL)
+				&& !ObjType.get_flag(MAGICFIELD)){
 			return;
 		}
 
 		try{
-			Delete(Obj, -1);
+			delete_op(Obj, -1);
 		}catch(RESULT r){
-			error("DeleteAllObjects: Exception %d.\n", r);
+			error("delete_all_objects: Exception %d.\n", r);
 		}
 	}
 }
 
-void ClearField(Object Obj, Object Exclude){
+void clear_field(Object Obj, Object Exclude){
 	// IMPORTANT(fusion): This function seems to be used when items transform
 	// into `UNPASS` versions of themselves, like doors, which is why we skip
-	// the actual object when calling `MoveAllObjects` at the end.
+	// the actual object when calling `move_all_objects` at the end.
 	//	The order we scan available fields may also be important which is why
 	// I've kept the same ordering used by the original function.
 
 	if(!Obj.exists()){
-		error("ClearField: Object does not exist.\n");
+		error("clear_field: Object does not exist.\n");
 		return;
 	}
 
 	int ObjX, ObjY, ObjZ;
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 
 	bool DestFound = false;
 	int DestX, DestY, DestZ;
@@ -591,8 +591,8 @@ void ClearField(Object Obj, Object Exclude){
 		DestX = ObjX + OffsetX[i];
 		DestY = ObjY + OffsetY[i];
 		DestZ = ObjZ;
-		if(CoordinateFlag(DestX, DestY, DestZ, BANK)
-		&& !CoordinateFlag(DestX, DestY, DestZ, UNPASS)){
+		if(coordinate_flag(DestX, DestY, DestZ, BANK)
+		&& !coordinate_flag(DestX, DestY, DestZ, UNPASS)){
 			DestFound = true;
 			break;
 		}
@@ -604,7 +604,7 @@ void ClearField(Object Obj, Object Exclude){
 			DestX = ObjX + OffsetX[i];
 			DestY = ObjY + OffsetY[i];
 			DestZ = ObjZ;
-			if(JumpPossible(DestX, DestY, DestZ, false)){
+			if(jump_possible(DestX, DestY, DestZ, false)){
 				DestFound = true;
 				break;
 			}
@@ -612,33 +612,33 @@ void ClearField(Object Obj, Object Exclude){
 	}
 
 	if(DestFound){
-		Object Dest = GetMapContainer(DestX, DestY, DestZ);
-		MoveAllObjects(Obj.getNextObject(), Dest, Exclude, true);
+		Object Dest = get_map_container(DestX, DestY, DestZ);
+		move_all_objects(Obj.get_next_object(), Dest, Exclude, true);
 	}
 }
 
-void LoadDepotBox(uint32 CreatureID, int Nr, Object Con){
+void load_depot_box(uint32 CreatureID, int Nr, Object Con){
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("moveuse::LoadDepotBox: Creature not found.\n");
+		error("moveuse::load_depot_box: Creature not found.\n");
 		return;
 	}
 
 	if(!Con.exists()){
-		error("moveuse::LoadDepotBox: Provided container does not exist.\n");
+		error("moveuse::load_depot_box: Provided container does not exist.\n");
 		return;
 	}
 
-	if(!Con.getObjectType().getFlag(CONTAINER)){
-		error("moveuse::LoadDepotBox: Provided object is not a container.\n");
+	if(!Con.get_object_type().get_flag(CONTAINER)){
+		error("moveuse::load_depot_box: Provided object is not a container.\n");
 		return;
 	}
 
 	// NOTE(fusion): Holy fuck. Objects are actually loaded into the depot box.
 	LoadDepot(Player->PlayerData, Nr, Con);
 
-	int DepotObjects = CountObjects(Con) - 1;
-	int DepotCapacity = GetDepotSize(Nr, CheckRight(Player->ID, PREMIUM_ACCOUNT));
+	int DepotObjects = count_objects(Con) - 1;
+	int DepotCapacity = get_depot_size(Nr, check_right(Player->ID, PREMIUM_ACCOUNT));
 	int DepotSpace = DepotCapacity - DepotObjects;
 	Player->Depot = Con;
 	Player->DepotNr = Nr;
@@ -655,25 +655,25 @@ void LoadDepotBox(uint32 CreatureID, int Nr, Object Con){
 	}
 }
 
-void SaveDepotBox(uint32 CreatureID, int Nr, Object Con){
+void save_depot_box(uint32 CreatureID, int Nr, Object Con){
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("moveuse::SaveDepotBox: Creature not found.\n");
+		error("moveuse::save_depot_box: Creature not found.\n");
 		return;
 	}
 
 	if(!Con.exists()){
-		error("moveuse::SaveDepotBox: Provided container does not exist.\n");
+		error("moveuse::save_depot_box: Provided container does not exist.\n");
 		return;
 	}
 
-	if(!Con.getObjectType().getFlag(CONTAINER)){
-		error("moveuse::SaveDepotBox: Provided object is not a container.\n");
+	if(!Con.get_object_type().get_flag(CONTAINER)){
+		error("moveuse::save_depot_box: Provided object is not a container.\n");
 		return;
 	}
 
-	int DepotObjects = CountObjects(Con) - 1;
-	Log("game", "Saving depot %d of %s ... depot size: %d.\n",
+	int DepotObjects = count_objects(Con) - 1;
+	log_message("game", "Saving depot %d of %s ... depot size: %d.\n",
 			Nr, Player->Name, DepotObjects);
 	print(3, "Depot of %s: calculated free slots %d, actual objects %d.\n",
 			Player->Name, Player->DepotSpace, DepotObjects);
@@ -681,10 +681,10 @@ void SaveDepotBox(uint32 CreatureID, int Nr, Object Con){
 	SaveDepot(Player->PlayerData, Nr, Con);
 	Player->Depot = NONE;
 
-	Object Obj = GetFirstContainerObject(Con);
+	Object Obj = get_first_container_object(Con);
 	while(Obj != NONE){
-		Object Next = Obj.getNextObject();
-		Delete(Obj, -1);
+		Object Next = Obj.get_next_object();
+		delete_op(Obj, -1);
 		Obj = Next;
 	}
 }
@@ -709,38 +709,38 @@ static int ReadLine(char *Dest, int DestCapacity, const char *Text, int ReadPos)
 	return ReadPos;
 }
 
-void SendMail(Object Obj){
+void send_mail(Object Obj){
 	if(!Obj.exists()){
-		error("SendMail: Provided object does not exist.\n");
+		error("send_mail: Provided object does not exist.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType != GetSpecialObject(PARCEL_NEW)
-	&& ObjType != GetSpecialObject(LETTER_NEW)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType != get_special_object(PARCEL_NEW)
+	&& ObjType != get_special_object(LETTER_NEW)){
 		return;
 	}
 
 	print(3, "Sending mail...\n");
 
 	uint32 TextAttr = 0;
-	if(ObjType == GetSpecialObject(LETTER_NEW)){
-		TextAttr = Obj.getAttribute(TEXTSTRING);
+	if(ObjType == get_special_object(LETTER_NEW)){
+		TextAttr = Obj.get_attribute(TEXTSTRING);
 	}else{
-		ObjectType LabelType = GetSpecialObject(PARCEL_LABEL);
-		Object Label = GetFirstContainerObject(Obj);
+		ObjectType LabelType = get_special_object(PARCEL_LABEL);
+		Object Label = get_first_container_object(Obj);
 		while(Label != NONE){
-			if(Label.getObjectType() == LabelType){
+			if(Label.get_object_type() == LabelType){
 				break;
 			}
-			Label = Label.getNextObject();
+			Label = Label.get_next_object();
 		}
 
 		if(Label == NONE){
 			return;
 		}
 
-		TextAttr = Label.getAttribute(TEXTSTRING);
+		TextAttr = Label.get_attribute(TEXTSTRING);
 	}
 
 	const char *Text = GetDynamicString(TextAttr);
@@ -768,8 +768,8 @@ void SendMail(Object Obj){
 		return;
 	}
 
-	Log("game", "Mail to %s in %s.\n", Addressee, Town);
-	int DepotNr = GetDepotNumber(Town);
+	log_message("game", "Mail to %s in %s.\n", Addressee, Town);
+	int DepotNr = get_depot_number(Town);
 	if(DepotNr == -1){
 		return;
 	}
@@ -791,20 +791,20 @@ void SendMail(Object Obj){
 	if(PlayerOnline && Player->Depot != NONE && Player->DepotNr == DepotNr){
 		print(3, "Addressee is logged in and has depot open.\n");
 		try{
-			Move(0, Obj, Player->Depot, -1, true, NONE);
-			if(ObjType == GetSpecialObject(LETTER_NEW)){
-				Change(Obj, GetSpecialObject(LETTER_STAMPED), 0);
+			move(0, Obj, Player->Depot, -1, true, NONE);
+			if(ObjType == get_special_object(LETTER_NEW)){
+				change(Obj, get_special_object(LETTER_STAMPED), 0);
 			}else{
-				Change(Obj, GetSpecialObject(PARCEL_STAMPED), 0);
+				change(Obj, get_special_object(PARCEL_STAMPED), 0);
 			}
-			Log("game", "Mail to %s in %s sent.\n", Addressee, Town);
-			Player->DepotSpace -= CountObjects(Obj);
+			log_message("game", "Mail to %s in %s sent.\n", Addressee, Town);
+			Player->DepotSpace -= count_objects(Obj);
 			print(3, "Depot of %s now has %d free slots.\n", Player->Name, Player->DepotSpace);
 			SendMessage(Player->Connection, TALK_INFO_MESSAGE, "New mail has arrived.");
 			print(3, "Mail sent successfully.\n");
 		}catch(RESULT r){
 			if(r != CONTAINERFULL){
-				error("SendMail (depot open): Exception %d.\n", r);
+				error("send_mail (depot open): Exception %d.\n", r);
 			}
 
 			print(3, "Exception %d during mail delivery.\n", r);
@@ -813,20 +813,20 @@ void SendMail(Object Obj){
 		print(3, "Addressee is not logged in or has depot closed.\n");
 
 		// TODO(fusion): The scope of this try block was unclear but I suppose
-		// this is correct due to how `Change` is also inside the try block in
+		// this is correct due to how `change` is also inside the try block in
 		// the try block above, when the player is online.
 		try{
-			if(ObjType == GetSpecialObject(LETTER_NEW)){
-				Change(Obj, GetSpecialObject(LETTER_STAMPED), 0);
+			if(ObjType == get_special_object(LETTER_NEW)){
+				change(Obj, get_special_object(LETTER_STAMPED), 0);
 			}else{
-				Change(Obj, GetSpecialObject(PARCEL_STAMPED), 0);
+				change(Obj, get_special_object(PARCEL_STAMPED), 0);
 			}
 
 			TDynamicWriteBuffer WriteBuffer(1024);
-			SaveObjects(Obj, &WriteBuffer, true);
-			Delete(Obj, -1);
+			save_objects(Obj, &WriteBuffer, true);
+			delete_op(Obj, -1);
 
-			TDelayedMail *Mail = DelayedMail.at(DelayedMails);
+			DelayedMail *Mail = DelayedMailArray.at(DelayedMails);
 			Mail->CharacterID = CharacterID;
 			Mail->DepotNumber = DepotNr;
 			Mail->PacketSize = WriteBuffer.Position;
@@ -835,46 +835,46 @@ void SendMail(Object Obj){
 			memcpy(Mail->Packet, WriteBuffer.Data, WriteBuffer.Position);
 			DelayedMails += 1;
 
-			Log("game", "Mail to %s in %s deferred.\n", Addressee, Town);
+			log_message("game", "Mail to %s in %s deferred.\n", Addressee, Town);
 			print(3, "Mail deferred.\n");
 			if(PlayerOnline){
-				SendMails(Player->PlayerData);
+				send_mails(Player->PlayerData);
 			}else{
-				LoadCharacterOrder(CharacterID);
+				load_character_order(CharacterID);
 			}
 		}catch(RESULT r){
-			error("SendMail: Cannot delete parcel (%d).\n", r);
+			error("send_mail: Cannot delete parcel (%d).\n", r);
 		}catch(const char *str){
-			error("SendMail: Cannot write parcel (%s).\n", str);
+			error("send_mail: Cannot write parcel (%s).\n", str);
 		}
 	}
 }
 
-void SendMails(TPlayerData *PlayerData){
+void send_mails(TPlayerData *PlayerData){
 	if(PlayerData == NULL){
-		error("SendMails: PlayerData is NULL.\n");
+		error("send_mails: PlayerData is NULL.\n");
 		return;
 	}
 
 	if(PlayerData->CharacterID == 0){
-		error("SendMails: Slot is not occupied.\n");
+		error("send_mails: Slot is not occupied.\n");
 		return;
 	}
 
 	if(PlayerData->Locked != gettid()){
-		error("SendMails: Slot is not locked by game thread.\n");
+		error("send_mails: Slot is not locked by game thread.\n");
 		return;
 	}
 
 	for(int i = 0; i < DelayedMails; i += 1){
-		TDelayedMail *Mail = DelayedMail.at(i);
+		DelayedMail *Mail = DelayedMailArray.at(i);
 		if(Mail->CharacterID != PlayerData->CharacterID){
 			continue;
 		}
 
 		int DepotNr = Mail->DepotNumber;
 		if(DepotNr < 0 || DepotNr >= MAX_DEPOTS){
-			error("SendMails: Invalid depot number %d.\n", DepotNr);
+			error("send_mails: Invalid depot number %d.\n", DepotNr);
 			DepotNr = 0;
 		}
 
@@ -893,7 +893,7 @@ void SendMails(TPlayerData *PlayerData){
 			NewDepot = new uint8[NewDepotSize];
 			memcpy(&NewDepot[0], Mail->Packet, Mail->PacketSize);
 			TWriteBuffer WriteBuffer(&NewDepot[Mail->PacketSize], 5);
-			WriteBuffer.writeWord((uint16)GetSpecialObject(DEPOT_CHEST).TypeID);
+			WriteBuffer.writeWord((uint16)get_special_object(DEPOT_CHEST).TypeID);
 			WriteBuffer.writeByte(0xFF);
 			WriteBuffer.writeWord(0xFFFF);
 		}
@@ -902,7 +902,7 @@ void SendMails(TPlayerData *PlayerData){
 		PlayerData->DepotSize[DepotNr] = NewDepotSize;
 		PlayerData->Dirty = true;
 
-		Log("game", "Mail to %s delivered.\n", PlayerData->Name);
+		log_message("game", "Mail to %s delivered.\n", PlayerData->Name);
 
 		if(Mail->Packet != NULL){
 			delete[] Mail->Packet;
@@ -910,17 +910,17 @@ void SendMails(TPlayerData *PlayerData){
 
 		// NOTE(fusion): A little swap and pop action.
 		DelayedMails -= 1;
-		*DelayedMail.at(i) = *DelayedMail.at(DelayedMails);
-		*DelayedMail.at(DelayedMails) = TDelayedMail{};
+		*DelayedMailArray.at(i) = *DelayedMailArray.at(DelayedMails);
+		*DelayedMailArray.at(DelayedMails) = DelayedMail{};
 
 		// NOTE(fusion): Check current index again after removal.
 		i -= 1;
 	}
 }
 
-void TextEffect(const char *Text, int x, int y, int z, int Radius){
+void text_effect(const char *Text, int x, int y, int z, int Radius){
 	if(Text == NULL){
-		error("TextEffect: Text does not exist.\n");
+		error("text_effect: Text does not exist.\n");
 		return;
 	}
 
@@ -943,31 +943,31 @@ void TextEffect(const char *Text, int x, int y, int z, int Radius){
 	}
 }
 
-void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
+void execute_action(MoveUseEventType EventType, MoveUseAction *Action,
 		Object User, Object Obj1, Object Obj2, Object *Temp){
 	try{
 		switch(Action->Action){
 			case MOVEUSE_ACTION_CREATEONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				ObjectType Type = Action->Parameters[1];
 				int Value = Action->Parameters[2];
-				Object MapCon = GetMapContainer(CoordX, CoordY, CoordZ);
-				*Temp = CreateObject(MapCon, Type, Value);
+				Object MapCon = get_map_container(CoordX, CoordY, CoordZ);
+				*Temp = create_object(MapCon, Type, Value);
 				break;
 			}
 
 			case MOVEUSE_ACTION_CREATE:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				ObjectType Type = Action->Parameters[1];
 				int Value = Action->Parameters[2];
-				*Temp = CreateObject(Obj.getContainer(), Type, Value);
+				*Temp = create_object(Obj.get_container(), Type, Value);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MONSTERONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				int Race = Action->Parameters[1];
 				CreateMonster(Race, CoordX, CoordY, CoordZ, 0, 0, true);
 				break;
@@ -975,105 +975,105 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 
 			case MOVEUSE_ACTION_MONSTER:{
 				int ObjX, ObjY, ObjZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				int Race = Action->Parameters[1];
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 				CreateMonster(Race, ObjX, ObjY, ObjZ, 0, 0, true);
 				break;
 			}
 
 			case MOVEUSE_ACTION_EFFECTONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				int Effect = Action->Parameters[1];
-				GraphicalEffect(CoordX, CoordY, CoordZ, Effect);
+				graphical_effect(CoordX, CoordY, CoordZ, Effect);
 				break;
 			}
 
 			case MOVEUSE_ACTION_EFFECT:{
 				int ObjX, ObjY, ObjZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				int Effect = Action->Parameters[1];
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-				GraphicalEffect(ObjX, ObjY, ObjZ, Effect);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				graphical_effect(ObjX, ObjY, ObjZ, Effect);
 				break;
 			}
 
 			case MOVEUSE_ACTION_TEXTONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				const char *Text = GetDynamicString(Action->Parameters[1]);
 				int Radius = Action->Parameters[2];
-				TextEffect(Text, CoordX, CoordY, CoordZ, Radius);
+				text_effect(Text, CoordX, CoordY, CoordZ, Radius);
 				break;
 			}
 
 			case MOVEUSE_ACTION_TEXT:{
 				int ObjX, ObjY, ObjZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				const char *Text = GetDynamicString(Action->Parameters[1]);
 				int Radius = Action->Parameters[2];
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-				TextEffect(Text, ObjX, ObjY, ObjZ, Radius);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				text_effect(Text, ObjX, ObjY, ObjZ, Radius);
 				break;
 			}
 
 			case MOVEUSE_ACTION_CHANGEONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				ObjectType OldType = Action->Parameters[1];
 				ObjectType NewType = Action->Parameters[2];
 				int NewValue = Action->Parameters[3];
-				*Temp = GetFirstSpecObject(CoordX, CoordY, CoordZ, OldType);
+				*Temp = get_first_spec_object(CoordX, CoordY, CoordZ, OldType);
 				if(*Temp != NONE){
-					ChangeObject(*Temp, NewType, NewValue);
+					change_object(*Temp, NewType, NewValue);
 				}else{
-					error("ExecuteAction (CHANGEONMAP): No object %d at [%d,%d,%d].\n",
+					error("execute_action (CHANGEONMAP): No object %d at [%d,%d,%d].\n",
 							OldType.TypeID, CoordX, CoordY, CoordZ);
 				}
 				break;
 			}
 
 			case MOVEUSE_ACTION_CHANGE:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				ObjectType NewType = Action->Parameters[1];
 				int NewValue = Action->Parameters[2];
-				ChangeObject(Obj, NewType, NewValue);
+				change_object(Obj, NewType, NewValue);
 				break;
 			}
 
 			case MOVEUSE_ACTION_CHANGEREL:{
 				int ObjX, ObjY, ObjZ, RelX, RelY, RelZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackRelativeCoordinate(Action->Parameters[1], &RelX, &RelY, &RelZ);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_relative_coordinate(Action->Parameters[1], &RelX, &RelY, &RelZ);
 				ObjectType OldType = Action->Parameters[2];
 				ObjectType NewType = Action->Parameters[3];
 				int NewValue = Action->Parameters[4];
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-				*Temp = GetFirstSpecObject((ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ), OldType);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				*Temp = get_first_spec_object((ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ), OldType);
 				if(*Temp != NONE){
-					ChangeObject(*Temp, NewType, NewValue);
+					change_object(*Temp, NewType, NewValue);
 				}else{
-					error("ExecuteAction (CHANGEREL): No object %d at [%d,%d,%d].\n",
+					error("execute_action (CHANGEREL): No object %d at [%d,%d,%d].\n",
 							OldType.TypeID, (ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ));
 				}
 				break;
 			}
 
 			case MOVEUSE_ACTION_SETATTRIBUTE:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				INSTANCEATTRIBUTE Attribute = (INSTANCEATTRIBUTE)Action->Parameters[1];
 				int Value = Action->Parameters[2];
-				Change(Obj, Attribute, Value);
+				change(Obj, Attribute, Value);
 				break;
 			}
 
 			case MOVEUSE_ACTION_CHANGEATTRIBUTE:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				INSTANCEATTRIBUTE Attribute = (INSTANCEATTRIBUTE)Action->Parameters[1];
 				int Amount = Action->Parameters[2];
 				// TODO(fusion): This is weird.
-				int OldValue = (int)Obj.getAttribute(Attribute);
+				int OldValue = (int)Obj.get_attribute(Attribute);
 				int NewValue = OldValue + Amount;
 				if(NewValue <= 0){
 					if(OldValue == 0){
@@ -1082,69 +1082,69 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 						NewValue = 1;
 					}
 				}
-				Change(Obj, Attribute, NewValue);
+				change(Obj, Attribute, NewValue);
 				break;
 			}
 
 			case MOVEUSE_ACTION_SETQUESTVALUE:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				int QuestNr = Action->Parameters[1];
 				int QuestValue = Action->Parameters[2];
-				ObjectType ObjType = Obj.getObjectType();
-				if(ObjType.isCreatureContainer()){
+				ObjectType ObjType = Obj.get_object_type();
+				if(ObjType.is_creature_container()){
 					TCreature *Creature = GetCreature(Obj);
 					if(Creature != NULL && Creature->Type == PLAYER){
 						((TPlayer*)Creature)->SetQuestValue(QuestNr, QuestValue);
 					}else{
-						error("ExecuteAction (SETQUESTVALUE): Creature does not exist or is not a player.\n");
+						error("execute_action (SETQUESTVALUE): Creature does not exist or is not a player.\n");
 					}
 				}else{
-					error("ExecuteAction (SETQUESTVALUE): Object is not a creature, but type %d.\n", ObjType.TypeID);
+					error("execute_action (SETQUESTVALUE): Object is not a creature, but type %d.\n", ObjType.TypeID);
 				}
 				break;
 			}
 
 			case MOVEUSE_ACTION_DAMAGE:{
-				Object AttackerObj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				Object VictimObj = GetEventObject(Action->Parameters[1], User, Obj1, Obj2, *Temp);
+				Object AttackerObj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object VictimObj = get_event_object(Action->Parameters[1], User, Obj1, Obj2, *Temp);
 				int DamageType = Action->Parameters[2];
 				int Damage = Action->Parameters[3];
 
 				TCreature *Attacker = NULL;
 				if(AttackerObj != NONE){
-					ObjectType AttackerType = AttackerObj.getObjectType();
-					if(AttackerType.isCreatureContainer()){
+					ObjectType AttackerType = AttackerObj.get_object_type();
+					if(AttackerType.is_creature_container()){
 						Attacker = GetCreature(AttackerObj);
-					}else if(AttackerType.getFlag(MAGICFIELD)
-							&& AttackerObj.getAttribute(RESPONSIBLE) != 0){
-						int TotalExpireTime = (int)AttackerType.getAttribute(TOTALEXPIRETIME);
-						int CurExpireTime = (int)CronInfo(AttackerObj, false);
+					}else if(AttackerType.get_flag(MAGICFIELD)
+							&& AttackerObj.get_attribute(RESPONSIBLE) != 0){
+						int TotalExpireTime = (int)AttackerType.get_attribute(TOTALEXPIRETIME);
+						int CurExpireTime = (int)cron_info(AttackerObj, false);
 						if((TotalExpireTime - CurExpireTime) < 5){
-							Attacker = GetCreature(AttackerObj.getAttribute(RESPONSIBLE));
+							Attacker = GetCreature(AttackerObj.get_attribute(RESPONSIBLE));
 						}
 					}
 				}
 
-				ObjectType VictimType = VictimObj.getObjectType();
-				if(VictimType.isCreatureContainer()){
+				ObjectType VictimType = VictimObj.get_object_type();
+				if(VictimType.is_creature_container()){
 					TCreature *Victim = GetCreature(VictimObj);
 					if(Victim != NULL){
 						Victim->Damage(Attacker, Damage, DamageType);
 					}else{
-						error("ExecuteAction (DAMAGE): Creature does not exist.\n");
+						error("execute_action (DAMAGE): Creature does not exist.\n");
 					}
 				}else{
-					error("ExecuteAction (DAMAGE): Object is not a creature, but type %d.\n", VictimType.TypeID);
+					error("execute_action (DAMAGE): Object is not a creature, but type %d.\n", VictimType.TypeID);
 				}
 				break;
 			}
 
 			case MOVEUSE_ACTION_SETSTART:{
 				int StartX, StartY, StartZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackAbsoluteCoordinate(Action->Parameters[1], &StartX, &StartY, &StartZ);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_absolute_coordinate(Action->Parameters[1], &StartX, &StartY, &StartZ);
 
-				if(!Obj.getObjectType().isCreatureContainer()){
+				if(!Obj.get_object_type().is_creature_container()){
 					throw ERROR;
 				}
 
@@ -1161,12 +1161,12 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 			}
 
 			case MOVEUSE_ACTION_WRITENAME:{
-				Object WriterObj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object WriterObj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				const char *Format = GetDynamicString(Action->Parameters[1]);
-				Object TargetObj = GetEventObject(Action->Parameters[2], User, Obj1, Obj2, *Temp);
+				Object TargetObj = get_event_object(Action->Parameters[2], User, Obj1, Obj2, *Temp);
 
-				if(WriterObj == NONE || !WriterObj.getObjectType().isCreatureContainer()
-				|| TargetObj == NONE || !TargetObj.getObjectType().getFlag(TEXT)){
+				if(WriterObj == NONE || !WriterObj.get_object_type().is_creature_container()
+				|| TargetObj == NONE || !TargetObj.get_object_type().get_flag(TEXT)){
 					throw ERROR;
 				}
 
@@ -1213,32 +1213,32 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 					}
 				}
 
-				DeleteDynamicString(TargetObj.getAttribute(TEXTSTRING));
-				DeleteDynamicString(TargetObj.getAttribute(EDITOR));
-				Change(TargetObj, TEXTSTRING, AddDynamicString(Text));
-				Change(TargetObj, EDITOR, 0);
+				DeleteDynamicString(TargetObj.get_attribute(TEXTSTRING));
+				DeleteDynamicString(TargetObj.get_attribute(EDITOR));
+				change(TargetObj, TEXTSTRING, AddDynamicString(Text));
+				change(TargetObj, EDITOR, 0);
 				break;
 			}
 
 			case MOVEUSE_ACTION_WRITETEXT:{
 				const char *Text = GetDynamicString(Action->Parameters[0]);
-				Object Obj = GetEventObject(Action->Parameters[1], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[1], User, Obj1, Obj2, *Temp);
 
-				if(Obj == NONE || !Obj.getObjectType().getFlag(TEXT)){
+				if(Obj == NONE || !Obj.get_object_type().get_flag(TEXT)){
 					throw ERROR;
 				}
 
-				DeleteDynamicString(Obj.getAttribute(TEXTSTRING));
-				DeleteDynamicString(Obj.getAttribute(EDITOR));
-				Change(Obj, TEXTSTRING, AddDynamicString(Text));
-				Change(Obj, EDITOR, 0);
+				DeleteDynamicString(Obj.get_attribute(TEXTSTRING));
+				DeleteDynamicString(Obj.get_attribute(EDITOR));
+				change(Obj, TEXTSTRING, AddDynamicString(Text));
+				change(Obj, EDITOR, 0);
 				break;
 			}
 
 			case MOVEUSE_ACTION_LOGOUT:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 
-				if(Obj == NONE || !Obj.getObjectType().isCreatureContainer()){
+				if(Obj == NONE || !Obj.get_object_type().is_creature_container()){
 					throw ERROR;
 				}
 
@@ -1253,50 +1253,50 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 
 			case MOVEUSE_ACTION_MOVEALLONMAP:{
 				int OrigX, OrigY, OrigZ, DestX, DestY, DestZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &OrigX, &OrigY, &OrigZ);
-				UnpackAbsoluteCoordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
-				Object First = GetFirstObject(OrigX, OrigY, OrigZ);
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
-				MoveAllObjects(First, Dest, NONE, false);
+				unpack_absolute_coordinate(Action->Parameters[0], &OrigX, &OrigY, &OrigZ);
+				unpack_absolute_coordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
+				Object First = get_first_object(OrigX, OrigY, OrigZ);
+				Object Dest = get_map_container(DestX, DestY, DestZ);
+				move_all_objects(First, Dest, NONE, false);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MOVEALL:{
 				int DestX, DestY, DestZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackAbsoluteCoordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
-				Object First = GetFirstContainerObject(Obj.getContainer());
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_absolute_coordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
+				Object First = get_first_container_object(Obj.get_container());
+				Object Dest = get_map_container(DestX, DestY, DestZ);
 				// TODO(fusion): Why do we set the `Exclude` parameter to `First`?
 				// Maybe we just don't want to check if it is `NONE` can call
-				// `getNextObject()` like MOVETOPONMAP?
-				MoveAllObjects(First, Dest, First, false);
+				// `get_next_object()` like MOVETOPONMAP?
+				move_all_objects(First, Dest, First, false);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MOVEALLREL:{
 				int ObjX, ObjY, ObjZ, RelX, RelY, RelZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackRelativeCoordinate(Action->Parameters[1], &RelX, &RelY, &RelZ);
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-				Object First = GetFirstContainerObject(Obj.getContainer());
-				Object Dest = GetMapContainer((ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ));
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_relative_coordinate(Action->Parameters[1], &RelX, &RelY, &RelZ);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				Object First = get_first_container_object(Obj.get_container());
+				Object Dest = get_map_container((ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ));
 				// TODO(fusion): Same as above?
-				MoveAllObjects(First, Dest, First, false);
+				move_all_objects(First, Dest, First, false);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MOVETOPONMAP:{
 				int OrigX, OrigY, OrigZ, DestX, DestY, DestZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &OrigX, &OrigY, &OrigZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &OrigX, &OrigY, &OrigZ);
 				ObjectType Type = Action->Parameters[1];
-				UnpackAbsoluteCoordinate(Action->Parameters[2], &DestX, &DestY, &DestZ);
-				Object Obj = GetFirstSpecObject(OrigX, OrigY, OrigZ, Type);
+				unpack_absolute_coordinate(Action->Parameters[2], &DestX, &DestY, &DestZ);
+				Object Obj = get_first_spec_object(OrigX, OrigY, OrigZ, Type);
 				if(Obj != NONE){
-					Object Dest = GetMapContainer(DestX, DestY, DestZ);
-					MoveAllObjects(Obj.getNextObject(), Dest, NONE, true);
+					Object Dest = get_map_container(DestX, DestY, DestZ);
+					move_all_objects(Obj.get_next_object(), Dest, NONE, true);
 				}else{
-					error("ExecuteAction (MOVETOPONMAP): No object %d at [%d,%d,%d].\n",
+					error("execute_action (MOVETOPONMAP): No object %d at [%d,%d,%d].\n",
 							Type.TypeID, OrigX, OrigY, OrigZ);
 				}
 				break;
@@ -1304,113 +1304,113 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 
 			case MOVEUSE_ACTION_MOVETOP:{
 				int DestX, DestY, DestZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackAbsoluteCoordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
-				MoveAllObjects(Obj.getNextObject(), Dest, NONE, true);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_absolute_coordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
+				Object Dest = get_map_container(DestX, DestY, DestZ);
+				move_all_objects(Obj.get_next_object(), Dest, NONE, true);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MOVETOPREL:{
 				int ObjX, ObjY, ObjZ, RelX, RelY, RelZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackRelativeCoordinate(Action->Parameters[1], &RelX, &RelY, &RelZ);
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-				Object Dest = GetMapContainer((ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ));
-				MoveAllObjects(Obj.getNextObject(), Dest, NONE, true);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_relative_coordinate(Action->Parameters[1], &RelX, &RelY, &RelZ);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				Object Dest = get_map_container((ObjX + RelX), (ObjY + RelY), (ObjZ + RelZ));
+				move_all_objects(Obj.get_next_object(), Dest, NONE, true);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MOVE:{
 				int DestX, DestY, DestZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackAbsoluteCoordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
-				MoveOneObject(Obj, Dest);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_absolute_coordinate(Action->Parameters[1], &DestX, &DestY, &DestZ);
+				Object Dest = get_map_container(DestX, DestY, DestZ);
+				move_one_object(Obj, Dest);
 				break;
 			}
 
 			case MOVEUSE_ACTION_MOVEREL:{
 				int RefX, RefY, RefZ, RelX, RelY, RelZ;
-				Object MovObj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				Object RefObj = GetEventObject(Action->Parameters[1], User, Obj1, Obj2, *Temp);
-				UnpackRelativeCoordinate(Action->Parameters[2], &RelX, &RelY, &RelZ);
-				GetObjectCoordinates(RefObj, &RefX, &RefY, &RefZ);
-				Object Dest = GetMapContainer((RefX + RelX), (RefY + RelY), (RefZ + RelZ));
-				MoveOneObject(MovObj, Dest);
+				Object MovObj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object RefObj = get_event_object(Action->Parameters[1], User, Obj1, Obj2, *Temp);
+				unpack_relative_coordinate(Action->Parameters[2], &RelX, &RelY, &RelZ);
+				get_object_coordinates(RefObj, &RefX, &RefY, &RefZ);
+				Object Dest = get_map_container((RefX + RelX), (RefY + RelY), (RefZ + RelZ));
+				move_one_object(MovObj, Dest);
 				break;
 			}
 
 			case MOVEUSE_ACTION_RETRIEVE:{
 				int ObjX, ObjY, ObjZ, OrigRelX, OrigRelY, OrigRelZ, DestRelX, DestRelY, DestRelZ;
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				UnpackRelativeCoordinate(Action->Parameters[1], &OrigRelX, &OrigRelY, &OrigRelZ);
-				UnpackRelativeCoordinate(Action->Parameters[2], &DestRelX, &DestRelY, &DestRelZ);
-				GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-				Object Top = GetTopObject((ObjX + OrigRelX), (ObjY + OrigRelY), (ObjZ + OrigRelZ), false);
-				if(Top != NONE && !Top.getObjectType().getFlag(UNMOVE)){
-					Object Dest = GetMapContainer((ObjX + DestRelX), (ObjY + DestRelY), (ObjZ + DestRelZ));
-					MoveOneObject(Top, Dest);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				unpack_relative_coordinate(Action->Parameters[1], &OrigRelX, &OrigRelY, &OrigRelZ);
+				unpack_relative_coordinate(Action->Parameters[2], &DestRelX, &DestRelY, &DestRelZ);
+				get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+				Object Top = get_top_object((ObjX + OrigRelX), (ObjY + OrigRelY), (ObjZ + OrigRelZ), false);
+				if(Top != NONE && !Top.get_object_type().get_flag(UNMOVE)){
+					Object Dest = get_map_container((ObjX + DestRelX), (ObjY + DestRelY), (ObjZ + DestRelZ));
+					move_one_object(Top, Dest);
 				}
 				break;
 			}
 
 			case MOVEUSE_ACTION_DELETEALLONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
-				Object First = GetFirstObject(CoordX, CoordY, CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				Object First = get_first_object(CoordX, CoordY, CoordZ);
 				// TODO(fusion): Same as `MOVEALL`.
-				DeleteAllObjects(First, First, false);
+				delete_all_objects(First, First, false);
 				break;
 			}
 
 			case MOVEUSE_ACTION_DELETETOPONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				ObjectType Type = Action->Parameters[1];
-				Object First = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+				Object First = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 				// TODO(fusion): Sometimes we throw, sometimes we print an error,
 				// sometimes we ignore it, what a mess.
 				if(First == NONE){
 					throw ERROR;
 				}
-				DeleteAllObjects(First, First, true);
+				delete_all_objects(First, First, true);
 				break;
 			}
 
 			case MOVEUSE_ACTION_DELETEONMAP:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				ObjectType Type = Action->Parameters[1];
-				Object Obj = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+				Object Obj = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 				if(Obj != NONE){
 					bool IsUseEvent = (EventType == MOVEUSE_EVENT_USE
 							|| EventType == MOVEUSE_EVENT_MULTIUSE);
-					Delete(Obj, (IsUseEvent ? 1 : -1));
+					delete_op(Obj, (IsUseEvent ? 1 : -1));
 				}else{
-					error("ExecuteAction (DELETEONMAP): No object %d at [%d,%d,%d].\n",
+					error("execute_action (DELETEONMAP): No object %d at [%d,%d,%d].\n",
 							Type.TypeID, CoordX, CoordY, CoordZ);
 				}
 				break;
 			}
 
 			case MOVEUSE_ACTION_DELETE:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				if(Obj == NONE){
 					throw ERROR;
 				}
 				bool IsUseEvent = (EventType == MOVEUSE_EVENT_USE
 						|| EventType == MOVEUSE_EVENT_MULTIUSE);
-				Delete(Obj, (IsUseEvent ? 1 : -1));
+				delete_op(Obj, (IsUseEvent ? 1 : -1));
 				break;
 			}
 
 			case MOVEUSE_ACTION_DELETEININVENTORY:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
 				ObjectType Type = Action->Parameters[1];
 				int Value = Action->Parameters[2];
-				if(Obj.getObjectType().isCreatureContainer()){
-					DeleteAtCreature(Obj.getCreatureID(), Type, 1, Value);
+				if(Obj.get_object_type().is_creature_container()){
+					delete_at_creature(Obj.get_creature_id(), Type, 1, Value);
 				}else{
 					throw ERROR;
 				}
@@ -1418,13 +1418,13 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 			}
 
 			case MOVEUSE_ACTION_DESCRIPTION:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				Object Cr = GetEventObject(Action->Parameters[1], User, Obj1, Obj2, *Temp);
-				if(Cr.getObjectType().isCreatureContainer()){
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				Object Cr = get_event_object(Action->Parameters[1], User, Obj1, Obj2, *Temp);
+				if(Cr.get_object_type().is_creature_container()){
 					TCreature *Creature = GetCreature(Cr);
 					if(Creature != NULL && Creature->Type == PLAYER){
 						SendMessage(Creature->Connection, TALK_INFO_MESSAGE,
-								"%s.", GetInfo(Obj));
+								"%s.", get_info(Obj));
 					}
 				}
 				break;
@@ -1432,47 +1432,47 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 
 			case MOVEUSE_ACTION_LOADDEPOT:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				ObjectType Type = Action->Parameters[1];
-				Object Cr = GetEventObject(Action->Parameters[2], User, Obj1, Obj2, *Temp);
+				Object Cr = get_event_object(Action->Parameters[2], User, Obj1, Obj2, *Temp);
 				int DepotNr = Action->Parameters[3];
 
-				if(!Cr.getObjectType().isCreatureContainer()){
+				if(!Cr.get_object_type().is_creature_container()){
 					throw ERROR;
 				}
 
-				Object Depot = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+				Object Depot = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 				if(Depot == NONE){
 					throw ERROR;
 				}
 
-				LoadDepotBox(Cr.getCreatureID(), DepotNr, Depot);
+				load_depot_box(Cr.get_creature_id(), DepotNr, Depot);
 				break;
 			}
 
 			case MOVEUSE_ACTION_SAVEDEPOT:{
 				int CoordX, CoordY, CoordZ;
-				UnpackAbsoluteCoordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
+				unpack_absolute_coordinate(Action->Parameters[0], &CoordX, &CoordY, &CoordZ);
 				ObjectType Type = Action->Parameters[1];
-				Object Cr = GetEventObject(Action->Parameters[2], User, Obj1, Obj2, *Temp);
+				Object Cr = get_event_object(Action->Parameters[2], User, Obj1, Obj2, *Temp);
 				int DepotNr = Action->Parameters[3];
 
-				if(!Cr.getObjectType().isCreatureContainer()){
+				if(!Cr.get_object_type().is_creature_container()){
 					throw ERROR;
 				}
 
-				Object Depot = GetFirstSpecObject(CoordX, CoordY, CoordZ, Type);
+				Object Depot = get_first_spec_object(CoordX, CoordY, CoordZ, Type);
 				if(Depot == NONE){
 					throw ERROR;
 				}
 
-				SaveDepotBox(Cr.getCreatureID(), DepotNr, Depot);
+				save_depot_box(Cr.get_creature_id(), DepotNr, Depot);
 				break;
 			}
 
 			case MOVEUSE_ACTION_SENDMAIL:{
-				Object Obj = GetEventObject(Action->Parameters[0], User, Obj1, Obj2, *Temp);
-				SendMail(Obj);
+				Object Obj = get_event_object(Action->Parameters[0], User, Obj1, Obj2, *Temp);
+				send_mail(Obj);
 				break;
 			}
 
@@ -1482,35 +1482,35 @@ void ExecuteAction(MoveUseEventType EventType, TMoveUseAction *Action,
 			}
 
 			default:{
-				error("ExecuteAction: Unknown action %d.\n", Action->Action);
+				error("execute_action: Unknown action %d.\n", Action->Action);
 				break;
 			}
 		}
 	}catch(RESULT r){
-		error("ExecuteAction: Exception %d (action %d).\n", r, Action->Action);
+		error("execute_action: Exception %d (action %d).\n", r, Action->Action);
 	}
 }
 
-bool HandleEvent(MoveUseEventType EventType, Object User, Object Obj1, Object Obj2){
+bool handle_event(MoveUseEventType EventType, Object User, Object Obj1, Object Obj2){
 	static int RecursionDepth = 0;
 
 	if(RecursionDepth > 10){
-		error("HandleEvent: Infinite loop suspected in move/use system.\n");
+		error("handle_event: Infinite loop suspected in move/use system.\n");
 		return false;
 	}
 
 	bool Result = false;
 	RecursionDepth += 1;
-	TMoveUseDatabase *DB = &MoveUseDatabases[EventType];
+	MoveUseDatabase *DB = &MoveUseDatabases[EventType];
 	for(int RuleNr = 1; RuleNr <= DB->NumberOfRules; RuleNr += 1){
 		bool Execute = true;
 		Object Temp = NONE;
-		TMoveUseRule *Rule = DB->Rules.at(RuleNr);
+		MoveUseRule *Rule = DB->Rules.at(RuleNr);
 		for(int ConditionNr = Rule->FirstCondition;
 				ConditionNr <= Rule->LastCondition;
 				ConditionNr += 1){
-			TMoveUseCondition *Condition = MoveUseConditions.at(ConditionNr);
-			if(!CheckCondition(EventType, Condition, User, Obj1, Obj2, &Temp)){
+			MoveUseCondition *Condition = MoveUseConditions.at(ConditionNr);
+			if(!check_condition(EventType, Condition, User, Obj1, Obj2, &Temp)){
 				Execute = false;
 				break;
 			}
@@ -1520,8 +1520,8 @@ bool HandleEvent(MoveUseEventType EventType, Object User, Object Obj1, Object Ob
 			for(int ActionNr = Rule->FirstAction;
 					ActionNr <= Rule->LastAction;
 					ActionNr += 1){
-				TMoveUseAction *Action = MoveUseActions.at(ActionNr);
-				ExecuteAction(EventType, Action, User, Obj1, Obj2, &Temp);
+				MoveUseAction *Action = MoveUseActions.at(ActionNr);
+				execute_action(EventType, Action, User, Obj1, Obj2, &Temp);
 			}
 			Result = true;
 			break;
@@ -1533,30 +1533,30 @@ bool HandleEvent(MoveUseEventType EventType, Object User, Object Obj1, Object Ob
 
 // Event Dispatching
 // =============================================================================
-void UseContainer(uint32 CreatureID, Object Con, int NextContainerNr){
+void use_container(uint32 CreatureID, Object Con, int NextContainerNr){
 	if(!Con.exists()){
-		error("UseContainer: Provided object does not exist.\n");
+		error("use_container: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER)){
-		error("UseContainer: Provided object is not a container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER)){
+		error("use_container: Provided object is not a container.\n");
 		throw ERROR;
 	}
 
 	if(NextContainerNr < 0 || NextContainerNr >= NARRAY(TPlayer::OpenContainer)){
-		error("UseContainer: Invalid window number %d.\n", NextContainerNr);
+		error("use_container: Invalid window number %d.\n", NextContainerNr);
 		throw ERROR;
 	}
 
-	if(ConType.isCreatureContainer()){
+	if(ConType.is_creature_container()){
 		throw NOTUSABLE;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseContainer: Player %d does not exist.\n", CreatureID);
+		error("use_container: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
@@ -1578,92 +1578,92 @@ void UseContainer(uint32 CreatureID, Object Con, int NextContainerNr){
 	}
 }
 
-void UseChest(uint32 CreatureID, Object Chest){
+void use_chest(uint32 CreatureID, Object Chest){
 	if(!Chest.exists()){
-		error("UseChest: Provided object does not exist.\n");
+		error("use_chest: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ChestType = Chest.getObjectType();
-	if(!ChestType.getFlag(CHEST)){
-		error("UseChest: Provided object is not a treasure chest.\n");
+	ObjectType ChestType = Chest.get_object_type();
+	if(!ChestType.get_flag(CHEST)){
+		error("use_chest: Provided object is not a treasure chest.\n");
 		throw ERROR;
 	}
 
 	int ChestX, ChestY, ChestZ;
-	GetObjectCoordinates(Chest, &ChestX, &ChestY, &ChestZ);
+	get_object_coordinates(Chest, &ChestX, &ChestY, &ChestZ);
 
-	int QuestNr = (int)Chest.getAttribute(CHESTQUESTNUMBER);
+	int QuestNr = (int)Chest.get_attribute(CHESTQUESTNUMBER);
 	if(QuestNr < 0 || QuestNr >= NARRAY(TPlayer::QuestValues)){
-		error("UseChest: Invalid number %d on treasure chest at position [%d,%d,%d].\n",
+		error("use_chest: Invalid number %d on treasure chest at position [%d,%d,%d].\n",
 				QuestNr, ChestX, ChestY, ChestZ);
 		throw ERROR;
 	}
 
-	if(CountObjectsInContainer(Chest) != 1){
-		error("UseChest: Treasure chest at position [%d,%d,%d] does not contain exactly one object.\n",
+	if(count_objects_in_container(Chest) != 1){
+		error("use_chest: Treasure chest at position [%d,%d,%d] does not contain exactly one object.\n",
 				ChestX, ChestY, ChestZ);
 		throw ERROR;
 	}
 
-	Object Treasure = GetFirstContainerObject(Chest);
-	ObjectType TreasureType = Treasure.getObjectType();
-	if(TreasureType.getFlag(UNMOVE) || !TreasureType.getFlag(TAKE)){
-		error("UseChest: Treasure at position [%d,%d,%d] is not takeable.\n",
+	Object Treasure = get_first_container_object(Chest);
+	ObjectType TreasureType = Treasure.get_object_type();
+	if(TreasureType.get_flag(UNMOVE) || !TreasureType.get_flag(TAKE)){
+		error("use_chest: Treasure at position [%d,%d,%d] is not takeable.\n",
 				ChestX, ChestY, ChestZ);
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseChest: Player %u does not exist.\n", CreatureID);
+		error("use_chest: Player %u does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
 	if(Player->GetQuestValue(QuestNr) != 0){
 		print(3, "Treasure chest is already known.\n");
 		SendMessage(Player->Connection, TALK_INFO_MESSAGE,
-				"The %s is empty.", ChestType.getName(-1));
+				"The %s is empty.", ChestType.get_name(-1));
 		return;
 	}
 
-	if(!CheckRight(CreatureID, UNLIMITED_CAPACITY)){
-		int TreasureWeight = GetCompleteWeight(Treasure);
-		int InventoryWeight = GetInventoryWeight(CreatureID);
+	if(!check_right(CreatureID, UNLIMITED_CAPACITY)){
+		int TreasureWeight = get_complete_weight(Treasure);
+		int InventoryWeight = get_inventory_weight(CreatureID);
 		int MaxWeight = Player->Skills[SKILL_CARRY_STRENGTH]->Get() * 100;
 		if((InventoryWeight + TreasureWeight) > MaxWeight
-				|| CheckRight(CreatureID, ZERO_CAPACITY)){
-			bool Multiple = TreasureType.getFlag(CUMULATIVE)
-					&& Treasure.getAttribute(AMOUNT) > 1;
+				|| check_right(CreatureID, ZERO_CAPACITY)){
+			bool Multiple = TreasureType.get_flag(CUMULATIVE)
+					&& Treasure.get_attribute(AMOUNT) > 1;
 			SendMessage(Player->Connection, TALK_INFO_MESSAGE,
 					"You have found %s. Weighing %d.%02d oz %s too heavy.",
-					GetName(Treasure), (TreasureWeight / 100), (TreasureWeight % 100),
+					get_name(Treasure), (TreasureWeight / 100), (TreasureWeight % 100),
 					(Multiple ? "they are" : "it is"));
 			return;
 		}
 	}
 
-	// NOTE(fusion): Copy treasure object and attempt to move into the player's
+	// NOTE(fusion): copy treasure object and attempt to move into the player's
 	// inventory. The original version was somewhat confusing but this should
 	// achieve the same end result.
-	Treasure = Copy(Chest, Treasure);
-	bool CheckContainers = TreasureType.getFlag(MOVEMENTEVENT);
+	Treasure = copy(Chest, Treasure);
+	bool CheckContainers = TreasureType.get_flag(MOVEMENTEVENT);
 	bool TreasureMoved = false;
 	for(int i = 0; i < 2 && !TreasureMoved; i += 1){
 		for(int Position = INVENTORY_FIRST;
 				Position <= INVENTORY_LAST && !TreasureMoved;
 				Position += 1){
 			try{
-				Object BodyObj = GetBodyObject(CreatureID, Position);
+				Object BodyObj = get_body_object(CreatureID, Position);
 				if(CheckContainers){
-					if(BodyObj != NONE && BodyObj.getObjectType().getFlag(CONTAINER)){
-						Move(CreatureID, Treasure, BodyObj, -1, true, NONE);
+					if(BodyObj != NONE && BodyObj.get_object_type().get_flag(CONTAINER)){
+						move(CreatureID, Treasure, BodyObj, -1, true, NONE);
 						TreasureMoved = true;
 					}
 				}else{
 					if(BodyObj == NONE){
-						Object BodyCon = GetBodyContainer(CreatureID, Position);
-						Move(CreatureID, Treasure, BodyCon, -1, true, NONE);
+						Object BodyCon = get_body_container(CreatureID, Position);
+						move(CreatureID, Treasure, BodyCon, -1, true, NONE);
 						TreasureMoved = true;
 					}
 				}
@@ -1675,95 +1675,95 @@ void UseChest(uint32 CreatureID, Object Chest){
 	}
 
 	if(!TreasureMoved){
-		bool Multiple = TreasureType.getFlag(CUMULATIVE)
-				&& Treasure.getAttribute(AMOUNT) > 1;
+		bool Multiple = TreasureType.get_flag(CUMULATIVE)
+				&& Treasure.get_attribute(AMOUNT) > 1;
 		SendMessage(Player->Connection, TALK_INFO_MESSAGE,
 				"You have found %s, but you have no room to take %s.\n",
-				GetName(Treasure), (Multiple ? "them" : "it"));
-		Delete(Treasure, -1);
+				get_name(Treasure), (Multiple ? "them" : "it"));
+		delete_op(Treasure, -1);
 		return;
 	}
 
 	SendMessage(Player->Connection, TALK_INFO_MESSAGE,
-			"You have found %s.\n", GetName(Treasure));
+			"You have found %s.\n", get_name(Treasure));
 	Player->SetQuestValue(QuestNr, 1);
 }
 
-void UseLiquidContainer(uint32 CreatureID, Object Obj, Object Dest){
+void use_liquid_container(uint32 CreatureID, Object Obj, Object Dest){
 	if(!Obj.exists()){
-		error("UseLiquidContainer: Provided object Obj does not exist.\n");
+		error("use_liquid_container: Provided object Obj does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
+	ObjectType ObjType = Obj.get_object_type();
 	if(!Dest.exists()){
-		error("UseLiquidContainer: Provided object Dest does not exist (Obj %d).\n",
+		error("use_liquid_container: Provided object Dest does not exist (Obj %d).\n",
 				ObjType.TypeID);
 		throw ERROR;
 	}
 
-	if(!ObjType.getFlag(LIQUIDCONTAINER)){
-		error("UseLiquidContainer: Provided object is not a liquid container.\n");
+	if(!ObjType.get_flag(LIQUIDCONTAINER)){
+		error("use_liquid_container: Provided object is not a liquid container.\n");
 		throw ERROR;
 	}
 
-	ObjectType DestType = Dest.getObjectType();
-	int LiquidType = Obj.getAttribute(CONTAINERLIQUIDTYPE);
+	ObjectType DestType = Dest.get_object_type();
+	int LiquidType = Obj.get_attribute(CONTAINERLIQUIDTYPE);
 
 	// NOTE(fusion): Fill liquid container.
-	if(DestType.getFlag(LIQUIDSOURCE) && LiquidType == LIQUID_NONE){
-		int DestLiquidType = (int)DestType.getAttribute(SOURCELIQUIDTYPE);
-		Change(Obj, CONTAINERLIQUIDTYPE, DestLiquidType);
+	if(DestType.get_flag(LIQUIDSOURCE) && LiquidType == LIQUID_NONE){
+		int DestLiquidType = (int)DestType.get_attribute(SOURCELIQUIDTYPE);
+		change(Obj, CONTAINERLIQUIDTYPE, DestLiquidType);
 		return;
 	}
 
 	// NOTE(fusion): Transfer liquid to another container.
-	if(DestType.getFlag(LIQUIDCONTAINER) && LiquidType != LIQUID_NONE
-			&& Dest.getAttribute(CONTAINERLIQUIDTYPE) == LIQUID_NONE){
-		Change(Dest, CONTAINERLIQUIDTYPE, LiquidType);
-		Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+	if(DestType.get_flag(LIQUIDCONTAINER) && LiquidType != LIQUID_NONE
+			&& Dest.get_attribute(CONTAINERLIQUIDTYPE) == LIQUID_NONE){
+		change(Dest, CONTAINERLIQUIDTYPE, LiquidType);
+		change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
 		return;
 	}
 
 	// NOTE(fusion): This is similar to the target picking logic for runes except
 	// we want to prioritize the user drinking the liquid, instead of otherwise
 	// throwing it on the ground.
-	if(!DestType.isCreatureContainer()){
-		Object Help = GetFirstContainerObject(Dest.getContainer());
+	if(!DestType.is_creature_container()){
+		Object Help = get_first_container_object(Dest.get_container());
 		while(Help != NONE){
-			ObjectType HelpType = Help.getObjectType();
-			if(HelpType.isCreatureContainer() && Help.getCreatureID() == CreatureID){
+			ObjectType HelpType = Help.get_object_type();
+			if(HelpType.is_creature_container() && Help.get_creature_id() == CreatureID){
 				Dest = Help;
 				DestType = HelpType;
 				break;
 			}
-			Help = Help.getNextObject();
+			Help = Help.get_next_object();
 		}
 	}
 
 	// NOTE(fusion): Spill liquid.
-	if(!DestType.isCreatureContainer() || Dest.getCreatureID() != CreatureID){
+	if(!DestType.is_creature_container() || Dest.get_creature_id() != CreatureID){
 		if(LiquidType == LIQUID_NONE){
 			throw NOTUSABLE;
 		}
 
 		int DestX, DestY, DestZ;
-		GetObjectCoordinates(Dest, &DestX, &DestY, &DestZ);
-		if(!CoordinateFlag(DestX, DestY, DestZ, BANK)
-		|| CoordinateFlag(DestX, DestY, DestZ, UNLAY)){
+		get_object_coordinates(Dest, &DestX, &DestY, &DestZ);
+		if(!coordinate_flag(DestX, DestY, DestZ, BANK)
+		|| coordinate_flag(DestX, DestY, DestZ, UNLAY)){
 			throw NOROOM;
 		}
 
-		Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
-		CreatePool(GetMapContainer(DestX, DestY, DestZ),
-				GetSpecialObject(BLOOD_POOL), LiquidType);
+		change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+		create_pool(get_map_container(DestX, DestY, DestZ),
+				get_special_object(BLOOD_POOL), LiquidType);
 		return;
 	}
 
 	// NOTE(fusion): Drink liquid.
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseLiquidContainer: Player %d does not exist.\n", CreatureID);
+		error("use_liquid_container: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
@@ -1775,68 +1775,68 @@ void UseLiquidContainer(uint32 CreatureID, Object Obj, Object Dest){
 
 		case LIQUID_WINE:
 		case LIQUID_BEER:{
-			Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+			change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
 			int DrunkLevel = Player->Skills[SKILL_DRUNKEN]->TimerValue();
 			if(DrunkLevel < 5){
 				Player->SetTimer(SKILL_DRUNKEN, (DrunkLevel + 1), 120, 120, -1);
 			}
-			Talk(CreatureID, TALK_SAY, NULL, "Aah...", false);
+			talk(CreatureID, TALK_SAY, NULL, "Aah...", false);
 			break;
 		}
 
 		case LIQUID_SLIME:{
-			Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+			change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
 			Player->Damage(NULL, 200, DAMAGE_POISON_PERIODIC);
-			Talk(CreatureID, TALK_SAY, NULL, "Urgh!", false);
+			talk(CreatureID, TALK_SAY, NULL, "Urgh!", false);
 			break;
 		}
 
 		case LIQUID_URINE:{
-			Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
-			Talk(CreatureID, TALK_SAY, NULL, "Urgh!", false);
+			change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+			talk(CreatureID, TALK_SAY, NULL, "Urgh!", false);
 			break;
 		}
 
 		case LIQUID_MANA:
 		case LIQUID_LIFE:{
-			DrinkPotion(CreatureID, Obj);
-			Talk(CreatureID, TALK_SAY, NULL, "Aaaah...", false);
+			drink_potion(CreatureID, Obj);
+			talk(CreatureID, TALK_SAY, NULL, "Aaaah...", false);
 			break;
 		}
 
 		case LIQUID_LEMONADE:{
-			Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
-			Talk(CreatureID, TALK_SAY, NULL, "Mmmh.", false);
+			change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+			talk(CreatureID, TALK_SAY, NULL, "Mmmh.", false);
 			break;
 		}
 
 		default:{
-			Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
-			Talk(CreatureID, TALK_SAY, NULL, "Gulp.", false);
+			change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+			talk(CreatureID, TALK_SAY, NULL, "Gulp.", false);
 			break;
 		}
 	}
 }
 
-void UseFood(uint32 CreatureID, Object Obj){
+void use_food(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("UseFood: Provided object does not exist.\n");
+		error("use_food: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(FOOD)){
-		error("UseFood: Provided object is not a food item.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(FOOD)){
+		error("use_food: Provided object is not a food item.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseFood: Creature %u does not exist.\n", CreatureID);
+		error("use_food: Creature %u does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
-	int ObjFoodTime = (int)ObjType.getAttribute(NUTRITION) * 12;
+	int ObjFoodTime = (int)ObjType.get_attribute(NUTRITION) * 12;
 	int CurFoodTime = Player->Skills[SKILL_FED]->TimerValue();
 	int MaxFoodTime = Player->Skills[SKILL_FED]->Max;
 	if((CurFoodTime + ObjFoodTime) > MaxFoodTime){
@@ -1844,49 +1844,49 @@ void UseFood(uint32 CreatureID, Object Obj){
 	}
 
 	Player->SetTimer(SKILL_FED, (CurFoodTime + ObjFoodTime), 0, 0, -1);
-	Delete(Obj, 1);
+	delete_op(Obj, 1);
 }
 
-void UseTextObject(uint32 CreatureID, Object Obj){
+void use_text_object(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("UseTextObject: Provided object does not exist.\n");
+		error("use_text_object: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(TEXT)){
-		error("UseTextObject: Provided object is not a text item.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(TEXT)){
+		error("use_text_object: Provided object is not a text item.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseTextObject: Creature %u does not exist.\n", CreatureID);
+		error("use_text_object: Creature %u does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
 	SendEditText(Player->Connection, Obj);
 }
 
-void UseAnnouncer(uint32 CreatureID, Object Obj){
+void use_announcer(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("UseAnnouncer: Provided object does not exist.\n");
+		error("use_announcer: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(INFORMATION)){
-		error("UseAnnouncer: Provided object does not provide information.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(INFORMATION)){
+		error("use_announcer: Provided object does not provide information.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseAnnouncer: Creature %d does not exist.\n", CreatureID);
+		error("use_announcer: Creature %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
-	int Information = (int)ObjType.getAttribute(INFORMATIONTYPE);
+	int Information = (int)ObjType.get_attribute(INFORMATIONTYPE);
 	switch(Information){
 		case 1:{ // INFORMATION_DATETIME
 			int Year, Cycle, Day, Hour, Minute;
@@ -1927,7 +1927,7 @@ void UseAnnouncer(uint32 CreatureID, Object Obj){
 			}
 
 			if(Player->GetQuestValue(104) != 0){
-				strcat(Help, "\nSpiritual Shielding");
+				strcat(Help, "\nSpiritual shielding");
 				NumBlessings += 1;
 			}
 
@@ -1950,244 +1950,244 @@ void UseAnnouncer(uint32 CreatureID, Object Obj){
 		}
 
 		default:{
-			error("UseAnnouncer: Invalid information type %d.\n", Information);
+			error("use_announcer: Invalid information type %d.\n", Information);
 			break;
 		}
 	}
 }
 
-void UseKeyDoor(uint32 CreatureID, Object Key, Object Door){
+void use_key_door(uint32 CreatureID, Object Key, Object Door){
 	if(!Key.exists()){
-		error("UseKeyDoor: Provided object Key does not exist.\n");
+		error("use_key_door: Provided object Key does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Door.exists()){
-		error("UseKeyDoor: Provided object Door does not exist.\n");
+		error("use_key_door: Provided object Door does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType KeyType = Key.getObjectType();
-	if(!KeyType.getFlag(KEY)){
-		error("UseKeyDoor: Provided object is not a key.\n");
+	ObjectType KeyType = Key.get_object_type();
+	if(!KeyType.get_flag(KEY)){
+		error("use_key_door: Provided object is not a key.\n");
 		throw ERROR;
 	}
 
-	ObjectType DoorType = Door.getObjectType();
-	if(!DoorType.getFlag(KEYDOOR)){
+	ObjectType DoorType = Door.get_object_type();
+	if(!DoorType.get_flag(KEYDOOR)){
 		throw NOTUSABLE;
 	}
 
-	int KeyNumber = (int)Key.getAttribute(KEYNUMBER);
-	int KeyHoleNumber = (int)Door.getAttribute(KEYHOLENUMBER);
+	int KeyNumber = (int)Key.get_attribute(KEYNUMBER);
+	int KeyHoleNumber = (int)Door.get_attribute(KEYHOLENUMBER);
 	if(KeyNumber == 0 || KeyHoleNumber == 0 || KeyNumber != KeyHoleNumber){
 		throw NOKEYMATCH;
 	}
 
-	ObjectType KeyDoorTarget = (int)DoorType.getAttribute(KEYDOORTARGET);
-	if(KeyDoorTarget.isMapContainer()){
-		error("UseKeyDoor: Target door for door %d not specified.\n",
+	ObjectType KeyDoorTarget = (int)DoorType.get_attribute(KEYDOORTARGET);
+	if(KeyDoorTarget.is_map_container()){
+		error("use_key_door: Target door for door %d not specified.\n",
 				DoorType.TypeID);
 		throw ERROR;
 	}
 
-	if(KeyDoorTarget.getFlag(UNPASS)){
-		ClearField(Door, NONE);
+	if(KeyDoorTarget.get_flag(UNPASS)){
+		clear_field(Door, NONE);
 	}
 
-	Change(Door, KeyDoorTarget, 0);
+	change(Door, KeyDoorTarget, 0);
 }
 
-void UseNameDoor(uint32 CreatureID, Object Door){
+void use_name_door(uint32 CreatureID, Object Door){
 	if(!Door.exists()){
-		error("UseNameDoor: Provided object Door does not exist.\n");
+		error("use_name_door: Provided object Door does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType DoorType = Door.getObjectType();
-	if(!DoorType.getFlag(NAMEDOOR)){
-		error("UseNameDoor: Provided object Door is not a named door.\n");
+	ObjectType DoorType = Door.get_object_type();
+	if(!DoorType.get_flag(NAMEDOOR)){
+		error("use_name_door: Provided object Door is not a named door.\n");
 		throw ERROR;
 	}
 
-	if(!DoorType.getFlag(TEXT)){
-		error("UseNameDoor: Provided object Door has no text.\n");
+	if(!DoorType.get_flag(TEXT)){
+		error("use_name_door: Provided object Door has no text.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseNameDoor: Player does not exist.\n");
+		error("use_name_door: Player does not exist.\n");
 		throw ERROR;
 	}
 
 	int DoorX, DoorY, DoorZ;
-	GetObjectCoordinates(Door, &DoorX, &DoorY, &DoorZ);
+	get_object_coordinates(Door, &DoorX, &DoorY, &DoorZ);
 
-	uint16 HouseID = GetHouseID(DoorX, DoorY, DoorZ);
+	uint16 HouseID = get_house_id(DoorX, DoorY, DoorZ);
 	if(HouseID == 0){
-		error("UseNameDoor: Coordinate [%d,%d,%d] does not belong to any house.\n",
+		error("use_name_door: Coordinate [%d,%d,%d] does not belong to any house.\n",
 				DoorX, DoorY, DoorZ);
 		throw ERROR;
 	}
 
-	if(!IsOwner(HouseID, Player)
-			&& !CheckRight(CreatureID, OPEN_NAMEDOORS)
-			&& !MayOpenDoor(Door, Player)){
+	if(!is_owner(HouseID, Player)
+			&& !check_right(CreatureID, OPEN_NAMEDOORS)
+			&& !may_open_door(Door, Player)){
 		throw NOTACCESSIBLE;
 	}
 
-	ObjectType NameDoorTarget = (int)DoorType.getAttribute(NAMEDOORTARGET);
-	if(NameDoorTarget.isMapContainer()){
-		error("UseNameDoor: Target door for door %d not specified.\n",
+	ObjectType NameDoorTarget = (int)DoorType.get_attribute(NAMEDOORTARGET);
+	if(NameDoorTarget.is_map_container()){
+		error("use_name_door: Target door for door %d not specified.\n",
 				DoorType.TypeID);
 		throw ERROR;
 	}
 
-	if(NameDoorTarget.getFlag(UNPASS)){
-		ClearField(Door, NONE);
+	if(NameDoorTarget.get_flag(UNPASS)){
+		clear_field(Door, NONE);
 	}
 
-	Change(Door, NameDoorTarget, 0);
+	change(Door, NameDoorTarget, 0);
 }
 
-void UseLevelDoor(uint32 CreatureID, Object Door){
-	if(!Door.exists() || !Door.getObjectType().getFlag(LEVELDOOR)
-			|| !Door.getContainer().getObjectType().isMapContainer()){
-		error("UseLevelDoor: Provided object Door is not a level door.\n");
+void use_level_door(uint32 CreatureID, Object Door){
+	if(!Door.exists() || !Door.get_object_type().get_flag(LEVELDOOR)
+			|| !Door.get_container().get_object_type().is_map_container()){
+		error("use_level_door: Provided object Door is not a level door.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseLevelDoor: Player does not exist.\n");
+		error("use_level_door: Player does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType DoorType = Door.getObjectType();
-	if(!DoorType.getFlag(UNPASS)){
+	ObjectType DoorType = Door.get_object_type();
+	if(!DoorType.get_flag(UNPASS)){
 		throw NOTUSABLE;
 	}
 
-	int DoorLevel = (int)Door.getAttribute(DOORLEVEL);
+	int DoorLevel = (int)Door.get_attribute(DOORLEVEL);
 	int PlayerLevel = Player->Skills[SKILL_LEVEL]->Get();
 	if(PlayerLevel < DoorLevel){
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s.", GetInfo(Door));
+		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Door));
 		return;
 	}
 
-	ObjectType LevelDoorTarget = (int)DoorType.getAttribute(LEVELDOORTARGET);
-	if(LevelDoorTarget.isMapContainer() || LevelDoorTarget.getFlag(UNPASS)){
-		error("UseLevelDoor: Target door for door %d not specified or not passable.\n",
+	ObjectType LevelDoorTarget = (int)DoorType.get_attribute(LEVELDOORTARGET);
+	if(LevelDoorTarget.is_map_container() || LevelDoorTarget.get_flag(UNPASS)){
+		error("use_level_door: Target door for door %d not specified or not passable.\n",
 				DoorType.TypeID);
 		throw ERROR;
 	}
 
-	Change(Door, LevelDoorTarget, 0);
-	Move(0, Player->CrObject, Door.getContainer(), -1, false, NONE);
+	change(Door, LevelDoorTarget, 0);
+	move(0, Player->CrObject, Door.get_container(), -1, false, NONE);
 }
 
-void UseQuestDoor(uint32 CreatureID, Object Door){
-	if(!Door.exists() || !Door.getObjectType().getFlag(QUESTDOOR)
-			|| !Door.getContainer().getObjectType().isMapContainer()){
-		error("UseQuestDoor: Provided object Door is not a quest door.\n");
+void use_quest_door(uint32 CreatureID, Object Door){
+	if(!Door.exists() || !Door.get_object_type().get_flag(QUESTDOOR)
+			|| !Door.get_container().get_object_type().is_map_container()){
+		error("use_quest_door: Provided object Door is not a quest door.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseQuestDoor: Player does not exist.\n");
+		error("use_quest_door: Player does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType DoorType = Door.getObjectType();
-	if(!DoorType.getFlag(UNPASS)){
+	ObjectType DoorType = Door.get_object_type();
+	if(!DoorType.get_flag(UNPASS)){
 		throw NOTUSABLE;
 	}
 
-	int QuestNr = Door.getAttribute(DOORQUESTNUMBER);
-	int QuestValue = Door.getAttribute(DOORQUESTVALUE);
+	int QuestNr = Door.get_attribute(DOORQUESTNUMBER);
+	int QuestValue = Door.get_attribute(DOORQUESTVALUE);
 	if(Player->GetQuestValue(QuestNr) != QuestValue){
-		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s.", GetInfo(Door));
+		SendMessage(Player->Connection, TALK_INFO_MESSAGE, "%s.", get_info(Door));
 		return;
 	}
 
-	ObjectType QuestDoorTarget = (int)DoorType.getAttribute(QUESTDOORTARGET);
-	if(QuestDoorTarget.isMapContainer() || QuestDoorTarget.getFlag(UNPASS)){
-		error("UseQuestDoor: Target door for door %d not specified or not passable.\n",
+	ObjectType QuestDoorTarget = (int)DoorType.get_attribute(QUESTDOORTARGET);
+	if(QuestDoorTarget.is_map_container() || QuestDoorTarget.get_flag(UNPASS)){
+		error("use_quest_door: Target door for door %d not specified or not passable.\n",
 				DoorType.TypeID);
 		throw ERROR;
 	}
 
-	Change(Door, QuestDoorTarget, 0);
-	Move(0, Player->CrObject, Door.getContainer(), -1, false, NONE);
+	change(Door, QuestDoorTarget, 0);
+	move(0, Player->CrObject, Door.get_container(), -1, false, NONE);
 }
 
-void UseWeapon(uint32 CreatureID, Object Weapon, Object Target){
-	if(!Weapon.exists() || !Weapon.getObjectType().isCloseWeapon()){
-		error("UseWeapon: Provided weapon does not exist or is not a weapon.\n");
+void use_weapon(uint32 CreatureID, Object Weapon, Object Target){
+	if(!Weapon.exists() || !Weapon.get_object_type().is_close_weapon()){
+		error("use_weapon: Provided weapon does not exist or is not a weapon.\n");
 		throw ERROR;
 	}
 
-	if(!Target.exists() || !Target.getObjectType().getFlag(DESTROY)){
-		error("UseWeapon: Provided target does not exist or is not destroyable.\n");
+	if(!Target.exists() || !Target.get_object_type().get_flag(DESTROY)){
+		error("use_weapon: Provided target does not exist or is not destroyable.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseWeapon: Player %d does not exist.\n", CreatureID);
+		error("use_weapon: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
-	if(!Target.getContainer().getObjectType().isMapContainer()){
+	if(!Target.get_container().get_object_type().is_map_container()){
 		throw NOTACCESSIBLE;
 	}
 
-	GraphicalEffect(Target, EFFECT_POFF);
+	graphical_effect(Target, EFFECT_POFF);
 	if(random(1, 3) == 1){
-		// TODO(fusion): This is very similar to what is done in `ProcessCronSystem`
+		// TODO(fusion): This is very similar to what is done in `process_cron_system`
 		// and it is probably some inlined helper function to transform items that
 		// might be containers.
-		ObjectType TargetType = Target.getObjectType();
-		ObjectType DestroyTarget = (int)TargetType.getAttribute(DESTROYTARGET);
-		if(TargetType.getFlag(CONTAINER)){
+		ObjectType TargetType = Target.get_object_type();
+		ObjectType DestroyTarget = (int)TargetType.get_attribute(DESTROYTARGET);
+		if(TargetType.get_flag(CONTAINER)){
 			int Remainder = 0;
-			if(!DestroyTarget.isMapContainer() && DestroyTarget.getFlag(CONTAINER)){
-				Remainder = (int)DestroyTarget.getAttribute(CAPACITY);
+			if(!DestroyTarget.is_map_container() && DestroyTarget.get_flag(CONTAINER)){
+				Remainder = (int)DestroyTarget.get_attribute(CAPACITY);
 			}
 
-			Empty(Target, Remainder);
+			empty(Target, Remainder);
 		}
-		Change(Target, DestroyTarget, 0);
+		change(Target, DestroyTarget, 0);
 	}
 }
 
-void UseChangeObject(uint32 CreatureID, Object Obj){
-	if(!Obj.exists() || !Obj.getObjectType().getFlag(CHANGEUSE)){
-		error("UseChangeObject: Object does not exist or is not a CHANGEUSE object.\n");
+void use_change_object(uint32 CreatureID, Object Obj){
+	if(!Obj.exists() || !Obj.get_object_type().get_flag(CHANGEUSE)){
+		error("use_change_object: Object does not exist or is not a CHANGEUSE object.\n");
 		throw ERROR;
 	}
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("UseChangeObject: Player %d does not exist.\n", CreatureID);
+		error("use_change_object: Player %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	ObjectType ChangeTarget = (int)ObjType.getAttribute(CHANGETARGET);
-	if(!ObjType.getFlag(UNPASS)
-			&& !ChangeTarget.isMapContainer()
-			&& ChangeTarget.getFlag(UNPASS)){
-		ClearField(Obj, NONE);
-	}else if(!ObjType.getFlag(UNLAY)
-			&& !ChangeTarget.isMapContainer()
-			&& ChangeTarget.getFlag(UNLAY)){
-		// TODO(fusion): This is similar to `ClearField` except we look for an
+	ObjectType ObjType = Obj.get_object_type();
+	ObjectType ChangeTarget = (int)ObjType.get_attribute(CHANGETARGET);
+	if(!ObjType.get_flag(UNPASS)
+			&& !ChangeTarget.is_map_container()
+			&& ChangeTarget.get_flag(UNPASS)){
+		clear_field(Obj, NONE);
+	}else if(!ObjType.get_flag(UNLAY)
+			&& !ChangeTarget.is_map_container()
+			&& ChangeTarget.get_flag(UNLAY)){
+		// TODO(fusion): This is similar to `clear_field` except we look for an
 		// field without `UNLAY`. It is probably an inlined function.
 		int ObjX, ObjY, ObjZ;
-		GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+		get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 
 		int OffsetX[4] = { 1,  0, -1,  0};
 		int OffsetY[4] = { 0,  1,  0, -1};
@@ -2195,26 +2195,26 @@ void UseChangeObject(uint32 CreatureID, Object Obj){
 			int DestX = ObjX + OffsetX[i];
 			int DestY = ObjY + OffsetY[i];
 			int DestZ = ObjZ;
-			if(CoordinateFlag(DestX, DestY, DestZ, BANK)
-			&& !CoordinateFlag(DestX, DestY, DestZ, UNPASS)){
-				Object Dest = GetMapContainer(DestX, DestY, DestZ);
-				MoveAllObjects(Obj.getNextObject(), Dest, NONE, true);
+			if(coordinate_flag(DestX, DestY, DestZ, BANK)
+			&& !coordinate_flag(DestX, DestY, DestZ, UNPASS)){
+				Object Dest = get_map_container(DestX, DestY, DestZ);
+				move_all_objects(Obj.get_next_object(), Dest, NONE, true);
 				break;
 			}
 		}
 	}
 
-	Change(Obj, ChangeTarget, 0);
+	change(Obj, ChangeTarget, 0);
 }
 
-void UseObject(uint32 CreatureID, Object Obj){
+void use_object(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("UseObjects: Provided object does not exist.\n");
+		error("use_objects: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	if(!Obj.getObjectType().getFlag(USEEVENT)){
-		error("UseObjects: Provided object is not usable.\n");
+	if(!Obj.get_object_type().get_flag(USEEVENT)){
+		error("use_objects: Provided object is not usable.\n");
 		throw ERROR;
 	}
 
@@ -2226,24 +2226,24 @@ void UseObject(uint32 CreatureID, Object Obj){
 		}
 	}
 
-	if(!HandleEvent(MOVEUSE_EVENT_USE, User, Obj, NONE)){
+	if(!handle_event(MOVEUSE_EVENT_USE, User, Obj, NONE)){
 		throw NOTUSABLE;
 	}
 }
 
-void UseObjects(uint32 CreatureID, Object Obj1, Object Obj2){
+void use_objects(uint32 CreatureID, Object Obj1, Object Obj2){
 	if(!Obj1.exists()){
-		error("UseObjects: Provided object Obj1 does not exist.\n");
+		error("use_objects: Provided object Obj1 does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Obj2.exists()){
-		error("UseObjects: Provided object Obj2 does not exist.\n");
+		error("use_objects: Provided object Obj2 does not exist.\n");
 		throw ERROR;
 	}
 
-	if(!Obj1.getObjectType().getFlag(USEEVENT)){
-		error("UseObjects: Provided object Obj1 is not usable.\n");
+	if(!Obj1.get_object_type().get_flag(USEEVENT)){
+		error("use_objects: Provided object Obj1 is not usable.\n");
 		throw ERROR;
 	}
 
@@ -2255,61 +2255,61 @@ void UseObjects(uint32 CreatureID, Object Obj1, Object Obj2){
 		}
 	}
 
-	if(!HandleEvent(MOVEUSE_EVENT_MULTIUSE, User, Obj1, Obj2)){
+	if(!handle_event(MOVEUSE_EVENT_MULTIUSE, User, Obj1, Obj2)){
 		throw NOTUSABLE;
 	}
 }
 
-void MovementEvent(Object Obj, Object Start, Object Dest){
+void movement_event(Object Obj, Object Start, Object Dest){
 	if(!Obj.exists()){
-		error("MovementEvent: Provided object does not exist.\n");
+		error("movement_event: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType StartType = Start.getObjectType();
-	if(!Start.exists() || (!StartType.getFlag(CONTAINER) && !StartType.getFlag(CHEST))){
-		error("MovementEvent: \"Start\" is not a container.\n");
+	ObjectType StartType = Start.get_object_type();
+	if(!Start.exists() || (!StartType.get_flag(CONTAINER) && !StartType.get_flag(CHEST))){
+		error("movement_event: \"Start\" is not a container.\n");
 		throw ERROR;
 	}
 
-	ObjectType DestType = Dest.getObjectType();
-	if(!Dest.exists() || (!DestType.getFlag(CONTAINER) && !DestType.getFlag(CHEST))){
-		error("MovementEvent: \"Dest\" is not a container.\n");
+	ObjectType DestType = Dest.get_object_type();
+	if(!Dest.exists() || (!DestType.get_flag(CONTAINER) && !DestType.get_flag(CHEST))){
+		error("movement_event: \"Dest\" is not a container.\n");
 		throw ERROR;
 	}
 
-	if(Obj.getObjectType().getFlag(MOVEMENTEVENT)){
-		HandleEvent(MOVEUSE_EVENT_MOVEMENT, NONE, Obj, NONE);
+	if(Obj.get_object_type().get_flag(MOVEMENTEVENT)){
+		handle_event(MOVEUSE_EVENT_MOVEMENT, NONE, Obj, NONE);
 		if(!Obj.exists()){
 			throw DESTROYED;
 		}
 	}
 }
 
-void SeparationEvent(Object Obj, Object Start){
+void separation_event(Object Obj, Object Start){
 	if(!Obj.exists()){
-		error("SeparationEvent: Provided object does not exist.\n");
+		error("separation_event: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Start.exists()){
-		error("SeparationEvent: Provided container does not exist.\n");
+		error("separation_event: Provided container does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType StartType = Start.getObjectType();
-	if(!StartType.isMapContainer()){
+	ObjectType StartType = Start.get_object_type();
+	if(!StartType.is_map_container()){
 		return;
 	}
 
 	// NOTE(fusion): Separation event for `Obj` against objects at `Start`.
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(SEPARATIONEVENT)){
-		Object Help = GetFirstContainerObject(Start);
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(SEPARATIONEVENT)){
+		Object Help = get_first_container_object(Start);
 		while(Help != NONE){
-			Object Next = Help.getNextObject();
+			Object Next = Help.get_next_object();
 			if(Help != Obj){
-				HandleEvent(MOVEUSE_EVENT_SEPARATION, NONE, Obj, Help);
+				handle_event(MOVEUSE_EVENT_SEPARATION, NONE, Obj, Help);
 				if(!Obj.exists()){
 					throw DESTROYED;
 				}
@@ -2319,29 +2319,29 @@ void SeparationEvent(Object Obj, Object Start){
 	}
 
 	// NOTE(fusion): Separation event for objects at `Start` against `Obj`.
-	Object Help = GetFirstContainerObject(Start);
+	Object Help = get_first_container_object(Start);
 	while(Help != NONE){
-		Object Next = Help.getNextObject();
+		Object Next = Help.get_next_object();
 		if(Help != Obj){
-			ObjectType HelpType = Help.getObjectType();
-			if(ObjType.isCreatureContainer()
-					&& (HelpType.getFlag(LEVELDOOR) || HelpType.getFlag(QUESTDOOR))){
-				ObjectType DoorTarget = HelpType.getFlag(LEVELDOOR)
-						? (int)HelpType.getAttribute(LEVELDOORTARGET)
-						: (int)HelpType.getAttribute(QUESTDOORTARGET);
-				if(DoorTarget.isMapContainer() || !DoorTarget.getFlag(UNPASS)){
-					error("SeparationEvent: Target door for door %d not specified or passable.\n",
+			ObjectType HelpType = Help.get_object_type();
+			if(ObjType.is_creature_container()
+					&& (HelpType.get_flag(LEVELDOOR) || HelpType.get_flag(QUESTDOOR))){
+				ObjectType DoorTarget = HelpType.get_flag(LEVELDOOR)
+						? (int)HelpType.get_attribute(LEVELDOORTARGET)
+						: (int)HelpType.get_attribute(QUESTDOORTARGET);
+				if(DoorTarget.is_map_container() || !DoorTarget.get_flag(UNPASS)){
+					error("separation_event: Target door for door %d not specified or passable.\n",
 							HelpType.TypeID);
 					throw ERROR;
 				}
 
-				ClearField(Help, Obj);
-				Change(Help, DoorTarget, 0);
+				clear_field(Help, Obj);
+				change(Help, DoorTarget, 0);
 				break;
 			}
 
-			if(HelpType.getFlag(SEPARATIONEVENT)){
-				HandleEvent(MOVEUSE_EVENT_SEPARATION, NONE, Help, Obj);
+			if(HelpType.get_flag(SEPARATIONEVENT)){
+				handle_event(MOVEUSE_EVENT_SEPARATION, NONE, Help, Obj);
 				if(!Obj.exists()){
 					throw DESTROYED;
 				}
@@ -2351,64 +2351,64 @@ void SeparationEvent(Object Obj, Object Start){
 	}
 }
 
-void CollisionEvent(Object Obj, Object Dest){
+void collision_event(Object Obj, Object Dest){
 	if(!Obj.exists()){
-		error("CollisionEvent: Provided object does not exist.\n");
+		error("collision_event: Provided object does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Dest.exists()){
-		error("CollisionEvent: Provided container does not exist.\n");
+		error("collision_event: Provided container does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType DestType = Dest.getObjectType();
-	if(!DestType.isMapContainer()){
+	ObjectType DestType = Dest.get_object_type();
+	if(!DestType.is_map_container()){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(TELEPORTABSOLUTE) || ObjType.getFlag(TELEPORTRELATIVE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(TELEPORTABSOLUTE) || ObjType.get_flag(TELEPORTRELATIVE)){
 		int TeleportEffect;
 		int TeleportDestX, TeleportDestY, TeleportDestZ;
-		if(ObjType.getFlag(TELEPORTABSOLUTE)){
-			UnpackAbsoluteCoordinate((int)Obj.getAttribute(ABSTELEPORTDESTINATION),
+		if(ObjType.get_flag(TELEPORTABSOLUTE)){
+			unpack_absolute_coordinate((int)Obj.get_attribute(ABSTELEPORTDESTINATION),
 									&TeleportDestX, &TeleportDestY, &TeleportDestZ);
-			TeleportEffect = (int)ObjType.getAttribute(ABSTELEPORTEFFECT);
+			TeleportEffect = (int)ObjType.get_attribute(ABSTELEPORTEFFECT);
 		}else{
 			int DisplacementX, DisplacementY, DisplacementZ;
-			GetObjectCoordinates(Obj, &TeleportDestX, &TeleportDestY, &TeleportDestZ);
-			UnpackRelativeCoordinate((int)ObjType.getAttribute(RELTELEPORTDISPLACEMENT),
+			get_object_coordinates(Obj, &TeleportDestX, &TeleportDestY, &TeleportDestZ);
+			unpack_relative_coordinate((int)ObjType.get_attribute(RELTELEPORTDISPLACEMENT),
 									&DisplacementX, &DisplacementY, &DisplacementZ);
 			TeleportDestX += DisplacementX;
 			TeleportDestY += DisplacementY;
 			TeleportDestZ += DisplacementZ;
-			TeleportEffect = (int)ObjType.getAttribute(RELTELEPORTEFFECT);
+			TeleportEffect = (int)ObjType.get_attribute(RELTELEPORTEFFECT);
 		}
 
-		Object TeleportDest = GetMapContainer(TeleportDestX, TeleportDestY, TeleportDestZ);
-		MoveAllObjects(Obj.getNextObject(), TeleportDest, NONE, true);
-		GraphicalEffect(TeleportDestX, TeleportDestY, TeleportDestZ, TeleportEffect);
+		Object TeleportDest = get_map_container(TeleportDestX, TeleportDestY, TeleportDestZ);
+		move_all_objects(Obj.get_next_object(), TeleportDest, NONE, true);
+		graphical_effect(TeleportDestX, TeleportDestY, TeleportDestZ, TeleportEffect);
 
-		// TODO(fusion): Is this even possible? Maybe `MoveAllObjects` could
+		// TODO(fusion): Is this even possible? Maybe `move_all_objects` could
 		// trigger a separation event that destroys `Obj`?
 		if(!Obj.exists()){
 			throw DESTROYED;
 		}
 	}else{
 		// NOTE(fusion): Collision event for `Obj` against objects at `Dest`.
-		if(ObjType.getFlag(COLLISIONEVENT)){
-			Object Help = GetFirstContainerObject(Dest);
+		if(ObjType.get_flag(COLLISIONEVENT)){
+			Object Help = get_first_container_object(Dest);
 			while(Help != NONE){
-				Object Next = Help.getNextObject();
+				Object Next = Help.get_next_object();
 
 				// IMPORTANT(fusion): Same as below.
 				if(Next == Obj){
-					Next = Next.getNextObject();
+					Next = Next.get_next_object();
 				}
 
 				if(Help != Obj){
-					HandleEvent(MOVEUSE_EVENT_COLLISION, NONE, Obj, Help);
+					handle_event(MOVEUSE_EVENT_COLLISION, NONE, Obj, Help);
 					if(!Obj.exists()){
 						throw DESTROYED;
 					}
@@ -2419,9 +2419,9 @@ void CollisionEvent(Object Obj, Object Dest){
 		}
 
 		// NOTE(fusion): Collision event for objects at `Dest` against `Obj`.
-		Object Help = GetFirstContainerObject(Dest);
+		Object Help = get_first_container_object(Dest);
 		while(Help != NONE){
-			Object Next = Help.getNextObject();
+			Object Next = Help.get_next_object();
 
 			// IMPORTANT(fusion): This is very subtle but the collision event can
 			// move or destroy either object, causing it to be removed from the
@@ -2433,34 +2433,34 @@ void CollisionEvent(Object Obj, Object Dest){
 			//  Note that this cannot happen to Help simply because it is already
 			// behind the Next pointer, so checking only for Obj here is enough.
 			if(Next == Obj){
-				Next = Next.getNextObject();
+				Next = Next.get_next_object();
 			}
 
 			if(Help != Obj){
-				ObjectType HelpType = Help.getObjectType();
-				if(HelpType.getFlag(TELEPORTABSOLUTE) || HelpType.getFlag(TELEPORTRELATIVE)){
+				ObjectType HelpType = Help.get_object_type();
+				if(HelpType.get_flag(TELEPORTABSOLUTE) || HelpType.get_flag(TELEPORTRELATIVE)){
 					int TeleportEffect;
 					int TeleportDestX, TeleportDestY, TeleportDestZ;
-					if(HelpType.getFlag(TELEPORTABSOLUTE)){
-						UnpackAbsoluteCoordinate((int)Help.getAttribute(ABSTELEPORTDESTINATION),
+					if(HelpType.get_flag(TELEPORTABSOLUTE)){
+						unpack_absolute_coordinate((int)Help.get_attribute(ABSTELEPORTDESTINATION),
 												&TeleportDestX, &TeleportDestY, &TeleportDestZ);
-						TeleportEffect = (int)HelpType.getAttribute(ABSTELEPORTEFFECT);
+						TeleportEffect = (int)HelpType.get_attribute(ABSTELEPORTEFFECT);
 					}else{
 						int DisplacementX, DisplacementY, DisplacementZ;
-						GetObjectCoordinates(Help, &TeleportDestX, &TeleportDestY, &TeleportDestZ);
-						UnpackRelativeCoordinate((int)HelpType.getAttribute(RELTELEPORTDISPLACEMENT),
+						get_object_coordinates(Help, &TeleportDestX, &TeleportDestY, &TeleportDestZ);
+						unpack_relative_coordinate((int)HelpType.get_attribute(RELTELEPORTDISPLACEMENT),
 												&DisplacementX, &DisplacementY, &DisplacementZ);
 						TeleportDestX += DisplacementX;
 						TeleportDestY += DisplacementY;
 						TeleportDestZ += DisplacementZ;
-						TeleportEffect = (int)HelpType.getAttribute(RELTELEPORTEFFECT);
+						TeleportEffect = (int)HelpType.get_attribute(RELTELEPORTEFFECT);
 					}
 
-					Object TeleportDest = GetMapContainer(TeleportDestX, TeleportDestY, TeleportDestZ);
-					MoveOneObject(Obj, TeleportDest);
-					GraphicalEffect(TeleportDestX, TeleportDestY, TeleportDestZ, TeleportEffect);
-				}else if(HelpType.getFlag(COLLISIONEVENT)){
-					HandleEvent(MOVEUSE_EVENT_COLLISION, NONE, Help, Obj);
+					Object TeleportDest = get_map_container(TeleportDestX, TeleportDestY, TeleportDestZ);
+					move_one_object(Obj, TeleportDest);
+					graphical_effect(TeleportDestX, TeleportDestY, TeleportDestZ, TeleportEffect);
+				}else if(HelpType.get_flag(COLLISIONEVENT)){
+					handle_event(MOVEUSE_EVENT_COLLISION, NONE, Help, Obj);
 				}
 
 				if(!Obj.exists()){
@@ -2475,9 +2475,9 @@ void CollisionEvent(Object Obj, Object Dest){
 
 // Event Loading / Initialization
 // =============================================================================
-void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParameters, ...){
+void load_parameters(ReadScriptFile *Script, int *Parameters, int NumberOfParameters, ...){
 	if(NumberOfParameters > MOVEUSE_MAX_PARAMETERS){
-		error("LoadParameters: Too many parameters (%d).\n", NumberOfParameters);
+		error("load_parameters: Too many parameters (%d).\n", NumberOfParameters);
 		Script->error("too many parameters");
 	}
 
@@ -2485,7 +2485,7 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 		return;
 	}
 
-	if(Script->Token != SPECIAL || Script->getSpecial() != '('){
+	if(Script->Token != SPECIAL || Script->get_special() != '('){
 		Script->error("'(' expected");
 	}
 
@@ -2493,13 +2493,13 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 	va_start(ap, NumberOfParameters);
 	for(int i = 0; i < NumberOfParameters; i += 1){
 		if(i > 0){
-			Script->readSymbol(',');
+			Script->read_symbol(',');
 		}
 
 		int ParamType = va_arg(ap, int);
 		switch(ParamType){
 			case MOVEUSE_PARAMETER_OBJECT:{
-				const char *Object = Script->readIdentifier();
+				const char *Object = Script->read_identifier();
 				if(strcmp(Object, "null") == 0){
 					Parameters[i] = 0; // MOVEUSE_OBJECT_NULL ?
 				}else if(strcmp(Object, "obj1") == 0){
@@ -2517,16 +2517,16 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 			}
 
 			case MOVEUSE_PARAMETER_TYPE:{
-				int TypeID = Script->readNumber();
+				int TypeID = Script->read_number();
 				Parameters[i] = TypeID;
-				if(!ObjectTypeExists(TypeID)){
+				if(!object_type_exists(TypeID)){
 					Script->error("Unknown object type");
 				}
 				break;
 			}
 
 			case MOVEUSE_PARAMETER_FLAG:{
-				int Flag = GetFlagByName(Script->readIdentifier());
+				int Flag = get_flag_by_name(Script->read_identifier());
 				Parameters[i] = Flag;
 				if(Flag == -1){
 					Script->error("Unknown flag");
@@ -2535,7 +2535,7 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 			}
 
 			case MOVEUSE_PARAMETER_TYPEATTRIBUTE:{
-				int TypeAttribute = GetTypeAttributeByName(Script->readIdentifier());
+				int TypeAttribute = get_type_attribute_by_name(Script->read_identifier());
 				Parameters[i] = TypeAttribute;
 				if(TypeAttribute == -1){
 					Script->error("Unknown type attribute");
@@ -2544,7 +2544,7 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 			}
 
 			case MOVEUSE_PARAMETER_INSTANCEATTRIBUTE:{
-				int InstanceAttribute = GetInstanceAttributeByName(Script->readIdentifier());
+				int InstanceAttribute = get_instance_attribute_by_name(Script->read_identifier());
 				Parameters[i] = InstanceAttribute;
 				if(InstanceAttribute == -1){
 					Script->error("Unknown instance attribute");
@@ -2554,20 +2554,20 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 
 			case MOVEUSE_PARAMETER_COORDINATE:{
 				int AbsX, AbsY, AbsZ;
-				Script->readCoordinate(&AbsX, &AbsY, &AbsZ);
-				Parameters[i] = PackAbsoluteCoordinate(AbsX, AbsY, AbsZ);
+				Script->read_coordinate(&AbsX, &AbsY, &AbsZ);
+				Parameters[i] = pack_absolute_coordinate(AbsX, AbsY, AbsZ);
 				break;
 			}
 
 			case MOVEUSE_PARAMETER_VECTOR:{
 				int RelX, RelY, RelZ;
-				Script->readCoordinate(&RelX, &RelY, &RelZ);
-				Parameters[i] = PackRelativeCoordinate(RelX, RelY, RelZ);
+				Script->read_coordinate(&RelX, &RelY, &RelZ);
+				Parameters[i] = pack_relative_coordinate(RelX, RelY, RelZ);
 				break;
 			}
 
 			case MOVEUSE_PARAMETER_RIGHT:{
-				const char *Right = Script->readIdentifier();
+				const char *Right = Script->read_identifier();
 				if(strcmp(Right, "premium_account") == 0){
 					Parameters[i] = PREMIUM_ACCOUNT;
 				}else if(strcmp(Right, "special_moveuse") == 0){
@@ -2579,7 +2579,7 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 			}
 
 			case MOVEUSE_PARAMETER_SKILL:{
-				int SkillNr = GetSkillByName(Script->readIdentifier());
+				int SkillNr = GetSkillByName(Script->read_identifier());
 				Parameters[i] = SkillNr;
 				if(SkillNr == -1){
 					Script->error("Unknown skill");
@@ -2588,18 +2588,18 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 			}
 
 			case MOVEUSE_PARAMETER_NUMBER:{
-				Parameters[i] = Script->readNumber();
+				Parameters[i] = Script->read_number();
 				break;
 			}
 
 			case MOVEUSE_PARAMETER_TEXT:{
-				const char *Text = Script->readString();
+				const char *Text = Script->read_string();
 				Parameters[i] = AddDynamicString(Text);
 				break;
 			}
 
 			case MOVEUSE_PARAMETER_COMPARISON:{
-				int Operator = (int)Script->readSpecial();
+				int Operator = (int)Script->read_special();
 				Parameters[i] = Operator;
 				if(strchr("<=>GLN", Operator) == NULL){
 					Script->error("Unknown comparison operator");
@@ -2610,217 +2610,217 @@ void LoadParameters(TReadScriptFile *Script, int *Parameters, int NumberOfParame
 	}
 	va_end(ap);
 
-	Script->readSymbol(')');
-	Script->nextToken();
+	Script->read_symbol(')');
+	Script->next_token();
 }
 
-void LoadCondition(TReadScriptFile *Script, TMoveUseCondition *Condition){
+void load_condition(ReadScriptFile *Script, MoveUseCondition *Condition){
 	char Identifier[MAX_IDENT_LENGTH];
-	strcpy(Identifier, Script->getIdentifier());
+	strcpy(Identifier, Script->get_identifier());
 
-	Script->nextToken();
+	Script->next_token();
 	if(strcmp(Identifier, "isposition") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISPOSITION;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "istype") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISTYPE;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TYPE);
 	}else if(strcmp(Identifier, "iscreature") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISCREATURE;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "isplayer") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISPLAYER;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "hasflag") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASFLAG;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_FLAG);
 	}else if(strcmp(Identifier, "hastypeattribute") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASTYPEATTRIBUTE;
-		LoadParameters(Script, Condition->Parameters, 4,
+		load_parameters(Script, Condition->Parameters, 4,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TYPEATTRIBUTE,
 								MOVEUSE_PARAMETER_COMPARISON,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "hasinstanceattribute") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASINSTANCEATTRIBUTE;
-		LoadParameters(Script, Condition->Parameters, 4,
+		load_parameters(Script, Condition->Parameters, 4,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_INSTANCEATTRIBUTE,
 								MOVEUSE_PARAMETER_COMPARISON,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "hastext") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASTEXT;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TEXT);
 	}else if(strcmp(Identifier, "ispeaceful") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISPEACEFUL;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "maylogout") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_MAYLOGOUT;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "hasprofession") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASPROFESSION;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "haslevel") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASLEVEL;
-		LoadParameters(Script, Condition->Parameters, 3,
+		load_parameters(Script, Condition->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COMPARISON,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "hasright") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASRIGHT;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_RIGHT);
 	}else if(strcmp(Identifier, "hasquestvalue") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_HASQUESTVALUE;
-		LoadParameters(Script, Condition->Parameters, 4,
+		load_parameters(Script, Condition->Parameters, 4,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER,
 								MOVEUSE_PARAMETER_COMPARISON,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "testskill") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_TESTSKILL;
-		LoadParameters(Script, Condition->Parameters, 4,
+		load_parameters(Script, Condition->Parameters, 4,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_SKILL,
 								MOVEUSE_PARAMETER_NUMBER,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "countobjects") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_COUNTOBJECTS;
-		LoadParameters(Script, Condition->Parameters, 3,
+		load_parameters(Script, Condition->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COMPARISON,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "countobjectsonmap") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_COUNTOBJECTSONMAP;
-		LoadParameters(Script, Condition->Parameters, 3,
+		load_parameters(Script, Condition->Parameters, 3,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_COMPARISON,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "isobjectthere") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISOBJECTTHERE;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE);
 	}else if(strcmp(Identifier, "iscreaturethere") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISCREATURETHERE;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "isplayerthere") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISPLAYERTHERE;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "isobjectininventory") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISOBJECTININVENTORY;
-		LoadParameters(Script, Condition->Parameters, 3,
+		load_parameters(Script, Condition->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "isprotectionzone") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISPROTECTIONZONE;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "ishouse") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISHOUSE;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "ishouseowner") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISHOUSEOWNER;
-		LoadParameters(Script, Condition->Parameters, 2,
+		load_parameters(Script, Condition->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "isdressed") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_ISDRESSED;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "random") == 0){
 		Condition->Condition = MOVEUSE_CONDITION_RANDOM;
-		LoadParameters(Script, Condition->Parameters, 1,
+		load_parameters(Script, Condition->Parameters, 1,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else{
 		Script->error("invalid condition");
 	}
 }
 
-void LoadAction(TReadScriptFile *Script, TMoveUseAction *Action){
+void load_action(ReadScriptFile *Script, MoveUseAction *Action){
 	char Identifier[MAX_IDENT_LENGTH];
-	strcpy(Identifier, Script->getIdentifier());
+	strcpy(Identifier, Script->get_identifier());
 
-	Script->nextToken();
+	Script->next_token();
 	if(strcmp(Identifier, "createonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_CREATEONMAP;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "create") == 0){
 		Action->Action = MOVEUSE_ACTION_CREATE;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "monsteronmap") == 0){
 		Action->Action = MOVEUSE_ACTION_MONSTERONMAP;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "monster") == 0){
 		Action->Action = MOVEUSE_ACTION_MONSTER;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "effectonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_EFFECTONMAP;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "effect") == 0){
 		Action->Action = MOVEUSE_ACTION_EFFECT;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "textonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_TEXTONMAP;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TEXT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "text") == 0){
 		Action->Action = MOVEUSE_ACTION_TEXT;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TEXT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "changeonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_CHANGEONMAP;
-		LoadParameters(Script, Action->Parameters, 4,
+		load_parameters(Script, Action->Parameters, 4,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "change") == 0){
 		Action->Action = MOVEUSE_ACTION_CHANGE;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "changerel") == 0){
 		Action->Action = MOVEUSE_ACTION_CHANGEREL;
-		LoadParameters(Script, Action->Parameters, 5,
+		load_parameters(Script, Action->Parameters, 5,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_VECTOR,
 								MOVEUSE_PARAMETER_TYPE,
@@ -2828,153 +2828,153 @@ void LoadAction(TReadScriptFile *Script, TMoveUseAction *Action){
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "setattribute") == 0){
 		Action->Action = MOVEUSE_ACTION_SETATTRIBUTE;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_INSTANCEATTRIBUTE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "changeattribute") == 0){
 		Action->Action = MOVEUSE_ACTION_CHANGEATTRIBUTE;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_INSTANCEATTRIBUTE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "setquestvalue") == 0){
 		Action->Action = MOVEUSE_ACTION_SETQUESTVALUE;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "damage") == 0){
 		Action->Action = MOVEUSE_ACTION_DAMAGE;
-		LoadParameters(Script, Action->Parameters, 4,
+		load_parameters(Script, Action->Parameters, 4,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "setstart") == 0){
 		Action->Action = MOVEUSE_ACTION_SETSTART;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "writename") == 0){
 		Action->Action = MOVEUSE_ACTION_WRITENAME;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TEXT,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "writetext") == 0){
 		Action->Action = MOVEUSE_ACTION_WRITETEXT;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_TEXT,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "logout") == 0){
 		Action->Action = MOVEUSE_ACTION_LOGOUT;
-		LoadParameters(Script, Action->Parameters, 1,
+		load_parameters(Script, Action->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "moveallonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVEALLONMAP;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "moveall") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVEALL;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "moveallrel") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVEALLREL;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_VECTOR);
 	}else if(strcmp(Identifier, "movetoponmap") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVETOPONMAP;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "movetop") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVETOP;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "movetoprel") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVETOPREL;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_VECTOR);
 	}else if(strcmp(Identifier, "move") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVE;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "moverel") == 0){
 		Action->Action = MOVEUSE_ACTION_MOVEREL;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_VECTOR);
 	}else if(strcmp(Identifier, "retrieve") == 0){
 		Action->Action = MOVEUSE_ACTION_RETRIEVE;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_VECTOR,
 								MOVEUSE_PARAMETER_VECTOR);
 	}else if(strcmp(Identifier, "deleteallonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_DELETEALLONMAP;
-		LoadParameters(Script, Action->Parameters, 1,
+		load_parameters(Script, Action->Parameters, 1,
 								MOVEUSE_PARAMETER_COORDINATE);
 	}else if(strcmp(Identifier, "deletetoponmap") == 0){
 		Action->Action = MOVEUSE_ACTION_DELETETOPONMAP;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE);
 	}else if(strcmp(Identifier, "deleteonmap") == 0){
 		Action->Action = MOVEUSE_ACTION_DELETEONMAP;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE);
 	}else if(strcmp(Identifier, "delete") == 0){
 		Action->Action = MOVEUSE_ACTION_DELETE;
-		LoadParameters(Script, Action->Parameters, 1,
+		load_parameters(Script, Action->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "deleteininventory") == 0){
 		Action->Action = MOVEUSE_ACTION_DELETEININVENTORY;
-		LoadParameters(Script, Action->Parameters, 3,
+		load_parameters(Script, Action->Parameters, 3,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "description") == 0){
 		Action->Action = MOVEUSE_ACTION_DESCRIPTION;
-		LoadParameters(Script, Action->Parameters, 2,
+		load_parameters(Script, Action->Parameters, 2,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "loaddepot") == 0){
 		Action->Action = MOVEUSE_ACTION_LOADDEPOT;
-		LoadParameters(Script, Action->Parameters, 4,
+		load_parameters(Script, Action->Parameters, 4,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "savedepot") == 0){
 		Action->Action = MOVEUSE_ACTION_SAVEDEPOT;
-		LoadParameters(Script, Action->Parameters, 4,
+		load_parameters(Script, Action->Parameters, 4,
 								MOVEUSE_PARAMETER_COORDINATE,
 								MOVEUSE_PARAMETER_TYPE,
 								MOVEUSE_PARAMETER_OBJECT,
 								MOVEUSE_PARAMETER_NUMBER);
 	}else if(strcmp(Identifier, "sendmail") == 0){
 		Action->Action = MOVEUSE_ACTION_SENDMAIL;
-		LoadParameters(Script, Action->Parameters, 1,
+		load_parameters(Script, Action->Parameters, 1,
 								MOVEUSE_PARAMETER_OBJECT);
 	}else if(strcmp(Identifier, "nop") == 0){
 		Action->Action = MOVEUSE_ACTION_NOP;
-		LoadParameters(Script, Action->Parameters, 0);
+		load_parameters(Script, Action->Parameters, 0);
 	}else{
 		Script->error("invalid action");
 	}
 }
 
-void LoadDataBase(void){
+void load_database(void){
 	print(1, "Loading move/use database ...\n");
 
 	char FileName[4096];
@@ -2984,22 +2984,22 @@ void LoadDataBase(void){
 		MoveUseDatabases[i].NumberOfRules = 0;
 	}
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
-	Script.nextToken();
+	Script.next_token();
 	while(Script.Token != ENDOFFILE){
-		const char *Identifier = Script.getIdentifier();
+		const char *Identifier = Script.get_identifier();
 
 		if(strcmp(Identifier, "begin") == 0){
-			Script.readString();
-			Script.nextToken();
+			Script.read_string();
+			Script.next_token();
 			continue;
 		}else if(strcmp(Identifier, "end") == 0){
-			Script.nextToken();
+			Script.next_token();
 			continue;
 		}
 
-		// NOTE(fusion): `TReadScriptFile::error` will always throw but the
+		// NOTE(fusion): `ReadScriptFile::error` will always throw but the
 		// compiler might not be able to detect that and issue a warning.
 		int EventType = 0;
 		if(strcmp(Identifier, "use") == 0){
@@ -3016,49 +3016,49 @@ void LoadDataBase(void){
 			Script.error("Unknown event type");
 		}
 
-		Script.readSymbol(',');
+		Script.read_symbol(',');
 
 		MoveUseDatabases[EventType].NumberOfRules += 1;
-		TMoveUseRule *Rule = MoveUseDatabases[EventType].Rules.at(
+		MoveUseRule *Rule = MoveUseDatabases[EventType].Rules.at(
 					MoveUseDatabases[EventType].NumberOfRules);
 
 		// NOTE(fusion): Conditions.
 		Rule->FirstCondition = NumberOfMoveUseConditions + 1;
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			NumberOfMoveUseConditions += 1;
-			TMoveUseCondition *Condition = MoveUseConditions.at(NumberOfMoveUseConditions);
+			MoveUseCondition *Condition = MoveUseConditions.at(NumberOfMoveUseConditions);
 			Condition->Modifier = MOVEUSE_MODIFIER_NORMAL;
 			if(Script.Token == SPECIAL){
-				if(Script.getSpecial() == '!'){
-					Script.nextToken();
+				if(Script.get_special() == '!'){
+					Script.next_token();
 					Condition->Modifier = MOVEUSE_MODIFIER_INVERT;
-				}else if(Script.getSpecial() == '~'){
-					Script.nextToken();
+				}else if(Script.get_special() == '~'){
+					Script.next_token();
 					Condition->Modifier = MOVEUSE_MODIFIER_TRUE;
 				}
 			}
-			LoadCondition(&Script, Condition);
+			load_condition(&Script, Condition);
 
-			if(Script.Token != SPECIAL || Script.getSpecial() != ','){
+			if(Script.Token != SPECIAL || Script.get_special() != ','){
 				break;
 			}
 		}
 		Rule->LastCondition = NumberOfMoveUseConditions;
 
-		if(Script.Token != SPECIAL || Script.getSpecial() != 'I'){
+		if(Script.Token != SPECIAL || Script.get_special() != 'I'){
 			Script.error("'->' expected");
 		}
 
 		// NOTE(fusion): Actions.
 		Rule->FirstAction = NumberOfMoveUseActions + 1;
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			NumberOfMoveUseActions += 1;
-			TMoveUseAction *Action = MoveUseActions.at(NumberOfMoveUseActions);
-			LoadAction(&Script, Action);
+			MoveUseAction *Action = MoveUseActions.at(NumberOfMoveUseActions);
+			load_action(&Script, Action);
 
-			if(Script.Token != SPECIAL || Script.getSpecial() != ','){
+			if(Script.Token != SPECIAL || Script.get_special() != ','){
 				break;
 			}
 		}
@@ -3066,13 +3066,13 @@ void LoadDataBase(void){
 
 		// NOTE(fusion): Optional tag?
 		if(Script.Token == STRING){
-			Script.nextToken();
+			Script.next_token();
 		}
 	}
 
 	Script.close();
 
-	print(1, "Move/use database loaded with %d/%d/%d/%d/%d rules.\n",
+	print(1, "move/use database loaded with %d/%d/%d/%d/%d rules.\n",
 			MoveUseDatabases[MOVEUSE_EVENT_USE].NumberOfRules,
 			MoveUseDatabases[MOVEUSE_EVENT_MULTIUSE].NumberOfRules,
 			MoveUseDatabases[MOVEUSE_EVENT_MOVEMENT].NumberOfRules,
@@ -3080,16 +3080,16 @@ void LoadDataBase(void){
 			MoveUseDatabases[MOVEUSE_EVENT_SEPARATION].NumberOfRules);
 }
 
-void InitMoveUse(void){
+void init_move_use(void){
 	NumberOfMoveUseConditions = 0;
 	NumberOfMoveUseActions = 0;
 	DelayedMails = 0;
-	LoadDataBase();
+	load_database();
 }
 
-void ExitMoveUse(void){
+void exit_move_use(void){
 	for(int i = 0; i < DelayedMails; i += 1){
-		error("ExitMoveUse: Parcel to %u was not delivered.\n",
-				DelayedMail.at(i)->CharacterID);
+		error("exit_move_use: Parcel to %u was not delivered.\n",
+				DelayedMailArray.at(i)->CharacterID);
 	}
 }

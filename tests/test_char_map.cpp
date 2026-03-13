@@ -52,8 +52,8 @@ TEST_CASE("Priority enum values") {
     CHECK(PRIORITY_CREATURE < PRIORITY_LOW);
 }
 
-TEST_CASE("TSector struct layout") {
-    TSector s{};
+TEST_CASE("Sector struct layout") {
+    Sector s{};
     CHECK(s.Status == STATUS_FREE);
     CHECK(s.TimeStamp == 0);
     CHECK(s.MapFlags == 0);
@@ -62,28 +62,28 @@ TEST_CASE("TSector struct layout") {
     CHECK(s.MapCon[31][31] == NONE);
 }
 
-TEST_CASE("TObject struct layout") {
-    TObject obj{};
+TEST_CASE("MapObject struct layout") {
+    MapObject obj{};
     CHECK(obj.ObjectID == 0);
     CHECK(obj.NextObject == NONE);
     CHECK(obj.Container == NONE);
     CHECK(obj.Type.TypeID == 0);
 }
 
-TEST_CASE("TDepotInfo struct layout") {
-    TDepotInfo d{};
+TEST_CASE("DepotInfo struct layout") {
+    DepotInfo d{};
     CHECK(d.Size == 0);
 }
 
-TEST_CASE("TMark struct layout") {
-    TMark m{};
+TEST_CASE("Mark struct layout") {
+    Mark m{};
     CHECK(m.x == 0);
     CHECK(m.y == 0);
     CHECK(m.z == 0);
 }
 
-TEST_CASE("TCronEntry struct layout") {
-    TCronEntry c{};
+TEST_CASE("CronEntry struct layout") {
+    CronEntry c{};
     CHECK(c.Obj == NONE);
     CHECK(c.RoundNr == 0);
 }

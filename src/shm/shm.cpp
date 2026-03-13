@@ -131,9 +131,9 @@ static void ErrorHandler(const char *Text){
 	if(SHM != NULL){
 		SHM->Errors += 1;
 		if(SHM->Errors <= 0x8000){
-			Log("error", Text);
+			log_message("error", Text);
 			if(SHM->Errors == 0x8000){
-				Log("error", "Too many errors. No further logging.\n");
+				log_message("error", "Too many errors. No further logging.\n");
 			}
 		}
 	}

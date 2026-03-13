@@ -86,11 +86,11 @@ void TShortway::FillMap(void){
 		int FieldZ = this->StartZ;
 
 		int Waypoints = -1;
-		Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+		Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 		if(Obj.exists()){
-			ObjectType ObjType = Obj.getObjectType();
-			if(ObjType.getFlag(BANK) && !ObjType.getFlag(UNPASS)){
-				Waypoints = (int)ObjType.getAttribute(WAYPOINTS);
+			ObjectType ObjType = Obj.get_object_type();
+			if(ObjType.get_flag(BANK) && !ObjType.get_flag(UNPASS)){
+				Waypoints = (int)ObjType.get_attribute(WAYPOINTS);
 				if(Waypoints == 0){
 					error("TShortway::FillMap: Invalid waypoints value %d for bank %d.\n",
 							Waypoints, ObjType.TypeID);
@@ -268,12 +268,12 @@ bool TCreature::SetOnMap(void){
 	int LoginY = this->posy;
 	int LoginZ = this->posz;
 	bool Player = (this->Type == PLAYER);
-	if(!SearchLoginField(&LoginX, &LoginY, &LoginZ, 1, Player)){
+	if(!search_login_field(&LoginX, &LoginY, &LoginZ, 1, Player)){
 		bool Found = false;
-		if(IsHouse(LoginX, LoginY, LoginZ)){
-			uint16 HouseID = GetHouseID(LoginX, LoginY, LoginZ);
-			GetExitPosition(HouseID, &LoginX, &LoginY, &LoginZ);
-			Found = SearchLoginField(&LoginX, &LoginY, &LoginZ, 1, Player);
+		if(is_house(LoginX, LoginY, LoginZ)){
+			uint16 HouseID = get_house_id(LoginX, LoginY, LoginZ);
+			get_exit_position(HouseID, &LoginX, &LoginY, &LoginZ);
+			Found = search_login_field(&LoginX, &LoginY, &LoginZ, 1, Player);
 		}
 
 		if(!Found){
@@ -283,7 +283,7 @@ bool TCreature::SetOnMap(void){
 		}
 	}
 
-	Object Con = GetMapContainer(LoginX, LoginY, LoginZ);
+	Object Con = get_map_container(LoginX, LoginY, LoginZ);
 	if(Con == NONE){
 		error("TCreature::SetOnMap: Map container for point [%d,%d,%d] does not exist.\n",
 				LoginX, LoginY, LoginZ);
@@ -294,11 +294,11 @@ bool TCreature::SetOnMap(void){
 	this->posy = LoginY;
 	this->posz = LoginZ;
 
-	// NOTE(fusion): `Create` automatically sets `this->CrObject` and creates
+	// NOTE(fusion): `create` automatically sets `this->CrObject` and creates
 	// its body container slots.
 	bool Result = true;
 	try{
-		Create(Con, TYPEID_CREATURE_CONTAINER, this->ID);
+		create(Con, TYPEID_CREATURE_CONTAINER, this->ID);
 	}catch(RESULT r){
 		error("TCreature::SetOnMap: Cannot place creature ([%d,%d,%d] - Exception %d).\n",
 				LoginX, LoginY, LoginZ, r);
@@ -316,11 +316,11 @@ bool TCreature::DelOnMap(void){
 		return true;
 	}
 
-	// TODO(fusion): I feel `Delete` should also manage `this->CrObject` automatically.
+	// TODO(fusion): I feel `delete_op` should also manage `this->CrObject` automatically.
 	bool Result = true;
 	this->CrObject = NONE;
 	try{
-		Delete(Obj, -1);
+		delete_op(Obj, -1);
 	}catch(RESULT r){
 		error("TCreature::DelOnMap: Error Deleting CreatureObject: %d\n", r);
 		Result = false;
@@ -367,17 +367,17 @@ void TCreature::Go(int DestX, int DestY, int DestZ){
 	if(!this->MovePossible(DestX, DestY, DestZ, true, false)){
 		bool DiagonalMove = (OrigX != DestX && OrigY != DestY);
 		if(this->Type == PLAYER && !DiagonalMove){
-			// TODO(fusion): These are quite similar to `MagicClimbing`. Perhaps
+			// TODO(fusion): These are quite similar to `magic_climbing`. Perhaps
 			// there is an inlined function here that checks whether climbing is
 			// possible.
-			if(DestZ > 0 && GetHeight(OrigX, OrigY, OrigZ) >= 24
-					&& !CoordinateFlag(OrigX, OrigY, OrigZ - 1, BANK)
-					&& !CoordinateFlag(OrigX, OrigY, OrigZ - 1, UNPASS)
+			if(DestZ > 0 && get_height(OrigX, OrigY, OrigZ) >= 24
+					&& !coordinate_flag(OrigX, OrigY, OrigZ - 1, BANK)
+					&& !coordinate_flag(OrigX, OrigY, OrigZ - 1, UNPASS)
 					&& this->MovePossible(DestX, DestY, DestZ - 1, true, true)){
 				DestZ -= 1;
-			}else if(DestZ < 15 && GetHeight(DestX, DestY, DestZ + 1) >= 24
-					&& !CoordinateFlag(DestX, DestY, DestZ, BANK)
-					&& !CoordinateFlag(DestX, DestY, DestZ, UNPASS)
+			}else if(DestZ < 15 && get_height(DestX, DestY, DestZ + 1) >= 24
+					&& !coordinate_flag(DestX, DestY, DestZ, BANK)
+					&& !coordinate_flag(DestX, DestY, DestZ, UNPASS)
 					&& this->MovePossible(DestX, DestY, DestZ + 1, true, true)){
 				DestZ += 1;
 			}
@@ -388,13 +388,13 @@ void TCreature::Go(int DestX, int DestY, int DestZ){
 		}
 	}
 
-	Object Dest = GetMapContainer(DestX, DestY, DestZ);
-	::Move(this->ID, this->CrObject, Dest, -1, false, NONE);
+	Object Dest = get_map_container(DestX, DestY, DestZ);
+	::move(this->ID, this->CrObject, Dest, -1, false, NONE);
 }
 
 void TCreature::Rotate(int Direction){
 	this->Direction = Direction;
-	AnnounceChangedObject(this->CrObject, OBJECT_CHANGED);
+	announce_changed_object(this->CrObject, OBJECT_CHANGED);
 }
 
 void TCreature::Rotate(TCreature *Target){
@@ -429,14 +429,14 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_creature_container()){
 		this->Combat.DelayAttack(2000);
 	}
 
 	int MoveCount = (int)Count;
-	if(ObjType.getFlag(CUMULATIVE)){
-		int ObjAmount = (int)Obj.getAttribute(AMOUNT);
+	if(ObjType.get_flag(CUMULATIVE)){
+		int ObjAmount = (int)Obj.get_attribute(AMOUNT);
 		if(MoveCount > ObjAmount){
 			MoveCount = ObjAmount;
 		}
@@ -444,7 +444,7 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 
 	if(DestX == 0xFFFF){ // SPECIAL_COORDINATE ?
 		if(DestY == INVENTORY_ANY){
-			// NOTE(fusion): `CheckInventoryDestination` will throw if it's not
+			// NOTE(fusion): `check_inventory_destination` will throw if it's not
 			// possible to place the object on the chosen container. We want to
 			// find a slot that doesn't make it throw while giving priority to
 			// non hand or ammo slots.
@@ -452,8 +452,8 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 					Position <= INVENTORY_LAST;
 					Position += 1){
 				try{
-					Object Con = GetBodyContainer(this->ID, Position);
-					CheckInventoryDestination(Obj, Con, false);
+					Object Con = get_body_container(this->ID, Position);
+					check_inventory_destination(Obj, Con, false);
 				}catch(RESULT r){
 					continue;
 				}
@@ -473,10 +473,10 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 				for(int Position = INVENTORY_FIRST;
 						Position <= INVENTORY_LAST;
 						Position += 1){
-					Object Con = GetBodyObject(this->ID, Position);
-					if(Con != NONE && Con.getObjectType().getFlag(CONTAINER)){
+					Object Con = get_body_object(this->ID, Position);
+					if(Con != NONE && Con.get_object_type().get_flag(CONTAINER)){
 						try{
-							CheckContainerDestination(Obj, Con);
+							check_container_destination(Obj, Con);
 						}catch(RESULT r){
 							continue;
 						}
@@ -494,21 +494,21 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 		Object DestCon = NONE;
 		Object DestObj = NONE;
 		if(DestY >= INVENTORY_FIRST && DestY <= INVENTORY_LAST){
-			DestCon = GetBodyContainer(this->ID, DestY);
-			DestObj = GetBodyObject(this->ID, DestY);
+			DestCon = get_body_container(this->ID, DestY);
+			DestObj = get_body_object(this->ID, DestY);
 		}else if(DestY >= CONTAINER_FIRST && DestY <= CONTAINER_LAST){
-			DestCon = GetBodyContainer(this->ID, DestY);
+			DestCon = get_body_container(this->ID, DestY);
 			if(DestZ < 254){
-				// TODO(fusion): The last argument to `GetObject` is the object
+				// TODO(fusion): The last argument to `get_object` is the object
 				// type we expect to find and it seems that the type id of a map
 				// container (which is 0) can be used as a wildcard for any object
 				// it finds.
-				DestObj = GetObject(this->ID, DestX, DestY, DestZ, DestZ, 0);
+				DestObj = get_object(this->ID, DestX, DestY, DestZ, DestZ, 0);
 			}else if(DestZ == 254){
 				if(DestCon == NONE){
 					throw NOTACCESSIBLE;
 				}
-				DestCon = DestCon.getContainer();
+				DestCon = DestCon.get_container();
 			}
 		}else{
 			error("TCreature::Move: Invalid container code %d.\n", DestY);
@@ -516,12 +516,12 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 		}
 
 		if(DestObj != NONE){
-			ObjectType DestObjType = DestObj.getObjectType();
-			if(DestObjType.getFlag(CONTAINER)){
+			ObjectType DestObjType = DestObj.get_object_type();
+			if(DestObjType.get_flag(CONTAINER)){
 				DestCon = DestObj;
 				DestObj = NONE;
-			}else if(DestObjType.getFlag(CUMULATIVE) && DestObjType == ObjType){
-				int DestAmount = (int)DestObj.getAttribute(AMOUNT);
+			}else if(DestObjType.get_flag(CUMULATIVE) && DestObjType == ObjType){
+				int DestAmount = (int)DestObj.get_attribute(AMOUNT);
 				int MergeCount = MoveCount;
 				if((DestAmount + MergeCount) > 100){
 					MergeCount = 100 - DestAmount;
@@ -529,7 +529,7 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 
 				if(MergeCount > 0){
 					try{
-						::Merge(this->ID, Obj, DestObj, MergeCount, NONE);
+						::merge(this->ID, Obj, DestObj, MergeCount, NONE);
 						MoveCount -= MergeCount;
 						if(MoveCount <= 0){
 							return;
@@ -550,7 +550,7 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 		}
 
 		try{
-			::Move(this->ID, Obj, DestCon, MoveCount, false, DestObj);
+			::move(this->ID, Obj, DestCon, MoveCount, false, DestObj);
 		}catch(RESULT r){
 			// NOTE(fusion): Attempt to exchange inventory items.
 			if(DestY >= INVENTORY_FIRST && DestY <= INVENTORY_LAST
@@ -559,29 +559,29 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 						|| r == HANDSNOTFREE
 						|| r == HANDBLOCKED
 						|| r == ONEWEAPONONLY)){
-				Object ObjCon = Obj.getContainer();
-				::Move(this->ID, DestObj, ObjCon, -1, false, NONE);
-				::Move(this->ID, Obj, DestCon, MoveCount, false, DestObj);
+				Object ObjCon = Obj.get_container();
+				::move(this->ID, DestObj, ObjCon, -1, false, NONE);
+				::move(this->ID, Obj, DestCon, MoveCount, false, DestObj);
 			}else{
 				throw;
 			}
 		}
 	}else{
-		Object Dest = GetMapContainer(DestX, DestY, DestZ);
+		Object Dest = get_map_container(DestX, DestY, DestZ);
 		if(!Dest.exists()){
 			throw ERROR;
 		}
 
-		if(ObjType.getFlag(HANG)
-				&& (CoordinateFlag(DestX, DestY, DestZ, HOOKSOUTH)
-					|| CoordinateFlag(DestY, DestY, DestZ, HOOKEAST))
-				&& !ObjectInRange(this->ID, Dest, 1)){
+		if(ObjType.get_flag(HANG)
+				&& (coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH)
+					|| coordinate_flag(DestY, DestY, DestZ, HOOKEAST))
+				&& !object_in_range(this->ID, Dest, 1)){
 			if(this->ToDoClear() && this->Type == PLAYER){
 				SendSnapback(this->Connection);
 			}
 
 			// NOTE(fusion): Pick up object if it's not in our inventory.
-			if(GetObjectCreatureID(Obj) != this->ID){
+			if(get_object_creature_id(Obj) != this->ID){
 				this->ToDoMove(Obj, 0xFFFF, 0, 0, 1);
 			}
 
@@ -590,7 +590,7 @@ void TCreature::Move(Object Obj, int DestX, int DestY, int DestZ, uint8 Count){
 			this->ToDoMove(Obj, DestX, DestY, DestZ, 1);
 			this->ToDoStart();
 		}else{
-			::Move(this->ID, Obj, Dest, MoveCount, false, NONE);
+			::move(this->ID, Obj, Dest, MoveCount, false, NONE);
 		}
 	}
 }
@@ -601,7 +601,7 @@ void TCreature::Trade(Object Obj, uint32 PartnerID){
 		throw ERROR;
 	}
 
-	if(!Obj.exists() || !ObjectAccessible(this->ID, Obj, 1)){
+	if(!Obj.exists() || !object_accessible(this->ID, Obj, 1)){
 		throw NOTACCESSIBLE;
 	}
 
@@ -618,15 +618,15 @@ void TCreature::Trade(Object Obj, uint32 PartnerID){
 		throw ALREADYTRADING;
 	}
 
-	if(CountObjects(Obj) > 100){
+	if(count_objects(Obj) > 100){
 		throw TOOMANYOBJECTS;
 	}
 
-	if(ObjectDistance(this->CrObject, Partner->CrObject) > 2){
+	if(object_distance(this->CrObject, Partner->CrObject) > 2){
 		throw OUTOFRANGE;
 	}
 
-	if(!ThrowPossible(this->posx, this->posy, this->posz,
+	if(!throw_possible(this->posx, this->posy, this->posz,
 			Partner->posx, Partner->posy, Partner->posz, 0)){
 		throw CANNOTTHROW;
 	}
@@ -638,19 +638,19 @@ void TCreature::Trade(Object Obj, uint32 PartnerID){
 	// NOTE(fusion): Check if one object is contained by the other.
 	if(Partner->TradeObject != NONE){
 		Object Help = Partner->TradeObject;
-		while(Help != NONE && !Help.getObjectType().isMapContainer()){
+		while(Help != NONE && !Help.get_object_type().is_map_container()){
 			if(Help == Obj){
 				throw NOTACCESSIBLE;
 			}
-			Help = Help.getContainer();
+			Help = Help.get_container();
 		}
 
 		Help = Obj;
-		while(Help != NONE && !Help.getObjectType().isMapContainer()){
+		while(Help != NONE && !Help.get_object_type().is_map_container()){
 			if(Help == Partner->TradeObject){
 				throw NOTACCESSIBLE;
 			}
-			Help = Help.getContainer();
+			Help = Help.get_container();
 		}
 	}
 
@@ -679,17 +679,17 @@ void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy){
 			throw DESTROYED;
 		}
 
-		bool DistUse = Obj1.getObjectType().getFlag(DISTUSE);
-		if(!DistUse && !ObjectInRange(this->ID, Obj2, 1)){
+		bool DistUse = Obj1.get_object_type().get_flag(DISTUSE);
+		if(!DistUse && !object_in_range(this->ID, Obj2, 1)){
 			int ObjX2, ObjY2, ObjZ2;
-			GetObjectCoordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
+			get_object_coordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
 
 			if(this->ToDoClear() && this->Type == PLAYER){
 				SendSnapback(this->Connection);
 			}
 
 			// NOTE(fusion): Pick up object 1 if it's not in our inventory.
-			if(GetObjectCreatureID(Obj1) != this->ID){
+			if(get_object_creature_id(Obj1) != this->ID){
 				this->ToDoMove(Obj1, 0xFFFF, 0, 0, 1);
 			}
 
@@ -703,14 +703,14 @@ void TCreature::Use(Object Obj1, Object Obj2, uint8 Dummy){
 			return;
 		}
 
-		if(DistUse && !ObjectInRange(this->ID, Obj2, 7)){
+		if(DistUse && !object_in_range(this->ID, Obj2, 7)){
 			throw OUTOFRANGE;
 		}
 
 		this->EarliestMultiuseTime = ServerMilliseconds + 1000;
 	}
 
-	::Use(this->ID, Obj1, Obj2, Dummy);
+	::use(this->ID, Obj1, Obj2, Dummy);
 }
 
 void TCreature::Turn(Object Obj){
@@ -718,7 +718,7 @@ void TCreature::Turn(Object Obj){
 		throw DESTROYED;
 	}
 
-	::Turn(this->ID, Obj);
+	::turn(this->ID, Obj);
 }
 
 void TCreature::Attack(void){
@@ -794,7 +794,7 @@ void TCreature::Execute(void){
 					const char *Text = GetDynamicString(TD.Talk.Text);
 					if(Text != NULL){
 						const char *Addressee = GetDynamicString(TD.Talk.Addressee);
-						Talk(this->ID, TD.Talk.Mode, Addressee, Text, TD.Talk.CheckSpamming);
+						talk(this->ID, TD.Talk.Mode, Addressee, Text, TD.Talk.CheckSpamming);
 					}else{
 						error("TCreature::Execute: Text is NULL for %s.\n", this->Name);
 					}
@@ -1054,7 +1054,7 @@ void TCreature::ToDoRotate(int Direction){
 
 void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum,
 						int DestX, int DestY, int DestZ, uint8 Count){
-	Object Obj = GetObject(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
+	Object Obj = get_object(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
 	if(!Obj.exists()){
 		throw NOTACCESSIBLE;
 	}
@@ -1067,15 +1067,15 @@ void TCreature::ToDoMove(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 			throw DOWNSTAIRS;
 		}
 
-		if(!ObjectInRange(this->ID, Obj, 1)){
+		if(!object_in_range(this->ID, Obj, 1)){
 			this->ToDoGo(ObjX, ObjY, ObjZ, false, INT_MAX);
 		}
 	}
 
 	int Delay = 100;
-	if(Obj.getObjectType().isCreatureContainer()){
-		Object DestBank = GetFirstObject(DestX, DestY, DestZ);
-		if(DestBank == NONE || !DestBank.getObjectType().getFlag(BANK)){
+	if(Obj.get_object_type().is_creature_container()){
+		Object DestBank = get_first_object(DestX, DestY, DestZ);
+		if(DestBank == NONE || !DestBank.get_object_type().get_flag(BANK)){
 			throw NOTACCESSIBLE;
 		}
 
@@ -1108,12 +1108,12 @@ void TCreature::ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Coun
 		throw NOTACCESSIBLE;
 	}
 
-	if(!ObjectInRange(this->ID, Obj, 1)){
+	if(!object_in_range(this->ID, Obj, 1)){
 		this->ToDoGo(DestX, DestY, DestZ, false, INT_MAX);
 	}
 
 	int Delay = 100;
-	if(Obj.getObjectType().isCreatureContainer()){
+	if(Obj.get_object_type().is_creature_container()){
 		// TODO(fusion): We don't add the delay until the earliest walk time
 		// like in the other variant above.
 		Delay = 1000;
@@ -1133,21 +1133,21 @@ void TCreature::ToDoMove(Object Obj, int DestX, int DestY, int DestZ, uint8 Coun
 
 void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum,
 						uint32 TradePartner){
-	Object Obj = GetObject(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
+	Object Obj = get_object(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
 	if(!Obj.exists()){
 		throw NOTACCESSIBLE;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(UNMOVE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(UNMOVE)){
 		throw NOTMOVABLE;
 	}
 
-	if(!ObjType.getFlag(TAKE)){
+	if(!ObjType.get_flag(TAKE)){
 		throw NOTTAKABLE;
 	}
 
-	if(ObjType.isCreatureContainer()){
+	if(ObjType.is_creature_container()){
 		error("TCreature::ToDoTrade: Object is a creature.\n");
 		throw ERROR;
 	}
@@ -1175,7 +1175,7 @@ void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 R
 			throw DOWNSTAIRS;
 		}
 
-		if(!ObjectInRange(this->ID, Obj, 1)){
+		if(!object_in_range(this->ID, Obj, 1)){
 			this->ToDoGo(ObjX, ObjY, ObjZ, false, INT_MAX);
 		}
 	}
@@ -1189,14 +1189,14 @@ void TCreature::ToDoTrade(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 R
 
 void TCreature::ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType Type1, uint8 RNum1,
 						uint8 Dummy, int ObjX2, int ObjY2, int ObjZ2, ObjectType Type2, uint8 RNum2){
-	Object Obj1 = GetObject(this->ID, ObjX1, ObjY1, ObjZ1, RNum1, Type1);
+	Object Obj1 = get_object(this->ID, ObjX1, ObjY1, ObjZ1, RNum1, Type1);
 	if(!Obj1.exists()){
 		throw NOTACCESSIBLE;
 	}
 
 	Object Obj2 = NONE;
 	if(Count >= 2){
-		Obj2 = GetObject(this->ID, ObjX2, ObjY2, ObjZ2, RNum2, Type2);
+		Obj2 = get_object(this->ID, ObjX2, ObjY2, ObjZ2, RNum2, Type2);
 		if(!Obj2.exists()){
 			throw NOTACCESSIBLE;
 		}
@@ -1210,7 +1210,7 @@ void TCreature::ToDoUse(uint8 Count, int ObjX1, int ObjY1, int ObjZ1, ObjectType
 			throw DOWNSTAIRS;
 		}
 
-		if(!ObjectInRange(this->ID, Obj1, 1)){
+		if(!object_in_range(this->ID, Obj1, 1)){
 			this->ToDoGo(ObjX1, ObjY1, ObjZ1, false, INT_MAX);
 		}
 	}
@@ -1238,9 +1238,9 @@ void TCreature::ToDoUse(uint8 Count, Object Obj1, Object Obj2){
 		throw NOTACCESSIBLE;
 	}
 
-	if(!ObjectInRange(this->ID, Obj1, 1)){
+	if(!object_in_range(this->ID, Obj1, 1)){
 		int ObjX1, ObjY1, ObjZ1;
-		GetObjectCoordinates(Obj1, &ObjX1, &ObjY1, &ObjZ1);
+		get_object_coordinates(Obj1, &ObjX1, &ObjY1, &ObjZ1);
 		this->ToDoGo(ObjX1, ObjY1, ObjZ1, false, INT_MAX);
 	}
 
@@ -1256,7 +1256,7 @@ void TCreature::ToDoUse(uint8 Count, Object Obj1, Object Obj2){
 }
 
 void TCreature::ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RNum){
-	Object Obj = GetObject(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
+	Object Obj = get_object(this->ID, ObjX, ObjY, ObjZ, RNum, Type);
 	if(!Obj.exists()){
 		throw NOTACCESSIBLE;
 	}
@@ -1269,7 +1269,7 @@ void TCreature::ToDoTurn(int ObjX, int ObjY, int ObjZ, ObjectType Type, uint8 RN
 			throw DOWNSTAIRS;
 		}
 
-		if(!ObjectInRange(this->ID, Obj, 1)){
+		if(!object_in_range(this->ID, Obj, 1)){
 			this->ToDoGo(ObjX, ObjY, ObjZ, false, INT_MAX);
 		}
 	}
@@ -1328,11 +1328,11 @@ void TCreature::ToDoChangeState(int NewState){
 
 void TCreature::NotifyGo(void){
 	// IMPORTANT(fusion): This and the function that does move `this->CrObject`
-	// should be the only ones where the output of `GetObjectCoordinates` will
+	// should be the only ones where the output of `get_object_coordinates` will
 	// differ from `this->posx`, `this->posy`, and `this->posz`.
 
 	int DestX, DestY, DestZ;
-	GetObjectCoordinates(this->CrObject, &DestX, &DestY, &DestZ);
+	get_object_coordinates(this->CrObject, &DestX, &DestY, &DestZ);
 	MoveChainCreature(this, DestX, DestY);
 
 	int OrigX = this->posx;
@@ -1409,7 +1409,7 @@ void TCreature::NotifyGo(void){
 				continue;
 			}
 
-			if(!ObjectAccessible(this->ID, Con, 1)){
+			if(!object_accessible(this->ID, Con, 1)){
 				((TPlayer*)this)->SetOpenContainer(ContainerNr, NONE);
 				SendCloseContainer(this->Connection, ContainerNr);
 			}
@@ -1428,9 +1428,9 @@ void TCreature::NotifyGo(void){
 				}
 			}
 
-			if(Partner == NULL || !ObjectAccessible(this->ID, TradeObject, 1)
-					|| ObjectDistance(this->CrObject, Partner->CrObject) > 2
-					|| !ThrowPossible(this->posx, this->posy, this->posz,
+			if(Partner == NULL || !object_accessible(this->ID, TradeObject, 1)
+					|| object_distance(this->CrObject, Partner->CrObject) > 2
+					|| !throw_possible(this->posx, this->posy, this->posz,
 							Partner->posx, Partner->posy, Partner->posz, 0)){
 				SendCloseTrade(this->Connection);
 				SendMessage(this->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
@@ -1440,14 +1440,14 @@ void TCreature::NotifyGo(void){
 	}
 
 	int Waypoints = 0;
-	Object Bank = GetFirstObject(DestX, DestY, DestZ);
+	Object Bank = get_first_object(DestX, DestY, DestZ);
 	while(Bank != NONE){
-		ObjectType BankType = Bank.getObjectType();
-		if(BankType.getFlag(BANK)){
-			Waypoints = BankType.getAttribute(WAYPOINTS);
+		ObjectType BankType = Bank.get_object_type();
+		if(BankType.get_flag(BANK)){
+			Waypoints = BankType.get_attribute(WAYPOINTS);
 			break;
 		}
-		Bank = Bank.getNextObject();
+		Bank = Bank.get_next_object();
 	}
 
 	if(Bank != NONE){
@@ -1469,7 +1469,7 @@ void TCreature::NotifyGo(void){
 
 void TCreature::NotifyTurn(Object DestCon){
 	int DestX, DestY, DestZ;
-	GetObjectCoordinates(DestCon, &DestX, &DestY, &DestZ);
+	get_object_coordinates(DestCon, &DestX, &DestY, &DestZ);
 
 	// NOTE(fusion): This is somewhat similar to `TCreature::Rotate`.
 	int OffsetX = DestX - this->posx;
@@ -1520,27 +1520,27 @@ void TCreature::NotifyChangeInventory(void){
 		for(int Position = INVENTORY_FIRST;
 				Position <= INVENTORY_LAST;
 				Position += 1){
-			Object Obj = GetBodyObject(this->ID, Position);
+			Object Obj = get_body_object(this->ID, Position);
 			if(Obj == NONE){
 				continue;
 			}
 
-			ObjectType ObjType = Obj.getObjectType();
-			if(!ObjType.getFlag(SKILLBOOST)){
+			ObjectType ObjType = Obj.get_object_type();
+			if(!ObjType.get_flag(SKILLBOOST)){
 				continue;
 			}
 
-			if(!ObjType.getFlag(CLOTHES)){
+			if(!ObjType.get_flag(CLOTHES)){
 				error("TCreature::NotifyChangeInventory: Object %d has SKILLBOOST but not CLOTHES.\n",
 						ObjType.TypeID);
 				continue;
 			}
 
-			if((int)ObjType.getAttribute(BODYPOSITION) != Position){
+			if((int)ObjType.get_attribute(BODYPOSITION) != Position){
 				continue;
 			}
 
-			int SkillNr = (int)ObjType.getAttribute(SKILLNUMBER);
+			int SkillNr = (int)ObjType.get_attribute(SKILLNUMBER);
 			if(SkillNr < 0 || SkillNr >= NARRAY(this->Skills)){
 				error("TCreature::NotifyChangeInventory: Object %d has invalid SKILLNUMBER %d.\n",
 						ObjType.TypeID, SkillNr);
@@ -1550,8 +1550,8 @@ void TCreature::NotifyChangeInventory(void){
 			// IMPORTANT(fusion): The value for the skill modification is stored
 			// as uint32 but is bitcast from a signed integer on load, meaning that
 			// that bitcasting it back should retrieve the original signed value.
-			//	See `LoadObjects`.
-			NewDelta[SkillNr] += (int)ObjType.getAttribute(SKILLMODIFICATION);
+			//	See `load_objects`.
+			NewDelta[SkillNr] += (int)ObjType.get_attribute(SKILLMODIFICATION);
 		}
 
 		bool SkillsChanged = false;
@@ -1563,7 +1563,7 @@ void TCreature::NotifyChangeInventory(void){
 				SkillsChanged = true;
 				Skill->DAct = NewDelta[SkillNr];
 				if(SkillNr == SKILL_GO_STRENGTH){
-					AnnounceChangedCreature(this->ID, CREATURE_SPEED_CHANGED);
+					announce_changed_creature(this->ID, CREATURE_SPEED_CHANGED);
 				}else if(SkillNr == SKILL_ILLUSION){
 					if(NewDelta[SKILL_ILLUSION] > 0){
 						if(!this->IsInvisible()){
@@ -1575,7 +1575,7 @@ void TCreature::NotifyChangeInventory(void){
 					}else if(Skill->TimerValue() == 0){
 						this->Outfit = this->OrgOutfit;
 					}
-					AnnounceChangedCreature(this->ID, CREATURE_OUTFIT_CHANGED);
+					announce_changed_creature(this->ID, CREATURE_OUTFIT_CHANGED);
 				}
 			}
 		}

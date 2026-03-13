@@ -6,9 +6,9 @@
 
 struct TCreature;
 struct TPlayer;
-struct TReportedStatement;
+struct ReportedStatement;
 
-enum TWriterThreadOrderType: int {
+enum WriterThreadOrderType: int {
 	WRITER_ORDER_TERMINATE			= 0,
 	WRITER_ORDER_LOGOUT				= 1,
 	WRITER_ORDER_PLAYERLIST			= 2,
@@ -21,23 +21,23 @@ enum TWriterThreadOrderType: int {
 	WRITER_ORDER_SAVEPLAYERDATA		= 9,
 };
 
-enum TWriterThreadReplyType: int {
+enum WriterThreadReplyType: int {
 	WRITER_REPLY_BROADCAST			= 0,
 	WRITER_REPLY_DIRECT				= 1,
 	WRITER_REPLY_LOGOUT				= 2,
 };
 
-struct TProtocolThreadOrder{
+struct ProtocolThreadOrder{
 	char ProtocolName[20];
 	char Text[256];
 };
 
-struct TWriterThreadOrder{
-	TWriterThreadOrderType OrderType;
+struct WriterThreadOrder{
+	WriterThreadOrderType OrderType;
 	const void *Data;
 };
 
-struct TLogoutOrderData{
+struct LogoutOrderData{
 	uint32 CharacterID;
 	int Level;
 	int Profession;
@@ -46,21 +46,21 @@ struct TLogoutOrderData{
 	char Residence[30];
 };
 
-struct TPlayerlistOrderData{
+struct PlayerlistOrderData{
 	int NumberOfPlayers;
 	const char *PlayerNames;
 	int *PlayerLevels;
 	int *PlayerProfessions;
 };
 
-struct TKillStatisticsOrderData{
+struct KillStatisticsOrderData{
 	int NumberOfRaces;
 	const char *RaceNames;
 	int *KilledPlayers;
 	int *KilledCreatures;
 };
 
-struct TPunishmentOrderData{
+struct PunishmentOrderData{
 	uint32 GamemasterID;
 	char GamemasterName[30];
 	char CriminalName[30];
@@ -69,12 +69,12 @@ struct TPunishmentOrderData{
 	int Action;
 	char Comment[200];
 	int NumberOfStatements;
-	vector<TReportedStatement> *ReportedStatements;
+	vector<ReportedStatement> *ReportedStatements;
 	uint32 StatementID;
-	bool IPBanishment;
+	bool ip_banishment;
 };
 
-struct TCharacterDeathOrderData{
+struct CharacterDeathOrderData{
 	uint32 CharacterID;
 	int Level;
 	uint32 Offender;
@@ -83,76 +83,76 @@ struct TCharacterDeathOrderData{
 	time_t Time;
 };
 
-struct TBuddyOrderData{
+struct BuddyOrderData{
 	uint32 AccountID;
 	uint32 Buddy;
 };
 
-struct TWriterThreadReply{
-	TWriterThreadReplyType ReplyType;
+struct WriterThreadReply{
+	WriterThreadReplyType ReplyType;
 	const void *Data;
 };
 
-struct TBroadcastReplyData{
+struct BroadcastReplyData{
 	char Message[100];
 };
 
-struct TDirectReplyData{
+struct DirectReplyData{
 	uint32 CharacterID;
 	char Message[100];
 };
 
-void InitProtocol(void);
-void InsertProtocolOrder(const char *ProtocolName, const char *Text);
-void GetProtocolOrder(TProtocolThreadOrder *Order);
-void WriteProtocol(const char *ProtocolName, const char *Text);
-int ProtocolThreadLoop(void *Unused);
-void InitLog(const char *ProtocolName);
-void Log(const char *ProtocolName, const char *Text, ...) ATTR_PRINTF(2, 3);
+void init_protocol(void);
+void insert_protocol_order(const char *ProtocolName, const char *Text);
+void get_protocol_order(ProtocolThreadOrder *Order);
+void write_protocol(const char *ProtocolName, const char *Text);
+int protocol_thread_loop(void *Unused);
+void init_log(const char *ProtocolName);
+void log_message(const char *ProtocolName, const char *Text, ...) ATTR_PRINTF(2, 3);
 
-void InitWriterBuffers(void);
-int GetOrderBufferSpace(void);
-void InsertOrder(TWriterThreadOrderType OrderType, const void *Data);
-void GetOrder(TWriterThreadOrder *Order);
-void TerminateWriterOrder(void);
-void LogoutOrder(TPlayer *Player);
-void PlayerlistOrder(int NumberOfPlayers, const char *PlayerNames,
+void init_writer_buffers(void);
+int get_order_buffer_space(void);
+void insert_order(WriterThreadOrderType OrderType, const void *Data);
+void get_order(WriterThreadOrder *Order);
+void terminate_writer_order(void);
+void logout_order(TPlayer *Player);
+void playerlist_order(int NumberOfPlayers, const char *PlayerNames,
 		int *PlayerLevels, int *PlayerProfessions);
-void KillStatisticsOrder(int NumberOfRaces, const char *RaceNames,
+void kill_statistics_order(int NumberOfRaces, const char *RaceNames,
 		int *KilledPlayers, int *KilledCreatures);
-void PunishmentOrder(TCreature *Gamemaster, const char *Name, const char *IPAddress,
+void punishment_order(TCreature *Gamemaster, const char *Name, const char *IPAddress,
 		int Reason, int Action, const char *Comment, int NumberOfStatements,
-		vector<TReportedStatement> *ReportedStatements, uint32 StatementID,
-		bool IPBanishment);
-void CharacterDeathOrder(TCreature *Creature, int OldLevel,
+		vector<ReportedStatement> *ReportedStatements, uint32 StatementID,
+		bool ip_banishment);
+void character_death_order(TCreature *Creature, int OldLevel,
 		uint32 OffenderID, const char *Remark, bool Unjustified);
-void AddBuddyOrder(TCreature *Creature, uint32 BuddyID);
-void RemoveBuddyOrder(TCreature *Creature, uint32 BuddyID);
-void DecrementIsOnlineOrder(uint32 CharacterID);
-void SavePlayerDataOrder(void);
-void ProcessLogoutOrder(TLogoutOrderData *Data);
-void ProcessPlayerlistOrder(TPlayerlistOrderData *Data);
-void ProcessKillStatisticsOrder(TKillStatisticsOrderData *Data);
-void ProcessPunishmentOrder(TPunishmentOrderData *Data);
-void ProcessCharacterDeathOrder(TCharacterDeathOrderData *Data);
-void ProcessAddBuddyOrder(TBuddyOrderData *Data);
-void ProcessRemoveBuddyOrder(TBuddyOrderData *Data);
-void ProcessDecrementIsOnlineOrder(uint32 CharacterID);
-int WriterThreadLoop(void *Unused);
+void add_buddy_order(TCreature *Creature, uint32 BuddyID);
+void remove_buddy_order(TCreature *Creature, uint32 BuddyID);
+void decrement_is_online_order(uint32 CharacterID);
+void save_player_data_order(void);
+void process_logout_order(LogoutOrderData *Data);
+void process_playerlist_order(PlayerlistOrderData *Data);
+void process_kill_statistics_order(KillStatisticsOrderData *Data);
+void process_punishment_order(PunishmentOrderData *Data);
+void process_character_death_order(CharacterDeathOrderData *Data);
+void process_add_buddy_order(BuddyOrderData *Data);
+void process_remove_buddy_order(BuddyOrderData *Data);
+void process_decrement_is_online_order(uint32 CharacterID);
+int writer_thread_loop(void *Unused);
 
-void InsertReply(TWriterThreadReplyType ReplyType, const void *Data);
-void BroadcastReply(const char *Text, ...) ATTR_PRINTF(1, 2);
-void DirectReply(uint32 CharacterID, const char *Text, ...) ATTR_PRINTF(2, 3);
-void LogoutReply(const char *PlayerName);
-bool GetReply(TWriterThreadReply *Reply);
-void ProcessBroadcastReply(TBroadcastReplyData *Data);
-void ProcessDirectReply(TDirectReplyData *Data);
-void ProcessLogoutReply(const char *Name);
-void ProcessWriterThreadReplies(void);
+void insert_reply(WriterThreadReplyType ReplyType, const void *Data);
+void broadcast_reply(const char *Text, ...) ATTR_PRINTF(1, 2);
+void direct_reply(uint32 CharacterID, const char *Text, ...) ATTR_PRINTF(2, 3);
+void logout_reply(const char *PlayerName);
+bool get_reply(WriterThreadReply *Reply);
+void process_broadcast_reply(BroadcastReplyData *Data);
+void process_direct_reply(DirectReplyData *Data);
+void process_logout_reply(const char *Name);
+void process_writer_thread_replies(void);
 
-void ClearPlayers(void);
-void InitWriter(void);
-void AbortWriter(void);
-void ExitWriter(void);
+void clear_players(void);
+void init_writer(void);
+void abort_writer(void);
+void exit_writer(void);
 
 #endif //TIBIA_WRITER_H_

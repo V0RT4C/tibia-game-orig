@@ -2,7 +2,7 @@
 #include "cr.h"
 #include "magic.h"
 
-const char *GetLiquidName(int LiquidType){
+const char *get_liquid_name(int LiquidType){
 	const char *LiquidName;
 	switch(LiquidType) {
 		case LIQUID_NONE:		LiquidName = "nothing"; break;
@@ -19,7 +19,7 @@ const char *GetLiquidName(int LiquidType){
 		case LIQUID_LIFE:		LiquidName = "lifefluid"; break;
 		case LIQUID_LEMONADE:	LiquidName = "lemonade"; break;
 		default:{
-			error("GetLiquidName: Invalid liquid type %d\n", LiquidType);
+			error("get_liquid_name: Invalid liquid type %d\n", LiquidType);
 			LiquidName = "unknown";
 			break;
 		}
@@ -27,7 +27,7 @@ const char *GetLiquidName(int LiquidType){
 	return LiquidName;
 }
 
-uint8 GetLiquidColor(int LiquidType){
+uint8 get_liquid_color(int LiquidType){
 	uint8 LiquidColor;
 	switch(LiquidType){
 		case LIQUID_NONE:		LiquidColor = LIQUID_COLORLESS; break;
@@ -44,7 +44,7 @@ uint8 GetLiquidColor(int LiquidType){
 		case LIQUID_LIFE:		LiquidColor = LIQUID_RED; break;
 		case LIQUID_LEMONADE:	LiquidColor = LIQUID_YELLOW; break;
 		default:{
-			error("GetLiquidColor: Invalid liquid type %d\n", LiquidType);
+			error("get_liquid_color: Invalid liquid type %d\n", LiquidType);
 			LiquidColor = LIQUID_COLORLESS;
 			break;
 		}
@@ -52,71 +52,71 @@ uint8 GetLiquidColor(int LiquidType){
 	return LiquidColor;
 }
 
-const char *GetName(Object Obj){
+const char *get_name(Object Obj){
 	char ObjectName[50] = {};
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_creature_container()){
 		TCreature *Creature = GetCreature(Obj);
 		if(Creature != NULL){
 			snprintf(ObjectName, sizeof(ObjectName), "%s", Creature->Name);
 		}else{
-			error("GetName: Creature %d does not exist.\n", Obj.getCreatureID());
+			error("get_name: Creature %d does not exist.\n", Obj.get_creature_id());
 		}
 	}else{
-		// IMPORTANT(fusion): `ObjectType::getName` returns the same static buffer
+		// IMPORTANT(fusion): `ObjectType::get_name` returns the same static buffer
 		// from `Plural`.
-		const char *TypeName = ObjType.getName(1);
+		const char *TypeName = ObjType.get_name(1);
 		if(TypeName != NULL){
 			strcpy(ObjectName, TypeName);
 		}
 
 		int LiquidType = LIQUID_NONE;
-		if(ObjType.getFlag(LIQUIDCONTAINER)){
-			LiquidType = (int)Obj.getAttribute(CONTAINERLIQUIDTYPE);
-		}else if(ObjType.getFlag(LIQUIDPOOL)){
-			LiquidType = (int)Obj.getAttribute(POOLLIQUIDTYPE);
+		if(ObjType.get_flag(LIQUIDCONTAINER)){
+			LiquidType = (int)Obj.get_attribute(CONTAINERLIQUIDTYPE);
+		}else if(ObjType.get_flag(LIQUIDPOOL)){
+			LiquidType = (int)Obj.get_attribute(POOLLIQUIDTYPE);
 		}
 
 		if(LiquidType != LIQUID_NONE){
 			strcat(ObjectName, " of ");
-			strcat(ObjectName, GetLiquidName(LiquidType));
+			strcat(ObjectName, get_liquid_name(LiquidType));
 		}
 	}
 
 	int Count = 1;
-	if(ObjType.getFlag(CUMULATIVE)){
-		Count = (int)Obj.getAttribute(AMOUNT);
+	if(ObjType.get_flag(CUMULATIVE)){
+		Count = (int)Obj.get_attribute(AMOUNT);
 	}
 
 	// IMPORTANT(fusion): `Plural` will return a static buffer.
 	return Plural(ObjectName, Count);
 }
 
-const char *GetInfo(Object Obj){
+const char *get_info(Object Obj){
 	if(!Obj.exists()){
-		error("GetInfo: Passed object does not exist.\n");
+		error("get_info: Passed object does not exist.\n");
 		return NULL;
 	}
 
-	return Obj.getObjectType().getDescription();
+	return Obj.get_object_type().get_description();
 }
 
-int GetWeight(Object Obj, int Count){
+int get_weight(Object Obj, int Count){
 	if(!Obj.exists()){
-		error("GetWeight: Passed object does not exist.\n");
+		error("get_weight: Passed object does not exist.\n");
 		return 0;
 	}
 
 	// TODO(fusion): Why do some UNTAKE items have weight, and even worse, hardcoded?
 
 	int Result = 0;
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(TAKE)){
-		int Weight = (int)ObjType.getAttribute(WEIGHT);
-		if(!ObjType.getFlag(CUMULATIVE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(TAKE)){
+		int Weight = (int)ObjType.get_attribute(WEIGHT);
+		if(!ObjType.get_flag(CUMULATIVE)){
 			Count = 1;
 		}else if(Count == -1){
-			Count = (int)Obj.getAttribute(AMOUNT);
+			Count = (int)Obj.get_attribute(AMOUNT);
 		}
 		Result = Weight * Count;
 	}else if(ObjType.TypeID == 2904){ // LARGE AMPHORA
@@ -128,52 +128,52 @@ int GetWeight(Object Obj, int Count){
 	}else if(ObjType.TypeID == 4311){ // DEAD HUMAN
 		Result = 80000;
 	}else{
-		error("GetWeight: Object type %d is not takeable.\n", ObjType.TypeID);
+		error("get_weight: Object type %d is not takeable.\n", ObjType.TypeID);
 	}
 	return Result;
 }
 
-int GetCompleteWeight(Object Obj){
-	int Result = GetWeight(Obj, -1);
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(CONTAINER) || ObjType.getFlag(CHEST)){
-		Object Help = GetFirstContainerObject(Obj);
-		Result += GetRowWeight(Help);
+int get_complete_weight(Object Obj){
+	int Result = get_weight(Obj, -1);
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(CONTAINER) || ObjType.get_flag(CHEST)){
+		Object Help = get_first_container_object(Obj);
+		Result += get_row_weight(Help);
 	}
 	return Result;
 }
 
-int GetRowWeight(Object Obj){
+int get_row_weight(Object Obj){
 	int Result = 0;
 	while(Obj != NONE){
-		// TODO(fusion): This is probably `GetCompleteWeight` inlined.
-		Result += GetWeight(Obj, -1);
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(CONTAINER) || ObjType.getFlag(CHEST)){
-			Object Help = GetFirstContainerObject(Obj);
-			Result += GetRowWeight(Help);
+		// TODO(fusion): This is probably `get_complete_weight` inlined.
+		Result += get_weight(Obj, -1);
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(CONTAINER) || ObjType.get_flag(CHEST)){
+			Object Help = get_first_container_object(Obj);
+			Result += get_row_weight(Help);
 		}
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Result;
 }
 
-uint32 GetObjectCreatureID(Object Obj){
+uint32 get_object_creature_id(Object Obj){
 	if(!Obj.exists()){
-		error("GetObjectCreatureID: Passed object does not exist.\n");
+		error("get_object_creature_id: Passed object does not exist.\n");
 		return 0;
 	}
 
 	uint32 CreatureID = 0;
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.isCreatureContainer()){
-			CreatureID = Obj.getCreatureID();
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.is_creature_container()){
+			CreatureID = Obj.get_creature_id();
 			break;
-		}else if(ObjType.isMapContainer()){
+		}else if(ObjType.is_map_container()){
 			break;
 		}
-		Obj = Obj.getContainer();
+		Obj = Obj.get_container();
 	}
 	return CreatureID;
 }
@@ -181,98 +181,98 @@ uint32 GetObjectCreatureID(Object Obj){
 // TODO(fusion): I'm not sure about this one. Objects inside containers would
 // also return the body position of the container even if it isn't actively
 // equipped.
-int GetObjectBodyPosition(Object Obj){
+int get_object_body_position(Object Obj){
 	if(!Obj.exists()){
-		error("GetObjectBodyPosition: Passed object does not exist.\n");
+		error("get_object_body_position: Passed object does not exist.\n");
 		return 0;
 	}
 
 	int Position = 0;
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.isBodyContainer()){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.is_body_container()){
 			// NOTE(fusion): Body container type ids match inventory slots exactly.
 			Position = ObjType.TypeID;
 			break;
-		}else if(ObjType.isMapContainer()){
+		}else if(ObjType.is_map_container()){
 			break;
 		}
-		Obj = Obj.getContainer();
+		Obj = Obj.get_container();
 	}
 	return Position;
 }
 
-int GetObjectRNum(Object Obj){
+int get_object_rnum(Object Obj){
 	if(!Obj.exists()){
-		error("GetObjectRNum: Passed object does not exist.\n");
+		error("get_object_rnum: Passed object does not exist.\n");
 		return 0;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isMapContainer()){
-		error("GetObjectRNum: Object is MapContainer.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_map_container()){
+		error("get_object_rnum: Object is MapContainer.\n");
 		return 0;
 	}
 
 	int Result = 0;
-	Object Con = Obj.getContainer();
-	Object Help = GetFirstContainerObject(Con);
+	Object Con = Obj.get_container();
+	Object Help = get_first_container_object(Con);
 	while(Help != NONE && Help != Obj){
 		Result += 1;
-		Help = Help.getNextObject();
+		Help = Help.get_next_object();
 	}
 
 	if(Help != Obj){
-		error("GetObjectRNum: Object is not in container\n");
+		error("get_object_rnum: Object is not in container\n");
 		Result = 0;
 	}
 
 	return Result;
 }
 
-bool ObjectInRange(uint32 CreatureID, Object Obj, int Range){
+bool object_in_range(uint32 CreatureID, Object Obj, int Range){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("ObjectInRange: Invalid creature CreatureID=%d passed.\n", CreatureID);
+		error("object_in_range: Invalid creature CreatureID=%d passed.\n", CreatureID);
 		return false;
 	}
 
 	if(!Obj.exists()){
-		error("ObjectInRange: Passed object does not exist.\n");
+		error("object_in_range: Passed object does not exist.\n");
 		return false;
 	}
 
 	int ObjX, ObjY, ObjZ;
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 	return Creature->posz == ObjZ
 		&& std::abs(Creature->posx - ObjX) <= Range
 		&& std::abs(Creature->posy - ObjY) <= Range;
 }
 
-bool ObjectAccessible(uint32 CreatureID, Object Obj, int Range){
+bool object_accessible(uint32 CreatureID, Object Obj, int Range){
 	if(!Obj.exists()){
-		error("ObjectAccessible: Passed object does not exist.\n");
+		error("object_accessible: Passed object does not exist.\n");
 		return false;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.isCreatureContainer()){
-		uint32 OwnerID = GetObjectCreatureID(Obj);
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.is_creature_container()){
+		uint32 OwnerID = get_object_creature_id(Obj);
 		if(OwnerID != 0){
 			return OwnerID == CreatureID;
 		}
 	}
 
-	if(ObjType.getFlag(HANG)){
+	if(ObjType.get_flag(HANG)){
 		int ObjX, ObjY, ObjZ;
-		GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+		get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 
-		bool HookSouth = CoordinateFlag(ObjX, ObjY, ObjZ, HOOKSOUTH);
-		bool HookEast = CoordinateFlag(ObjX, ObjY, ObjZ, HOOKEAST);
+		bool HookSouth = coordinate_flag(ObjX, ObjY, ObjZ, HOOKSOUTH);
+		bool HookEast = coordinate_flag(ObjX, ObjY, ObjZ, HOOKEAST);
 		if(HookSouth || HookEast){
 			TCreature *Creature = GetCreature(CreatureID);
 			if(Creature == NULL){
-				error("ObjectAccessible: Creature does not exist.\n");
+				error("object_accessible: Creature does not exist.\n");
 				return false;
 			}
 
@@ -296,20 +296,20 @@ bool ObjectAccessible(uint32 CreatureID, Object Obj, int Range){
 		}
 	}
 
-	return ObjectInRange(CreatureID, Obj, Range);
+	return object_in_range(CreatureID, Obj, Range);
 }
 
-int ObjectDistance(Object Obj1, Object Obj2){
+int object_distance(Object Obj1, Object Obj2){
 	if(!Obj1.exists() || !Obj2.exists()){
-		error("ObjectDistance: Passed objects do not exist.\n");
+		error("object_distance: Passed objects do not exist.\n");
 		return INT_MAX;
 	}
 
 	int Distance = INT_MAX;
 	int ObjX1, ObjY1, ObjZ1;
 	int ObjX2, ObjY2, ObjZ2;
-	GetObjectCoordinates(Obj1, &ObjX1, &ObjY1, &ObjZ1);
-	GetObjectCoordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
+	get_object_coordinates(Obj1, &ObjX1, &ObjY1, &ObjZ1);
+	get_object_coordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
 	if(ObjZ1 == ObjZ2){
 		Distance = std::max<int>(
 				std::abs(ObjX1 - ObjX2),
@@ -318,30 +318,30 @@ int ObjectDistance(Object Obj1, Object Obj2){
 	return Distance;
 }
 
-Object GetBodyContainer(uint32 CreatureID, int Position){
+Object get_body_container(uint32 CreatureID, int Position){
 	if((Position < INVENTORY_FIRST || Position > INVENTORY_LAST)
 	&& (Position < CONTAINER_FIRST || Position > CONTAINER_LAST)){
-		error("GetBodyContainer: invalid position: %d\n", Position);
+		error("get_body_container: invalid position: %d\n", Position);
 		return NONE;
 	}
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("GetBodyContainer: Creature %d does not exist.\n", CreatureID);
+		error("get_body_container: Creature %d does not exist.\n", CreatureID);
 		return NONE;
 	}
 
 	if(Position >= INVENTORY_FIRST && Position <= INVENTORY_LAST){
 		if(!Creature->CrObject.exists()){
-			error("GetBodyContainer: Creature object of %s does not exist (Pos %d).\n",
+			error("get_body_container: Creature object of %s does not exist (Pos %d).\n",
 					Creature->Name, Position);
 			return NONE;
 		}
 
-		return GetContainerObject(Creature->CrObject, Position - INVENTORY_FIRST);
+		return get_container_object(Creature->CrObject, Position - INVENTORY_FIRST);
 	}else{
 		if(Creature->Type != PLAYER){
-			error("GetBodyContainer: Only players have open containers.\n");
+			error("get_body_container: Only players have open containers.\n");
 			return NONE;
 		}
 
@@ -349,35 +349,35 @@ Object GetBodyContainer(uint32 CreatureID, int Position){
 	}
 }
 
-Object GetBodyObject(uint32 CreatureID, int Position){
+Object get_body_object(uint32 CreatureID, int Position){
 	if(Position < INVENTORY_FIRST || Position > INVENTORY_LAST){
-		error("GetBodyObject: invalid position %d\n", Position);
+		error("get_body_object: invalid position %d\n", Position);
 		return NONE;
 	}
 
 	Object Obj = NONE;
-	Object Con = GetBodyContainer(CreatureID, Position);
+	Object Con = get_body_container(CreatureID, Position);
 	if(Con != NONE){
-		Obj = GetFirstContainerObject(Con);
+		Obj = get_first_container_object(Con);
 	}
 	return Obj;
 }
 
-Object GetTopObject(int x, int y, int z, bool Move){
-	Object Obj = GetFirstObject(x, y, z);
+Object get_top_object(int x, int y, int z, bool move){
+	Object Obj = get_first_object(x, y, z);
 	if(Obj != NONE){
 		while(true){
-			Object Next = Obj.getNextObject();
+			Object Next = Obj.get_next_object();
 			if(Next == NONE){
 				break;
 			}
 
-			ObjectType ObjType = Obj.getObjectType();
-			if(!ObjType.getFlag(BANK)
-					&& !ObjType.getFlag(CLIP)
-					&& !ObjType.getFlag(BOTTOM)
-					&& !ObjType.getFlag(TOP)
-					&& (!Move || !ObjType.isCreatureContainer())){
+			ObjectType ObjType = Obj.get_object_type();
+			if(!ObjType.get_flag(BANK)
+					&& !ObjType.get_flag(CLIP)
+					&& !ObjType.get_flag(BOTTOM)
+					&& !ObjType.get_flag(TOP)
+					&& (!move || !ObjType.is_creature_container())){
 				break;
 			}
 
@@ -387,78 +387,78 @@ Object GetTopObject(int x, int y, int z, bool Move){
 	return Obj;
 }
 
-Object GetContainer(uint32 CreatureID, int x, int y, int z){
+Object get_container(uint32 CreatureID, int x, int y, int z){
 	if(x == 0xFFFF){ // SPECIAL_COORDINATE ?
-		return GetBodyContainer(CreatureID, y);
+		return get_body_container(CreatureID, y);
 	}else{
-		return GetMapContainer(x, y, z);
+		return get_map_container(x, y, z);
 	}
 }
 
-Object GetObject(uint32 CreatureID, int x, int y, int z, int RNum, ObjectType Type){
+Object get_object(uint32 CreatureID, int x, int y, int z, int RNum, ObjectType Type){
 	Object Obj = NONE;
 	if(x == 0xFFFF){ // SPECIAL_COORDINATE ?
 		if(y >= INVENTORY_FIRST && y <= INVENTORY_LAST){
-			Obj = GetBodyObject(CreatureID, y);
+			Obj = get_body_object(CreatureID, y);
 		}else if(y >= CONTAINER_FIRST && y <= CONTAINER_LAST){
-			Object Con = GetBodyContainer(CreatureID, y);
+			Object Con = get_body_container(CreatureID, y);
 			if(Con != NONE){
-				Obj = GetContainerObject(Con, RNum);
+				Obj = get_container_object(Con, RNum);
 			}
 		}else if(y != INVENTORY_ANY){
-			error("GetObject: Invalid ContainerCode x=%d,y=%d,z=%d,RNum=%d,Type=%d.\n",
+			error("get_object: Invalid ContainerCode x=%d,y=%d,z=%d,RNum=%d,Type=%d.\n",
 					x, y, z, RNum, Type.TypeID);
 		}
 	}else if(RNum != -1){
-		Obj = GetFirstObject(x, y, z);
+		Obj = get_first_object(x, y, z);
 		while(Obj != NONE){
-			if(Obj.getObjectType().getDisguise() == Type){
+			if(Obj.get_object_type().get_disguise() == Type){
 				break;
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 	}else{
-		Obj = GetTopObject(x, y, z, false);
+		Obj = get_top_object(x, y, z, false);
 	}
 
 	// NOTE(fusion): `Type` can be a map container (TypeID = 0) as a wildcard for
 	// any object found.
-	if(Obj != NONE && !Type.isMapContainer()
-			&& Obj.getObjectType().getDisguise() != Type){
+	if(Obj != NONE && !Type.is_map_container()
+			&& Obj.get_object_type().get_disguise() != Type){
 		Obj = NONE;
 	}
 
 	return Obj;
 }
 
-Object GetRowObject(Object Obj, ObjectType Type, uint32 Value, bool Recurse){
+Object get_row_object(Object Obj, ObjectType Type, uint32 Value, bool Recurse){
 	Object Result = NONE;
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(Recurse && ObjType.getFlag(CONTAINER)){
-			Object Help = GetFirstContainerObject(Obj);
-			Result = GetRowObject(Help, Type, Value, Recurse);
+		ObjectType ObjType = Obj.get_object_type();
+		if(Recurse && ObjType.get_flag(CONTAINER)){
+			Object Help = get_first_container_object(Obj);
+			Result = get_row_object(Help, Type, Value, Recurse);
 			if(Result != NONE){
 				break;
 			}
 		}
 
 		if(ObjType == Type
-				&& (!ObjType.getFlag(LIQUIDCONTAINER) || Obj.getAttribute(CONTAINERLIQUIDTYPE) == Value)
-				&& (!ObjType.getFlag(KEY)             || Obj.getAttribute(KEYNUMBER)           == Value)){
+				&& (!ObjType.get_flag(LIQUIDCONTAINER) || Obj.get_attribute(CONTAINERLIQUIDTYPE) == Value)
+				&& (!ObjType.get_flag(KEY)             || Obj.get_attribute(KEYNUMBER)           == Value)){
 			Result = Obj;
 			break;
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Result;
 }
 
-Object GetInventoryObject(uint32 CreatureID, ObjectType Type, uint32 Value){
+Object get_inventory_object(uint32 CreatureID, ObjectType Type, uint32 Value){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("GetInventoryObject: Creature %d does not exist.\n",CreatureID);
+		error("get_inventory_object: Creature %d does not exist.\n",CreatureID);
 		return NONE;
 	}
 
@@ -466,172 +466,172 @@ Object GetInventoryObject(uint32 CreatureID, ObjectType Type, uint32 Value){
 
 	// NOTE(fusion): Search inventory containers.
 	{
-		Object BodyCon = GetFirstContainerObject(Creature->CrObject);
+		Object BodyCon = get_first_container_object(Creature->CrObject);
 		while(BodyCon != NONE){
-			Object BodyObj = GetFirstContainerObject(BodyCon);
-			if(BodyObj != NONE && BodyObj.getObjectType().getFlag(CONTAINER)){
-				Object Help = GetFirstContainerObject(BodyObj);
-				Result = GetRowObject(Help, Type, Value, true);
+			Object BodyObj = get_first_container_object(BodyCon);
+			if(BodyObj != NONE && BodyObj.get_object_type().get_flag(CONTAINER)){
+				Object Help = get_first_container_object(BodyObj);
+				Result = get_row_object(Help, Type, Value, true);
 				if(Result != NONE){
 					break;
 				}
 			}
-			BodyCon = BodyCon.getNextObject();
+			BodyCon = BodyCon.get_next_object();
 		}
 	}
 
 	// NOTE(fusion): Search inventory slots.
 	if(Result == NONE){
-		Object BodyCon = GetFirstContainerObject(Creature->CrObject);
+		Object BodyCon = get_first_container_object(Creature->CrObject);
 		while(BodyCon != NONE){
-			Object BodyObj = GetFirstContainerObject(BodyCon);
-			Result = GetRowObject(BodyObj, Type, Value, false);
+			Object BodyObj = get_first_container_object(BodyCon);
+			Result = get_row_object(BodyObj, Type, Value, false);
 			if(Result != NONE){
 				break;
 			}
-			BodyCon = BodyCon.getNextObject();
+			BodyCon = BodyCon.get_next_object();
 		}
 	}
 
 	return Result;
 }
 
-bool IsHeldByContainer(Object Obj, Object Con){
+bool is_held_by_container(Object Obj, Object Con){
 	// TODO(fusion): Why do we check for map container in some loops?
-	while(Obj != NONE && !Obj.getObjectType().isMapContainer()){
+	while(Obj != NONE && !Obj.get_object_type().is_map_container()){
 		if(Obj == Con){
 			return true;
 		}
-		Obj = Obj.getContainer();
+		Obj = Obj.get_container();
 	}
 	return false;
 }
 
-int CountObjectsInContainer(Object Con){
+int count_objects_in_container(Object Con){
 	if(!Con.exists()){
-		error("CountObjectsInContainer: Container does not exist.\n");
+		error("count_objects_in_container: Container does not exist.\n");
 		return 0;
 	}
 
 	int Count = 0;
-	Object Obj = GetFirstContainerObject(Con);
+	Object Obj = get_first_container_object(Con);
 	while(Obj != NONE){
 		Count += 1;
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Count;
 }
 
-int CountObjects(Object Obj){
+int count_objects(Object Obj){
 	if(!Obj.exists()){
 		return 0;
 	}
 
 	int Count = 1;
-	if(Obj.getObjectType().getFlag(CONTAINER)){
-		Object Help = GetFirstContainerObject(Obj);
+	if(Obj.get_object_type().get_flag(CONTAINER)){
+		Object Help = get_first_container_object(Obj);
 		while(Help != NONE){
-			Count += CountObjects(Help);
-			Help = Help.getNextObject();
+			Count += count_objects(Help);
+			Help = Help.get_next_object();
 		}
 	}
 	return Count;
 }
 
-int CountObjects(Object Obj, ObjectType Type, uint32 Value){
+int count_objects(Object Obj, ObjectType Type, uint32 Value){
 	if(!Obj.exists()){
 		return 0;
 	}
 
-	// TODO(fusion): This is different from the other `CountObjects` as it does
+	// TODO(fusion): This is different from the other `count_objects` as it does
 	// check other objects in the chain.
 	int Count = 0;
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(CONTAINER)){
-			Object Help = GetFirstContainerObject(Obj);
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(CONTAINER)){
+			Object Help = get_first_container_object(Obj);
 			// BUG(fusion): We probably meant to pass `Value` down the the call stack?
-			Count += CountObjects(Help, Type, 0);
+			Count += count_objects(Help, Type, 0);
 		}
 
 		if(ObjType == Type
-				&& (!ObjType.getFlag(LIQUIDCONTAINER) || Obj.getAttribute(CONTAINERLIQUIDTYPE) == Value)
-				&& (!ObjType.getFlag(KEY)             || Obj.getAttribute(KEYNUMBER)           == Value)){
-			if(ObjType.getFlag(CUMULATIVE)){
-				Count += (int)Obj.getAttribute(AMOUNT);
+				&& (!ObjType.get_flag(LIQUIDCONTAINER) || Obj.get_attribute(CONTAINERLIQUIDTYPE) == Value)
+				&& (!ObjType.get_flag(KEY)             || Obj.get_attribute(KEYNUMBER)           == Value)){
+			if(ObjType.get_flag(CUMULATIVE)){
+				Count += (int)Obj.get_attribute(AMOUNT);
 			}else{
 				Count += 1;
 			}
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Count;
 }
 
-int CountInventoryObjects(uint32 CreatureID, ObjectType Type, uint32 Value){
+int count_inventory_objects(uint32 CreatureID, ObjectType Type, uint32 Value){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("CountInventoryObjects: Creature %d does not exist; object type %d.\n",
+		error("count_inventory_objects: Creature %d does not exist; object type %d.\n",
 				CreatureID, Type.TypeID);
 		return 0;
 	}
 
 	if(Creature->CrObject == NONE){
-		error("CountInventoryObjects: Creature %s has no creature object.\n",
+		error("count_inventory_objects: Creature %s has no creature object.\n",
 				Creature->Name);
 		return 0;
 	}
 
-	Object Help = GetFirstContainerObject(Creature->CrObject);
-	return CountObjects(Help, Type, Value);
+	Object Help = get_first_container_object(Creature->CrObject);
+	return count_objects(Help, Type, Value);
 }
 
-int CountMoney(Object Obj){
+int count_money(Object Obj){
 	if(!Obj.exists()){
 		return 0;
 	}
 
 	int Result = 0;
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(CONTAINER)){
-			Object Help = GetFirstContainerObject(Obj);
-			Result += CountMoney(Help);
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(CONTAINER)){
+			Object Help = get_first_container_object(Obj);
+			Result += count_money(Help);
 		}
 
 		// TODO(fusion): This was three different if statements but I don't think
 		// we'd want the same object type to be all special money objects.
-		if(ObjType == GetSpecialObject(MONEY_ONE)){
-			Result += (int)Obj.getAttribute(AMOUNT);
-		}else if(ObjType == GetSpecialObject(MONEY_HUNDRED)){
-			Result += (int)Obj.getAttribute(AMOUNT) * 100;
-		}else if(ObjType == GetSpecialObject(MONEY_TENTHOUSAND)){
-			Result += (int)Obj.getAttribute(AMOUNT) * 10000;
+		if(ObjType == get_special_object(MONEY_ONE)){
+			Result += (int)Obj.get_attribute(AMOUNT);
+		}else if(ObjType == get_special_object(MONEY_HUNDRED)){
+			Result += (int)Obj.get_attribute(AMOUNT) * 100;
+		}else if(ObjType == get_special_object(MONEY_TENTHOUSAND)){
+			Result += (int)Obj.get_attribute(AMOUNT) * 10000;
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Result;
 }
 
-int CountInventoryMoney(uint32 CreatureID){
+int count_inventory_money(uint32 CreatureID){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("CountInventoryMoney: Creature %d does not exist.\n", CreatureID);
+		error("count_inventory_money: Creature %d does not exist.\n", CreatureID);
 		return 0;
 	}
 
 	if(Creature->CrObject == NONE){
-		error("CountInventoryMoney: Creature %s has no creature object.\n", Creature->Name);
+		error("count_inventory_money: Creature %s has no creature object.\n", Creature->Name);
 		return 0;
 	}
 
-	Object Help = GetFirstContainerObject(Creature->CrObject);
-	return CountMoney(Help);
+	Object Help = get_first_container_object(Creature->CrObject);
+	return count_money(Help);
 }
 
-void CalculateChange(int Amount, int *Gold, int *Platinum, int *Crystal){
+void calculate_change(int Amount, int *Gold, int *Platinum, int *Crystal){
 	// TODO(fusion): This function is kind of a mess. We should simplify or
 	// get rid of it entirely. It is used when removing gold from a creature
 	// but doesnt doesn't report errors outside from the `error` logging. It
@@ -644,7 +644,7 @@ void CalculateChange(int Amount, int *Gold, int *Platinum, int *Crystal){
 
 	print(3, "Paying %d with %d/%d/%d coins...\n", Amount, Go, Pl, Cr);
 	if((Cr * 10000 + Pl * 100 + Go) < Amount){
-		error("CalculateChange: %d/%d/%d coins are not enough to pay %d.\n",
+		error("calculate_change: %d/%d/%d coins are not enough to pay %d.\n",
 				Go, Pl, Cr, Amount);
 		return;
 	}
@@ -681,84 +681,84 @@ void CalculateChange(int Amount, int *Gold, int *Platinum, int *Crystal){
 	*Crystal = Cr;
 
 	if((Cr * 10000 + Pl * 100 + Go) != Amount){
-		error("CalculateChange: Incorrect calculation: %d/%d/%d coins for %d.\n",
+		error("calculate_change: Incorrect calculation: %d/%d/%d coins for %d.\n",
 				Go, Pl, Cr, Amount);
 	}
 }
 
-int GetHeight(int x, int y, int z){
+int get_height(int x, int y, int z){
 	int Result = 0;
-	Object Obj = GetFirstObject(x, y, z);
+	Object Obj = get_first_object(x, y, z);
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(HEIGHT)){
-			Result += (int)ObjType.getAttribute(ELEVATION);
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(HEIGHT)){
+			Result += (int)ObjType.get_attribute(ELEVATION);
 		}
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Result;
 }
 
-bool JumpPossible(int x, int y, int z, bool AvoidPlayers){
+bool jump_possible(int x, int y, int z, bool AvoidPlayers){
 	bool HasBank = false;
-	Object Obj = GetFirstObject(x, y, z);
+	Object Obj = get_first_object(x, y, z);
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
+		ObjectType ObjType = Obj.get_object_type();
 
-		if(ObjType.getFlag(BANK)){
+		if(ObjType.get_flag(BANK)){
 			HasBank = true;
 		}
 
-		if(ObjType.getFlag(UNPASS) && ObjType.getFlag(UNMOVE)){
+		if(ObjType.get_flag(UNPASS) && ObjType.get_flag(UNMOVE)){
 			return false;
 		}
 
-		if(AvoidPlayers && ObjType.isCreatureContainer()){
+		if(AvoidPlayers && ObjType.is_creature_container()){
 			TCreature *Creature = GetCreature(Obj);
 			if(Creature != NULL && Creature->Type == PLAYER){
 				return false;
 			}
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return HasBank;
 }
 
-bool FieldPossible(int x, int y, int z, int FieldType){
-	Object Obj = GetFirstObject(x, y, z);
+bool field_possible(int x, int y, int z, int FieldType){
+	Object Obj = get_first_object(x, y, z);
 
 	// NOTE(fusion): Only the first object on a given coordinate can be a bank
 	// on regular circumstances, so it makes sense to check it right away to
 	// determine whether a bank is present.
-	if(Obj == NONE || !Obj.getObjectType().getFlag(BANK)){
+	if(Obj == NONE || !Obj.get_object_type().get_flag(BANK)){
 		return false;
 	}
 
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(!ObjType.isCreatureContainer()){
-			if(ObjType.getFlag(UNPASS)){
+		ObjectType ObjType = Obj.get_object_type();
+		if(!ObjType.is_creature_container()){
+			if(ObjType.get_flag(UNPASS)){
 				return false;
 			}
 
-			if(ObjType.getFlag(UNLAY)){
+			if(ObjType.get_flag(UNLAY)){
 				return false;
 			}
 		}
 
 		if(FieldType == FIELD_TYPE_MAGICWALL || FieldType == FIELD_TYPE_WILDGROWTH){
-			if(ObjType.getFlag(UNPASS)){
+			if(ObjType.get_flag(UNPASS)){
 				return false;
 			}
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return true;
 }
 
-bool SearchFreeField(int *x, int *y, int *z, int Distance, uint16 HouseID, bool Jump){
+bool search_free_field(int *x, int *y, int *z, int Distance, uint16 HouseID, bool Jump){
 	int OffsetX = 0;
 	int OffsetY = 0;
 	int CurrentDistance = 0;
@@ -772,20 +772,20 @@ bool SearchFreeField(int *x, int *y, int *z, int Distance, uint16 HouseID, bool 
 		// function inlined.
 		bool MovePossible;
 		if(Jump){
-			MovePossible = JumpPossible(FieldX, FieldY, FieldZ, true);
+			MovePossible = jump_possible(FieldX, FieldY, FieldZ, true);
 		}else{
-			MovePossible = CoordinateFlag(FieldX, FieldY, FieldZ, BANK)
-					&& !CoordinateFlag(FieldX, FieldY, FieldZ, UNPASS);
+			MovePossible = coordinate_flag(FieldX, FieldY, FieldZ, BANK)
+					&& !coordinate_flag(FieldX, FieldY, FieldZ, UNPASS);
 
 			// TODO(fusion): This one I'm not so sure.
-			if(MovePossible && CoordinateFlag(FieldX, FieldY, FieldZ, AVOID)){
-				MovePossible = CoordinateFlag(FieldX, FieldY, FieldZ, BED);
+			if(MovePossible && coordinate_flag(FieldX, FieldY, FieldZ, AVOID)){
+				MovePossible = coordinate_flag(FieldX, FieldY, FieldZ, BED);
 			}
 		}
 
 		if(MovePossible){
-			if(HouseID == 0xFFFF || !IsHouse(FieldX, FieldY, FieldZ)
-			|| (HouseID != 0 && GetHouseID(FieldX, FieldY, FieldZ) == HouseID)){
+			if(HouseID == 0xFFFF || !is_house(FieldX, FieldY, FieldZ)
+			|| (HouseID != 0 && get_house_id(FieldX, FieldY, FieldZ) == HouseID)){
 				*x = FieldX;
 				*y = FieldY;
 				return true;
@@ -825,50 +825,50 @@ bool SearchFreeField(int *x, int *y, int *z, int Distance, uint16 HouseID, bool 
 	return false;
 }
 
-// NOTE(fusion): This is a helper function for `SearchLoginField` and improves
+// NOTE(fusion): This is a helper function for `search_login_field` and improves
 // the readability of an otherwise convoluted function.
 static bool LoginPossible(int x, int y, int z, uint16 HouseID, bool Player){
-	Object Obj = GetFirstObject(x, y, z);
+	Object Obj = get_first_object(x, y, z);
 	if(Obj == NONE){
 		return false;
 	}
 
-	if(Player && IsNoLogoutField(x, y, z)){
+	if(Player && is_no_logout_field(x, y, z)){
 		return false;
 	}
 
-	if(IsHouse(x, y, z) && (HouseID == 0 || GetHouseID(x, y, z) != HouseID)){
+	if(is_house(x, y, z) && (HouseID == 0 || get_house_id(x, y, z) != HouseID)){
 		return false;
 	}
 
 	bool HasBank = false;
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(BANK)){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(BANK)){
 			HasBank = true;
 		}
 
-		if(ObjType.isCreatureContainer()){
+		if(ObjType.is_creature_container()){
 			return false;
 		}
 
-		if(ObjType.getFlag(UNPASS) && ObjType.getFlag(UNMOVE)){
+		if(ObjType.get_flag(UNPASS) && ObjType.get_flag(UNMOVE)){
 			return false;
 		}
 
-		if(!Player && ObjType.getFlag(AVOID) && ObjType.getFlag(UNMOVE)){
+		if(!Player && ObjType.get_flag(AVOID) && ObjType.get_flag(UNMOVE)){
 			return false;
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return HasBank;
 }
 
-bool SearchLoginField(int *x, int *y, int *z, int Distance, bool Player){
-	uint16 HouseID = GetHouseID(*x, *y, *z);
-	if(SearchFreeField(x, y, z, Distance, HouseID, false)
-			&& (!Player || !IsNoLogoutField(*x, *y, *z))){
+bool search_login_field(int *x, int *y, int *z, int Distance, bool Player){
+	uint16 HouseID = get_house_id(*x, *y, *z);
+	if(search_free_field(x, y, z, Distance, HouseID, false)
+			&& (!Player || !is_no_logout_field(*x, *y, *z))){
 		return true;
 	}
 
@@ -887,7 +887,7 @@ bool SearchLoginField(int *x, int *y, int *z, int Distance, bool Player){
 			return true;
 		}
 
-		// NOTE(fusion): Same as `SearchFreeField`.
+		// NOTE(fusion): Same as `search_free_field`.
 		if(CurrentDirection == DIRECTION_NORTH){
 			OffsetY -= 1;
 			if(OffsetY <= -CurrentDistance){
@@ -915,7 +915,7 @@ bool SearchLoginField(int *x, int *y, int *z, int Distance, bool Player){
 	return false;
 }
 
-bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
+bool search_spawn_field(int *x, int *y, int *z, int Distance, bool Player){
 	// TODO(fusion): It seems `Distance` can be a negative number to do some
 	// extended search?
 	bool Minimize = true;
@@ -924,7 +924,7 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 		Distance = -Distance;
 	}
 
-	uint16 HouseID = GetHouseID(*x, *y, *z);
+	uint16 HouseID = get_house_id(*x, *y, *z);
 	matrix<int> Map(-Distance, Distance, -Distance, Distance, INT_MAX);
 	*Map.at(0, 0) = 0;
 
@@ -944,15 +944,15 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 			int FieldX = *x + OffsetX;
 			int FieldY = *y + OffsetY;
 			int FieldZ = *z;
-			if(IsHouse(FieldX, FieldY, FieldZ) && (HouseID == 0 || GetHouseID(FieldX, FieldY, FieldZ) != HouseID)){
+			if(is_house(FieldX, FieldY, FieldZ) && (HouseID == 0 || get_house_id(FieldX, FieldY, FieldZ) != HouseID)){
 				continue;
 			}
 
-			if(!Player && IsProtectionZone(FieldX, FieldY, FieldZ)){
+			if(!Player && is_protection_zone(FieldX, FieldY, FieldZ)){
 				continue;
 			}
 
-			Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+			Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 			if(Obj == NONE){
 				continue;
 			}
@@ -961,13 +961,13 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 			bool LoginPossible = true;
 			bool LoginBad = false;
 			while(Obj != NONE){
-				ObjectType ObjType = Obj.getObjectType();
-				if(ObjType.isCreatureContainer()){
+				ObjectType ObjType = Obj.get_object_type();
+				if(ObjType.is_creature_container()){
 					LoginPossible = false;
 				}
 
-				if(ObjType.getFlag(UNPASS)){
-					if(ObjType.getFlag(UNMOVE)){
+				if(ObjType.get_flag(UNPASS)){
+					if(ObjType.get_flag(UNMOVE)){
 						ExpansionPossible = false;
 						LoginPossible = false;
 					}else{
@@ -975,8 +975,8 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 					}
 				}
 
-				if(ObjType.getFlag(AVOID)){
-					if(ObjType.getFlag(UNMOVE)){
+				if(ObjType.get_flag(AVOID)){
+					if(ObjType.get_flag(UNMOVE)){
 						ExpansionPossible = false;
 						LoginPossible = LoginPossible && !Player;
 					}else{
@@ -984,7 +984,7 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 					}
 				}
 
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 
 			if(ExpansionPossible || ExpansionPhase == 0){
@@ -1003,7 +1003,7 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 				Expanded = true;
 			}
 
-			if(LoginPossible && (!Player || !IsNoLogoutField(FieldX, FieldY, FieldZ))){
+			if(LoginPossible && (!Player || !is_no_logout_field(FieldX, FieldY, FieldZ))){
 				int TieBreaker = random(0, 99);
 				if(!LoginBad){
 					TieBreaker += 100;
@@ -1035,21 +1035,21 @@ bool SearchSpawnField(int *x, int *y, int *z, int Distance, bool Player){
 	return Result;
 }
 
-bool SearchFlightField(uint32 FugitiveID, uint32 PursuerID, int *x, int *y, int *z){
+bool search_flight_field(uint32 FugitiveID, uint32 PursuerID, int *x, int *y, int *z){
 	TCreature *Fugitive = GetCreature(FugitiveID);
 	if(Fugitive == NULL){
-		error("SearchFlightField: Fugitive does not exist.\n");
+		error("search_flight_field: Fugitive does not exist.\n");
 		return false;
 	}
 
 	TCreature *Pursuer = GetCreature(PursuerID);
 	if(Pursuer == NULL){
-		error("SearchFlightField: Pursuer does not exist.\n");
+		error("search_flight_field: Pursuer does not exist.\n");
 		return false;
 	}
 
 	if(Fugitive->posz != Pursuer->posz){
-		error("SearchFlightField: Fugitive and pursuer are on different levels.\n");
+		error("search_flight_field: Fugitive and pursuer are on different levels.\n");
 		return false;
 	}
 
@@ -1107,7 +1107,7 @@ bool SearchFlightField(uint32 FugitiveID, uint32 PursuerID, int *x, int *y, int 
 			case DIRECTION_NORTHWEST: FieldX -= 1; FieldY -= 1; break;
 			case DIRECTION_NORTHEAST: FieldX += 1; FieldY -= 1; break;
 			default:{
-				error("SearchFlightField: Invalid direction %d.\n", Dir[i]);
+				error("search_flight_field: Invalid direction %d.\n", Dir[i]);
 				return false;
 			}
 		}
@@ -1123,7 +1123,7 @@ bool SearchFlightField(uint32 FugitiveID, uint32 PursuerID, int *x, int *y, int 
 	return false;
 }
 
-bool SearchSummonField(int *x, int *y, int *z, int Distance){
+bool search_summon_field(int *x, int *y, int *z, int Distance){
 	int BestX = 0;
 	int BestY = 0;
 	int BestTieBreaker = -1;
@@ -1137,12 +1137,12 @@ bool SearchSummonField(int *x, int *y, int *z, int Distance){
 		int FieldX = *x + OffsetX;
 		int FieldY = *y + OffsetY;
 		int FieldZ = *z;
-		if(CoordinateFlag(FieldX, FieldY, FieldZ, BANK)
-				&& !CoordinateFlag(FieldX, FieldY, FieldZ, UNPASS)
-				&& !CoordinateFlag(FieldX, FieldY, FieldZ, AVOID)
-				&& !IsProtectionZone(FieldX, FieldY, FieldZ)
-				&& !IsHouse(FieldX, FieldY, FieldZ)
-				&& ThrowPossible(*x, *y, *z, FieldX, FieldY, FieldZ, 0)){
+		if(coordinate_flag(FieldX, FieldY, FieldZ, BANK)
+				&& !coordinate_flag(FieldX, FieldY, FieldZ, UNPASS)
+				&& !coordinate_flag(FieldX, FieldY, FieldZ, AVOID)
+				&& !is_protection_zone(FieldX, FieldY, FieldZ)
+				&& !is_house(FieldX, FieldY, FieldZ)
+				&& throw_possible(*x, *y, *z, FieldX, FieldY, FieldZ, 0)){
 			BestX = FieldX;
 			BestY = FieldY;
 			BestTieBreaker = TieBreaker;
@@ -1159,15 +1159,15 @@ bool SearchSummonField(int *x, int *y, int *z, int Distance){
 	return Result;
 }
 
-bool ThrowPossible(int OrigX, int OrigY, int OrigZ,
+bool throw_possible(int OrigX, int OrigY, int OrigZ,
 			int DestX, int DestY, int DestZ, int Power){
 	// NOTE(fusion): `MinZ` contains the highest floor we're able to throw. We'll
 	// iterate from it towards the destination floor, checking the line between the
 	// origin and destination until we find a valid throwing path (or not).
 	int MinZ = std::max<int>(OrigZ - Power, 0);
 	for(int CurZ = OrigZ - 1; CurZ >= MinZ; CurZ -= 1){
-		Object Obj = GetFirstObject(OrigX, OrigY, CurZ);
-		if(Obj != NONE && Obj.getObjectType().getFlag(BANK)){
+		Object Obj = get_first_object(OrigX, OrigY, CurZ);
+		if(Obj != NONE && Obj.get_object_type().get_flag(BANK)){
 			MinZ = CurZ + 1;
 			break;
 		}
@@ -1180,8 +1180,8 @@ bool ThrowPossible(int OrigX, int OrigY, int OrigZ,
 			std::abs(DestY - OrigY));
 
 	int StartT = 1;
-	if((DestX < OrigX && CoordinateFlag(OrigX, OrigY, OrigZ, HOOKEAST))
-	|| (DestY < OrigY && CoordinateFlag(OrigX, OrigY, OrigZ, HOOKSOUTH))){
+	if((DestX < OrigX && coordinate_flag(OrigX, OrigY, OrigZ, HOOKEAST))
+	|| (DestY < OrigY && coordinate_flag(OrigX, OrigY, OrigZ, HOOKSOUTH))){
 		StartT = 0;
 	}
 
@@ -1194,7 +1194,7 @@ bool ThrowPossible(int OrigX, int OrigY, int OrigZ,
 				int CurX = (OrigX * (MaxT - T) + DestX * T) / MaxT;
 				int CurY = (OrigY * (MaxT - T) + DestY * T) / MaxT;
 				int CurZ = MinZ;
-				if(CoordinateFlag(CurX, CurY, CurZ, UNTHROW)){
+				if(coordinate_flag(CurX, CurY, CurZ, UNTHROW)){
 					break;
 				}
 
@@ -1206,8 +1206,8 @@ bool ThrowPossible(int OrigX, int OrigY, int OrigZ,
 		if(LastX == DestX && LastY == DestY){
 			int LastZ = MinZ;
 			for(; LastZ < DestZ; LastZ += 1){
-				Object Obj = GetFirstObject(DestX, DestY, LastZ);
-				if(Obj != NONE && Obj.getObjectType().getFlag(BANK)){
+				Object Obj = get_first_object(DestX, DestY, LastZ);
+				if(Obj != NONE && Obj.get_object_type().get_flag(BANK)){
 					break;
 				}
 			}
@@ -1223,10 +1223,10 @@ bool ThrowPossible(int OrigX, int OrigY, int OrigZ,
 	return false;
 }
 
-void GetCreatureLight(uint32 CreatureID, int *Brightness, int *Color){
+void get_creature_light(uint32 CreatureID, int *Brightness, int *Color){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("GetCreatureLight: Creature does not exist.\n");
+		error("get_creature_light: Creature does not exist.\n");
 		*Brightness = 0;
 		*Color = 0;
 		return;
@@ -1237,7 +1237,7 @@ void GetCreatureLight(uint32 CreatureID, int *Brightness, int *Color){
 		OutBrightness = Creature->Skills[SKILL_LIGHT]->TimerValue();
 	}
 
-	if(Creature->Type == PLAYER && CheckRight(CreatureID, ILLUMINATE)){
+	if(Creature->Type == PLAYER && check_right(CreatureID, ILLUMINATE)){
 		if(OutBrightness < 7){
 			OutBrightness = 7;
 		}
@@ -1249,18 +1249,18 @@ void GetCreatureLight(uint32 CreatureID, int *Brightness, int *Color){
 	for(int Position = INVENTORY_FIRST;
 			Position <= INVENTORY_LAST;
 			Position += 1){
-		Object Obj = GetBodyObject(CreatureID, Position);
+		Object Obj = get_body_object(CreatureID, Position);
 		if(Obj == NONE){
 			continue;
 		}
 
-		ObjectType ObjType = Obj.getObjectType();
-		if(!ObjType.getFlag(LIGHT)){
+		ObjectType ObjType = Obj.get_object_type();
+		if(!ObjType.get_flag(LIGHT)){
 			continue;
 		}
 
-		int ObjBrightness = (int)ObjType.getAttribute(BRIGHTNESS);
-		int ObjColor      = (int)ObjType.getAttribute(LIGHTCOLOR);
+		int ObjBrightness = (int)ObjType.get_attribute(BRIGHTNESS);
+		int ObjColor      = (int)ObjType.get_attribute(LIGHTCOLOR);
 		int ObjRed        = (ObjColor / 36)     * ObjBrightness;
 		int ObjGreen      = (ObjColor % 36 / 6) * ObjBrightness;
 		int ObjBlue       = (ObjColor % 36 % 6) * ObjBrightness;
@@ -1293,36 +1293,36 @@ void GetCreatureLight(uint32 CreatureID, int *Brightness, int *Color){
 	*Color      = OutColor;
 }
 
-int GetInventoryWeight(uint32 CreatureID){
+int get_inventory_weight(uint32 CreatureID){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("GetInventoryWeight: Creature %d does not exist.\n", CreatureID);
+		error("get_inventory_weight: Creature %d does not exist.\n", CreatureID);
 		return 0;
 	}
 
-	Object Help = GetFirstContainerObject(Creature->CrObject);
-	return GetRowWeight(Help);
+	Object Help = get_first_container_object(Creature->CrObject);
+	return get_row_weight(Help);
 }
 
-bool CheckRight(uint32 CharacterID, RIGHT Right){
+bool check_right(uint32 CharacterID, RIGHT Right){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("CheckRight: Player does not exist; Right=%d.\n", Right);
+		error("check_right: Player does not exist; Right=%d.\n", Right);
 		return false;
 	}
 
 	if(!CheckBitIndex(NARRAY(Player->Rights), Right)){
-		error("CheckRight: Invalid right number %d.\n", Right);
+		error("check_right: Invalid right number %d.\n", Right);
 		return false;
 	}
 
 	return CheckBit(Player->Rights, Right);
 }
 
-bool CheckBanishmentRight(uint32 CharacterID, int Reason, int Action){
+bool check_banishment_right(uint32 CharacterID, int Reason, int Action){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("CheckBanishmentRight: Player does not exist.\n");
+		error("check_banishment_right: Player does not exist.\n");
 		return false;
 	}
 
@@ -1330,58 +1330,58 @@ bool CheckBanishmentRight(uint32 CharacterID, int Reason, int Action){
 	// reasons exactly when subtracting 18.
 
 	if(Reason < 0 || Reason > 31){
-		error("CheckBanishmentRight: Invalid ban reason %d from player %d.\n",
+		error("check_banishment_right: Invalid ban reason %d from player %d.\n",
 				Reason, CharacterID);
 		return false;
 	}
 
 	if(Action < 0 || Action > 6){
-		error("CheckBanishmentRight: Invalid action %d from player %d.\n",
+		error("check_banishment_right: Invalid action %d from player %d.\n",
 				Action, CharacterID);
 		return false;
 	}
 
 	bool Result = false;
-	if(CheckRight(CharacterID, (RIGHT)(Reason + 18))){
+	if(check_right(CharacterID, (RIGHT)(Reason + 18))){
 		bool Name = (Reason >= 0 && Reason <= 8);
 		bool Statement = (Reason >= 9 && Reason <= 27) || Reason == 29;
 		switch(Action){
 			case 0:{
-				Result = CheckRight(CharacterID, NOTATION);
+				Result = check_right(CharacterID, NOTATION);
 				break;
 			}
 
 			case 1:{
-				Result = Name && CheckRight(CharacterID, NAMELOCK);
+				Result = Name && check_right(CharacterID, NAMELOCK);
 				break;
 			}
 
 			case 2:{
-				Result = !Name && CheckRight(CharacterID, BANISHMENT);
+				Result = !Name && check_right(CharacterID, BANISHMENT);
 				break;
 			}
 
 			case 3:{
-				Result = Name && CheckRight(CharacterID, NAMELOCK)
-						&& CheckRight(CharacterID, BANISHMENT);
+				Result = Name && check_right(CharacterID, NAMELOCK)
+						&& check_right(CharacterID, BANISHMENT);
 				break;
 			}
 
 			case 4:{
-				Result = !Name && CheckRight(CharacterID, BANISHMENT)
-						&& CheckRight(CharacterID, FINAL_WARNING);
+				Result = !Name && check_right(CharacterID, BANISHMENT)
+						&& check_right(CharacterID, FINAL_WARNING);
 				break;
 			}
 
 			case 5:{
-				Result = Name && CheckRight(CharacterID, NAMELOCK)
-						&& CheckRight(CharacterID, BANISHMENT)
-						&& CheckRight(CharacterID, FINAL_WARNING);
+				Result = Name && check_right(CharacterID, NAMELOCK)
+						&& check_right(CharacterID, BANISHMENT)
+						&& check_right(CharacterID, FINAL_WARNING);
 				break;
 			}
 
 			case 6:{
-				Result = Statement && CheckRight(CharacterID, STATEMENT_REPORT);
+				Result = Statement && check_right(CharacterID, STATEMENT_REPORT);
 				break;
 			}
 		}
@@ -1390,7 +1390,7 @@ bool CheckBanishmentRight(uint32 CharacterID, int Reason, int Action){
 	return Result;
 }
 
-const char *GetBanishmentReason(int Reason){
+const char *get_banishment_reason(int Reason){
 	const char *Result = "";
 	switch(Reason){
 		case 0:  Result = "NAME_INSULTING"; break;
@@ -1426,17 +1426,17 @@ const char *GetBanishmentReason(int Reason){
 		case 30: Result = "SPOILING_AUCTION"; break;
 		case 31: Result = "INVALID_PAYMENT"; break;
 		default:{
-			error("GetBanishmentReason: Invalid banishment reason %d.\n", Reason);
+			error("get_banishment_reason: Invalid banishment reason %d.\n", Reason);
 			break;
 		}
 	}
 	return Result;
 }
 
-void InitInfo(void){
+void init_info(void){
 	// no-op
 }
 
-void ExitInfo(void){
+void exit_info(void){
 	// no-op
 }

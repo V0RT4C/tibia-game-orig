@@ -20,20 +20,20 @@ enum : int{
 };
 
 struct ObjectType {
-	ObjectType(void) { this->setTypeID(0); }
-	ObjectType(int TypeID) { this->setTypeID(TypeID); }
-	void setTypeID(int TypeID);
-	bool getFlag(FLAG Flag);
-	uint32 getAttribute(TYPEATTRIBUTE Attribute);
-	int getAttributeOffset(INSTANCEATTRIBUTE Attribute);
-	const char *getName(int Count);
-	const char *getDescription(void);
+	ObjectType(void) { this->set_type_id(0); }
+	ObjectType(int TypeID) { this->set_type_id(TypeID); }
+	void set_type_id(int TypeID);
+	bool get_flag(FLAG Flag);
+	uint32 get_attribute(TYPEATTRIBUTE Attribute);
+	int get_attribute_offset(INSTANCEATTRIBUTE Attribute);
+	const char *get_name(int Count);
+	const char *get_description(void);
 
-	bool isMapContainer(void){
+	bool is_map_container(void){
 		return this->TypeID == TYPEID_MAP_CONTAINER;
 	}
 
-	bool isBodyContainer(void){
+	bool is_body_container(void){
 		return this->TypeID == TYPEID_HEAD_CONTAINER
 			|| this->TypeID == TYPEID_NECK_CONTAINER
 			|| this->TypeID == TYPEID_BAG_CONTAINER
@@ -46,36 +46,36 @@ struct ObjectType {
 			|| this->TypeID == TYPEID_AMMO_CONTAINER;
 	}
 
-	bool isCreatureContainer(void){
+	bool is_creature_container(void){
 		return this->TypeID == TYPEID_CREATURE_CONTAINER;
 	}
 
-	bool isTwoHanded(void){
-		return this->getFlag(CLOTHES)
-			&& this->getAttribute(BODYPOSITION) == 0;
+	bool is_two_handed(void){
+		return this->get_flag(CLOTHES)
+			&& this->get_attribute(BODYPOSITION) == 0;
 	}
 
-	bool isWeapon(void){
-		return this->getFlag(WEAPON)
-			|| this->getFlag(BOW)
-			|| this->getFlag(THROW)
-			|| this->getFlag(WAND);
+	bool is_weapon(void){
+		return this->get_flag(WEAPON)
+			|| this->get_flag(BOW)
+			|| this->get_flag(THROW)
+			|| this->get_flag(WAND);
 	}
 
-	bool isCloseWeapon(void){
-		if(!this->getFlag(WEAPON)){
+	bool is_close_weapon(void){
+		if(!this->get_flag(WEAPON)){
 			return false;
 		}
 
-		int WeaponType = this->getAttribute(WEAPONTYPE);
+		int WeaponType = this->get_attribute(WEAPONTYPE);
 		return WeaponType == WEAPON_SWORD
 			|| WeaponType == WEAPON_CLUB
 			|| WeaponType == WEAPON_AXE;
 	}
 
-	ObjectType getDisguise(void){
-		if(this->getFlag(DISGUISE)){
-			return (int)this->getAttribute(DISGUISETARGET);
+	ObjectType get_disguise(void){
+		if(this->get_flag(DISGUISE)){
+			return (int)this->get_attribute(DISGUISETARGET);
 		}else{
 			return *this;
 		}
@@ -102,19 +102,19 @@ struct TObjectType {
 	int AttributeOffsets[18];
 };
 
-int GetFlagByName(const char *Name);
-int GetTypeAttributeByName(const char *Name);
-int GetInstanceAttributeByName(const char *Name);
-const char *GetFlagName(int Flag);
-const char *GetTypeAttributeName(int Attribute);
-const char *GetInstanceAttributeName(int Attribute);
-bool ObjectTypeExists(int TypeID);
-bool ObjectTypeExists(uint8 Group, uint8 Number);
-ObjectType GetNewObjectType(uint8 Group, uint8 Number);
-void GetOldObjectType(ObjectType Type, uint8 *Group, uint8 *Number);
-ObjectType GetSpecialObject(SPECIALMEANING Meaning);
-ObjectType GetObjectTypeByName(const char *SearchName, bool Movable);
-void InitObjects(void);
-void ExitObjects(void);
+int get_flag_by_name(const char *Name);
+int get_type_attribute_by_name(const char *Name);
+int get_instance_attribute_by_name(const char *Name);
+const char *get_flag_name(int Flag);
+const char *get_type_attribute_name(int Attribute);
+const char *get_instance_attribute_name(int Attribute);
+bool object_type_exists(int TypeID);
+bool object_type_exists(uint8 Group, uint8 Number);
+ObjectType get_new_object_type(uint8 Group, uint8 Number);
+void get_old_object_type(ObjectType Type, uint8 *Group, uint8 *Number);
+ObjectType get_special_object(SPECIALMEANING Meaning);
+ObjectType get_object_type_by_name(const char *SearchName, bool Movable);
+void init_objects(void);
+void exit_objects(void);
 
 #endif //TIBIA_OBJECTS_H_

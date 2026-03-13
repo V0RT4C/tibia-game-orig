@@ -41,7 +41,7 @@ bool CheckSpecialCoordinates(int Command, int x, int y, int z, bool AllowInvento
 			return false;
 		}
 	}else{
-		return IsOnMap(x, y, z);
+		return is_on_map(x, y, z);
 	}
 }
 
@@ -54,7 +54,7 @@ bool CheckVisibility(int Command, TConnection *Connection, int x, int y, int z){
 	bool Result = Connection->IsVisible(x, y, z);
 	if(!Result){
 		int PlayerX, PlayerY, PlayerZ;
-		Connection->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
+		Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
 		print(3, "CheckVisibility: Field [%d,%d,%d] is not visible from [%d,%d,%d]"
 				" for command %d.\n",
 				x, y, z, PlayerX, PlayerY, PlayerZ, Command);
@@ -63,7 +63,7 @@ bool CheckVisibility(int Command, TConnection *Connection, int x, int y, int z){
 }
 
 bool CheckObjectType(int Command, int TypeID){
-	bool Result = ObjectTypeExists(TypeID);
+	bool Result = object_type_exists(TypeID);
 	if(!Result){
 		print(3, "CheckObjectType: Invalid object type %d for command %d.\n",
 				TypeID, Command);
@@ -72,10 +72,10 @@ bool CheckObjectType(int Command, int TypeID){
 }
 
 ObjectType GetObjectType(int Command, int TypeID){
-	// TODO(fusion): Isn't this already done by `ObjectType::setTypeID` ?
+	// TODO(fusion): Isn't this already done by `ObjectType::set_type_id` ?
 	ObjectType ObjType(0);
 	if(CheckObjectType(Command, TypeID)){
-		ObjType.setTypeID(TypeID);
+		ObjType.set_type_id(TypeID);
 	}
 	return ObjType;
 }
@@ -257,7 +257,7 @@ void CMoveObject(TConnection *Connection, TReadBuffer *Buffer){
 	uint8 Count = Buffer->readByte();
 
 	ObjectType Type = GetObjectType(CL_CMD_MOVE_OBJECT, TypeID);
-	if(Type.isMapContainer() || (Type.getFlag(CUMULATIVE) && Count == 0)){
+	if(Type.is_map_container() || (Type.get_flag(CUMULATIVE) && Count == 0)){
 		return;
 	}
 
@@ -271,7 +271,7 @@ void CMoveObject(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	// TODO(fusion): `RNum` is only used inside `ToDoMove` > `GetObject` to index
+	// TODO(fusion): `RNum` is only used inside `ToDoMove` > `get_object` to index
 	// into containers. For some reason I thought the Z coordinate was also used
 	// for that. Perhaps they're set to the same value.
 	if(OrigX != 0xFFFF){
@@ -308,7 +308,7 @@ void CTradeObject(TConnection *Connection, TReadBuffer *Buffer){
 	uint32 TradePartner = Buffer->readQuad();
 
 	ObjectType Type = GetObjectType(CL_CMD_TRADE_OBJECT, TypeID);
-	if(Type.isMapContainer()){
+	if(Type.is_map_container()){
 		return;
 	}
 
@@ -352,7 +352,7 @@ void CInspectTrade(TConnection *Connection, TReadBuffer *Buffer){
 	Object Obj = Player->InspectTrade(OwnOffer, Position);
 	if(Obj.exists()){
 		try{
-			Look(Player->ID, Obj);
+			look(Player->ID, Obj);
 		}catch(RESULT r){
 			SendResult(Connection, r);
 		}
@@ -402,11 +402,11 @@ void CUseObject(TConnection *Connection, TReadBuffer *Buffer){
 	uint8 Dummy = Buffer->readByte();
 
 	ObjectType Type = GetObjectType(CL_CMD_USE_OBJECT, TypeID);
-	if(Type.isMapContainer() || Type.getFlag(MULTIUSE)){
+	if(Type.is_map_container() || Type.get_flag(MULTIUSE)){
 		return;
 	}
 
-	if(Type.getFlag(CONTAINER) && Dummy >= NARRAY(TPlayer::OpenContainer)){
+	if(Type.get_flag(CONTAINER) && Dummy >= NARRAY(TPlayer::OpenContainer)){
 		return;
 	}
 
@@ -453,7 +453,7 @@ void CUseTwoObjects(TConnection *Connection, TReadBuffer *Buffer){
 
 	ObjectType Type1 = GetObjectType(CL_CMD_USE_TWO_OBJECTS, TypeID1);
 	ObjectType Type2 = GetObjectType(CL_CMD_USE_TWO_OBJECTS, TypeID2);
-	if(Type1.isMapContainer() || Type2.isMapContainer() || !Type1.getFlag(MULTIUSE)){
+	if(Type1.is_map_container() || Type2.is_map_container() || !Type1.get_flag(MULTIUSE)){
 		return;
 	}
 
@@ -497,9 +497,9 @@ void CUseOnCreature(TConnection *Connection, TReadBuffer *Buffer){
 	uint8 RNum = Buffer->readByte();
 	uint32 TargetID = Buffer->readQuad();
 
-	// TODO(fusion): Check `Type.getFlag(MULTIUSE)`?
+	// TODO(fusion): Check `Type.get_flag(MULTIUSE)`?
 	ObjectType Type = GetObjectType(CL_CMD_USE_ON_CREATURE, TypeID);
-	if(Type.isMapContainer()){
+	if(Type.is_map_container()){
 		return;
 	}
 
@@ -531,7 +531,7 @@ void CUseOnCreature(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	Object Obj = GetObject(Player->ID, ObjX, ObjY, ObjZ, RNum, Type);
+	Object Obj = get_object(Player->ID, ObjX, ObjY, ObjZ, RNum, Type);
 	if(!Obj.exists() || !Target->CrObject.exists()){
 		SendResult(Connection, NOTACCESSIBLE);
 		return;
@@ -565,9 +565,9 @@ void CTurnObject(TConnection *Connection, TReadBuffer *Buffer){
 	int TypeID = Buffer->readWord();
 	uint8 RNum = Buffer->readByte();
 
-	// TODO(fusion): Check `Type.getFlag(ROTATE)`?
+	// TODO(fusion): Check `Type.get_flag(ROTATE)`?
 	ObjectType Type = GetObjectType(CL_CMD_TURN_OBJECT, TypeID);
-	if(Type.isMapContainer()){
+	if(Type.is_map_container()){
 		return;
 	}
 
@@ -623,9 +623,9 @@ void CUpContainer(TConnection *Connection, TReadBuffer *Buffer){
 	if(ContainerNr < NARRAY(TPlayer::OpenContainer)){
 		Object Con = Player->GetOpenContainer(ContainerNr);
 		if(Con != NONE){
-			Object Up = Con.getContainer();
-			ObjectType UpType = Up.getObjectType();
-			if(!UpType.isMapContainer() && !UpType.isBodyContainer()){
+			Object Up = Con.get_container();
+			ObjectType UpType = Up.get_object_type();
+			if(!UpType.is_map_container() && !UpType.is_body_container()){
 				Player->SetOpenContainer(ContainerNr, Up);
 				SendContainer(Connection, ContainerNr);
 			}else{
@@ -653,26 +653,26 @@ void CEditText(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(WRITE)
-	&& (!ObjType.getFlag(WRITEONCE) || Obj.getAttribute(TEXTSTRING) != 0)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(WRITE)
+	&& (!ObjType.get_flag(WRITEONCE) || Obj.get_attribute(TEXTSTRING) != 0)){
 		SendResult(Connection, NOTACCESSIBLE);
 		return;
 	}
 
 	char Text[4096];
-	Buffer->readString(Text, sizeof(Text));
+	Buffer->read_string(Text, sizeof(Text));
 	int TextLength = (int)strlen(Text);
-	int MaxLength = (ObjType.getFlag(WRITE)
-				? (int)ObjType.getAttribute(MAXLENGTH)
-				: (int)ObjType.getAttribute(MAXLENGTHONCE));
+	int MaxLength = (ObjType.get_flag(WRITE)
+				? (int)ObjType.get_attribute(MAXLENGTH)
+				: (int)ObjType.get_attribute(MAXLENGTHONCE));
 	if(TextLength >= MaxLength){
 		SendResult(Connection, NOROOM);
 		return;
 	}
 
 	try{
-		EditText(Player->ID, Obj, Text);
+		edit_text(Player->ID, Obj, Text);
 	}catch(RESULT r){
 		SendResult(Connection, r);
 	}
@@ -692,11 +692,11 @@ void CEditList(TConnection *Connection, TReadBuffer *Buffer){
 	char Text[4096];
 	int Type = Buffer->readByte();
 	uint32 ID = Buffer->readQuad();
-	Buffer->readString(Text, sizeof(Text));
+	Buffer->read_string(Text, sizeof(Text));
 	if(Type == GUESTLIST){
-		ChangeGuests((uint16)ID, Player, Text);
+		change_guests((uint16)ID, Player, Text);
 	}else if(Type == SUBOWNERLIST){
-		ChangeSubowners((uint16)ID, Player, Text);
+		change_subowners((uint16)ID, Player, Text);
 	}else if(Type == DOORLIST){
 		Object Door = Object(ID);
 		if(!Door.exists()){
@@ -704,13 +704,13 @@ void CEditList(TConnection *Connection, TReadBuffer *Buffer){
 			return;
 		}
 
-		ObjectType DoorType = Door.getObjectType();
-		if(!DoorType.getFlag(NAMEDOOR) || !DoorType.getFlag(TEXT)){
+		ObjectType DoorType = Door.get_object_type();
+		if(!DoorType.get_flag(NAMEDOOR) || !DoorType.get_flag(TEXT)){
 			SendResult(Connection, NOTACCESSIBLE);
 			return;
 		}
 
-		ChangeNameDoor(Door, Player, Text);
+		change_name_door(Door, Player, Text);
 	}else{
 		error("CEditList: Unknown type %d.\n", Type);
 	}
@@ -739,10 +739,10 @@ void CLookAtPoint(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	int RNum = (ObjX == 0xFFFF ? ObjZ : -1);
-	Object Obj = GetObject(Player->ID, ObjX, ObjY, ObjZ, RNum, 0);
+	Object Obj = get_object(Player->ID, ObjX, ObjY, ObjZ, RNum, 0);
 	if(Obj.exists()){
 		try{
-			Look(Player->ID, Obj);
+			look(Player->ID, Obj);
 		}catch(RESULT r){
 			SendResult(Connection, r);
 		}
@@ -785,7 +785,7 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 			|| Mode == TALK_GAMEMASTER_ANSWER
 			|| Mode == TALK_GAMEMASTER_MESSAGE
 			|| Mode == TALK_ANONYMOUS_MESSAGE){
-		Buffer->readString(Addressee, sizeof(Addressee));
+		Buffer->read_string(Addressee, sizeof(Addressee));
 		if(Addressee[0] == 0){
 			print(3, "CTalk: Recipient not specified.\n");
 			return;
@@ -797,7 +797,7 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 			|| Mode == TALK_GAMEMASTER_CHANNELCALL
 			|| Mode == TALK_ANONYMOUS_CHANNELCALL){
 		Channel = Buffer->readWord();
-		if(Channel >= GetNumberOfChannels()){
+		if(Channel >= get_number_of_channels()){
 			print(3, "CTalk: Invalid channel %d.\n", Channel);
 			return;
 		}
@@ -806,7 +806,7 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	char Text[256];
-	Buffer->readString(Text, sizeof(Text));
+	Buffer->read_string(Text, sizeof(Text));
 	if(Text[0] == 0){
 		print(3, "CTalk: Kein Text.\n");
 		return;
@@ -817,19 +817,19 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	if(Mode == TALK_GAMEMASTER_ANSWER && !CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL)){
+	if(Mode == TALK_GAMEMASTER_ANSWER && !check_right(Player->ID, READ_GAMEMASTER_CHANNEL)){
 		Mode = TALK_PRIVATE_MESSAGE;
-	}else if(Mode == TALK_GAMEMASTER_BROADCAST && !CheckRight(Player->ID, GAMEMASTER_BROADCAST)){
+	}else if(Mode == TALK_GAMEMASTER_BROADCAST && !check_right(Player->ID, GAMEMASTER_BROADCAST)){
 		Mode = TALK_SAY;
-	}else if(Mode == TALK_GAMEMASTER_CHANNELCALL && !CheckRight(Player->ID, GAMEMASTER_BROADCAST)){
+	}else if(Mode == TALK_GAMEMASTER_CHANNELCALL && !check_right(Player->ID, GAMEMASTER_BROADCAST)){
 		Mode = TALK_CHANNEL_CALL;
-	}else if(Mode == TALK_GAMEMASTER_MESSAGE && !CheckRight(Player->ID, GAMEMASTER_BROADCAST)){
+	}else if(Mode == TALK_GAMEMASTER_MESSAGE && !check_right(Player->ID, GAMEMASTER_BROADCAST)){
 		Mode = TALK_PRIVATE_MESSAGE;
-	}else if(Mode == TALK_ANONYMOUS_BROADCAST && !CheckRight(Player->ID, ANONYMOUS_BROADCAST)){
+	}else if(Mode == TALK_ANONYMOUS_BROADCAST && !check_right(Player->ID, ANONYMOUS_BROADCAST)){
 		Mode = TALK_SAY;
-	}else if(Mode == TALK_ANONYMOUS_CHANNELCALL && !CheckRight(Player->ID, ANONYMOUS_BROADCAST)){
+	}else if(Mode == TALK_ANONYMOUS_CHANNELCALL && !check_right(Player->ID, ANONYMOUS_BROADCAST)){
 		Mode = TALK_CHANNEL_CALL;
-	}else if(Mode == TALK_ANONYMOUS_MESSAGE && !CheckRight(Player->ID, ANONYMOUS_BROADCAST)){
+	}else if(Mode == TALK_ANONYMOUS_MESSAGE && !check_right(Player->ID, ANONYMOUS_BROADCAST)){
 		Mode = TALK_PRIVATE_MESSAGE;
 	}
 
@@ -853,14 +853,14 @@ void CTalk(TConnection *Connection, TReadBuffer *Buffer){
 			return;
 		}
 
-		if(!ChannelSubscribed(Channel, Player->ID)){
+		if(!channel_subscribed(Channel, Player->ID)){
 			Addressee[0] = 0;
 			Mode = TALK_SAY;
 		}
 	}
 
 	if(Mode == TALK_CHANNEL_CALL && Channel == CHANNEL_HELP
-			&& CheckRight(Player->ID, HIGHLIGHT_HELP_CHANNEL)){
+			&& check_right(Player->ID, HIGHLIGHT_HELP_CHANNEL)){
 		Mode = TALK_HIGHLIGHT_CHANNELCALL;
 		Player->TutorActivities += 1;
 		print(3, "Activity point for %s.\n", Player->Name);
@@ -931,9 +931,9 @@ void CJoinChannel(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	int Channel = Buffer->readWord();
-	if(Channel < GetNumberOfChannels()){
+	if(Channel < get_number_of_channels()){
 		try{
-			bool OwnChannel = JoinChannel(Channel, Player->ID);
+			bool OwnChannel = join_channel(Channel, Player->ID);
 			if(Channel == CHANNEL_RULEVIOLATIONS){
 				SendOpenRequestQueue(Connection);
 				SendExistingRequests(Connection);
@@ -960,8 +960,8 @@ void CLeaveChannel(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	int Channel = Buffer->readWord();
-	if(Channel < GetNumberOfChannels()){
-		LeaveChannel(Channel, Player->ID, true);
+	if(Channel < get_number_of_channels()){
+		leave_channel(Channel, Player->ID, true);
 	}
 }
 
@@ -977,7 +977,7 @@ void CPrivateChannel(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	char Name[30];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	if(Name[0] == 0){
 		return;
 	}
@@ -1004,12 +1004,12 @@ void CProcessRequest(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	TPlayer *Player = Connection->GetPlayer();
-	if(Player == NULL || !ChannelAvailable(CHANNEL_RULEVIOLATIONS, Player->ID)){
+	if(Player == NULL || !channel_available(CHANNEL_RULEVIOLATIONS, Player->ID)){
 		return;
 	}
 
 	char Name[30];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	if(Name[0] == 0){
 		return;
 	}
@@ -1040,12 +1040,12 @@ void CRemoveRequest(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	TPlayer *Player = Connection->GetPlayer();
-	if(Player == NULL || !ChannelAvailable(CHANNEL_RULEVIOLATIONS, Player->ID)){
+	if(Player == NULL || !channel_available(CHANNEL_RULEVIOLATIONS, Player->ID)){
 		return;
 	}
 
 	char Name[30];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	if(Name[0] == 0){
 		return;
 	}
@@ -1076,7 +1076,7 @@ void CCancelRequest(TConnection *Connection, TReadBuffer *Buffer){
 
 	// TODO(fusion): Does this mean regular players can't cancel their requests?
 	TPlayer *Player = Connection->GetPlayer();
-	if(Player == NULL || !ChannelAvailable(CHANNEL_RULEVIOLATIONS, Player->ID)){
+	if(Player == NULL || !channel_available(CHANNEL_RULEVIOLATIONS, Player->ID)){
 		return;
 	}
 
@@ -1178,7 +1178,7 @@ void CInviteToParty(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	InviteToParty(Player->ID, GuestID);
+	invite_to_party(Player->ID, GuestID);
 }
 
 void CJoinParty(TConnection *Connection, TReadBuffer *Buffer){
@@ -1193,7 +1193,7 @@ void CJoinParty(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	uint32 HostID = Buffer->readQuad();
-	JoinParty(Player->ID, HostID);
+	join_party(Player->ID, HostID);
 }
 
 void CRevokeInvitation(TConnection *Connection, TReadBuffer *Buffer){
@@ -1213,7 +1213,7 @@ void CRevokeInvitation(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	uint32 GuestID = Buffer->readQuad();
-	RevokeInvitation(Player->ID, GuestID);
+	revoke_invitation(Player->ID, GuestID);
 }
 
 void CPassLeadership(TConnection *Connection, TReadBuffer *Buffer){
@@ -1233,7 +1233,7 @@ void CPassLeadership(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	uint32 NewLeaderID = Buffer->readQuad();
-	PassLeadership(Player->ID, NewLeaderID);
+	pass_leadership(Player->ID, NewLeaderID);
 }
 
 void CLeaveParty(TConnection *Connection, TReadBuffer *Buffer){
@@ -1252,7 +1252,7 @@ void CLeaveParty(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	LeaveParty(Player->ID, false);
+	leave_party(Player->ID, false);
 }
 
 void COpenChannel(TConnection *Connection, TReadBuffer *Buffer){
@@ -1267,7 +1267,7 @@ void COpenChannel(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	try{
-		OpenChannel(Player->ID);
+		open_channel(Player->ID);
 	}catch(RESULT r){
 		SendResult(Connection, r);
 	}
@@ -1285,14 +1285,14 @@ void CInviteToChannel(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	char Name[30];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	if(Name[0] == 0){
 		print(2, "CInviteToChannel: No name specified.\n");
 		return;
 	}
 
 	try{
-		InviteToChannel(Player->ID, Name);
+		invite_to_channel(Player->ID, Name);
 	}catch(RESULT r){
 		SendResult(Connection, r);
 	}
@@ -1312,14 +1312,14 @@ void CExcludeFromChannel(TConnection *Connection, TReadBuffer *Buffer){
 	// TODO(fusion): The original function didn check if name was empty but it
 	// is probably a good idea.
 	char Name[30];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	if(Name[0] == 0){
 		print(2, "CInviteToChannel: No name specified.\n");
 		return;
 	}
 
 	try{
-		ExcludeFromChannel(Player->ID, Name);
+		exclude_from_channel(Player->ID, Name);
 	}catch(RESULT r){
 		SendResult(Connection, r);
 	}
@@ -1358,7 +1358,7 @@ void CRefreshField(TConnection *Connection, TReadBuffer *Buffer){
 	int FieldY = Buffer->readWord();
 	int FieldZ = Buffer->readByte();
 
-	if(!IsOnMap(FieldX, FieldY, FieldZ)){
+	if(!is_on_map(FieldX, FieldY, FieldZ)){
 		return;
 	}
 
@@ -1400,7 +1400,7 @@ void CGetOutfit(TConnection *Connection, TReadBuffer *Buffer){
 		return;
 	}
 
-	if(CheckRight(Player->ID, GAMEMASTER_OUTFIT)){
+	if(check_right(Player->ID, GAMEMASTER_OUTFIT)){
 		SendMessage(Connection, TALK_FAILURE_MESSAGE,
 				"You may not change your outfit.");
 		return;
@@ -1426,7 +1426,7 @@ void CSetOutfit(TConnection *Connection, TReadBuffer *Buffer){
 
 	int FirstOutfit = (Player->Sex == 1) ? 128 : 136;
 	int LastOutfit  = (Player->Sex == 1) ? 131 : 139;
-	if(CheckRight(Player->ID, PREMIUM_ACCOUNT)){
+	if(check_right(Player->ID, PREMIUM_ACCOUNT)){
 		LastOutfit += 3;
 	}
 
@@ -1449,7 +1449,7 @@ void CSetOutfit(TConnection *Connection, TReadBuffer *Buffer){
 
 	if(Player->Outfit == Player->OrgOutfit){
 		Player->Outfit = NewOutfit;
-		AnnounceChangedCreature(Player->ID, CREATURE_OUTFIT_CHANGED);
+		announce_changed_creature(Player->ID, CREATURE_OUTFIT_CHANGED);
 	}
 
 	Player->OrgOutfit = NewOutfit;
@@ -1467,7 +1467,7 @@ void CAddBuddy(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	char Name[30];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	if(Name[0] != 0){
 		Player->AddBuddy(Name);
 	}
@@ -1498,35 +1498,35 @@ void CBugReport(TConnection *Connection, TReadBuffer *Buffer){
 	}
 
 	char Text[1024];
-	Buffer->readString(Text, sizeof(Text));
+	Buffer->read_string(Text, sizeof(Text));
 
-	bool Empty = true;
+	bool empty = true;
 	for(int i = 0; Text[i] != 0; i += 1){
 		if(!isprint(Text[i])){
 			Text[i] = 0;
 			break;
 		}else if(!isSpace(Text[i])){
-			Empty = false;
+			empty = false;
 		}
 	}
 
-	if(Empty){
+	if(empty){
 		return;
 	}
 
 	// NOTE(fusion): `ctime` will already add a new line character which is why
-	// there is none in this first `Log` call.
+	// there is none in this first `log_message` call.
 	int PlayerX, PlayerY, PlayerZ;
 	time_t Time = time(NULL);
-	Connection->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
-	Log("bugreport", "%s - %d/%d - [%d,%d,%d] - %s",
-			Connection->GetName(),
+	Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
+	log_message("bugreport", "%s - %d/%d - [%d,%d,%d] - %s",
+			Connection->get_name(),
 			Connection->TerminalType,
 			Connection->TerminalVersion,
 			PlayerX, PlayerY, PlayerZ,
 			ctime(&Time));
-	Log("bugreport", "%s\n", Text);
-	Log("bugreport", "---------------------------------------------------------------------------\n");
+	log_message("bugreport", "%s\n", Text);
+	log_message("bugreport", "---------------------------------------------------------------------------\n");
 
 	SendMessage(Connection, TALK_STATUS_MESSAGE, "Comment sent.");
 }
@@ -1544,15 +1544,15 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 
 	char Name[30];
 	char Comment[200];
-	Buffer->readString(Name, sizeof(Name));
+	Buffer->read_string(Name, sizeof(Name));
 	int Reason = Buffer->readByte();
 	int Action = Buffer->readByte();
-	Buffer->readString(Comment, sizeof(Comment));
+	Buffer->read_string(Comment, sizeof(Comment));
 	uint32 StatementID = Buffer->readQuad();
-	bool IPBanishment = Buffer->readByte() != 0;
+	bool ip_banishment = Buffer->readByte() != 0;
 
-	if(!CheckBanishmentRight(Player->ID, Reason, Action)
-			|| (IPBanishment && !CheckRight(Player->ID, IP_BANISHMENT))){
+	if(!check_banishment_right(Player->ID, Reason, Action)
+			|| (ip_banishment && !check_right(Player->ID, IP_BANISHMENT))){
 		SendMessage(Connection, TALK_FAILURE_MESSAGE,
 				"You have no authorization for this action.");
 		return;
@@ -1572,9 +1572,9 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 
 	TPlayer *Criminal;
 	const char *IPAddress = NULL;
-	bool IgnoreGamemasters = !CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
 	if(IdentifyPlayer(Name, false, IgnoreGamemasters, &Criminal) == 0){
-		if(CheckRight(Criminal->ID, NO_BANISHMENT)){
+		if(check_right(Criminal->ID, NO_BANISHMENT)){
 			if(Action == 1 || Action == 3 || Action == 5){
 				SendMessage(Connection, TALK_FAILURE_MESSAGE,
 						"This name has already been approved.");
@@ -1597,19 +1597,19 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 		}
 
 		strcpy(Name, GetCharacterName(Name));
-		if(IPBanishment){
+		if(ip_banishment){
 			SendMessage(Connection, TALK_FAILURE_MESSAGE,
 					"Player is not online. No IP address was banished.");
-			IPBanishment = false;
+			ip_banishment = false;
 		}
 	}
 
 	int NumberOfStatements = 0;
-	vector<TReportedStatement> *ReportedStatements = NULL;
+	vector<ReportedStatement> *ReportedStatements = NULL;
 	bool HasStatement = ((Reason >= 9 && Reason <= 27) || Reason == 29);
 	if(HasStatement && StatementID != 0){
 		uint32 ListenerID = (Action != 6 ? Player->ID : 0);
-		int Context = GetCommunicationContext(ListenerID, StatementID,
+		int Context = get_communication_context(ListenerID, StatementID,
 							&NumberOfStatements, &ReportedStatements);
 		if(Context == 1){
 			SendMessage(Connection, TALK_FAILURE_MESSAGE,
@@ -1622,8 +1622,8 @@ void CRuleViolation(TConnection *Connection, TReadBuffer *Buffer){
 		}
 	}
 
-	PunishmentOrder(Player, Name, IPAddress, Reason, Action, Comment,
-			NumberOfStatements, ReportedStatements, StatementID, IPBanishment);
+	punishment_order(Player, Name, IPAddress, Reason, Action, Comment,
+			NumberOfStatements, ReportedStatements, StatementID, ip_banishment);
 }
 
 void CErrorFileEntry(TConnection *Connection, TReadBuffer *Buffer){
@@ -1636,39 +1636,39 @@ void CErrorFileEntry(TConnection *Connection, TReadBuffer *Buffer){
 	char Date[32];
 	char Stack[2048];
 	char Comment[512];
-	Buffer->readString(Title, sizeof(Title));
-	Buffer->readString(Date, sizeof(Date));
-	Buffer->readString(Stack, sizeof(Stack));
-	Buffer->readString(Comment, sizeof(Comment));
+	Buffer->read_string(Title, sizeof(Title));
+	Buffer->read_string(Date, sizeof(Date));
+	Buffer->read_string(Stack, sizeof(Stack));
+	Buffer->read_string(Comment, sizeof(Comment));
 	if(Stack[0] == 0 && Comment[0] == 0){
 		return;
 	}
 
 	// NOTE(fusion): `ctime` will already add a new line character which is why
-	// there is none in this first `Log` call.
+	// there is none in this first `log_message` call.
 	int PlayerX, PlayerY, PlayerZ;
 	time_t Time = time(NULL);
-	Connection->GetPosition(&PlayerX, &PlayerY, &PlayerZ);
-	Log("client-error", "%s - %d/%d - [%d,%d,%d] - %s",
-			Connection->GetName(),
+	Connection->get_position(&PlayerX, &PlayerY, &PlayerZ);
+	log_message("client-error", "%s - %d/%d - [%d,%d,%d] - %s",
+			Connection->get_name(),
 			Connection->TerminalType,
 			Connection->TerminalVersion,
 			PlayerX, PlayerY, PlayerZ,
 			ctime(&Time));
-	Log("client-error", "%s\n", Title);
-	Log("client-error", "%s\n", Date);
+	log_message("client-error", "%s\n", Title);
+	log_message("client-error", "%s\n", Date);
 
 	if(Stack[0] != 0){
-		Log("client-error", "\n");
-		Log("client-error", "%s\n", Stack);
+		log_message("client-error", "\n");
+		log_message("client-error", "%s\n", Stack);
 	}
 
 	if(Comment[0] != 0){
-		Log("client-error", "\n");
-		Log("client-error", "%s\n", Comment);
+		log_message("client-error", "\n");
+		log_message("client-error", "%s\n", Comment);
 	}
 
-	Log("client-error","---------------------------------------------------------------------------\n");
+	log_message("client-error","---------------------------------------------------------------------------\n");
 }
 
 void ReceiveData(TConnection *Connection){
@@ -1706,11 +1706,11 @@ void ReceiveData(TConnection *Connection){
 		if(Command != CL_CMD_LOGIN){
 			error("ReceiveData: Wrong login command %d.\n", Command);
 		}else if(!Connection->JoinGame(&Buffer)){
-			Log("game", "Login failed.\n");
+			log_message("game", "Login failed.\n");
 			SendResult(Connection, LOGINERROR);
 			TPlayer *Player = Connection->GetPlayer();
 			if(Player != NULL){
-				DecrementIsOnlineOrder(Player->ID);
+				decrement_is_online_order(Player->ID);
 			}else{
 				error("ReceiveData: Login failed and no creature known.\n");
 			}

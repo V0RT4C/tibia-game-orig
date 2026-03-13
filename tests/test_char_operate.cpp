@@ -34,8 +34,8 @@ TEST_CASE("Channel ID enums") {
     CHECK(MAX_CHANNELS == 0xFFFF);
 }
 
-TEST_CASE("TStatement struct layout") {
-    TStatement s{};
+TEST_CASE("Statement struct layout") {
+    Statement s{};
     CHECK(s.StatementID == 0);
     CHECK(s.TimeStamp == 0);
     CHECK(s.CharacterID == 0);
@@ -45,20 +45,20 @@ TEST_CASE("TStatement struct layout") {
     CHECK(s.Reported == false);
 }
 
-TEST_CASE("TListener struct layout") {
-    TListener l{};
+TEST_CASE("Listener struct layout") {
+    Listener l{};
     CHECK(l.StatementID == 0);
     CHECK(l.CharacterID == 0);
 }
 
-TEST_CASE("TReportedStatement struct layout") {
-    TReportedStatement r{};
+TEST_CASE("ReportedStatement struct layout") {
+    ReportedStatement r{};
     CHECK(r.StatementID == 0);
     CHECK(r.TimeStamp == 0);
     CHECK(r.CharacterID == 0);
     CHECK(sizeof(r.Text) == 256);
 }
 
-// TChannel and TParty constructor/copy tests omitted — TChannel and TParty
+// Channel and Party constructor/copy tests omitted — Channel and Party
 // have non-inline constructors in operate.cpp which pulls in heavy game-wide
 // dependencies. These will be testable after Phase 3 decomposes cr.h.

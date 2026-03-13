@@ -170,8 +170,8 @@ struct TConnection {
 	void Close(bool Delay);
 	void Disconnect(void);
 	TPlayer *GetPlayer(void);
-	const char *GetName(void);
-	void GetPosition(int *x, int *y, int *z);
+	const char *get_name(void);
+	void get_position(int *x, int *y, int *z);
 	bool IsVisible(int x, int y, int z);
 	KNOWNCREATURESTATE KnownCreature(uint32 ID, bool UpdateFollows);
 	uint32 NewKnownCreature(uint32 NewID);

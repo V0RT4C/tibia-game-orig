@@ -10,7 +10,7 @@ struct TWriteStream {
 	virtual void writeByte(uint8 Byte) = 0;												// VTABLE[1]
 	virtual void writeWord(uint16 Word);												// VTABLE[2]
 	virtual void writeQuad(uint32 Quad);												// VTABLE[3]
-	virtual void writeString(const char *String);										// VTABLE[4]
+	virtual void write_string(const char *String);										// VTABLE[4]
 	virtual void writeBytes(const uint8 *Buffer, int Count);							// VTABLE[5]
 };
 

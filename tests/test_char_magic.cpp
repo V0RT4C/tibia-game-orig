@@ -3,8 +3,8 @@
 #include "game_data/magic/magic.h"
 
 // Characterization tests for magic enums.
-// TImpact virtual methods are defined in magic.cpp (not inline), so we do not
-// instantiate TImpact here to avoid requiring magic.cpp linkage.
+// Impact virtual methods are defined in magic.cpp (not inline), so we do not
+// instantiate Impact here to avoid requiring magic.cpp linkage.
 
 TEST_CASE("Field type enum values") {
     CHECK(FIELD_TYPE_FIRE == 1);

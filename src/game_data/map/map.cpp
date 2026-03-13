@@ -22,22 +22,22 @@ int VeteranStartPositionY;
 int VeteranStartPositionZ;
 
 static int OBCount;
-static matrix3d<TSector*> *Sector;
-static TObjectBlock **ObjectBlock;
-static TObject *FirstFreeObject;
-static TObject **HashTableData;
+static matrix3d<Sector*> *SectorMatrix;
+static ObjectBlock **ObjectBlockArray;
+static MapObject *FirstFreeObject;
+static MapObject **HashTableData;
 static uint8 *HashTableType;
 static uint32 HashTableSize;
 static uint32 HashTableMask;
 static uint32 HashTableFree;
 static uint32 ObjectCounter;
 
-static vector<TCronEntry> CronEntry(0, 256, 256);
+static vector<CronEntry> CronEntryArray(0, 256, 256);
 static int CronHashTable[2047];
 static int CronEntries;
 
-static vector<TDepotInfo> DepotInfo(0, 4, 5);
-static vector<TMark> Mark(0, 4, 5);
+static vector<DepotInfo> DepotInfoArray(0, 4, 5);
+static vector<Mark> MarkArray(0, 4, 5);
 static int Marks;
 
 static TDynamicWriteBuffer HelpBuffer(kb(64));
@@ -51,79 +51,79 @@ bool Object::exists(void){
 
 	uint32 EntryIndex = this->ObjectID & HashTableMask;
 	if(HashTableType[EntryIndex] == STATUS_SWAPPED){
-		UnswapSector((uintptr)HashTableData[EntryIndex]);
+		unswap_sector((uintptr)HashTableData[EntryIndex]);
 	}
 
 	return HashTableType[EntryIndex] == STATUS_LOADED
 		&& HashTableData[EntryIndex]->ObjectID == this->ObjectID;
 }
 
-ObjectType Object::getObjectType(void){
-	return AccessObject(*this)->Type;
+ObjectType Object::get_object_type(void){
+	return access_object(*this)->Type;
 }
 
-void Object::setObjectType(ObjectType Type){
-	AccessObject(*this)->Type = Type;
+void Object::set_object_type(ObjectType Type){
+	access_object(*this)->Type = Type;
 }
 
-Object Object::getNextObject(void){
-	return AccessObject(*this)->NextObject;
+Object Object::get_next_object(void){
+	return access_object(*this)->NextObject;
 }
 
-void Object::setNextObject(Object NextObject){
-	AccessObject(*this)->NextObject = NextObject;
+void Object::set_next_object(Object NextObject){
+	access_object(*this)->NextObject = NextObject;
 }
 
-Object Object::getContainer(void){
-	return AccessObject(*this)->Container;
+Object Object::get_container(void){
+	return access_object(*this)->Container;
 }
 
-void Object::setContainer(Object Container){
-	AccessObject(*this)->Container = Container;
+void Object::set_container(Object Container){
+	access_object(*this)->Container = Container;
 }
 
-uint32 Object::getCreatureID(void){
-	// TODO(fusion): We call `AccessObject` once in `getObjectType` then again
+uint32 Object::get_creature_id(void){
+	// TODO(fusion): We call `access_object` once in `get_object_type` then again
 	// after checking the TypeID, when we could call it once to check both type
 	// and access `Attributes[1]`.
 
-	if(!this->getObjectType().isCreatureContainer()){
-		error("Object::getCreatureID: Object is not a creature.\n");
+	if(!this->get_object_type().is_creature_container()){
+		error("Object::get_creature_id: Object is not a creature.\n");
 		return 0;
 	}
 
-	return AccessObject(*this)->Attributes[1];
+	return access_object(*this)->Attributes[1];
 }
 
-uint32 Object::getAttribute(INSTANCEATTRIBUTE Attribute){
-	ObjectType ObjType = this->getObjectType();
-	int AttributeOffset = ObjType.getAttributeOffset(Attribute);
+uint32 Object::get_attribute(INSTANCEATTRIBUTE Attribute){
+	ObjectType ObjType = this->get_object_type();
+	int AttributeOffset = ObjType.get_attribute_offset(Attribute);
 	if(AttributeOffset == -1){
-		error("Object::getAttribute: Flag for attribute %d on object type %d not set.\n",
+		error("Object::get_attribute: Flag for attribute %d on object type %d not set.\n",
 				Attribute, ObjType.TypeID);
 		return 0;
 	}
 
-	if(AttributeOffset < 0 || AttributeOffset >= NARRAY(TObject::Attributes)){
-		error("Object::getAttribute: Invalid offset %d for attribute %d on object type %d.\n",
+	if(AttributeOffset < 0 || AttributeOffset >= NARRAY(MapObject::Attributes)){
+		error("Object::get_attribute: Invalid offset %d for attribute %d on object type %d.\n",
 				AttributeOffset, Attribute, ObjType.TypeID);
 		return 0;
 	}
 
-	return AccessObject(*this)->Attributes[AttributeOffset];
+	return access_object(*this)->Attributes[AttributeOffset];
 }
 
-void Object::setAttribute(INSTANCEATTRIBUTE Attribute, uint32 Value){
-	ObjectType ObjType = this->getObjectType();
-	int AttributeOffset = ObjType.getAttributeOffset(Attribute);
+void Object::set_attribute(INSTANCEATTRIBUTE Attribute, uint32 Value){
+	ObjectType ObjType = this->get_object_type();
+	int AttributeOffset = ObjType.get_attribute_offset(Attribute);
 	if(AttributeOffset == -1){
-		error("Object::setAttribute: Flag for attribute %d on object type %d not set.\n",
+		error("Object::set_attribute: Flag for attribute %d on object type %d not set.\n",
 				Attribute, ObjType.TypeID);
 		return;
 	}
 
-	if(AttributeOffset < 0 || AttributeOffset >= NARRAY(TObject::Attributes)){
-		error("Object::setAttribute: Invalid offset %d for attribute %d on object type %d.\n",
+	if(AttributeOffset < 0 || AttributeOffset >= NARRAY(MapObject::Attributes)){
+		error("Object::set_attribute: Invalid offset %d for attribute %d on object type %d.\n",
 				AttributeOffset, Attribute, ObjType.TypeID);
 		return;
 	}
@@ -132,25 +132,25 @@ void Object::setAttribute(INSTANCEATTRIBUTE Attribute, uint32 Value){
 		if(Attribute == AMOUNT || Attribute == POOLLIQUIDTYPE || Attribute == CHARGES){
 			Value = 1;
 		}else if(Attribute == REMAININGUSES){
-			Value = ObjType.getAttribute(TOTALUSES);
+			Value = ObjType.get_attribute(TOTALUSES);
 		}
 	}
 
-	AccessObject(*this)->Attributes[AttributeOffset] = Value;
+	access_object(*this)->Attributes[AttributeOffset] = Value;
 }
 
 // Cron Management
 // =============================================================================
 static void CronMove(int Destination, int Source){
-	TCronEntry *DestEntry = CronEntry.at(Destination);
-	*DestEntry = *CronEntry.at(Source);
+	CronEntry *DestEntry = CronEntryArray.at(Destination);
+	*DestEntry = *CronEntryArray.at(Source);
 
 	if(DestEntry->Next != -1){
-		CronEntry.at(DestEntry->Next)->Previous = Destination;
+		CronEntryArray.at(DestEntry->Next)->Previous = Destination;
 	}
 
 	if(DestEntry->Previous != -1){
-		CronEntry.at(DestEntry->Previous)->Next = Destination;
+		CronEntryArray.at(DestEntry->Previous)->Next = Destination;
 	}else{
 		CronHashTable[DestEntry->Obj.ObjectID % NARRAY(CronHashTable)] = Destination;
 	}
@@ -159,8 +159,8 @@ static void CronMove(int Destination, int Source){
 static void CronHeapify(int Position){
 	while(Position > 1){
 		int Parent = Position / 2;
-		TCronEntry *CurrentEntry = CronEntry.at(Position);
-		TCronEntry *ParentEntry = CronEntry.at(Parent);
+		CronEntry *CurrentEntry = CronEntryArray.at(Position);
+		CronEntry *ParentEntry = CronEntryArray.at(Parent);
 		if(ParentEntry->RoundNr <= CurrentEntry->RoundNr){
 			break;
 		}
@@ -183,16 +183,16 @@ static void CronHeapify(int Position){
 			break;
 		}
 
-		TCronEntry *SmallestEntry = CronEntry.at(Smallest);
+		CronEntry *SmallestEntry = CronEntryArray.at(Smallest);
 		if((Smallest + 1) <= Last){
-			TCronEntry *OtherEntry = CronEntry.at(Smallest + 1);
+			CronEntry *OtherEntry = CronEntryArray.at(Smallest + 1);
 			if(OtherEntry->RoundNr < SmallestEntry->RoundNr){
 				SmallestEntry = OtherEntry;
 				Smallest += 1;
 			}
 		}
 
-		TCronEntry *CurrentEntry = CronEntry.at(Position);
+		CronEntry *CurrentEntry = CronEntryArray.at(Position);
 		if(CurrentEntry->RoundNr <= SmallestEntry->RoundNr){
 			break;
 		}
@@ -217,14 +217,14 @@ static void CronSet(Object Obj, uint32 Delay){
 	CronEntries += 1;
 
 	int Position = CronEntries;
-	TCronEntry *Entry = CronEntry.at(Position);
+	CronEntry *Entry = CronEntryArray.at(Position);
 	Entry->Obj = Obj;
 	Entry->RoundNr = RoundNr + Delay;
 	Entry->Previous = -1;
 	Entry->Next = CronHashTable[Obj.ObjectID % NARRAY(CronHashTable)];
 	CronHashTable[Obj.ObjectID % NARRAY(CronHashTable)] = Position;
 	if(Entry->Next != -1){
-		CronEntry.at(Entry->Next)->Previous = Position;
+		CronEntryArray.at(Entry->Next)->Previous = Position;
 	}
 
 	CronHeapify(Position);
@@ -236,14 +236,14 @@ static void CronDelete(int Position){
 		return;
 	}
 
-	TCronEntry *Entry = CronEntry.at(Position);
+	CronEntry *Entry = CronEntryArray.at(Position);
 
 	if(Entry->Next != -1){
-		CronEntry.at(Entry->Next)->Previous = Entry->Previous;
+		CronEntryArray.at(Entry->Next)->Previous = Entry->Previous;
 	}
 
 	if(Entry->Previous != -1){
-		CronEntry.at(Entry->Previous)->Next = Entry->Next;
+		CronEntryArray.at(Entry->Previous)->Next = Entry->Next;
 	}else{
 		CronHashTable[Entry->Obj.ObjectID % NARRAY(CronHashTable)] = Entry->Next;
 	}
@@ -256,10 +256,10 @@ static void CronDelete(int Position){
 	}
 }
 
-Object CronCheck(void){
+Object cron_check(void){
 	Object Obj = NONE;
 	if(CronEntries != 0){
-		TCronEntry *Entry = CronEntry.at(1);
+		CronEntry *Entry = CronEntryArray.at(1);
 		if(Entry->RoundNr <= RoundNr){
 			Obj = Entry->Obj;
 		}
@@ -267,31 +267,31 @@ Object CronCheck(void){
 	return Obj;
 }
 
-void CronExpire(Object Obj, int Delay){
+void cron_expire(Object Obj, int Delay){
 	if(!Obj.exists()){
-		error("CronExpire: Provided object does not exist.\n");
+		error("cron_expire: Provided object does not exist.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(EXPIRE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(EXPIRE)){
 		if(Delay == -1){
-			CronSet(Obj, ObjType.getAttribute(TOTALEXPIRETIME));
+			CronSet(Obj, ObjType.get_attribute(TOTALEXPIRETIME));
 		}else{
 			CronSet(Obj, (uint32)Delay);
 		}
 	}
 }
 
-void CronChange(Object Obj, int NewDelay){
+void cron_change(Object Obj, int NewDelay){
 	if(!Obj.exists()){
-		error("CronChange: Provided object does not exist.\n");
+		error("cron_change: Provided object does not exist.\n");
 		return;
 	}
 
 	int Position = CronHashTable[Obj.ObjectID % NARRAY(CronHashTable)];
 	while(Position != -1){
-		TCronEntry *Entry = CronEntry.at(Position);
+		CronEntry *Entry = CronEntryArray.at(Position);
 		if(Entry->Obj == Obj){
 			Entry->RoundNr = RoundNr + NewDelay;
 			CronHeapify(Position);
@@ -300,24 +300,24 @@ void CronChange(Object Obj, int NewDelay){
 		Position = Entry->Next;
 	}
 
-	error("CronChange: Object is not registered in the cron system.\n");
+	error("cron_change: Object is not registered in the cron system.\n");
 }
 
-uint32 CronInfo(Object Obj, bool Delete){
+uint32 cron_info(Object Obj, bool delete_op){
 	if(!Obj.exists()){
-		error("CronInfo: Provided object does not exist.\n");
+		error("cron_info: Provided object does not exist.\n");
 		return 0;
 	}
 
 	int Position = CronHashTable[Obj.ObjectID % NARRAY(CronHashTable)];
 	while(Position != -1){
-		TCronEntry *Entry = CronEntry.at(Position);
+		CronEntry *Entry = CronEntryArray.at(Position);
 		if(Entry->Obj == Obj){
 			uint32 Remaining = 1;
 			if(Entry->RoundNr > RoundNr){
 				Remaining = Entry->RoundNr - RoundNr;
 			}
-			if(Delete){
+			if(delete_op){
 				CronDelete(Position);
 			}
 			return Remaining;
@@ -325,17 +325,17 @@ uint32 CronInfo(Object Obj, bool Delete){
 		Position = Entry->Next;
 	}
 
-	error("CronInfo: Object is not registered in the cron system.\n");
+	error("cron_info: Object is not registered in the cron system.\n");
 	return 0;
 }
 
-uint32 CronStop(Object Obj){
+uint32 cron_stop(Object Obj){
 	if(!Obj.exists()){
-		error("CronStop: Provided object does not exist.\n");
+		error("cron_stop: Provided object does not exist.\n");
 		return 0;
 	}
 
-	return CronInfo(Obj, true);
+	return cron_info(Obj, true);
 }
 
 // Map Management
@@ -361,72 +361,72 @@ static void ReadMapConfig(void){
 	char FileName[4096];
 	snprintf(FileName, sizeof(FileName), "%s/map.dat", DATAPATH);
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 	while(true){
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token == ENDOFFILE){
 			Script.close();
 			break;
 		}
 
 		char Identifier[MAX_IDENT_LENGTH];
-		strcpy(Identifier, Script.getIdentifier());
-		Script.readSymbol('=');
+		strcpy(Identifier, Script.get_identifier());
+		Script.read_symbol('=');
 
 		if(strcmp(Identifier, "sectorxmin") == 0){
-			SectorXMin = Script.readNumber();
+			SectorXMin = Script.read_number();
 		}else if(strcmp(Identifier, "sectorxmax") == 0){
-			SectorXMax = Script.readNumber();
+			SectorXMax = Script.read_number();
 		}else if(strcmp(Identifier, "sectorymin") == 0){
-			SectorYMin = Script.readNumber();
+			SectorYMin = Script.read_number();
 		}else if(strcmp(Identifier, "sectorymax") == 0){
-			SectorYMax = Script.readNumber();
+			SectorYMax = Script.read_number();
 		}else if(strcmp(Identifier, "sectorzmin") == 0){
-			SectorZMin = Script.readNumber();
+			SectorZMin = Script.read_number();
 		}else if(strcmp(Identifier, "sectorzmax") == 0){
-			SectorZMax = Script.readNumber();
+			SectorZMax = Script.read_number();
 		}else if(strcmp(Identifier, "refreshedcylinders") == 0){
-			RefreshedCylinders = Script.readNumber();
+			RefreshedCylinders = Script.read_number();
 		}else if(strcmp(Identifier, "objects") == 0){
-			HashTableSize = (uint32)Script.readNumber();
+			HashTableSize = (uint32)Script.read_number();
 		}else if(strcmp(Identifier, "cachesize") == 0){
-			OBCount = Script.readNumber();
+			OBCount = Script.read_number();
 		}else if(strcmp(Identifier, "depot") == 0){
 			int DepotIndex = 0;
-			TDepotInfo TempInfo = {};
-			Script.readSymbol('(');
-			DepotIndex = Script.readNumber();
-			Script.readSymbol(',');
-			const char *Town = Script.readString();
+			DepotInfo TempInfo = {};
+			Script.read_symbol('(');
+			DepotIndex = Script.read_number();
+			Script.read_symbol(',');
+			const char *Town = Script.read_string();
 			if(strlen(Town) >= NARRAY(TempInfo.Town)){
 				Script.error("town name too long");
 			}
 			strcpy(TempInfo.Town, Town);
-			Script.readSymbol(',');
-			TempInfo.Size = Script.readNumber();
-			Script.readSymbol(')');
-			*DepotInfo.at(DepotIndex) = TempInfo;
+			Script.read_symbol(',');
+			TempInfo.Size = Script.read_number();
+			Script.read_symbol(')');
+			*DepotInfoArray.at(DepotIndex) = TempInfo;
 		}else if(strcmp(Identifier, "mark") == 0){
-			TMark TempMark = {};
-			Script.readSymbol('(');
-			const char *Name = Script.readString();
+			Mark TempMark = {};
+			Script.read_symbol('(');
+			const char *Name = Script.read_string();
 			if(strlen(Name) >= NARRAY(TempMark.Name)){
 				Script.error("mark name too long");
 			}
 			strcpy(TempMark.Name, Name);
-			Script.readSymbol(',');
-			Script.readCoordinate(&TempMark.x, &TempMark.y, &TempMark.z);
-			Script.readSymbol(')');
-			*Mark.at(Marks) = TempMark;
+			Script.read_symbol(',');
+			Script.read_coordinate(&TempMark.x, &TempMark.y, &TempMark.z);
+			Script.read_symbol(')');
+			*MarkArray.at(Marks) = TempMark;
 			Marks += 1;
 		}else if(strcmp(Identifier, "newbiestart") == 0){
-			 Script.readCoordinate(
+			 Script.read_coordinate(
 					&NewbieStartPositionX,
 					&NewbieStartPositionY,
 					&NewbieStartPositionZ);
 		}else if(strcmp(Identifier, "veteranstart") == 0){
-			 Script.readCoordinate(
+			 Script.read_coordinate(
 					&VeteranStartPositionX,
 					&VeteranStartPositionY,
 					&VeteranStartPositionZ);
@@ -522,16 +522,16 @@ static void ResizeHashTable(void){
 	error("INFO: Hash table too small. Size is being doubled to %d.\n", NewSize);
 
 	uint32 NewMask = NewSize - 1;
-	TObject **NewData = (TObject**)malloc(NewSize * sizeof(TObject*));
+	MapObject **NewData = (MapObject**)malloc(NewSize * sizeof(MapObject*));
 	uint8 *NewType = (uint8*)malloc(NewSize * sizeof(uint8));
 	memset(NewType, 0, NewSize * sizeof(uint8));
 
 	// TODO(fusion): This rehash loop doesn't make a lot of sense. It wants to
 	// access all existing objects but doing so would cause all sectors to be
 	// swapped in at some time or another. This may be bad for performance but
-	// the real problem is that `UnswapSector` may swap out some other sector
+	// the real problem is that `unswap_sector` may swap out some other sector
 	// whose objects were already put into `NewType` and `NewData`, causing
-	// multiple object ids to reference the same `TObject`.
+	// multiple object ids to reference the same `MapObject`.
 	//	Looking at some of the logs included with this executable, it doesn't
 	// look like this function was ever called which explains why it wasn't fixed
 	// earlier.
@@ -545,11 +545,11 @@ static void ResizeHashTable(void){
 	for(uint32 i = 1; i < OldSize; i += 1){
 		if(HashTableType[i] != STATUS_FREE){
 			if(HashTableType[i] == STATUS_SWAPPED){
-				UnswapSector((uintptr)HashTableData[i]);
+				unswap_sector((uintptr)HashTableData[i]);
 			}
 
 			if(HashTableType[i] == STATUS_LOADED){
-				TObject *Entry = HashTableData[i];
+				MapObject *Entry = HashTableData[i];
 				NewType[Entry->ObjectID & NewMask] = STATUS_LOADED;
 				NewData[Entry->ObjectID & NewMask] = Entry;
 			}else{
@@ -568,12 +568,12 @@ static void ResizeHashTable(void){
 	HashTableFree += (NewSize - OldSize);
 }
 
-static TObject *GetFreeObjectSlot(void){
+static MapObject *GetFreeObjectSlot(void){
 	if(FirstFreeObject == NULL){
-		SwapSector();
+		swap_sector();
 	}
 
-	TObject *Entry = FirstFreeObject;
+	MapObject *Entry = FirstFreeObject;
 	if(Entry == NULL){
 		error("GetFreeObjectSlot: No free slots remaining.\n");
 		return NULL;
@@ -581,29 +581,29 @@ static TObject *GetFreeObjectSlot(void){
 
 	// NOTE(fusion): The next object pointer was originally stored in `Entry->NextObject.ObjectID`
 	// which is a problem when compiling in 64 bits mode. For this reason, I've changed it to be
-	// stored at the beggining of `TObject`.
-	FirstFreeObject = *((TObject**)Entry);
+	// stored at the beggining of `MapObject`.
+	FirstFreeObject = *((MapObject**)Entry);
 
-	// TODO(fusion): Using `memset` here will trigger a compiler warning because `TObject` contains
+	// TODO(fusion): Using `memset` here will trigger a compiler warning because `MapObject` contains
 	// a few `Object`s and I've made them non PODs by adding a few constructors.
-	//memset(Entry, 0, sizeof(TObject));
+	//memset(Entry, 0, sizeof(MapObject));
 
-	*Entry = TObject{};
+	*Entry = MapObject{};
 	return Entry;
 }
 
-static void PutFreeObjectSlot(TObject *Entry){
+static void PutFreeObjectSlot(MapObject *Entry){
 	if(Entry == NULL){
 		error("PutFreeObjectSlot: Entry is NULL.\n");
 		return;
 	}
 
 	// NOTE(fusion): See note in `GetFreeObjectSlot`, just above.
-	*((TObject**)Entry) = FirstFreeObject;
+	*((MapObject**)Entry) = FirstFreeObject;
 	FirstFreeObject = Entry;
 }
 
-void SwapObject(TWriteBinaryFile *File, Object Obj, uintptr FileNumber){
+void swap_object(TWriteBinaryFile *File, Object Obj, uintptr FileNumber){
 	ASSERT(Obj != NONE);
 
 	// NOTE(fusion): Does it make sense to swap an object that isn't loaded? We
@@ -611,45 +611,45 @@ void SwapObject(TWriteBinaryFile *File, Object Obj, uintptr FileNumber){
 	// sector if it was swapped out. We should probably have an assertion here.
 	uint32 EntryIndex = Obj.ObjectID & HashTableMask;
 	if(HashTableType[EntryIndex] != STATUS_LOADED){
-		error("SwapObject: Object doesn't exist or is not currently loaded.\n");
+		error("swap_object: Object doesn't exist or is not currently loaded.\n");
 		return;
 	}
 
-	TObject *Entry = HashTableData[EntryIndex];
+	MapObject *Entry = HashTableData[EntryIndex];
 	if(Entry->ObjectID != Obj.ObjectID){
-		error("SwapObject: Provided object does not exist.\n");
+		error("swap_object: Provided object does not exist.\n");
 		return;
 	}
 
-	File->writeBytes((const uint8*)Entry, sizeof(TObject));
-	if(Entry->Type.getFlag(CONTAINER) || Entry->Type.getFlag(CHEST)){
-		Object Current = Object(Obj.getAttribute(CONTENT));
+	File->writeBytes((const uint8*)Entry, sizeof(MapObject));
+	if(Entry->Type.get_flag(CONTAINER) || Entry->Type.get_flag(CHEST)){
+		Object Current = Object(Obj.get_attribute(CONTENT));
 		while(Current != NONE){
-			Object Next = Current.getNextObject();
-			SwapObject(File, Current, FileNumber);
+			Object Next = Current.get_next_object();
+			swap_object(File, Current, FileNumber);
 			Current = Next;
 		}
 	}
 
 	PutFreeObjectSlot(Entry);
 	HashTableType[EntryIndex] = STATUS_SWAPPED;
-	HashTableData[EntryIndex] = (TObject*)FileNumber;
+	HashTableData[EntryIndex] = (MapObject*)FileNumber;
 }
 
-void SwapSector(void){
+void swap_sector(void){
 	static uintptr FileNumber = 0;
 
-	TSector *Oldest = NULL;
+	Sector *Oldest = NULL;
 	int OldestSectorX = 0;
 	int OldestSectorY = 0;
 	int OldestSectorZ = 0;
 	uint32 OldestTimeStamp = RoundNr + 1;
 
-	ASSERT(Sector != NULL);
+	ASSERT(SectorMatrix != NULL);
 	for(int SectorZ = SectorZMin; SectorZ <= SectorZMax; SectorZ += 1)
 	for(int SectorY = SectorYMin; SectorY <= SectorYMax; SectorY += 1)
 	for(int SectorX = SectorXMin; SectorX <= SectorXMax; SectorX += 1){
-		TSector *CurrentSector = *Sector->at(SectorX, SectorY, SectorZ);
+		Sector *CurrentSector = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 		if(CurrentSector != NULL
 				&& CurrentSector->Status == STATUS_LOADED
 				&& CurrentSector->TimeStamp < OldestTimeStamp){
@@ -662,7 +662,7 @@ void SwapSector(void){
 	}
 
 	if(Oldest == NULL){
-		error("FATAL ERROR in SwapSector: No sector can be swapped out.\n");
+		error("FATAL ERROR in swap_sector: No sector can be swapped out.\n");
 		abort();
 	}
 
@@ -678,7 +678,7 @@ void SwapSector(void){
 	TWriteBinaryFile File;
 	try{
 		if(!File.open(FileName)){
-			error("FATAL ERROR in SwapSector: Cannot create file \"%s\".\n", FileName);
+			error("FATAL ERROR in swap_sector: Cannot create file \"%s\".\n", FileName);
 			abort();
 		}
 		print(2, "Swapping out sector %d/%d/%d...\n", OldestSectorX, OldestSectorY, OldestSectorZ);
@@ -687,26 +687,26 @@ void SwapSector(void){
 		File.writeQuad((uint32)OldestSectorZ);
 		for(int X = 0; X < 32; X += 1){
 			for(int Y = 0; Y < 32; Y += 1){
-				SwapObject(&File, Oldest->MapCon[X][Y], FileNumber);
+				swap_object(&File, Oldest->MapCon[X][Y], FileNumber);
 			}
 		}
 		Oldest->Status = STATUS_SWAPPED;
 		File.close();
 	}catch(const char *str){
-		error("FATAL ERROR in SwapSector: Cannot create file \"%s\".\n", FileName);
+		error("FATAL ERROR in swap_sector: Cannot create file \"%s\".\n", FileName);
 		error("# Error: %s\n", str);
 		abort();
 	}
 }
 
-void UnswapSector(uintptr FileNumber){
+void unswap_sector(uintptr FileNumber){
 	char FileName[4096];
 	snprintf(FileName, sizeof(FileName), "%s/%08u.swp", SAVEPATH, (uint32)FileNumber);
 
 	TReadBinaryFile File;
 	try{
 		if(!File.open(FileName)){
-			error("FATAL ERROR in UnswapSector: Cannot open file \"%s\".\n", FileName);
+			error("FATAL ERROR in unswap_sector: Cannot open file \"%s\".\n", FileName);
 			abort();
 		}
 		int SectorX = (int)File.readQuad();
@@ -714,24 +714,24 @@ void UnswapSector(uintptr FileNumber){
 		int SectorZ = (int)File.readQuad();
 		print(2, "Swapping in sector %d/%d/%d...\n", SectorX, SectorY, SectorZ);
 
-		ASSERT(Sector != NULL);
-		TSector *LoadingSector = *Sector->at(SectorX, SectorY, SectorZ);
+		ASSERT(SectorMatrix != NULL);
+		Sector *LoadingSector = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 		if(LoadingSector == NULL){
-			error("UnswapSector: Sector %d/%d/%d does not exist.\n", SectorX, SectorY, SectorZ);
+			error("unswap_sector: Sector %d/%d/%d does not exist.\n", SectorX, SectorY, SectorZ);
 			File.close();
 			return;
 		}
 
 		if(LoadingSector->Status != STATUS_SWAPPED){
-			error("UnswapSector: Sector %d/%d/%d is not swapped out.\n", SectorX, SectorY, SectorZ);
+			error("unswap_sector: Sector %d/%d/%d is not swapped out.\n", SectorX, SectorY, SectorZ);
 			File.close();
 			return;
 		}
 
 		int Size = File.getSize();
 		while(File.getPosition() < Size){
-			TObject Entry;
-			File.readBytes((uint8*)&Entry, sizeof(TObject));
+			MapObject Entry;
+			File.readBytes((uint8*)&Entry, sizeof(MapObject));
 
 			uint32 EntryIndex = Entry.ObjectID & HashTableMask;
 			if(HashTableType[EntryIndex] == STATUS_SWAPPED){
@@ -739,28 +739,28 @@ void UnswapSector(uintptr FileNumber){
 				// its status. The original code would call `readBytes` on the result
 				// from `GetFreeObjectSlot()` directly and would then leak it if the
 				// entry status was not `STATUS_SWAPPED`.
-				TObject *EntryPointer = GetFreeObjectSlot();
+				MapObject *EntryPointer = GetFreeObjectSlot();
 				*EntryPointer = Entry;
 				HashTableData[EntryIndex] = EntryPointer;
 				HashTableType[EntryIndex] = STATUS_LOADED;
 			}else{
-				error("UnswapSector: Object %u already exists.\n", Entry.ObjectID);
+				error("unswap_sector: Object %u already exists.\n", Entry.ObjectID);
 			}
 		}
 		LoadingSector->Status = STATUS_LOADED;
 		File.close();
 		unlink(FileName);
 	}catch(const char *str){
-		error("FATAL ERROR in UnswapSector: Cannot read file \"%s\".\n", FileName);
+		error("FATAL ERROR in unswap_sector: Cannot read file \"%s\".\n", FileName);
 		error("# Error: %s\n", str);
 		abort();
 	}
 }
 
-void DeleteSwappedSectors(void){
+void delete_swapped_sectors(void){
 	DIR *SwapDir = opendir(SAVEPATH);
 	if(SwapDir == NULL){
-		error("DeleteSwappedSectors: Subdirectory %s not found\n", SAVEPATH);
+		error("delete_swapped_sectors: Subdirectory %s not found\n", SAVEPATH);
 		return;
 	}
 
@@ -786,16 +786,16 @@ void DeleteSwappedSectors(void){
 	closedir(SwapDir);
 }
 
-void LoadObjects(TReadScriptFile *Script, TWriteStream *Stream, bool Skip){
+void load_objects(ReadScriptFile *Script, TWriteStream *Stream, bool Skip){
 	int Depth = 1;
 	bool ProcessObjects = true;
-	Script->readSymbol('{');
-	Script->nextToken();
+	Script->read_symbol('{');
+	Script->next_token();
 	while(true){
 		if(ProcessObjects){
 			if(Script->Token != SPECIAL){
-				int TypeID = Script->getNumber();
-				if(!ObjectTypeExists(TypeID)){
+				int TypeID = Script->get_number();
+				if(!object_type_exists(TypeID)){
 					Script->error("unknown object type");
 				}
 
@@ -805,7 +805,7 @@ void LoadObjects(TReadScriptFile *Script, TWriteStream *Stream, bool Skip){
 
 				ProcessObjects = false;
 			}else{
-				char Special = Script->getSpecial();
+				char Special = Script->get_special();
 				if(Special == '}'){
 					if(!Skip){
 						Stream->writeWord(0xFFFF);
@@ -820,36 +820,36 @@ void LoadObjects(TReadScriptFile *Script, TWriteStream *Stream, bool Skip){
 					Script->error("expected comma");
 				}
 			}
-			Script->nextToken();
+			Script->next_token();
 		}else{
 			if(Script->Token != SPECIAL){
-				int Attribute = GetInstanceAttributeByName(Script->getIdentifier());
+				int Attribute = get_instance_attribute_by_name(Script->get_identifier());
 				if(Attribute == -1){
 					Script->error("unknown attribute");
 				}
 
-				Script->readSymbol('=');
+				Script->read_symbol('=');
 				if(!Skip){
 					Stream->writeByte((uint8)Attribute);
 				}
 
 				if(Attribute == CONTENT){
-					Script->readSymbol('{');
+					Script->read_symbol('{');
 					Depth += 1;
 					ProcessObjects = true;
 				}else if(Attribute == TEXTSTRING || Attribute == EDITOR){
-					const char *String = Script->readString();
+					const char *String = Script->read_string();
 					if(!Skip){
-						Stream->writeString(String);
+						Stream->write_string(String);
 					}
 				}else{
-					int Number = Script->readNumber();
+					int Number = Script->read_number();
 					if(!Skip){
 						Stream->writeQuad((uint32)Number);
 					}
 				}
 
-				Script->nextToken();
+				Script->next_token();
 			}else{
 				// NOTE(fusion): Attributes are key-value pairs separated by whitespace.
 				// If we find a special token (probably ',' or '}'), then we're done
@@ -863,7 +863,7 @@ void LoadObjects(TReadScriptFile *Script, TWriteStream *Stream, bool Skip){
 	}
 }
 
-void LoadObjects(TReadStream *Stream, Object Con){
+void load_objects(TReadStream *Stream, Object Con){
 	int Depth = 1;
 	Object Obj = NONE;
 	while(true){
@@ -873,14 +873,14 @@ void LoadObjects(TReadStream *Stream, Object Con){
 				ObjectCounter += 1;
 				ObjectType ObjType(TypeID);
 
-				if(ObjType.isBodyContainer()){
-					Obj = GetContainerObject(Con, (TypeID - 1));
+				if(ObjType.is_body_container()){
+					Obj = get_container_object(Con, (TypeID - 1));
 				}else{
-					Obj = AppendObject(Con, ObjType);
+					Obj = append_object(Con, ObjType);
 				}
 			}else{
 				Obj = Con;
-				Con = Con.getContainer();
+				Con = Con.get_container();
 				Depth -= 1;
 				if(Depth <= 0){
 					break;
@@ -895,16 +895,16 @@ void LoadObjects(TReadStream *Stream, Object Con){
 					Depth += 1;
 				}else if(Attribute == TEXTSTRING || Attribute == EDITOR){
 					char String[4096];
-					Stream->readString(String, sizeof(String));
-					Obj.setAttribute((INSTANCEATTRIBUTE)Attribute, AddDynamicString(String));
+					Stream->read_string(String, sizeof(String));
+					Obj.set_attribute((INSTANCEATTRIBUTE)Attribute, AddDynamicString(String));
 				}else if(Attribute == REMAININGEXPIRETIME){
 					uint32 Value = Stream->readQuad();
 					if(Value != 0){
-						CronChange(Obj, (int)Value);
+						cron_change(Obj, (int)Value);
 					}
 				}else{
 					uint32 Value = Stream->readQuad();
-					Obj.setAttribute((INSTANCEATTRIBUTE)Attribute, Value);
+					Obj.set_attribute((INSTANCEATTRIBUTE)Attribute, Value);
 				}
 			}else{
 				Obj = NONE;
@@ -913,22 +913,22 @@ void LoadObjects(TReadStream *Stream, Object Con){
 	}
 }
 
-void InitSector(int SectorX, int SectorY, int SectorZ){
-	ASSERT(Sector);
-	if(*Sector->at(SectorX, SectorY, SectorZ) != NULL){
-		error("InitSector: Sector %d/%d/%d already exists.\n", SectorX, SectorY, SectorZ);
+void init_sector(int SectorX, int SectorY, int SectorZ){
+	ASSERT(SectorMatrix);
+	if(*SectorMatrix->at(SectorX, SectorY, SectorZ) != NULL){
+		error("init_sector: Sector %d/%d/%d already exists.\n", SectorX, SectorY, SectorZ);
 		return;
 	}
 
-	TSector *NewSector = (TSector*)malloc(sizeof(TSector));
+	Sector *NewSector = (Sector*)malloc(sizeof(Sector));
 	for(int X = 0; X < 32; X += 1){
 		for(int Y = 0; Y < 32; Y += 1){
-			Object MapCon = CreateObject();
+			Object MapCon = create_object();
 			// NOTE(fusion): `Attributes[0]` is probably the object id of the
 			// first object in the container.
-			AccessObject(MapCon)->Attributes[1] = SectorX * 32 + X;
-			AccessObject(MapCon)->Attributes[2] = SectorY * 32 + Y;
-			AccessObject(MapCon)->Attributes[3] = SectorZ;
+			access_object(MapCon)->Attributes[1] = SectorX * 32 + X;
+			access_object(MapCon)->Attributes[2] = SectorY * 32 + Y;
+			access_object(MapCon)->Attributes[3] = SectorZ;
 			NewSector->MapCon[X][Y] = MapCon;
 		}
 	}
@@ -936,23 +936,23 @@ void InitSector(int SectorX, int SectorY, int SectorZ){
 	NewSector->Status = STATUS_LOADED;
 	NewSector->MapFlags = 0;
 
-	*Sector->at(SectorX, SectorY, SectorZ) = NewSector;
+	*SectorMatrix->at(SectorX, SectorY, SectorZ) = NewSector;
 }
 
-void LoadSector(const char *FileName, int SectorX, int SectorY, int SectorZ){
+void load_sector(const char *FileName, int SectorX, int SectorY, int SectorZ){
 	if(SectorX < SectorXMin || SectorXMax < SectorX
 			|| SectorY < SectorYMin || SectorYMax < SectorY
 			|| SectorZ < SectorZMin || SectorZMax < SectorZ){
 		return;
 	}
 
-	InitSector(SectorX, SectorY, SectorZ);
+	init_sector(SectorX, SectorY, SectorZ);
 
-	ASSERT(Sector != NULL);
-	TSector *LoadingSector = *Sector->at(SectorX, SectorY, SectorZ);
+	ASSERT(SectorMatrix != NULL);
+	Sector *LoadingSector = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 	ASSERT(LoadingSector != NULL);
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	try{
 		Script.open(FileName);
 		print(1, "Loading sector %d/%d/%d ...\n", SectorX, SectorY, SectorZ);
@@ -960,21 +960,21 @@ void LoadSector(const char *FileName, int SectorX, int SectorY, int SectorZ){
 		int OffsetX = -1;
 		int OffsetY = -1;
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			if(Script.Token == ENDOFFILE){
 				Script.close();
 				return;
 			}
 
-			if(Script.Token == SPECIAL && Script.getSpecial() == ','){
+			if(Script.Token == SPECIAL && Script.get_special() == ','){
 				continue;
 			}
 
 			if(Script.Token == BYTES){
-				uint8 *SectorOffset = Script.getBytesequence();
+				uint8 *SectorOffset = Script.get_bytesequence();
 				OffsetX = (int)SectorOffset[0];
 				OffsetY = (int)SectorOffset[1];
-				Script.readSymbol(':');
+				Script.read_symbol(':');
 				// TODO(fusion): Probably check if offsets are within bounds?
 				continue;
 			}
@@ -987,37 +987,37 @@ void LoadSector(const char *FileName, int SectorX, int SectorY, int SectorZ){
 				Script.error("coordinate expected");
 			}
 
-			const char *Identifier = Script.getIdentifier();
+			const char *Identifier = Script.get_identifier();
 			if(strcmp(Identifier, "refresh") == 0){
 				LoadingSector->MapFlags |= 1;
-				AccessObject(LoadingSector->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x100;
+				access_object(LoadingSector->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x100;
 			}else if(strcmp(Identifier, "nologout") == 0){
 				LoadingSector->MapFlags |= 2;
-				AccessObject(LoadingSector->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x200;
+				access_object(LoadingSector->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x200;
 			}else if(strcmp(Identifier, "protectionzone") == 0){
 				LoadingSector->MapFlags |= 4;
-				AccessObject(LoadingSector->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x400;
+				access_object(LoadingSector->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x400;
 			}else if(strcmp(Identifier, "content") == 0){
-				Script.readSymbol('=');
+				Script.read_symbol('=');
 				HelpBuffer.Position = 0;
-				LoadObjects(&Script, &HelpBuffer, false);
+				load_objects(&Script, &HelpBuffer, false);
 				TReadBuffer ReadBuffer(HelpBuffer.Data, HelpBuffer.Position);
-				LoadObjects(&ReadBuffer, LoadingSector->MapCon[OffsetX][OffsetY]);
+				load_objects(&ReadBuffer, LoadingSector->MapCon[OffsetX][OffsetY]);
 			}else{
 				Script.error("unknown map flag");
 			}
 		}
 	}catch(const char *str){
-		error("LoadSector: Cannot read file \"%s\".\n", FileName);
+		error("load_sector: Cannot read file \"%s\".\n", FileName);
 		error("# Error: %s\n", str);
 		throw "Cannot load sector";
 	}
 }
 
-void LoadMap(void){
+void load_map(void){
 	DIR *MapDir = opendir(MAPPATH);
 	if(MapDir == NULL){
-		error("LoadMap: Subdirectory %s not found\n", MAPPATH);
+		error("load_map: Subdirectory %s not found\n", MAPPATH);
 		throw "Cannot load map";
 	}
 
@@ -1031,7 +1031,7 @@ void LoadMap(void){
 			continue;
 		}
 
-		// NOTE(fusion): See note in `DeleteSwappedSectors`.
+		// NOTE(fusion): See note in `delete_swapped_sectors`.
 		const char *FileExt = findLast(DirEntry->d_name, '.');
 		if(FileExt == NULL || strcmp(FileExt, ".sec") != 0){
 			continue;
@@ -1040,7 +1040,7 @@ void LoadMap(void){
 		int SectorX, SectorY, SectorZ;
 		if(sscanf(DirEntry->d_name, "%d-%d-%d.sec", &SectorX, &SectorY, &SectorZ) == 3){
 			snprintf(FileName, sizeof(FileName), "%s/%s", MAPPATH, DirEntry->d_name);
-			LoadSector(FileName, SectorX, SectorY, SectorZ);
+			load_sector(FileName, SectorX, SectorY, SectorZ);
 			SectorCounter += 1;
 		}
 	}
@@ -1050,9 +1050,9 @@ void LoadMap(void){
 	print(1, "%d objects loaded.\n", ObjectCounter);
 }
 
-void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
-	// TODO(fusion): Just use a recursive algorithm for both `SaveObjects` and
-	// `LoadObjects`. Regardless of performance differences, this iterative version
+void save_objects(Object Obj, TWriteStream *Stream, bool Stop){
+	// TODO(fusion): Just use a recursive algorithm for both `save_objects` and
+	// `load_objects`. Regardless of performance differences, this iterative version
 	// is just unreadable and mostly disconnected.
 	int Depth = 1;
 	bool ProcessObjects = true;
@@ -1060,8 +1060,8 @@ void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
 	while(true){
 		if(ProcessObjects){
 			if(Obj != NONE){
-				ObjectType ObjType = Obj.getObjectType();
-				if(!ObjType.isCreatureContainer()){
+				ObjectType ObjType = Obj.get_object_type();
+				if(!ObjType.is_creature_container()){
 					Stream->writeWord((uint16)ObjType.TypeID);
 					ProcessObjects = false;
 				}else{
@@ -1069,7 +1069,7 @@ void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
 						break;
 					}
 					Prev = Obj;
-					Obj = Obj.getNextObject();
+					Obj = Obj.get_next_object();
 				}
 			}else{
 				Stream->writeWord(0xFFFF);
@@ -1088,29 +1088,29 @@ void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
 					error("LastObj is NONE (1)\n");
 				}
 
-				Prev = Prev.getContainer();
+				Prev = Prev.get_container();
 				if(Prev == NONE){
 					error("LastObj is NONE (2)\n");
 				}
 
-				Obj = Prev.getNextObject();
+				Obj = Prev.get_next_object();
 			}
 		}else{
 			ASSERT(Obj != NONE);
-			ObjectType ObjType = Obj.getObjectType();
+			ObjectType ObjType = Obj.get_object_type();
 			for(int Attribute = 1; Attribute <= 17; Attribute += 1){
-				if(ObjType.getAttributeOffset((INSTANCEATTRIBUTE)Attribute) != -1){
+				if(ObjType.get_attribute_offset((INSTANCEATTRIBUTE)Attribute) != -1){
 					uint32 Value = 0;
 					if(Attribute == REMAININGEXPIRETIME){
-						Value = CronInfo(Obj, false);
+						Value = cron_info(Obj, false);
 					}else{
-						Value = Obj.getAttribute((INSTANCEATTRIBUTE)Attribute);
+						Value = Obj.get_attribute((INSTANCEATTRIBUTE)Attribute);
 					}
 
 					if(Value != 0){
 						Stream->writeByte((uint8)Attribute);
 						if(Attribute == TEXTSTRING || Attribute == EDITOR){
-							Stream->writeString(GetDynamicString(Value));
+							Stream->write_string(GetDynamicString(Value));
 						}else{
 							Stream->writeQuad(Value);
 						}
@@ -1119,8 +1119,8 @@ void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
 			}
 
 			Object First = NONE;
-			if(ObjType.getAttributeOffset(CONTENT) != -1){
-				First = Object(Obj.getAttribute(CONTENT));
+			if(ObjType.get_attribute_offset(CONTENT) != -1){
+				First = Object(Obj.get_attribute(CONTENT));
 			}
 
 			if(First != NONE){
@@ -1136,7 +1136,7 @@ void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
 				}
 
 				Prev = Obj;
-				Obj = Obj.getNextObject();
+				Obj = Obj.get_next_object();
 			}
 
 			ProcessObjects = true;
@@ -1144,22 +1144,22 @@ void SaveObjects(Object Obj, TWriteStream *Stream, bool Stop){
 	}
 }
 
-void SaveObjects(TReadStream *Stream, TWriteScriptFile *Script){
+void save_objects(TReadStream *Stream, WriteScriptFile *Script){
 	int Depth = 1;
 	bool ProcessObjects = true;
 	bool FirstObject = true;
-	Script->writeText("{");
+	Script->write_text("{");
 	while(true){
 		if(ProcessObjects){
 			int TypeID = (int)Stream->readWord();
 			if(TypeID != 0xFFFF){
 				if(!FirstObject){
-					Script->writeText(", ");
+					Script->write_text(", ");
 				}
 
-				Script->writeNumber(TypeID);
+				Script->write_number(TypeID);
 			}else{
-				Script->writeText("}");
+				Script->write_text("}");
 				Depth -= 1;
 				if(Depth <= 0){
 					break;
@@ -1170,20 +1170,20 @@ void SaveObjects(TReadStream *Stream, TWriteScriptFile *Script){
 		}else{
 			int Attribute = (int)Stream->readByte();
 			if(Attribute != 0xFF){
-				Script->writeText(" ");
-				Script->writeText(GetInstanceAttributeName(Attribute));
-				Script->writeText("=");
+				Script->write_text(" ");
+				Script->write_text(get_instance_attribute_name(Attribute));
+				Script->write_text("=");
 				if(Attribute == CONTENT){
 					Depth += 1;
 					ProcessObjects = true;
 					FirstObject = true;
-					Script->writeText("{");
+					Script->write_text("{");
 				}else if(Attribute == TEXTSTRING || Attribute == EDITOR){
 					char String[4096];
-					Stream->readString(String, sizeof(String));
-					Script->writeString(String);
+					Stream->read_string(String, sizeof(String));
+					Script->write_string(String);
 				}else{
-					Script->writeNumber((int)Stream->readQuad());
+					Script->write_number((int)Stream->readQuad());
 				}
 			}else{
 				ProcessObjects = true;
@@ -1193,103 +1193,103 @@ void SaveObjects(TReadStream *Stream, TWriteScriptFile *Script){
 	}
 }
 
-void SaveSector(char *FileName, int SectorX, int SectorY, int SectorZ){
-	ASSERT(Sector);
-	TSector *SavingSector = *Sector->at(SectorX, SectorY, SectorZ);
+void save_sector(char *FileName, int SectorX, int SectorY, int SectorZ){
+	ASSERT(SectorMatrix);
+	Sector *SavingSector = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 	if(!SavingSector){
 		return;
 	}
 
-	bool Empty = true;
-	TWriteScriptFile Script;
+	bool empty = true;
+	WriteScriptFile Script;
 	try{
 		Script.open(FileName);
 		print(1, "Saving sector %d/%d/%d ...\n", SectorX, SectorY, SectorZ);
 
-		Script.writeText("# Tibia - graphical Multi-User-Dungeon");
-		Script.writeLn();
-		Script.writeText("# Data for sector ");
-		Script.writeNumber(SectorX);
-		Script.writeText("/");
-		Script.writeNumber(SectorY);
-		Script.writeText("/");
-		Script.writeNumber(SectorZ);
-		Script.writeLn();
-		Script.writeLn();
+		Script.write_text("# Tibia - graphical Multi-User-Dungeon");
+		Script.write_ln();
+		Script.write_text("# Data for sector ");
+		Script.write_number(SectorX);
+		Script.write_text("/");
+		Script.write_number(SectorY);
+		Script.write_text("/");
+		Script.write_number(SectorZ);
+		Script.write_ln();
+		Script.write_ln();
 
 		for(int X = 0; X < 32; X += 1){
 			for(int Y = 0; Y < 32; Y += 1){
-				Object First = Object(SavingSector->MapCon[X][Y].getAttribute(CONTENT));
-				uint8 Flags = GetMapContainerFlags(SavingSector->MapCon[X][Y]);
+				Object First = Object(SavingSector->MapCon[X][Y].get_attribute(CONTENT));
+				uint8 Flags = get_map_container_flags(SavingSector->MapCon[X][Y]);
 				if(First != NONE || Flags != 0){
-					Script.writeNumber(X);
-					Script.writeText("-");
-					Script.writeNumber(Y);
-					Script.writeText(": ");
+					Script.write_number(X);
+					Script.write_text("-");
+					Script.write_number(Y);
+					Script.write_text(": ");
 
 					int AttrCount = 0;
 
 					if(Flags & 1){
 						if(AttrCount > 0){
-							Script.writeText(", ");
+							Script.write_text(", ");
 						}
-						Script.writeText("Refresh");
+						Script.write_text("Refresh");
 						AttrCount += 1;
 					}
 
 					if(Flags & 2){
 						if(AttrCount > 0){
-							Script.writeText(", ");
+							Script.write_text(", ");
 						}
-						Script.writeText("NoLogout");
+						Script.write_text("NoLogout");
 						AttrCount += 1;
 					}
 
 					if(Flags & 4){
 						if(AttrCount > 0){
-							Script.writeText(", ");
+							Script.write_text(", ");
 						}
-						Script.writeText("ProtectionZone");
+						Script.write_text("ProtectionZone");
 						AttrCount += 1;
 					}
 
 					if(First != NONE){
 						if(AttrCount > 0){
-							Script.writeText(", ");
+							Script.write_text(", ");
 						}
-						Script.writeText("Content=");
+						Script.write_text("Content=");
 						HelpBuffer.Position = 0;
-						SaveObjects(First, &HelpBuffer, false);
+						save_objects(First, &HelpBuffer, false);
 						TReadBuffer ReadBuffer(HelpBuffer.Data, HelpBuffer.Position);
-						SaveObjects(&ReadBuffer, &Script);
+						save_objects(&ReadBuffer, &Script);
 						AttrCount += 1;
 					}
 
-					Script.writeLn();
-					Empty = false;
+					Script.write_ln();
+					empty = false;
 				}
 			}
 		}
 
 		Script.close();
-		if(Empty){
-			error("SaveSector: Sector %d/%d/%d is empty.\n", SectorX, SectorY, SectorZ);
+		if(empty){
+			error("save_sector: Sector %d/%d/%d is empty.\n", SectorX, SectorY, SectorZ);
 			unlink(FileName);
 		}
 	}catch(const char *str){
-		error("SaveSector: Cannot write file %s.\n", FileName);
+		error("save_sector: Cannot write file %s.\n", FileName);
 		error("# Error: %s\n", str);
 	}
 }
 
-void SaveMap(void){
+void save_map(void){
 	// NOTE(fusion): I guess this could happen if we're already saving the map
 	// and a signal causes `exit` to execute cleanup functions registered with
-	// `atexit`, among which is `ExitAll` which may call `SaveMap` throught
-	// `ExitMap`.
+	// `atexit`, among which is `ExitAll` which may call `save_map` throught
+	// `exit_map`.
 	static bool SavingMap = false;
 	if(SavingMap){
-		error("SaveMap: Map is already being saved.\n");
+		error("save_map: Map is already being saved.\n");
 		return;
 	}
 
@@ -1303,26 +1303,26 @@ void SaveMap(void){
 	for(int SectorX = SectorXMin; SectorX <= SectorXMax; SectorX += 1){
 		snprintf(FileName, sizeof(FileName), "%s/%04d-%04d-%02d.sec",
 				MAPPATH, SectorX, SectorY, SectorZ);
-		SaveSector(FileName, SectorX, SectorY, SectorZ);
+		save_sector(FileName, SectorX, SectorY, SectorZ);
 	}
 
 	print(1, "%d objects saved.\n", ObjectCounter);
 	SavingMap = false;
 }
 
-void RefreshSector(int SectorX, int SectorY, int SectorZ, TReadStream *Stream){
+void refresh_sector(int SectorX, int SectorY, int SectorZ, TReadStream *Stream){
 	// NOTE(fusion): `matrix3d::at` would return the first entry if coordinates
 	// are out of bounds which could be a problem here.
 	if(SectorX < SectorXMin || SectorXMax < SectorX
 			|| SectorY < SectorYMin || SectorYMax < SectorY
 			|| SectorZ < SectorZMin || SectorZMax < SectorZ){
-		error("RefreshSector: Sector %d/%d/%d is out of bounds.",
+		error("refresh_sector: Sector %d/%d/%d is out of bounds.",
 				SectorX, SectorY, SectorZ);
 		return;
 	}
 
-	ASSERT(Sector);
-	TSector *Sec = *Sector->at(SectorX, SectorY, SectorZ);
+	ASSERT(SectorMatrix);
+	Sector *Sec = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 	if(Sec == NULL || (Sec->MapFlags & 0x01) == 0){
 		return;
 	}
@@ -1337,41 +1337,41 @@ void RefreshSector(int SectorX, int SectorY, int SectorZ, TReadStream *Stream){
 
 				// TODO(fusion): This loop was done a bit differently but I suppose
 				// iterating it directly is clearer and as long as we don't access
-				// the object after `DeleteObject`, it should work the same.
-				Object Obj = Object(Con.getAttribute(CONTENT));
+				// the object after `delete_object`, it should work the same.
+				Object Obj = Object(Con.get_attribute(CONTENT));
 				while(Obj != NONE){
-					Object Next = Obj.getNextObject();
-					if(!Obj.getObjectType().isCreatureContainer()){
-						DeleteObject(Obj);
+					Object Next = Obj.get_next_object();
+					if(!Obj.get_object_type().is_creature_container()){
+						delete_object(Obj);
 					}
 					Obj = Next;
 				}
 
-				LoadObjects(Stream, Con);
+				load_objects(Stream, Con);
 			}
 		}
 	}catch(const char *str){
-		error("RefreshSector: Error reading the data (%s).\n", str);
+		error("refresh_sector: Error reading the data (%s).\n", str);
 	}
 }
 
-void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
-		TReadScriptFile *Script, bool SaveHouses){
+void patch_sector(int SectorX, int SectorY, int SectorZ, bool FullSector,
+		ReadScriptFile *Script, bool SaveHouses){
 	if(SectorX < SectorXMin || SectorXMax < SectorX
 			|| SectorY < SectorYMin || SectorYMax < SectorY
 			|| SectorZ < SectorZMin || SectorZMax < SectorZ){
-		error("PatchSector: Sector %d/%d/%d is out of bounds.",
+		error("patch_sector: Sector %d/%d/%d is out of bounds.",
 				SectorX, SectorY, SectorZ);
 		return;
 	}
 
-	ASSERT(Sector);
-	TSector *Sec = *Sector->at(SectorX, SectorY, SectorZ);
+	ASSERT(SectorMatrix);
+	Sector *Sec = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 	bool NewSector = (Sec == NULL);
 	if(NewSector){
 		print(2, "Creating new sector %d/%d/%d.\n", SectorX, SectorY, SectorZ);
-		InitSector(SectorX, SectorY, SectorZ);
-		Sec = *Sector->at(SectorX, SectorY, SectorZ);
+		init_sector(SectorX, SectorY, SectorZ);
+		Sec = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 		ASSERT(Sec != NULL);
 	}
 
@@ -1386,20 +1386,20 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 		int OffsetX = -1;
 		int OffsetY = -1;
 		while(true){
-			Script->nextToken();
+			Script->next_token();
 			if(Script->Token == ENDOFFILE){
 				break;
 			}
 
-			if(Script->Token == SPECIAL && Script->getSpecial() == ','){
+			if(Script->Token == SPECIAL && Script->get_special() == ','){
 				continue;
 			}
 
 			if(Script->Token == BYTES){
-				uint8 *SectorOffset = Script->getBytesequence();
+				uint8 *SectorOffset = Script->get_bytesequence();
 				OffsetX = (int)SectorOffset[0];
 				OffsetY = (int)SectorOffset[1];
-				Script->readSymbol(':');
+				Script->read_symbol(':');
 
 				// TODO(fusion): Probably check if offsets are within bounds?
 				FieldTreated[OffsetX][OffsetY] = true;
@@ -1408,37 +1408,37 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 				int CoordZ = SectorZ;
 
 				// TODO(fusion): Maybe some inlined function?
-				House = IsHouse(CoordX, CoordY, CoordZ);
-				if(!House && CoordinateFlag(CoordX, CoordY, CoordZ, HOOKSOUTH)){
-					House = IsHouse(CoordX - 1, CoordY + 1, CoordZ)
-						||  IsHouse(CoordX,     CoordY + 1, CoordZ)
-						||  IsHouse(CoordX + 1, CoordY + 1, CoordZ);
+				House = is_house(CoordX, CoordY, CoordZ);
+				if(!House && coordinate_flag(CoordX, CoordY, CoordZ, HOOKSOUTH)){
+					House = is_house(CoordX - 1, CoordY + 1, CoordZ)
+						||  is_house(CoordX,     CoordY + 1, CoordZ)
+						||  is_house(CoordX + 1, CoordY + 1, CoordZ);
 				}
-				if(!House && CoordinateFlag(CoordX, CoordY, CoordZ, HOOKEAST)){
-					House = IsHouse(CoordX + 1, CoordY - 1, CoordZ)
-						||  IsHouse(CoordX + 1, CoordY,     CoordZ)
-						||  IsHouse(CoordX + 1, CoordY + 1, CoordZ);
+				if(!House && coordinate_flag(CoordX, CoordY, CoordZ, HOOKEAST)){
+					House = is_house(CoordX + 1, CoordY - 1, CoordZ)
+						||  is_house(CoordX + 1, CoordY,     CoordZ)
+						||  is_house(CoordX + 1, CoordY + 1, CoordZ);
 				}
 
 				if(House){
 					if(SaveHouses){
 						continue;
 					}
-					CleanHouseField(CoordX, CoordY, CoordZ);
+					clean_house_field(CoordX, CoordY, CoordZ);
 				}
 
-				// NOTE(fusion): Similar to `RefreshSector`.
+				// NOTE(fusion): Similar to `refresh_sector`.
 				Object Con = Sec->MapCon[OffsetX][OffsetY];
-				Object Obj = Object(Con.getAttribute(CONTENT));
+				Object Obj = Object(Con.get_attribute(CONTENT));
 				while(Obj != NONE){
-					Object Next = Obj.getNextObject();
-					if(!Obj.getObjectType().isCreatureContainer()){
-						DeleteObject(Obj);
+					Object Next = Obj.get_next_object();
+					if(!Obj.get_object_type().is_creature_container()){
+						delete_object(Obj);
 					}
 					Obj = Next;
 				}
-				// NOTE(fusion): Clear map container flags. See note in `GetObjectCoordinates`.
-				AccessObject(Con)->Attributes[3] &= 0xFFFF00FF;
+				// NOTE(fusion): Clear map container flags. See note in `get_object_coordinates`.
+				access_object(Con)->Attributes[3] &= 0xFFFF00FF;
 				FieldPatched[OffsetX][OffsetY] = true;
 				continue;
 			}
@@ -1451,32 +1451,32 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 				Script->error("coordinate expected");
 			}
 
-			const char *Identifier = Script->getIdentifier();
+			const char *Identifier = Script->get_identifier();
 			if(strcmp(Identifier, "refresh") == 0){
 				Sec->MapFlags |= 1;
 				if(!House || !SaveHouses){
-					AccessObject(Sec->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x100;
+					access_object(Sec->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x100;
 				}
 			}else if(strcmp(Identifier, "nologout") == 0){
 				Sec->MapFlags |= 2;
 				if(!House || !SaveHouses){
-					AccessObject(Sec->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x200;
+					access_object(Sec->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x200;
 				}
 			}else if(strcmp(Identifier, "protectionzone") == 0){
 				Sec->MapFlags |= 4;
 				if(!House || !SaveHouses){
-					AccessObject(Sec->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x400;
+					access_object(Sec->MapCon[OffsetX][OffsetY])->Attributes[3] |= 0x400;
 				}
 			}else if(strcmp(Identifier, "content") == 0){
-				Script->readSymbol('=');
+				Script->read_symbol('=');
 				HelpBuffer.Position = 0;
 				if(!House || !SaveHouses){
-					LoadObjects(Script, &HelpBuffer, false);
+					load_objects(Script, &HelpBuffer, false);
 					TReadBuffer ReadBuffer(HelpBuffer.Data, HelpBuffer.Position);
-					LoadObjects(&ReadBuffer, Sec->MapCon[OffsetX][OffsetY]);
+					load_objects(&ReadBuffer, Sec->MapCon[OffsetX][OffsetY]);
 				}else{
 					// NOTE(fusion): Skip content.
-					LoadObjects(Script, &HelpBuffer, true);
+					load_objects(Script, &HelpBuffer, true);
 				}
 			}else{
 				Script->error("unknown map flag");
@@ -1500,36 +1500,36 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 			int CoordZ = SectorZ;
 
 			// TODO(fusion): Maybe some inlined function?
-			bool House = IsHouse(CoordX, CoordY, CoordZ);
-			if(!House && CoordinateFlag(CoordX, CoordY, CoordZ, HOOKSOUTH)){
-				House = IsHouse(CoordX - 1, CoordY + 1, CoordZ)
-					||  IsHouse(CoordX,     CoordY + 1, CoordZ)
-					||  IsHouse(CoordX + 1, CoordY + 1, CoordZ);
+			bool House = is_house(CoordX, CoordY, CoordZ);
+			if(!House && coordinate_flag(CoordX, CoordY, CoordZ, HOOKSOUTH)){
+				House = is_house(CoordX - 1, CoordY + 1, CoordZ)
+					||  is_house(CoordX,     CoordY + 1, CoordZ)
+					||  is_house(CoordX + 1, CoordY + 1, CoordZ);
 			}
-			if(!House && CoordinateFlag(CoordX, CoordY, CoordZ, HOOKEAST)){
-				House = IsHouse(CoordX + 1, CoordY - 1, CoordZ)
-					||  IsHouse(CoordX + 1, CoordY,     CoordZ)
-					||  IsHouse(CoordX + 1, CoordY + 1, CoordZ);
+			if(!House && coordinate_flag(CoordX, CoordY, CoordZ, HOOKEAST)){
+				House = is_house(CoordX + 1, CoordY - 1, CoordZ)
+					||  is_house(CoordX + 1, CoordY,     CoordZ)
+					||  is_house(CoordX + 1, CoordY + 1, CoordZ);
 			}
 
 			if(House){
 				if(SaveHouses){
 					continue;
 				}
-				CleanHouseField(CoordX, CoordY, CoordZ);
+				clean_house_field(CoordX, CoordY, CoordZ);
 			}
 
 			// NOTE(fusion): Same as in the parsing loop above.
 			Object Con = Sec->MapCon[OffsetX][OffsetY];
-			Object Obj = Object(Con.getAttribute(CONTENT));
+			Object Obj = Object(Con.get_attribute(CONTENT));
 			while(Obj != NONE){
-				Object Next = Obj.getNextObject();
-				if(!Obj.getObjectType().isCreatureContainer()){
-					DeleteObject(Obj);
+				Object Next = Obj.get_next_object();
+				if(!Obj.get_object_type().is_creature_container()){
+					delete_object(Obj);
 				}
 				Obj = Next;
 			}
-			AccessObject(Con)->Attributes[3] &= 0xFFFF00FF;
+			access_object(Con)->Attributes[3] &= 0xFFFF00FF;
 			FieldPatched[OffsetX][OffsetY] = true;
 		}
 	}
@@ -1543,49 +1543,49 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 	snprintf(FileNameBak, sizeof(FileNameBak), "%s/%04d-%04d-%02d.sec~",
 			ORIGMAPPATH, SectorX, SectorY, SectorZ);
 
-	TWriteScriptFile OUT;
+	WriteScriptFile OUT;
 	OUT.open(FileNameBak);
-	OUT.writeText("# Tibia - graphical Multi-User-Dungeon");
-	OUT.writeLn();
-	OUT.writeText("# Data for sector ");
-	OUT.writeNumber(SectorX);
-	OUT.writeText("/");
-	OUT.writeNumber(SectorY);
-	OUT.writeText("/");
-	OUT.writeNumber(SectorZ);
-	OUT.writeLn();
-	OUT.writeLn();
+	OUT.write_text("# Tibia - graphical Multi-User-Dungeon");
+	OUT.write_ln();
+	OUT.write_text("# Data for sector ");
+	OUT.write_number(SectorX);
+	OUT.write_text("/");
+	OUT.write_number(SectorY);
+	OUT.write_text("/");
+	OUT.write_number(SectorZ);
+	OUT.write_ln();
+	OUT.write_ln();
 
 	if(!NewSector){
-		TReadScriptFile IN;
+		ReadScriptFile IN;
 		IN.open(FileName);
 
 		int OffsetX = -1;
 		int OffsetY = -1;
 		int AttrCount = 0;
 		while(true){
-			IN.nextToken();
+			IN.next_token();
 			if(IN.Token == ENDOFFILE){
 				IN.close();
 				break;
 			}
 
-			if(IN.Token == SPECIAL && IN.getSpecial() == ','){
+			if(IN.Token == SPECIAL && IN.get_special() == ','){
 				continue;
 			}
 
 			if(IN.Token == BYTES){
-				uint8 *SectorOffset = IN.getBytesequence();
+				uint8 *SectorOffset = IN.get_bytesequence();
 				OffsetX = (int)SectorOffset[0];
 				OffsetY = (int)SectorOffset[1];
-				IN.readSymbol(':');
+				IN.read_symbol(':');
 				AttrCount = 0;
 				// TODO(fusion): Probably check if offsets are within bounds?
 				if(!FieldPatched[OffsetX][OffsetY]){
-					OUT.writeNumber(OffsetX);
-					OUT.writeText("-");
-					OUT.writeNumber(OffsetY);
-					OUT.writeText(": ");
+					OUT.write_number(OffsetX);
+					OUT.write_text("-");
+					OUT.write_number(OffsetY);
+					OUT.write_text(": ");
 				}
 				continue;
 			}
@@ -1598,42 +1598,42 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 				IN.error("coordinate expected");
 			}
 
-			const char *Identifier = IN.getIdentifier();
+			const char *Identifier = IN.get_identifier();
 			if(strcmp(Identifier, "refresh") == 0){
 				if(!FieldPatched[OffsetX][OffsetY]){
 					if(AttrCount > 0){
-						OUT.writeText(", ");
+						OUT.write_text(", ");
 					}
-					OUT.writeText("Refresh");
+					OUT.write_text("Refresh");
 					AttrCount += 1;
 				}
 			}else if(strcmp(Identifier, "nologout") == 0){
 				if(!FieldPatched[OffsetX][OffsetY]){
 					if(AttrCount > 0){
-						OUT.writeText(", ");
+						OUT.write_text(", ");
 					}
-					OUT.writeText("NoLogout");
+					OUT.write_text("NoLogout");
 					AttrCount += 1;
 				}
 			}else if(strcmp(Identifier, "protectionzone") == 0){
 				if(!FieldPatched[OffsetX][OffsetY]){
 					if(AttrCount > 0){
-						OUT.writeText(", ");
+						OUT.write_text(", ");
 					}
-					OUT.writeText("ProtectionZone");
+					OUT.write_text("ProtectionZone");
 					AttrCount += 1;
 				}
 			}else if(strcmp(Identifier, "content") == 0){
-				IN.readSymbol('=');
+				IN.read_symbol('=');
 				HelpBuffer.Position = 0;
-				LoadObjects(&IN, &HelpBuffer, false);
+				load_objects(&IN, &HelpBuffer, false);
 				if(!FieldPatched[OffsetX][OffsetY]){
 					if(AttrCount > 0){
-						OUT.writeText(", ");
+						OUT.write_text(", ");
 					}
-					OUT.writeText("Content=");
+					OUT.write_text("Content=");
 					TReadBuffer ReadBuffer(HelpBuffer.Data, HelpBuffer.Position);
-					SaveObjects(&ReadBuffer, &OUT);
+					save_objects(&ReadBuffer, &OUT);
 					AttrCount += 1;
 				}
 			}else{
@@ -1651,53 +1651,53 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 		}
 
 		Object Con = Sec->MapCon[OffsetX][OffsetY];
-		Object First = Object(Con.getAttribute(CONTENT));
-		uint8 Flags = GetMapContainerFlags(Con);
+		Object First = Object(Con.get_attribute(CONTENT));
+		uint8 Flags = get_map_container_flags(Con);
 		if(First != NONE || Flags != 0){
-			OUT.writeNumber(OffsetX);
-			OUT.writeText("-");
-			OUT.writeNumber(OffsetY);
-			OUT.writeText(": ");
+			OUT.write_number(OffsetX);
+			OUT.write_text("-");
+			OUT.write_number(OffsetY);
+			OUT.write_text(": ");
 
 			int AttrCount = 0;
 
 			if(Flags & 1){
 				if(AttrCount > 0){
-					OUT.writeText(", ");
+					OUT.write_text(", ");
 				}
-				OUT.writeText("Refresh");
+				OUT.write_text("Refresh");
 				AttrCount += 1;
 			}
 
 			if(Flags & 2){
 				if(AttrCount > 0){
-					OUT.writeText(", ");
+					OUT.write_text(", ");
 				}
-				OUT.writeText("NoLogout");
+				OUT.write_text("NoLogout");
 				AttrCount += 1;
 			}
 
 			if(Flags & 4){
 				if(AttrCount > 0){
-					OUT.writeText(", ");
+					OUT.write_text(", ");
 				}
-				OUT.writeText("ProtectionZone");
+				OUT.write_text("ProtectionZone");
 				AttrCount += 1;
 			}
 
 			if(First != NONE){
 				if(AttrCount > 0){
-					OUT.writeText(", ");
+					OUT.write_text(", ");
 				}
-				OUT.writeText("Content=");
+				OUT.write_text("Content=");
 				HelpBuffer.Position = 0;
-				SaveObjects(First, &HelpBuffer, false);
+				save_objects(First, &HelpBuffer, false);
 				TReadBuffer ReadBuffer(HelpBuffer.Data, HelpBuffer.Position);
-				SaveObjects(&ReadBuffer, &OUT);
+				save_objects(&ReadBuffer, &OUT);
 				AttrCount += 1;
 			}
 
-			OUT.writeLn();
+			OUT.write_ln();
 		}
 	}
 	OUT.close();
@@ -1710,47 +1710,47 @@ void PatchSector(int SectorX, int SectorY, int SectorZ, bool FullSector,
 
 	if(rename(FileNameBak, FileName) != 0){
 		int ErrCode = errno;
-		error("PatchSector: Error %d renaming %s.\n", ErrCode, FileNameBak);
+		error("patch_sector: Error %d renaming %s.\n", ErrCode, FileNameBak);
 		error("# Error %d: %s.\n", ErrCode, strerror(ErrCode));
 		throw "cannot patch ORIGMAP";
 	}
 }
 
-void InitMap(void){
+void init_map(void){
 	ReadMapConfig();
 
-	Sector = new matrix3d<TSector*>(SectorXMin, SectorXMax,
+	SectorMatrix = new matrix3d<Sector*>(SectorXMin, SectorXMax,
 			SectorYMin, SectorYMax, SectorZMin, SectorZMax, NULL);
 
-	DeleteSwappedSectors();
+	delete_swapped_sectors();
 
 	// NOTE(fusion): Object storage is FIXED and determined at startup.
-	ObjectBlock = (TObjectBlock**)malloc(OBCount * sizeof(TObjectBlock*));
+	ObjectBlockArray = (ObjectBlock**)malloc(OBCount * sizeof(ObjectBlock*));
 	for(int i = 0; i < OBCount; i += 1){
-		ObjectBlock[i] = (TObjectBlock*)malloc(sizeof(TObjectBlock));
+		ObjectBlockArray[i] = (ObjectBlock*)malloc(sizeof(ObjectBlock));
 	}
 
 	// NOTE(fusion): Setup free object list. See note in `GetFreeObjectSlot`.
-	constexpr int ObjectsPerBlock = NARRAY(TObjectBlock::Object);
+	constexpr int ObjectsPerBlock = NARRAY(ObjectBlock::Object);
 	for(int i = 0; i < OBCount; i += 1){
 		for(int j = 0; j < ObjectsPerBlock; j += 1){
-			*((TObject**)&ObjectBlock[i]->Object[j]) = &ObjectBlock[i]->Object[j + 1];
+			*((MapObject**)&ObjectBlockArray[i]->Object[j]) = &ObjectBlockArray[i]->Object[j + 1];
 		}
 
 		if(i < (OBCount - 1)){
 			// NOTE(fusion): Link last entry of this block, with the first entry of the next one.
-			*((TObject**)&ObjectBlock[i]->Object[ObjectsPerBlock - 1]) = &ObjectBlock[i + 1]->Object[0];
+			*((MapObject**)&ObjectBlockArray[i]->Object[ObjectsPerBlock - 1]) = &ObjectBlockArray[i + 1]->Object[0];
 		}else{
 			// NOTE(fusion): End of free object list.
-			*((TObject**)&ObjectBlock[i]->Object[ObjectsPerBlock - 1]) = NULL;
+			*((MapObject**)&ObjectBlockArray[i]->Object[ObjectsPerBlock - 1]) = NULL;
 		}
 	}
-	FirstFreeObject = &ObjectBlock[0]->Object[0];
+	FirstFreeObject = &ObjectBlockArray[0]->Object[0];
 
 	// NOTE(fusion): Initialize object hash table.
 	ASSERT(is_pow2(HashTableSize));
 	HashTableMask = HashTableSize - 1;
-	HashTableData = (TObject**)malloc(HashTableSize * sizeof(TObject*));
+	HashTableData = (MapObject**)malloc(HashTableSize * sizeof(MapObject*));
 	HashTableType = (uint8*)malloc(HashTableSize * sizeof(uint8));
 	memset(HashTableType, 0, HashTableSize * sizeof(uint8));
 	HashTableFree = HashTableSize - 1;
@@ -1764,48 +1764,48 @@ void InitMap(void){
 	}
 	CronEntries = 0;
 
-	LoadMap();
+	load_map();
 }
 
-void ExitMap(bool Save){
+void exit_map(bool Save){
 	if(Save){
-		SaveMap();
+		save_map();
 	}
 
 	free(HashTableData);
 	free(HashTableType);
 
 	for(int i = 0; i < OBCount; i += 1){
-		free(ObjectBlock[i]);
+		free(ObjectBlockArray[i]);
 	}
-	free(ObjectBlock);
+	free(ObjectBlockArray);
 
-	if(Sector != NULL){
+	if(SectorMatrix != NULL){
 		for(int SectorZ = SectorZMin; SectorZ <= SectorZMax; SectorZ += 1)
 		for(int SectorY = SectorYMin; SectorY <= SectorYMax; SectorY += 1)
 		for(int SectorX = SectorXMin; SectorX <= SectorXMax; SectorX += 1){
-			TSector *CurrentSector = *Sector->at(SectorX, SectorY, SectorZ);
+			Sector *CurrentSector = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 			if(CurrentSector != NULL){
 				free(CurrentSector);
 			}
 		}
-		delete Sector;
+		delete SectorMatrix;
 	}
 
-	DeleteSwappedSectors();
+	delete_swapped_sectors();
 }
 
 // Object Functions
 // =============================================================================
-TObject *AccessObject(Object Obj){
+MapObject *access_object(Object Obj){
 	if(Obj == NONE){
-		error("AccessObject: Invalid object number zero.\n");
+		error("access_object: Invalid object number zero.\n");
 		return HashTableData[0];
 	}
 
 	uint32 EntryIndex = Obj.ObjectID & HashTableMask;
 	if(HashTableType[EntryIndex] == STATUS_SWAPPED){
-		UnswapSector((uintptr)HashTableData[EntryIndex]);
+		unswap_sector((uintptr)HashTableData[EntryIndex]);
 	}
 
 	if(HashTableType[EntryIndex] == STATUS_LOADED
@@ -1816,7 +1816,7 @@ TObject *AccessObject(Object Obj){
 	}
 }
 
-Object CreateObject(void){
+Object create_object(void){
 	static uint32 NextObjectID = 1;
 
 	// NOTE(fusion): Load factor of 1/16.
@@ -1834,9 +1834,9 @@ Object CreateObject(void){
 	}
 	ASSERT(HashTableType[NextObjectID & HashTableMask] == 0);
 
-	TObject *Entry = GetFreeObjectSlot();
+	MapObject *Entry = GetFreeObjectSlot();
 	if(Entry == NULL){
-		error("CreateObject: Cannot create object.\n");
+		error("create_object: Cannot create object.\n");
 		return NONE;
 	}
 
@@ -1855,24 +1855,24 @@ static void DestroyObject(Object Obj){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(TEXT)){
-		DeleteDynamicString(Obj.getAttribute(TEXTSTRING));
-		DeleteDynamicString(Obj.getAttribute(EDITOR));
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(TEXT)){
+		DeleteDynamicString(Obj.get_attribute(TEXTSTRING));
+		DeleteDynamicString(Obj.get_attribute(EDITOR));
 	}
 
-	if(ObjType.getFlag(CONTAINER) || ObjType.getFlag(CHEST)){
+	if(ObjType.get_flag(CONTAINER) || ObjType.get_flag(CHEST)){
 		while(true){
-			Object Inner = Object(Obj.getAttribute(CONTENT));
+			Object Inner = Object(Obj.get_attribute(CONTENT));
 			if(Inner == NONE){
 				break;
 			}
-			DeleteObject(Inner);
+			delete_object(Inner);
 		}
 	}
 
-	if(ObjType.getFlag(EXPIRE)){
-		CronStop(Obj);
+	if(ObjType.get_flag(EXPIRE)){
+		cron_stop(Obj);
 	}
 
 	// TODO(fusion): I feel this should be checked up front?
@@ -1893,19 +1893,19 @@ static void DestroyObject(Object Obj){
 	DecrementObjectCounter();
 }
 
-void DeleteObject(Object Obj){
+void delete_object(Object Obj){
 	if(!Obj.exists()){
-		error("DeleteObject: Provided object does not exist.\n");
+		error("delete_object: Provided object does not exist.\n");
 		return;
 	}
 
-	CutObject(Obj);
+	cut_object(Obj);
 	DestroyObject(Obj);
 }
 
-void ChangeObject(Object Obj, ObjectType NewType){
+void change_object(Object Obj, ObjectType NewType){
 	if(!Obj.exists()){
-		error("ChangeObject: Provided object does not exist.\n");
+		error("change_object: Provided object does not exist.\n");
 		return;
 	}
 
@@ -1913,98 +1913,98 @@ void ChangeObject(Object Obj, ObjectType NewType){
 	uint32 SavedExpireTime = 0;
 	int Delay = -1;
 
-	ObjectType OldType = Obj.getObjectType();
-	if(!OldType.isMapContainer()){
-		if(OldType.getFlag(CUMULATIVE)){
-			Amount = Obj.getAttribute(AMOUNT);
+	ObjectType OldType = Obj.get_object_type();
+	if(!OldType.is_map_container()){
+		if(OldType.get_flag(CUMULATIVE)){
+			Amount = Obj.get_attribute(AMOUNT);
 		}
 
-		if(OldType.getFlag(EXPIRE)){
-			SavedExpireTime = CronStop(Obj);
-			if(NewType.getFlag(CUMULATIVE)){
+		if(OldType.get_flag(EXPIRE)){
+			SavedExpireTime = cron_stop(Obj);
+			if(NewType.get_flag(CUMULATIVE)){
 				Amount = 1;
 			}
 		}
 
-		if(OldType.getFlag(TEXT) && !NewType.getFlag(TEXT)){
-			DeleteDynamicString(Obj.getAttribute(TEXTSTRING));
-			Obj.setAttribute(TEXTSTRING, 0);
+		if(OldType.get_flag(TEXT) && !NewType.get_flag(TEXT)){
+			DeleteDynamicString(Obj.get_attribute(TEXTSTRING));
+			Obj.set_attribute(TEXTSTRING, 0);
 
-			DeleteDynamicString(Obj.getAttribute(EDITOR));
-			Obj.setAttribute(EDITOR, 0);
+			DeleteDynamicString(Obj.get_attribute(EDITOR));
+			Obj.set_attribute(EDITOR, 0);
 		}
 
-		if(OldType.getFlag(EXPIRESTOP)){
-			if(Obj.getAttribute(SAVEDEXPIRETIME) != 0){
-				Delay = (int)Obj.getAttribute(SAVEDEXPIRETIME);
+		if(OldType.get_flag(EXPIRESTOP)){
+			if(Obj.get_attribute(SAVEDEXPIRETIME) != 0){
+				Delay = (int)Obj.get_attribute(SAVEDEXPIRETIME);
 			}
 		}
 
-		if(OldType.getFlag(MAGICFIELD)){
-			Obj.setAttribute(RESPONSIBLE, 0);
+		if(OldType.get_flag(MAGICFIELD)){
+			Obj.set_attribute(RESPONSIBLE, 0);
 		}
 	}
 
-	Obj.setObjectType(NewType);
+	Obj.set_object_type(NewType);
 
-	if(NewType.getFlag(CUMULATIVE)){
+	if(NewType.get_flag(CUMULATIVE)){
 		if(Amount <= 0){
 			Amount = 1;
 		}
-		Obj.setAttribute(AMOUNT, Amount);
+		Obj.set_attribute(AMOUNT, Amount);
 	}
 
-	if(NewType.getFlag(RUNE)){
-		if(Obj.getAttribute(CHARGES) == 0){
-			Obj.setAttribute(CHARGES, 1);
+	if(NewType.get_flag(RUNE)){
+		if(Obj.get_attribute(CHARGES) == 0){
+			Obj.set_attribute(CHARGES, 1);
 		}
 	}
 
-	if(NewType.getFlag(LIQUIDPOOL)){
-		if(Obj.getAttribute(POOLLIQUIDTYPE) == 0){
-			Obj.setAttribute(POOLLIQUIDTYPE, LIQUID_WATER);
+	if(NewType.get_flag(LIQUIDPOOL)){
+		if(Obj.get_attribute(POOLLIQUIDTYPE) == 0){
+			Obj.set_attribute(POOLLIQUIDTYPE, LIQUID_WATER);
 		}
 	}
 
-	if(NewType.getFlag(WEAROUT)){
-		if(Obj.getAttribute(REMAININGUSES) == 0){
-			Obj.setAttribute(REMAININGUSES, NewType.getAttribute(TOTALUSES));
+	if(NewType.get_flag(WEAROUT)){
+		if(Obj.get_attribute(REMAININGUSES) == 0){
+			Obj.set_attribute(REMAININGUSES, NewType.get_attribute(TOTALUSES));
 		}
 	}
 
-	if(NewType.getFlag(EXPIRESTOP)){
-		Obj.setAttribute(SAVEDEXPIRETIME, SavedExpireTime);
+	if(NewType.get_flag(EXPIRESTOP)){
+		Obj.set_attribute(SAVEDEXPIRETIME, SavedExpireTime);
 	}
 
-	CronExpire(Obj, Delay);
+	cron_expire(Obj, Delay);
 }
 
-void ChangeObject(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value){
+void change_object(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value){
 	if(!Obj.exists()){
-		error("ChangeObject: Provided object does not exist.\n");
+		error("change_object: Provided object does not exist.\n");
 		return;
 	}
 
-	Obj.setAttribute(Attribute, Value);
+	Obj.set_attribute(Attribute, Value);
 }
 
-int GetObjectPriority(Object Obj){
+int get_object_priority(Object Obj){
 	if(!Obj.exists()){
-		error("GetObjectPriority: Provided object does not exist.\n");
+		error("get_object_priority: Provided object does not exist.\n");
 		return -1;
 	}
 
 	int ObjPriority;
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(BANK)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(BANK)){
 		ObjPriority = PRIORITY_BANK;
-	}else if(ObjType.getFlag(CLIP)){
+	}else if(ObjType.get_flag(CLIP)){
 		ObjPriority = PRIORITY_CLIP;
-	}else if(ObjType.getFlag(BOTTOM)){
+	}else if(ObjType.get_flag(BOTTOM)){
 		ObjPriority = PRIORITY_BOTTOM;
-	}else if(ObjType.getFlag(TOP)){
+	}else if(ObjType.get_flag(TOP)){
 		ObjPriority = PRIORITY_TOP;
-	}else if(ObjType.isCreatureContainer()){
+	}else if(ObjType.is_creature_container()){
 		ObjPriority = PRIORITY_CREATURE;
 	}else{
 		ObjPriority = PRIORITY_LOW;
@@ -2012,35 +2012,35 @@ int GetObjectPriority(Object Obj){
 	return ObjPriority;
 }
 
-void PlaceObject(Object Obj, Object Con, bool Append){
+void place_object(Object Obj, Object Con, bool Append){
 	if(!Obj.exists()){
-		error("PlaceObject: Provided object does not exist.\n");
+		error("place_object: Provided object does not exist.\n");
 		return;
 	}
 
 	if(!Con.exists()){
-		error("PlaceObject: Provided container does not exist.\n");
+		error("place_object: Provided container does not exist.\n");
 		return;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER) && !ConType.getFlag(CHEST)){
-		error("PlaceObject: Con (%d) is not a container.\n", ConType.TypeID);
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER) && !ConType.get_flag(CHEST)){
+		error("place_object: Con (%d) is not a container.\n", ConType.TypeID);
 		return;
 	}
 
 	Object Prev = NONE;
-	Object Cur = Object(Con.getAttribute(CONTENT));
-	if(ConType.isMapContainer()){
+	Object Cur = Object(Con.get_attribute(CONTENT));
+	if(ConType.is_map_container()){
 		// TODO(fusion): Review. The loop below was a bit rough but it seems that
 		// append is forced for non PRIORITY_CREATURE and PRIORITY_LOW.
-		int ObjPriority = GetObjectPriority(Obj);
+		int ObjPriority = get_object_priority(Obj);
 		Append = Append
 			|| (ObjPriority != PRIORITY_CREATURE
 				&& ObjPriority != PRIORITY_LOW);
 
 		while(Cur != NONE){
-			int CurPriority = GetObjectPriority(Cur);
+			int CurPriority = get_object_priority(Cur);
 			if(CurPriority == ObjPriority
 					&& (ObjPriority == PRIORITY_BANK
 						|| ObjPriority == PRIORITY_BOTTOM
@@ -2057,11 +2057,11 @@ void PlaceObject(Object Obj, Object Con, bool Append){
 				}
 
 				int CoordX, CoordY, CoordZ;
-				GetObjectCoordinates(Con, &CoordX, &CoordY, &CoordZ);
+				get_object_coordinates(Con, &CoordX, &CoordY, &CoordZ);
 
-				ObjectType ObjType = Obj.getObjectType();
-				ObjectType CurType = Cur.getObjectType();
-				error("PlaceObject: Two %s objects (%d and %d) on field [%d,%d,%d].\n",
+				ObjectType ObjType = Obj.get_object_type();
+				ObjectType CurType = Cur.get_object_type();
+				error("place_object: Two %s objects (%d and %d) on field [%d,%d,%d].\n",
 					PriorityString, ObjType.TypeID, CurType.TypeID, CoordX, CoordY, CoordZ);
 			}
 
@@ -2069,251 +2069,251 @@ void PlaceObject(Object Obj, Object Con, bool Append){
 			if(!Append && CurPriority >= ObjPriority) break;
 
 			Prev = Cur;
-			Cur = Cur.getNextObject();
+			Cur = Cur.get_next_object();
 		}
 	}else{
 		if(Append){
 			while(Cur != NONE){
 				Prev = Cur;
-				Cur = Cur.getNextObject();
+				Cur = Cur.get_next_object();
 			}
 		}
 	}
 
 	if(Prev != NONE){
-		Prev.setNextObject(Obj);
+		Prev.set_next_object(Obj);
 	}else{
-		Con.setAttribute(CONTENT, Obj.ObjectID);
+		Con.set_attribute(CONTENT, Obj.ObjectID);
 	}
-	Obj.setNextObject(Cur);
-	Obj.setContainer(Con);
+	Obj.set_next_object(Cur);
+	Obj.set_container(Con);
 }
 
-// NOTE(fusion): This is the opposite of `PlaceObject`.
-void CutObject(Object Obj){
+// NOTE(fusion): This is the opposite of `place_object`.
+void cut_object(Object Obj){
 	if(!Obj.exists()){
-		error("CutObject: Provided object does not exist.\n");
+		error("cut_object: Provided object does not exist.\n");
 		return;
 	}
 
-	Object Con = Obj.getContainer();
-	Object Cur = GetFirstContainerObject(Con);
+	Object Con = Obj.get_container();
+	Object Cur = get_first_container_object(Con);
 	if(Cur == Obj){
-		Object Next = Obj.getNextObject();
-		Con.setAttribute(CONTENT, Next.ObjectID);
+		Object Next = Obj.get_next_object();
+		Con.set_attribute(CONTENT, Next.ObjectID);
 	}else{
 		Object Prev;
 		do{
 			Prev = Cur;
-			Cur = Cur.getNextObject();
+			Cur = Cur.get_next_object();
 		}while(Cur != Obj);
-		Prev.setNextObject(Cur.getNextObject());
+		Prev.set_next_object(Cur.get_next_object());
 	}
 
-	Obj.setNextObject(NONE);
-	Obj.setContainer(NONE);
+	Obj.set_next_object(NONE);
+	Obj.set_container(NONE);
 }
 
-void MoveObject(Object Obj, Object Con){
+void move_object(Object Obj, Object Con){
 	if(!Obj.exists()){
-		error("MoveObject: Provided object does not exist.\n");
+		error("move_object: Provided object does not exist.\n");
 		return;
 	}
 
 	if(!Con.exists()){
-		error("MoveObject: Provided destination container does not exist.\n");
+		error("move_object: Provided destination container does not exist.\n");
 		return;
 	}
 
-	CutObject(Obj);
-	PlaceObject(Obj, Con, false);
+	cut_object(Obj);
+	place_object(Obj, Con, false);
 }
 
-Object AppendObject(Object Con, ObjectType Type){
+Object append_object(Object Con, ObjectType Type){
 	if(!Con.exists()){
-		error("AppendObject: Provided container does not exist.\n");
+		error("append_object: Provided container does not exist.\n");
 		return NONE;
 	}
 
-	Object Obj = CreateObject();
-	ChangeObject(Obj, Type);
-	PlaceObject(Obj, Con, true);
+	Object Obj = create_object();
+	change_object(Obj, Type);
+	place_object(Obj, Con, true);
 	return Obj;
 }
 
-Object SetObject(Object Con, ObjectType Type, uint32 CreatureID){
+Object set_object(Object Con, ObjectType Type, uint32 CreatureID){
 	if(!Con.exists()){
-		error("SetObject: Provided container does not exist.\n");
+		error("set_object: Provided container does not exist.\n");
 		return NONE;
 	}
 
-	Object Obj = CreateObject();
-	ChangeObject(Obj, Type);
-	PlaceObject(Obj, Con, false);
-	if(Type.isCreatureContainer()){
+	Object Obj = create_object();
+	change_object(Obj, Type);
+	place_object(Obj, Con, false);
+	if(Type.is_creature_container()){
 		if(CreatureID == 0){
-			error("SetObject: Invalid creature ID.\n");
+			error("set_object: Invalid creature ID.\n");
 		}
-		AccessObject(Obj)->Attributes[1] = CreatureID;
+		access_object(Obj)->Attributes[1] = CreatureID;
 	}
 	return Obj;
 }
 
-Object CopyObject(Object Con, Object Source){
+Object copy_object(Object Con, Object Source){
 	if(!Source.exists()){
-		error("CopyObject: Source does not exist.\n");
+		error("copy_object: Source does not exist.\n");
 		return NONE;
 	}
 
 	if(!Con.exists()){
-		error("CopyObject: Destination container does not exist.\n");
+		error("copy_object: Destination container does not exist.\n");
 		return NONE;
 	}
 
-	ObjectType SourceType = Source.getObjectType();
-	if(SourceType.isCreatureContainer()){
-		error("CopyObject: Creatures must not be copied.\n");
+	ObjectType SourceType = Source.get_object_type();
+	if(SourceType.is_creature_container()){
+		error("copy_object: Creatures must not be copied.\n");
 		return NONE;
 	}
 
-	Object NewObj = SetObject(Con, SourceType, 0);
-	for(int i = 0; i < NARRAY(TObject::Attributes); i += 1){
-		AccessObject(NewObj)->Attributes[i] = AccessObject(Source)->Attributes[i];
+	Object NewObj = set_object(Con, SourceType, 0);
+	for(int i = 0; i < NARRAY(MapObject::Attributes); i += 1){
+		access_object(NewObj)->Attributes[i] = access_object(Source)->Attributes[i];
 	}
 
-	if(SourceType.getFlag(CONTAINER) || SourceType.getFlag(CHEST)){
-		NewObj.setAttribute(CONTENT, NONE.ObjectID);
+	if(SourceType.get_flag(CONTAINER) || SourceType.get_flag(CHEST)){
+		NewObj.set_attribute(CONTENT, NONE.ObjectID);
 	}
 
-	if(SourceType.getFlag(TEXT)){
+	if(SourceType.get_flag(TEXT)){
 		// NOTE(fusion): Both `NewObj` and `Source` share the same strings. We
 		// need to duplicate them so both objects can "own" and manage their own
 		// strings separately.
-		uint32 TextString = NewObj.getAttribute(TEXTSTRING);
+		uint32 TextString = NewObj.get_attribute(TEXTSTRING);
 		if(TextString != 0){
 			TextString = AddDynamicString(GetDynamicString(TextString));
-			NewObj.setAttribute(TEXTSTRING, TextString);
+			NewObj.set_attribute(TEXTSTRING, TextString);
 		}
 
-		uint32 Editor = NewObj.getAttribute(EDITOR);
+		uint32 Editor = NewObj.get_attribute(EDITOR);
 		if(Editor != 0){
 			Editor = AddDynamicString(GetDynamicString(Editor));
-			NewObj.setAttribute(EDITOR, Editor);
+			NewObj.set_attribute(EDITOR, Editor);
 		}
 	}
 
 	return NewObj;
 }
 
-Object SplitObject(Object Obj, int Count){
+Object split_object(Object Obj, int Count){
 	if(!Obj.exists()){
-		error("SplitObject: Provided object does not exist.\n");
+		error("split_object: Provided object does not exist.\n");
 		return NONE;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(CUMULATIVE)){
-		error("SplitObject: Object is not cumulative.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(CUMULATIVE)){
+		error("split_object: Object is not cumulative.\n");
 		return Obj; // TODO(fusion): Probably return NONE?
 	}
 
-	uint32 Amount = Obj.getAttribute(AMOUNT);
+	uint32 Amount = Obj.get_attribute(AMOUNT);
 	if(Count <= 0 || (uint32)Count > Amount){
-		error("SplitObject: Invalid count %d.\n", Count);
+		error("split_object: Invalid count %d.\n", Count);
 		return Obj; // TODO(fusion): Probably return NONE?
 	}
 
 	Object Res = Obj;
 	if((uint32)Count != Amount){
-		Res = CopyObject(Obj.getContainer(), Obj);
-		Res.setAttribute(AMOUNT, (uint32)Count);
-		Obj.setAttribute(AMOUNT, Amount - (uint32)Count);
+		Res = copy_object(Obj.get_container(), Obj);
+		Res.set_attribute(AMOUNT, (uint32)Count);
+		Obj.set_attribute(AMOUNT, Amount - (uint32)Count);
 	}
 	return Res;
 }
 
-void MergeObjects(Object Obj, Object Dest){
+void merge_objects(Object Obj, Object Dest){
 	if(!Obj.exists()){
-		error("MergeObjects: Provided object does not exist.\n");
+		error("merge_objects: Provided object does not exist.\n");
 		return;
 	}
 
 	if(!Dest.exists()){
-		error("MergeObjects: Provided destination does not exist.\n");
+		error("merge_objects: Provided destination does not exist.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	ObjectType DestType = Dest.getObjectType();
+	ObjectType ObjType = Obj.get_object_type();
+	ObjectType DestType = Dest.get_object_type();
 	if(ObjType != DestType){
-		error("MergeObjects: Object types %d and %d are not identical.\n",
+		error("merge_objects: Object types %d and %d are not identical.\n",
 				ObjType.TypeID, DestType.TypeID);
 		return;
 	}
 
-	if(!ObjType.getFlag(CUMULATIVE)){
-		error("MergeObjects: Object type %d is not cumulative.\n", ObjType.TypeID);
+	if(!ObjType.get_flag(CUMULATIVE)){
+		error("merge_objects: Object type %d is not cumulative.\n", ObjType.TypeID);
 		return;
 	}
 
-	uint32 ObjAmount = Obj.getAttribute(AMOUNT);
+	uint32 ObjAmount = Obj.get_attribute(AMOUNT);
 	if(ObjAmount == 0){
-		error("MergeObjects: Object contains 0 parts.\n");
+		error("merge_objects: Object contains 0 parts.\n");
 		ObjAmount = 1;
 	}
 
-	uint32 DestAmount = Dest.getAttribute(AMOUNT);
+	uint32 DestAmount = Dest.get_attribute(AMOUNT);
 	if(DestAmount == 0){
-		error("MergeObjects: Destination object contains 0 parts.\n");
+		error("merge_objects: Destination object contains 0 parts.\n");
 		DestAmount = 1;
 	}
 
 	DestAmount += ObjAmount;
 	if(DestAmount > 100){
-		error("MergeObjects: New object contains more than 100 parts.\n");
+		error("merge_objects: New object contains more than 100 parts.\n");
 		DestAmount = 100;
 	}
 
-	Dest.setAttribute(AMOUNT, DestAmount);
-	DeleteObject(Obj);
+	Dest.set_attribute(AMOUNT, DestAmount);
+	delete_object(Obj);
 }
 
-Object GetFirstContainerObject(Object Con){
+Object get_first_container_object(Object Con){
 	if(Con == NONE){
-		error("GetFirstContainerObject: Provided container does not exist.\n");
+		error("get_first_container_object: Provided container does not exist.\n");
 		return NONE;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER) && !ConType.getFlag(CHEST)){
-		error("GetFirstContainerObject: Con (%d) is not a container.\n", ConType.TypeID);
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER) && !ConType.get_flag(CHEST)){
+		error("get_first_container_object: Con (%d) is not a container.\n", ConType.TypeID);
 		return NONE;
 	}
 
-	return Object(Con.getAttribute(CONTENT));
+	return Object(Con.get_attribute(CONTENT));
 }
 
-Object GetContainerObject(Object Con, int Index){
+Object get_container_object(Object Con, int Index){
 	if(Index < 0){
-		error("GetContainerObject: Invalid index %d.\n", Index);
+		error("get_container_object: Invalid index %d.\n", Index);
 		return NONE;
 	}
 
 	if(!Con.exists()){
-		error("GetContainerObject: Provided container does not exist.\n");
+		error("get_container_object: Provided container does not exist.\n");
 		return NONE;
 	}
 
-	Object Obj = GetFirstContainerObject(Con);
+	Object Obj = get_first_container_object(Con);
 	while(Index > 0 && Obj != NONE){
 		Index -= 1;
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 
 	return Obj;
 }
 
-Object GetMapContainer(int x, int y, int z){
+Object get_map_container(int x, int y, int z){
 	int SectorX = x / 32;
 	int SectorY = y / 32;
 	int SectorZ = z;
@@ -2324,8 +2324,8 @@ Object GetMapContainer(int x, int y, int z){
 		return NONE;
 	}
 
-	ASSERT(Sector != NULL);
-	TSector *ConSector = *Sector->at(SectorX, SectorY, SectorZ);
+	ASSERT(SectorMatrix != NULL);
+	Sector *ConSector = *SectorMatrix->at(SectorX, SectorY, SectorZ);
 	if(ConSector == NULL){
 		return NONE;
 	}
@@ -2336,94 +2336,94 @@ Object GetMapContainer(int x, int y, int z){
 	return ConSector->MapCon[OffsetX][OffsetY];
 }
 
-Object GetMapContainer(Object Obj){
+Object get_map_container(Object Obj){
 	if(!Obj.exists()){
-		error("GetMapContainer: Provided object does not exist\n");
+		error("get_map_container: Provided object does not exist\n");
 		return NONE;
 	}
 
 	while(Obj != NONE){
-		if(Obj.getObjectType().isMapContainer())
+		if(Obj.get_object_type().is_map_container())
 			break;
-		Obj = Obj.getContainer();
+		Obj = Obj.get_container();
 	}
 
 	return Obj;
 }
 
-Object GetFirstObject(int x, int y, int z){
-	Object MapCon = GetMapContainer(x, y, z);
+Object get_first_object(int x, int y, int z){
+	Object MapCon = get_map_container(x, y, z);
 	if(MapCon != NONE){
-		return Object(MapCon.getAttribute(CONTENT));
+		return Object(MapCon.get_attribute(CONTENT));
 	}else{
 		return NONE;
 	}
 }
 
-Object GetFirstSpecObject(int x, int y, int z, ObjectType Type){
-	Object Obj = GetFirstObject(x, y, z);
+Object get_first_spec_object(int x, int y, int z, ObjectType Type){
+	Object Obj = get_first_object(x, y, z);
 	while(Obj != NONE){
-		if(Obj.getObjectType() == Type){
+		if(Obj.get_object_type() == Type){
 			break;
 		}
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Obj;
 }
 
-uint8 GetMapContainerFlags(Object Obj){
-	if(!Obj.exists() || !Obj.getObjectType().isMapContainer()){
-		error("GetMapContainerFlags: Object is not a MapContainer.\n");
+uint8 get_map_container_flags(Object Obj){
+	if(!Obj.exists() || !Obj.get_object_type().is_map_container()){
+		error("get_map_container_flags: Object is not a MapContainer.\n");
 		return 0;
 	}
 
-	// NOTE(fusion): See note in `GetObjectCoordinates`.
-	return (uint8)(AccessObject(Obj)->Attributes[3] >> 8);
+	// NOTE(fusion): See note in `get_object_coordinates`.
+	return (uint8)(access_object(Obj)->Attributes[3] >> 8);
 }
 
-void GetObjectCoordinates(Object Obj, int *x, int *y, int *z){
+void get_object_coordinates(Object Obj, int *x, int *y, int *z){
 	if(!Obj.exists()){
-		error("GetObjectCoordinates: Provided object does not exist.\n");
+		error("get_object_coordinates: Provided object does not exist.\n");
 		*x = 0;
 		*y = 0;
 		*z = 0;
 		return;
 	}
 
-	// TODO(fusion): I'm not sure I like this approach with calling `AccessObject`
-	// multiple times for the same object. Furthermore, using `Object::getObjectType`
+	// TODO(fusion): I'm not sure I like this approach with calling `access_object`
+	// multiple times for the same object. Furthermore, using `Object::get_object_type`
 	// (at least until now) is very weird when we could just get the same information
-	// from the `TObject` which we'll access ANYWAYS.
+	// from the `MapObject` which we'll access ANYWAYS.
 
 	while(true){
-		if(Obj.getObjectType().isMapContainer())
+		if(Obj.get_object_type().is_map_container())
 			break;
-		Obj = Obj.getContainer();
+		Obj = Obj.get_container();
 	}
 
-	*x = AccessObject(Obj)->Attributes[1];
-	*y = AccessObject(Obj)->Attributes[2];
+	*x = access_object(Obj)->Attributes[1];
+	*y = access_object(Obj)->Attributes[2];
 
 	// NOTE(fusion): The first 8 bits of `Attributes[3]` holds the Z coordinate
 	// of a map container. The next 8 bits holds its flags and the last 16 bits
 	// holds its house id.
-	*z = AccessObject(Obj)->Attributes[3] & 0xFF;
+	*z = access_object(Obj)->Attributes[3] & 0xFF;
 }
 
-bool CoordinateFlag(int x, int y, int z, FLAG Flag){
+bool coordinate_flag(int x, int y, int z, FLAG Flag){
 	bool Result = false;
-	Object Obj = GetFirstObject(x, y, z);
+	Object Obj = get_first_object(x, y, z);
 	while(Obj != NONE){
-		if(Obj.getObjectType().getFlag(Flag)){
+		if(Obj.get_object_type().get_flag(Flag)){
 			Result = true;
 			break;
 		}
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 	return Result;
 }
 
-bool IsOnMap(int x, int y, int z){
+bool is_on_map(int x, int y, int z){
 	int SectorX = x / 32;
 	int SectorY = y / 32;
 	int SectorZ = z;
@@ -2433,7 +2433,7 @@ bool IsOnMap(int x, int y, int z){
 		&& SectorZMin <= SectorZ && SectorZ <= SectorZMax;
 }
 
-bool IsPremiumArea(int x, int y, int z){
+bool is_premium_area(int x, int y, int z){
 	int SectorX = x / 32;
 	int SectorY = y / 32;
 
@@ -2451,98 +2451,98 @@ bool IsPremiumArea(int x, int y, int z){
 	return Result;
 }
 
-bool IsNoLogoutField(int x, int y, int z){
+bool is_no_logout_field(int x, int y, int z){
 	bool Result = false;
-	Object Con = GetMapContainer(x, y, z);
+	Object Con = get_map_container(x, y, z);
 	if(Con != NONE){
-		Result = (GetMapContainerFlags(Con) & 0x02) != 0;
+		Result = (get_map_container_flags(Con) & 0x02) != 0;
 	}
 	return Result;
 }
 
-bool IsProtectionZone(int x, int y, int z){
+bool is_protection_zone(int x, int y, int z){
 	bool Result = false;
-	Object Con = GetMapContainer(x, y, z);
+	Object Con = get_map_container(x, y, z);
 	if(Con != NONE){
-		Result = (GetMapContainerFlags(Con) & 0x04) != 0;
+		Result = (get_map_container_flags(Con) & 0x04) != 0;
 	}
 	return Result;
 }
 
-bool IsHouse(int x, int y, int z){
-	return GetHouseID(x, y, z) != 0;
+bool is_house(int x, int y, int z){
+	return get_house_id(x, y, z) != 0;
 }
 
-uint16 GetHouseID(int x, int y, int z){
-	Object Con = GetMapContainer(x, y, z);
+uint16 get_house_id(int x, int y, int z){
+	Object Con = get_map_container(x, y, z);
 	if(Con == NONE){
 		return 0;
 	}
 
 	if(!Con.exists()){
-		error("GetHouseID: Map container for point [%d,%d,%d] does not exist.\n", x, y, z);
+		error("get_house_id: Map container for point [%d,%d,%d] does not exist.\n", x, y, z);
 		return 0;
 	}
 
-	// NOTE(fusion): See note in `GetObjectCoordinates`.
-	return (uint16)(AccessObject(Con)->Attributes[3] >> 16);
+	// NOTE(fusion): See note in `get_object_coordinates`.
+	return (uint16)(access_object(Con)->Attributes[3] >> 16);
 }
 
-void SetHouseID(int x, int y, int z, uint16 ID){
-	if(!IsOnMap(x, y, z)){
+void set_house_id(int x, int y, int z, uint16 ID){
+	if(!is_on_map(x, y, z)){
 		return;
 	}
 
-	Object Con = GetMapContainer(x, y, z);
+	Object Con = get_map_container(x, y, z);
 	if(Con == NONE || !Con.exists()){
-		error("SetHouseID: Map container for point [%d,%d,%d] does not exist.\n", x, y, z);
+		error("set_house_id: Map container for point [%d,%d,%d] does not exist.\n", x, y, z);
 		return;
 	}
 
-	// NOTE(fusion): See note in `GetObjectCoordinates`.
-	uint16 PrevID = (uint16)(AccessObject(Con)->Attributes[3] >> 16);
+	// NOTE(fusion): See note in `get_object_coordinates`.
+	uint16 PrevID = (uint16)(access_object(Con)->Attributes[3] >> 16);
 	if(PrevID != 0){
-		error("SetHouseID: Field [%d,%d,%d] already belongs to a house.\n", x, y, z);
+		error("set_house_id: Field [%d,%d,%d] already belongs to a house.\n", x, y, z);
 		return;
 	}
 
-	AccessObject(Con)->Attributes[3] |= ((uint32)ID << 16);
+	access_object(Con)->Attributes[3] |= ((uint32)ID << 16);
 }
 
-int GetDepotNumber(const char *Town){
+int get_depot_number(const char *Town){
 	if(Town == NULL){
-		error("GetDepotNumber: Town is NULL.\n");
+		error("get_depot_number: Town is NULL.\n");
 		return -1;
 	}
 
-	for(int DepotNumber = DepotInfo.min;
-			DepotNumber <= DepotInfo.max;
+	for(int DepotNumber = DepotInfoArray.min;
+			DepotNumber <= DepotInfoArray.max;
 			DepotNumber += 1){
-		if(stricmp(DepotInfo.at(DepotNumber)->Town, Town) == 0){
+		if(stricmp(DepotInfoArray.at(DepotNumber)->Town, Town) == 0){
 			return DepotNumber;
 		}
 	}
 	return -1;
 }
 
-const char *GetDepotName(int DepotNumber){
-	if(DepotNumber < DepotInfo.min || DepotNumber > DepotInfo.max){
-		error("GetDepotName: Invalid name for depot %d.\n", DepotNumber);
+const char *get_depot_name(int DepotNumber){
+	if(DepotNumber < DepotInfoArray.min || DepotNumber > DepotInfoArray.max){
+		error("get_depot_name: Invalid name for depot %d.\n", DepotNumber);
 		return "unknown";
 	}
 
-	return DepotInfo.at(DepotNumber)->Town;
+	return DepotInfoArray.at(DepotNumber)->Town;
 }
 
-int GetDepotSize(int DepotNumber, bool PremiumAccount){
-	if(DepotNumber < DepotInfo.min || DepotNumber > DepotInfo.max){
-		error("GetDepotSize: Invalid depot number %d.\n", DepotNumber);
+int get_depot_size(int DepotNumber, bool PremiumAccount){
+	if(DepotNumber < DepotInfoArray.min || DepotNumber > DepotInfoArray.max){
+		error("get_depot_size: Invalid depot number %d.\n", DepotNumber);
 		return 1;
 	}
 
-	TDepotInfo *Info = DepotInfo.at(DepotNumber);
+	DepotInfo *Info = DepotInfoArray.at(DepotNumber);
 	if(Info->Size < 1){
-		error("GetDepotSize: Invalid depot size %d for depot %d.\n", Info->Size, DepotNumber);
+		error("get_depot_size: Invalid depot size %d for depot %d.\n", Info->Size, DepotNumber);
 		Info->Size = 1;
 	}
 
@@ -2554,10 +2554,10 @@ int GetDepotSize(int DepotNumber, bool PremiumAccount){
 	return Size;
 }
 
-bool GetMarkPosition(const char *Name, int *x, int *y, int *z){
+bool get_mark_position(const char *Name, int *x, int *y, int *z){
 	bool Result = false;
 	for(int i = 0; i < Marks; i += 1){
-		TMark *MarkPointer = Mark.at(i);
+		Mark *MarkPointer = MarkArray.at(i);
 		if(stricmp(MarkPointer->Name, Name) == 0){
 			*x = MarkPointer->x;
 			*y = MarkPointer->y;
@@ -2569,7 +2569,7 @@ bool GetMarkPosition(const char *Name, int *x, int *y, int *z){
 	return Result;
 }
 
-void GetStartPosition(int *x, int *y, int *z, bool Newbie){
+void get_start_position(int *x, int *y, int *z, bool Newbie){
 	if(Newbie){
 		*x = NewbieStartPositionX;
 		*y = NewbieStartPositionY;

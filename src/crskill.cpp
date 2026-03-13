@@ -363,7 +363,7 @@ bool TSkillLevel::Jump(int Range){
 	this->Master->Skills[SKILL_GO_STRENGTH   ]->Advance(Range);
 	this->Master->Skills[SKILL_CARRY_STRENGTH]->Advance(Range);
 
-	AnnounceChangedCreature(this->Master->ID, CREATURE_SPEED_CHANGED);
+	announce_changed_creature(this->Master->ID, CREATURE_SPEED_CHANGED);
 	this->Master->Combat.CheckCombatValues();
 
 	if(this->Master->Type == PLAYER){
@@ -695,7 +695,7 @@ void TSkillHitpoints::Set(int Value){
 		if(Master->Type == PLAYER){
 			SendPlayerData(Master->Connection);
 		}
-		AnnounceChangedCreature(Master->ID, CREATURE_HEALTH_CHANGED);
+		announce_changed_creature(Master->ID, CREATURE_HEALTH_CHANGED);
 	}
 }
 
@@ -738,7 +738,7 @@ bool TSkillGoStrength::SetTimer(int Cycle, int Count, int MaxCount, int Addition
 	if(Master->Type == PLAYER){
 		((TPlayer*)Master)->CheckState();
 	}
-	AnnounceChangedCreature(Master->ID, CREATURE_SPEED_CHANGED);
+	announce_changed_creature(Master->ID, CREATURE_SPEED_CHANGED);
 	return true;
 }
 
@@ -758,7 +758,7 @@ void TSkillGoStrength::Event(int Range){
 	if(this->SkNr == SKILL_GO_STRENGTH && Master->Type == PLAYER){
 		((TPlayer*)Master)->CheckState();
 	}
-	AnnounceChangedCreature(Master->ID, CREATURE_SPEED_CHANGED);
+	announce_changed_creature(Master->ID, CREATURE_SPEED_CHANGED);
 }
 
 // TSkillCarryStrength
@@ -816,7 +816,7 @@ void TSkillFed::Event(int Range){
 		return;
 	}
 
-	if(Master->IsDead || IsProtectionZone(Master->posx, Master->posy, Master->posz)){
+	if(Master->IsDead || is_protection_zone(Master->posx, Master->posy, Master->posz)){
 		return;
 	}
 
@@ -907,9 +907,9 @@ bool TSkillLight::SetTimer(int Cycle, int Count, int MaxCount, int AdditionalVal
 
 	// TODO(fusion): The decompiled function had this logic, but WTF.
 	//	if(GetCreature(Master->ID) != NULL){
-	//		AnnounceChangedCreature(Master->ID, CREATURE_LIGHT_CHANGED);
+	//		announce_changed_creature(Master->ID, CREATURE_LIGHT_CHANGED);
 	//	}
-	AnnounceChangedCreature(Master->ID, CREATURE_LIGHT_CHANGED);
+	announce_changed_creature(Master->ID, CREATURE_LIGHT_CHANGED);
 	return true;
 }
 
@@ -920,7 +920,7 @@ void TSkillLight::Event(int Range){
 		return;
 	}
 
-	AnnounceChangedCreature(Master->ID, CREATURE_LIGHT_CHANGED);
+	announce_changed_creature(Master->ID, CREATURE_LIGHT_CHANGED);
 }
 
 // TSkillIllusion
@@ -942,9 +942,9 @@ bool TSkillIllusion::SetTimer(int Cycle, int Count, int MaxCount, int Additional
 
 	// TODO(fusion): The decompiled function had this logic, but WTF.
 	//	if(GetCreature(Master->ID) != NULL){
-	//		AnnounceChangedCreature(Master->ID, CREATURE_OUTFIT_CHANGED);
+	//		announce_changed_creature(Master->ID, CREATURE_OUTFIT_CHANGED);
 	//	}
-	AnnounceChangedCreature(Master->ID, CREATURE_OUTFIT_CHANGED);
+	announce_changed_creature(Master->ID, CREATURE_OUTFIT_CHANGED);
 	return true;
 }
 
@@ -958,8 +958,8 @@ void TSkillIllusion::Event(int Range){
 
 		if(this->Get() <= 0){
 			Master->Outfit = Master->OrgOutfit;
-			AnnounceChangedCreature(Master->ID, CREATURE_OUTFIT_CHANGED);
-			NotifyAllCreatures(Master->CrObject, OBJECT_CHANGED, NONE);
+			announce_changed_creature(Master->ID, CREATURE_OUTFIT_CHANGED);
+			notify_all_creatures(Master->CrObject, OBJECT_CHANGED, NONE);
 		}
 	}
 }
@@ -1032,18 +1032,18 @@ void TSkillPoison::Event(int Range){
 
 	// NOTE(fusion): I think this is checking whether `Master` is still upon some
 	// poison field to determine whether we should extend the poison effect?
-	Object Obj = GetFirstObject(Master->posx, Master->posy, Master->posz);
+	Object Obj = get_first_object(Master->posx, Master->posy, Master->posz);
 	while(Obj != NONE){
 		// NOTE(fusion): I think `ObjectType` is analogous to `ItemType` in
 		// OpenTibia terms.
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(AVOID)){
-			if(ObjType.getAttribute(AVOIDDAMAGETYPES) == DAMAGE_POISON){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(AVOID)){
+			if(ObjType.get_attribute(AVOIDDAMAGETYPES) == DAMAGE_POISON){
 				this->Cycle += 1;
 			}
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 }
 
@@ -1065,16 +1065,16 @@ void TSkillBurning::Event(int Range){
 
 	// NOTE(Fusion): Something similar to `TSkillPoison::Event` except we're
 	// looking for a different field type.
-	Object Obj = GetFirstObject(Master->posx, Master->posy, Master->posz);
+	Object Obj = get_first_object(Master->posx, Master->posy, Master->posz);
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(AVOID)){
-			if(ObjType.getAttribute(AVOIDDAMAGETYPES) == DAMAGE_FIRE){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(AVOID)){
+			if(ObjType.get_attribute(AVOIDDAMAGETYPES) == DAMAGE_FIRE){
 				this->Cycle += 1;
 			}
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 }
 
@@ -1091,16 +1091,16 @@ void TSkillEnergy::Event(int Range){
 
 	// NOTE(Fusion): Something similar to `TSkillPoison::Event` except we're
 	// looking for a different field type.
-	Object Obj = GetFirstObject(Master->posx, Master->posy, Master->posz);
+	Object Obj = get_first_object(Master->posx, Master->posy, Master->posz);
 	while(Obj != NONE){
-		ObjectType ObjType = Obj.getObjectType();
-		if(ObjType.getFlag(AVOID)){
-			if(ObjType.getAttribute(AVOIDDAMAGETYPES) == DAMAGE_ENERGY){
+		ObjectType ObjType = Obj.get_object_type();
+		if(ObjType.get_flag(AVOID)){
+			if(ObjType.get_attribute(AVOIDDAMAGETYPES) == DAMAGE_ENERGY){
 				this->Cycle += 1;
 			}
 		}
 
-		Obj = Obj.getNextObject();
+		Obj = Obj.get_next_object();
 	}
 }
 

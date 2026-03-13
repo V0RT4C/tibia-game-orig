@@ -5,31 +5,31 @@
 
 struct TPlayerData;
 
-typedef void TRefreshSectorFunction(int SectorX, int SectorY, int SectorZ,
+typedef void RefreshSectorFunction(int SectorX, int SectorY, int SectorZ,
 									const uint8 *Data, int Size);
-typedef void TSendMailsFunction(TPlayerData *PlayerData);
+typedef void SendMailsFunction(TPlayerData *PlayerData);
 
-enum TReaderThreadOrderType: int {
+enum ReaderThreadOrderType: int {
 	READER_ORDER_TERMINATE		= 0,
 	READER_ORDER_LOADSECTOR		= 1,
 	READER_ORDER_LOADCHARACTER	= 2,
 };
 
-enum TReaderThreadReplyType: int {
+enum ReaderThreadReplyType: int {
 	READER_REPLY_SECTORDATA		= 0,
 	READER_REPLY_CHARACTERDATA	= 1,
 };
 
-struct TReaderThreadOrder {
-	TReaderThreadOrderType OrderType;
+struct ReaderThreadOrder {
+	ReaderThreadOrderType OrderType;
 	int SectorX;
 	int SectorY;
 	int SectorZ;
 	uint32 CharacterID;
 };
 
-struct TReaderThreadReply {
-	TReaderThreadReplyType ReplyType;
+struct ReaderThreadReply {
+	ReaderThreadReplyType ReplyType;
 	int SectorX;
 	int SectorY;
 	int SectorZ;
@@ -37,28 +37,28 @@ struct TReaderThreadReply {
 	int Size;
 };
 
-void InitReaderBuffers(void);
-void InsertOrder(TReaderThreadOrderType OrderType,
+void init_reader_buffers(void);
+void insert_order(ReaderThreadOrderType OrderType,
 		int SectorX, int SectorY, int SectorZ, uint32 CharacterID);
-void GetOrder(TReaderThreadOrder *Order);
-void TerminateReaderOrder(void);
-void LoadSectorOrder(int SectorX, int SectorY, int SectorZ);
-void LoadCharacterOrder(uint32 CharacterID);
-void ProcessLoadSectorOrder(int SectorX, int SectorY, int SectorZ);
-void ProcessLoadCharacterOrder(uint32 CharacterID);
-int ReaderThreadLoop(void *Unused);
+void get_order(ReaderThreadOrder *Order);
+void terminate_reader_order(void);
+void load_sector_order(int SectorX, int SectorY, int SectorZ);
+void load_character_order(uint32 CharacterID);
+void process_load_sector_order(int SectorX, int SectorY, int SectorZ);
+void process_load_character_order(uint32 CharacterID);
+int reader_thread_loop(void *Unused);
 
-void InsertReply(TReaderThreadReplyType ReplyType,
+void insert_reply(ReaderThreadReplyType ReplyType,
 		int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size);
-bool GetReply(TReaderThreadReply *Reply);
-void SectorReply(int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size);
-void CharacterReply(uint32 CharacterID);
-void ProcessSectorReply(TRefreshSectorFunction *RefreshSector,
+bool get_reply(ReaderThreadReply *Reply);
+void sector_reply(int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size);
+void character_reply(uint32 CharacterID);
+void process_sector_reply(RefreshSectorFunction *refresh_sector,
 		int SectorX, int SectorY, int SectorZ, uint8 *Data, int Size);
-void ProcessCharacterReply(TSendMailsFunction *SendMails, uint32 CharacterID);
-void ProcessReaderThreadReplies(TRefreshSectorFunction *RefreshSector, TSendMailsFunction *SendMails);
+void process_character_reply(SendMailsFunction *send_mails, uint32 CharacterID);
+void process_reader_thread_replies(RefreshSectorFunction *refresh_sector, SendMailsFunction *send_mails);
 
-void InitReader(void);
-void ExitReader(void);
+void init_reader(void);
+void exit_reader(void);
 
 #endif //TIBIA_READER_HH

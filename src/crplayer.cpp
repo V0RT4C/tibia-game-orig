@@ -93,7 +93,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 		return;
 	}
 
-	SendMails(PlayerData);
+	send_mails(PlayerData);
 	this->PlayerData = PlayerData;
 	this->Connection = Connection;
 	strcpy(this->Name, PlayerData->Name);
@@ -159,39 +159,39 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 		this->posz = this->startz;
 	}
 
-	if(PlayerData->LastLoginTime == 0 && CheckRight(CharacterID, GAMEMASTER_OUTFIT)){
-		Log("game", "Gamemaster character %s logs in for the first time -> setting level 2.\n", this->Name);
+	if(PlayerData->LastLoginTime == 0 && check_right(CharacterID, GAMEMASTER_OUTFIT)){
+		log_message("game", "Gamemaster character %s logs in for the first time -> setting level 2.\n", this->Name);
 		this->Skills[SKILL_LEVEL]->Act = 2;
 		this->Skills[SKILL_LEVEL]->Exp = 100;
 		this->Skills[SKILL_LEVEL]->LastLevel = 100;
 		this->Skills[SKILL_LEVEL]->NextLevel = 200;
 	}
 
-	if(CoordinateFlag(this->posx, this->posy, this->posz, BED)){
+	if(coordinate_flag(this->posx, this->posy, this->posz, BED)){
 		this->Regenerate();
 	}
 
-	uint16 HouseID = GetHouseID(this->posx, this->posy, this->posz);
+	uint16 HouseID = get_house_id(this->posx, this->posy, this->posz);
 	if(HouseID != 0
-			&& !IsInvited(HouseID, this, PlayerData->LastLogoutTime)
-			&& !CheckRight(CharacterID, ENTER_HOUSES)){
-		GetExitPosition(HouseID, &this->posx, &this->posy, &this->posz);
+			&& !is_invited(HouseID, this, PlayerData->LastLogoutTime)
+			&& !check_right(CharacterID, ENTER_HOUSES)){
+		get_exit_position(HouseID, &this->posx, &this->posy, &this->posz);
 	}
 
-	if(!CheckRight(CharacterID, PREMIUM_ACCOUNT)){
-		if(IsPremiumArea(this->startx, this->starty, this->startz)){
-			Log("game", "Player %s is being removed from PayArea town and receives a new home town.\n", this->Name);
-			GetStartPosition(&this->startx, &this->starty, &this->startz, (this->Profession == PROFESSION_NONE));
+	if(!check_right(CharacterID, PREMIUM_ACCOUNT)){
+		if(is_premium_area(this->startx, this->starty, this->startz)){
+			log_message("game", "Player %s is being removed from PayArea town and receives a new home town.\n", this->Name);
+			get_start_position(&this->startx, &this->starty, &this->startz, (this->Profession == PROFESSION_NONE));
 		}
 
-		if(IsPremiumArea(this->posx, this->posy, this->posz)){
-			Log("game", "Player %s is being removed from PayArea and placed in their home town.\n", this->Name);
+		if(is_premium_area(this->posx, this->posy, this->posz)){
+			log_message("game", "Player %s is being removed from PayArea and placed in their home town.\n", this->Name);
 			this->posx = this->startx;
 			this->posy = this->starty;
 			this->posz = this->startz;
 		}
 	}else{
-		Log("game", "Player has Premium Account.\n");
+		log_message("game", "Player has Premium Account.\n");
 	}
 
 	this->SetOnMap();
@@ -199,11 +199,11 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 	SendInitGame(Connection, CharacterID);
 	SendRights(Connection);
 	SendFullScreen(Connection);
-	GraphicalEffect(this->CrObject, EFFECT_ENERGY);
+	graphical_effect(this->CrObject, EFFECT_ENERGY);
 	this->LoadInventory(PlayerData->LastLoginTime == 0);
 	this->NotifyChangeInventory();
 	SendAmbiente(Connection);
-	AnnounceChangedCreature(CharacterID, CREATURE_LIGHT_CHANGED);
+	announce_changed_creature(CharacterID, CREATURE_LIGHT_CHANGED);
 	SendPlayerSkills(Connection);
 	this->CheckState();
 	this->SendBuddies();
@@ -214,8 +214,8 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 		strftime(TimeString, sizeof(TimeString), "%d. %b %Y %X %Z", &LastLogin);
 		SendMessage(Connection, TALK_LOGIN_MESSAGE,
 				"Your last visit in Tibia: %s.", TimeString);
-	}else if(!CheckRight(this->ID, GAMEMASTER_OUTFIT)){
-		Log("game", "Player %s logs in for the first time -> outfit selection.\n", this->Name);
+	}else if(!check_right(this->ID, GAMEMASTER_OUTFIT)){
+		log_message("game", "Player %s logs in for the first time -> outfit selection.\n", this->Name);
 		SendMessage(Connection, TALK_LOGIN_MESSAGE,
 				"Welcome to Tibia! Please choose your outfit.");
 		SendOutfit(Connection);
@@ -225,7 +225,7 @@ TPlayer::TPlayer(TConnection *Connection, uint32 CharacterID):
 }
 
 TPlayer::~TPlayer(void){
-	LogoutOrder(this);
+	logout_order(this);
 	if(this->ConstructError != NOERROR){
 		this->DelInList();
 		return;
@@ -237,11 +237,11 @@ TPlayer::~TPlayer(void){
 	this->SaveData();
 
 	if(!this->IsDead){
-		Log("game", "Player %s logs out.\n", this->Name);
-		GraphicalEffect(this->posx, this->posy, this->posz, EFFECT_POFF);
+		log_message("game", "Player %s logs out.\n", this->Name);
+		graphical_effect(this->posx, this->posy, this->posz, EFFECT_POFF);
 		this->SaveInventory();
 	}else{
-		Log("game", "Player %s has died.\n", this->Name);
+		log_message("game", "Player %s has died.\n", this->Name);
 
 		// NOTE(fusion): This is a disaster. We're deleting inventory data here
 		// so `~TCreature` can handle dropping loot and then re-generate it with
@@ -252,10 +252,10 @@ TPlayer::~TPlayer(void){
 
 		bool ResetCharacter = false;
 		if(this->Profession != PROFESSION_NONE && this->Skills[SKILL_LEVEL]->Get() <= 5){
-			Log("game", "Completely resetting player %s due to level.\n", this->Name);
+			log_message("game", "Completely resetting player %s due to level.\n", this->Name);
 			ResetCharacter = true;
 		}else if(this->Skills[SKILL_HITPOINTS]->Max <= 0){
-			Log("game", "Completely resetting player %s due to MaxHitpoints.\n", this->Name);
+			log_message("game", "Completely resetting player %s due to MaxHitpoints.\n", this->Name);
 			ResetCharacter = true;
 		}
 
@@ -296,20 +296,20 @@ TPlayer::~TPlayer(void){
 			this->LoseInventory = LOSE_INVENTORY_ALL;
 		}
 
-		if(CheckRight(this->ID, KEEP_INVENTORY)){
+		if(check_right(this->ID, KEEP_INVENTORY)){
 			this->LoseInventory = LOSE_INVENTORY_NONE;
 		}
 	}
 
-	if(CheckRight(this->ID, READ_GAMEMASTER_CHANNEL)){
+	if(check_right(this->ID, READ_GAMEMASTER_CHANNEL)){
 		CloseProcessedRequests(this->ID);
 	}
 
 	this->ClearRequest();
-	LeaveAllChannels(this->ID);
+	leave_all_channels(this->ID);
 
 	if(this->GetPartyLeader(false) != 0){
-		::LeaveParty(this->ID, true);
+		::leave_party(this->ID, true);
 	}
 
 	this->ClearPlayerkillingMarks();
@@ -322,7 +322,7 @@ TPlayer::~TPlayer(void){
 }
 
 void TPlayer::Death(void){
-	if(CheckRight(this->ID, INVULNERABLE)){
+	if(check_right(this->ID, INVULNERABLE)){
 		error("TPlayer::Death: No, that's not how it works!! Gods cannot be killed!!\n");
 		this->Skills[SKILL_HITPOINTS]->SetMax();
 		return;
@@ -364,15 +364,15 @@ bool TPlayer::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 	bool Result = TCreature::MovePossible(x, y, z, Execute, Jump);
 	if(Result && Execute){
 		if(this->EarliestProtectionZoneRound > RoundNr
-				&& IsProtectionZone(x, y, z)
-				&& !IsProtectionZone(this->posx, this->posy, this->posz)){
+				&& is_protection_zone(x, y, z)
+				&& !is_protection_zone(this->posx, this->posy, this->posz)){
 			throw ENTERPROTECTIONZONE;
 		}
 
-		uint16 HouseID = GetHouseID(x, y, z);
+		uint16 HouseID = get_house_id(x, y, z);
 		if(HouseID != 0
-				&& !IsInvited(HouseID, this, INT_MAX)
-				&& !CheckRight(this->ID, ENTER_HOUSES)){
+				&& !is_invited(HouseID, this, INT_MAX)
+				&& !check_right(this->ID, ENTER_HOUSES)){
 			throw NOTINVITED;
 		}
 	}
@@ -482,7 +482,7 @@ void TPlayer::LoadData(void){
 	this->OrgOutfit = PlayerData->OriginalOutfit;
 	this->Outfit = PlayerData->CurrentOutfit;
 
-	GetStartPosition(&this->startx, &this->starty, &this->startz, true);
+	get_start_position(&this->startx, &this->starty, &this->startz, true);
 	this->posx = this->startx;
 	this->posy = this->starty;
 	this->posz = this->startz;
@@ -638,8 +638,8 @@ void TPlayer::LoadInventory(bool SetStandardInventory){
 					break;
 				}
 
-				LoadObjects(&ReadBuffer, GetBodyContainer(this->ID, Position));
-				Object BodyObj = GetBodyObject(this->ID, Position);
+				load_objects(&ReadBuffer, get_body_container(this->ID, Position));
+				Object BodyObj = get_body_object(this->ID, Position);
 				if(BodyObj != NONE){
 					SendSetInventory(this->Connection, Position, BodyObj);
 				}
@@ -650,23 +650,23 @@ void TPlayer::LoadInventory(bool SetStandardInventory){
 		}
 	}else if(SetStandardInventory
 			&& this->Profession == PROFESSION_NONE
-			&& !CheckRight(this->ID, ZERO_CAPACITY)){
+			&& !check_right(this->ID, ZERO_CAPACITY)){
 		try{
-			Create(GetBodyContainer(this->ID, INVENTORY_RIGHTHAND),
-					GetSpecialObject(DEFAULT_RIGHTHAND), 0);
-			Create(GetBodyContainer(this->ID, INVENTORY_LEFTHAND),
-					GetSpecialObject(DEFAULT_LEFTHAND), 0);
+			create(get_body_container(this->ID, INVENTORY_RIGHTHAND),
+					get_special_object(DEFAULT_RIGHTHAND), 0);
+			create(get_body_container(this->ID, INVENTORY_LEFTHAND),
+					get_special_object(DEFAULT_LEFTHAND), 0);
 			if(this->Sex == 1){
-				Create(GetBodyContainer(this->ID, INVENTORY_TORSO),
-						GetSpecialObject(DEFAULT_BODY_MALE), 0);
+				create(get_body_container(this->ID, INVENTORY_TORSO),
+						get_special_object(DEFAULT_BODY_MALE), 0);
 			}else{
-				Create(GetBodyContainer(this->ID, INVENTORY_TORSO),
-						GetSpecialObject(DEFAULT_BODY_FEMALE), 0);
+				create(get_body_container(this->ID, INVENTORY_TORSO),
+						get_special_object(DEFAULT_BODY_FEMALE), 0);
 			}
 
-			Object Bag = Create(GetBodyContainer(this->ID, INVENTORY_BAG),
-								GetSpecialObject(DEFAULT_CONTAINER), 0);
-			Create(Bag, GetSpecialObject(DEFAULT_FOOD), 1);
+			Object Bag = create(get_body_container(this->ID, INVENTORY_BAG),
+								get_special_object(DEFAULT_CONTAINER), 0);
+			create(Bag, get_special_object(DEFAULT_FOOD), 1);
 		}catch(RESULT r){
 			error("TPlayer::LoadInventory: Exception %d while creating the default inventory.\n", r);
 		}
@@ -693,10 +693,10 @@ void TPlayer::SaveInventory(void){
 		for(int Position = INVENTORY_FIRST;
 				Position <= INVENTORY_LAST;
 				Position += 1){
-			Object Obj = GetBodyObject(this->ID, Position);
+			Object Obj = get_body_object(this->ID, Position);
 			if(Obj.exists()){
 				HelpBuffer.writeByte((uint8)Position);
-				SaveObjects(Obj, &HelpBuffer, false);
+				save_objects(Obj, &HelpBuffer, false);
 			}
 		}
 
@@ -715,11 +715,11 @@ void TPlayer::SaveInventory(void){
 }
 
 void TPlayer::StartCoordinates(void){
-	GetStartPosition(&this->startx, &this->starty, &this->startz, true);
+	get_start_position(&this->startx, &this->starty, &this->startz, true);
 }
 
 void TPlayer::TakeOver(TConnection *Connection){
-	Log("game", "Player %s takes over connection.\n", this->Name);
+	log_message("game", "Player %s takes over connection.\n", this->Name);
 
 	this->LoggingOut = false;
 	this->LogoutAllowed = false;
@@ -755,11 +755,11 @@ void TPlayer::TakeOver(TConnection *Connection){
 	this->CheckOutfit();
 	this->ClearRequest();
 	this->Combat.StopAttack(0);
-	LeaveAllChannels(this->ID);
+	leave_all_channels(this->ID);
 	this->CloseAllContainers();
 	this->RejectTrade();
 
-	if(CheckRight(this->ID, READ_GAMEMASTER_CHANNEL)){
+	if(check_right(this->ID, READ_GAMEMASTER_CHANNEL)){
 		CloseProcessedRequests(this->ID);
 	}
 
@@ -780,7 +780,7 @@ void TPlayer::SetOpenContainer(int ContainerNr, Object Con){
 		return;
 	}
 
-	if(Con != NONE && (!Con.exists() || !Con.getObjectType().getFlag(CONTAINER))){
+	if(Con != NONE && (!Con.exists() || !Con.get_object_type().get_flag(CONTAINER))){
 		error("TPlayer::SetOpenContainer: Container does not exist.\n");
 		return;
 	}
@@ -831,12 +831,12 @@ Object TPlayer::InspectTrade(bool OwnOffer, int Position){
 	}
 
 	while(Obj != NONE && Position > 0){
-		int ObjCount = CountObjects(Obj);
+		int ObjCount = count_objects(Obj);
 		if(Position < ObjCount){
-			Obj = GetFirstContainerObject(Obj);
+			Obj = get_first_container_object(Obj);
 			Position -= 1;
 		}else{
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 			Position -= ObjCount;
 		}
 	}
@@ -864,29 +864,29 @@ void TPlayer::AcceptTrade(void){
 	TPlayer *Player[2]		= { this, Partner };
 	Object Dest[2]			= { NONE, NONE };
 	Object Obj[2]			= { this->TradeObject, Partner->TradeObject };
-	ObjectType ObjType[2]	= { Obj[0].getObjectType(), Obj[1].getObjectType() };
+	ObjectType ObjType[2]	= { Obj[0].get_object_type(), Obj[1].get_object_type() };
 	for(int i = 0; i < 2; i += 1){
 		int Cur = i;
 		int Other = 1 - i;
 
 		try{
-			if(!ObjectAccessible(Player[Cur]->ID, Obj[Cur], 1)){
+			if(!object_accessible(Player[Cur]->ID, Obj[Cur], 1)){
 				throw NOTACCESSIBLE;
 			}
 
-			if(ObjType[Cur].getFlag(UNMOVE)){
+			if(ObjType[Cur].get_flag(UNMOVE)){
 				throw NOTMOVABLE;
 			}
 
-			if(!ObjType[Cur].getFlag(TAKE)){
+			if(!ObjType[Cur].get_flag(TAKE)){
 				throw NOTTAKABLE;
 			}
 
-			if(CheckRight(Player[Other]->ID, ZERO_CAPACITY)){
+			if(check_right(Player[Other]->ID, ZERO_CAPACITY)){
 				throw TOOHEAVY;
 			}
 
-			if(!CheckRight(Player[Other]->ID, UNLIMITED_CAPACITY)){
+			if(!check_right(Player[Other]->ID, UNLIMITED_CAPACITY)){
 				TSkill *CarryStrength = Player[Other]->Skills[SKILL_CARRY_STRENGTH];
 				if(CarryStrength == NULL){
 					error("TPlayer::AcceptTrade: Skill CARRYSTRENGTH does not exist.\n");
@@ -897,10 +897,10 @@ void TPlayer::AcceptTrade(void){
 				// considering the object that will be added and the object that may
 				// be removed.
 				int MaxWeight = CarryStrength->Get() * 100;
-				int FinalWeight = GetInventoryWeight(Player[Other]->ID)
-								+ GetCompleteWeight(Obj[Cur]);
-				if(GetObjectCreatureID(Obj[Other]) == Player[Other]->ID){
-					FinalWeight -= GetCompleteWeight(Obj[Other]);
+				int FinalWeight = get_inventory_weight(Player[Other]->ID)
+								+ get_complete_weight(Obj[Cur]);
+				if(get_object_creature_id(Obj[Other]) == Player[Other]->ID){
+					FinalWeight -= get_complete_weight(Obj[Other]);
 				}
 
 				if(FinalWeight > MaxWeight){
@@ -909,25 +909,25 @@ void TPlayer::AcceptTrade(void){
 			}
 
 			// NOTE(fusion): We're looking for the object's destination on the
-			// other player's inventory. It is similar to `CreateAtCreature` but
+			// other player's inventory. It is similar to `create_at_creature` but
 			// not quite. This should probably be its own function.
-			bool CheckContainers = ObjType[Cur].getFlag(MOVEMENTEVENT);
+			bool CheckContainers = ObjType[Cur].get_flag(MOVEMENTEVENT);
 			for(int j = 0; j < 2; j += 1){
 				for(int Position = INVENTORY_FIRST;
 						Position <= INVENTORY_LAST;
 						Position += 1){
 					// TODO(fusion): It was only a matter of time until one of these showed up.
 					try{
-						Object BodyObj = GetBodyObject(Player[Other]->ID, Position);
+						Object BodyObj = get_body_object(Player[Other]->ID, Position);
 						if(CheckContainers){
 							if(BodyObj != NONE && BodyObj != Obj[Other]
-									&& BodyObj.getObjectType().getFlag(CONTAINER)){
+									&& BodyObj.get_object_type().get_flag(CONTAINER)){
 								// NOTE(fusion): Check if the container has enough capacity,
 								// considering the object that will be added and the object
 								// that may be removed.
-								int MaxCount = BodyObj.getObjectType().getAttribute(CAPACITY);
-								int FinalCount = CountObjectsInContainer(BodyObj) + 1;
-								if(Obj[Other].getContainer() == BodyObj){
+								int MaxCount = BodyObj.get_object_type().get_attribute(CAPACITY);
+								int FinalCount = count_objects_in_container(BodyObj) + 1;
+								if(Obj[Other].get_container() == BodyObj){
 									FinalCount -= 1;
 								}
 
@@ -940,8 +940,8 @@ void TPlayer::AcceptTrade(void){
 							}
 						}else{
 							if(BodyObj == NONE){
-								Object BodyCon = GetBodyContainer(Player[Other]->ID, Position);
-								CheckInventoryPlace(ObjType[Cur], BodyCon, Obj[Other]);
+								Object BodyCon = get_body_container(Player[Other]->ID, Position);
+								check_inventory_place(ObjType[Cur], BodyCon, Obj[Other]);
 								Dest[Other] = BodyCon;
 								break;
 							}
@@ -982,10 +982,10 @@ void TPlayer::AcceptTrade(void){
 	SendCloseTrade(Partner->Connection);
 
 	// TODO(fusion): I feel this could be problematic.
-	::Move(0, Obj[0], GetMapContainer(Player[1]->CrObject), -1, true, NONE);
-	::Move(0, Obj[1], GetMapContainer(Player[0]->CrObject), -1, true, NONE);
-	::Move(0, Obj[0], Dest[1], -1, true, NONE);
-	::Move(0, Obj[1], Dest[0], -1, true, NONE);
+	::move(0, Obj[0], get_map_container(Player[1]->CrObject), -1, true, NONE);
+	::move(0, Obj[1], get_map_container(Player[0]->CrObject), -1, true, NONE);
+	::move(0, Obj[0], Dest[1], -1, true, NONE);
+	::move(0, Obj[1], Dest[0], -1, true, NONE);
 }
 
 void TPlayer::RejectTrade(void){
@@ -1115,7 +1115,7 @@ uint8 TPlayer::GetEffectiveProfession(void){
 
 uint8 TPlayer::GetActiveProfession(void){
 	uint8 Profession;
-	if(CheckRight(this->ID, PREMIUM_ACCOUNT)){
+	if(check_right(this->ID, PREMIUM_ACCOUNT)){
 		Profession = this->GetRealProfession();
 	}else{
 		Profession = this->GetEffectiveProfession();
@@ -1124,7 +1124,7 @@ uint8 TPlayer::GetActiveProfession(void){
 }
 
 bool TPlayer::GetActivePromotion(void){
-	return CheckRight(this->ID, PREMIUM_ACCOUNT)
+	return check_right(this->ID, PREMIUM_ACCOUNT)
 		&& this->Profession >= PROFESSION_PROMOTION;
 }
 
@@ -1174,7 +1174,7 @@ void TPlayer::SetQuestValue(int QuestNr, int Value){
 }
 
 void TPlayer::CheckOutfit(void){
-	if(CheckRight(this->ID, GAMEMASTER_OUTFIT)){
+	if(check_right(this->ID, GAMEMASTER_OUTFIT)){
 		if(this->OrgOutfit.OutfitID == 75){
 			return;
 		}
@@ -1273,8 +1273,8 @@ void TPlayer::AddBuddy(const char *Name){
 	}
 
 	if(PlayerData->Buddies >= 20
-			&& !CheckRight(this->ID, PREMIUM_ACCOUNT)
-			&& !CheckRight(this->ID, READ_GAMEMASTER_CHANNEL)){
+			&& !check_right(this->ID, PREMIUM_ACCOUNT)
+			&& !check_right(this->ID, READ_GAMEMASTER_CHANNEL)){
 		SendMessage(this->Connection, TALK_FAILURE_MESSAGE,
 				"You cannot add more buddies.");
 		return;
@@ -1310,10 +1310,10 @@ void TPlayer::AddBuddy(const char *Name){
 	strcpy(PlayerData->BuddyName[PlayerData->Buddies], BuddyName);
 	PlayerData->Buddies += 1;
 
-	Online = Online && (!CheckRight(BuddyID, NO_STATISTICS)
-			|| CheckRight(this->ID, READ_GAMEMASTER_CHANNEL));
+	Online = Online && (!check_right(BuddyID, NO_STATISTICS)
+			|| check_right(this->ID, READ_GAMEMASTER_CHANNEL));
 	SendBuddyData(this->Connection, BuddyID, BuddyName, Online);
-	AddBuddyOrder(this, BuddyID);
+	add_buddy_order(this, BuddyID);
 }
 
 void TPlayer::RemoveBuddy(uint32 CharacterID){
@@ -1336,7 +1336,7 @@ void TPlayer::RemoveBuddy(uint32 CharacterID){
 		PlayerData->Buddies -= 1;
 		PlayerData->Buddy[BuddyIndex] = PlayerData->Buddy[PlayerData->Buddies];
 		strcpy(PlayerData->BuddyName[BuddyIndex], PlayerData->BuddyName[PlayerData->Buddies]);
-		RemoveBuddyOrder(this, CharacterID);
+		remove_buddy_order(this, CharacterID);
 	}
 }
 
@@ -1347,14 +1347,14 @@ void TPlayer::SendBuddies(void){
 		return;
 	}
 
-	bool ReadGamemasterChannel = CheckRight(this->ID, READ_GAMEMASTER_CHANNEL);
+	bool ReadGamemasterChannel = check_right(this->ID, READ_GAMEMASTER_CHANNEL);
 	for(int i = 0; i < PlayerData->Buddies; i += 1){
 		bool Online = false;
 		uint32 BuddyID = PlayerData->Buddy[i];
 		const char *BuddyName = PlayerData->BuddyName[i];
 		TPlayer *Buddy = GetPlayer(BuddyID);
 		if(Buddy != NULL){
-			Online = ReadGamemasterChannel || !CheckRight(BuddyID, NO_STATISTICS);
+			Online = ReadGamemasterChannel || !check_right(BuddyID, NO_STATISTICS);
 			BuddyName = Buddy->Name;
 		}
 		SendBuddyData(this->Connection, BuddyID, BuddyName, Online);
@@ -1364,12 +1364,12 @@ void TPlayer::SendBuddies(void){
 void TPlayer::Regenerate(void){
 	// TODO(fusion): This is probably some inlined function that searches for an
 	// object with an specific flag on a field.
-	Object Bed = GetFirstObject(this->posx, this->posy, this->posz);
+	Object Bed = get_first_object(this->posx, this->posy, this->posz);
 	while(Bed != NONE){
-		if(Bed.getObjectType().getFlag(BED)){
+		if(Bed.get_object_type().get_flag(BED)){
 			break;
 		}
-		Bed = Bed.getNextObject();
+		Bed = Bed.get_next_object();
 	}
 
 	if(Bed == NONE){
@@ -1377,12 +1377,12 @@ void TPlayer::Regenerate(void){
 		return;
 	}
 
-	if(!Bed.getObjectType().getFlag(TEXT)){
+	if(!Bed.get_object_type().get_flag(TEXT)){
 		error("TPlayer::Regenerate: Bed does not have text.\n");
 		return;
 	}
 
-	uint32 Text = Bed.getAttribute(TEXTSTRING);
+	uint32 Text = Bed.get_attribute(TEXTSTRING);
 	if(Text == 0 || stricmp(GetDynamicString(Text), this->Name) != 0){
 		return;
 	}
@@ -1405,7 +1405,7 @@ void TPlayer::Regenerate(void){
 	}
 
 	try{
-		UseObjects(0, Bed, Bed);
+		use_objects(0, Bed, Bed);
 	}catch(RESULT r){
 		error("TPlayer::Regenerate: Exception %d while cleaning up the bed.\n", r);
 	}
@@ -1485,7 +1485,7 @@ void TPlayer::RecordAttack(uint32 VictimID){
 	if(!this->IsAttackJustified(VictimID) && !this->Aggressor){
 		this->Aggressor = true;
 		print(3, "Player %s is aggressor.\n", this->Name);
-		AnnounceChangedCreature(this->ID, CREATURE_SKULL_CHANGED);
+		announce_changed_creature(this->ID, CREATURE_SKULL_CHANGED);
 	}
 }
 
@@ -1522,12 +1522,12 @@ void TPlayer::RecordMurder(uint32 VictimID){
 		PlayerData->PlayerkillerEnd = Now + 2592000; // 30 days
 		if(OldPlayerkillerEnd == 0){
 			print(3, "Player %s is a playerkiller.\n", this->Name);
-			AnnounceChangedCreature(this->ID, CREATURE_SKULL_CHANGED);
+			announce_changed_creature(this->ID, CREATURE_SKULL_CHANGED);
 		}
 
 		if(Playerkilling == 2){
-			// TODO(fusion): This might be an inlined function that calls `PunishmentOrder`?
-			PunishmentOrder(NULL, this->Name, this->IPAddress, 28, 2,
+			// TODO(fusion): This might be an inlined function that calls `punishment_order`?
+			punishment_order(NULL, this->Name, this->IPAddress, 28, 2,
 					"Exceeding the limit of unjustified kills by 100%.",
 					0, NULL, 0, false);
 		}
@@ -1545,7 +1545,7 @@ void TPlayer::RecordDeath(uint32 AttackerID, int OldLevel, const char *Remark){
 		Justified = Attacker->IsAttackJustified(this->ID);
 		Attacker->RecordMurder(this->ID);
 	}
-	CharacterDeathOrder(this, OldLevel, AttackerID, Remark, !Justified);
+	character_death_order(this, OldLevel, AttackerID, Remark, !Justified);
 }
 
 int TPlayer::CheckPlayerkilling(int Now){
@@ -1623,7 +1623,7 @@ void TPlayer::ClearPlayerkillingMarks(void){
 	if(this->Aggressor){
 		this->Aggressor = false;
 		print(3, "Player %s is no longer an aggressor.\n", this->Name);
-		AnnounceChangedCreature(this->ID, CREATURE_SKULL_CHANGED);
+		announce_changed_creature(this->ID, CREATURE_SKULL_CHANGED);
 	}else{
 		for(int i = 0; i < this->NumberOfFormerAttackedPlayers; i += 1){
 			TPlayer *Victim = GetPlayer(*this->FormerAttackedPlayers.at(i));
@@ -1717,12 +1717,12 @@ int TPlayer::GetPartyMark(TPlayer *Observer){
 	}
 
 	if(Observer->GetPartyLeader(false) == Observer->ID
-			&& IsInvitedToParty(this->ID, Observer->ID)){
+			&& is_invited_to_party(this->ID, Observer->ID)){
 		return PARTY_SHIELD_GUEST;
 	}
 
 	if(this->GetPartyLeader(false) == this->ID
-			&& IsInvitedToParty(Observer->ID, this->ID)){
+			&& is_invited_to_party(Observer->ID, this->ID)){
 		return PARTY_SHIELD_HOST;
 	}
 
@@ -1843,7 +1843,7 @@ int IdentifyPlayer(const char *Name, bool ExactMatch, bool IgnoreGamemasters, TP
 				*OutPlayer = Player;
 				return 0; // FOUND ?
 			}else if(!ExactMatch){
-				if(IgnoreGamemasters && CheckRight(Player->ID, NO_STATISTICS)){
+				if(IgnoreGamemasters && check_right(Player->ID, NO_STATISTICS)){
 					continue;
 				}
 
@@ -1903,14 +1903,14 @@ void NotifyBuddies(uint32 CharacterID, const char *Name, bool Login){
 		return;
 	}
 
-	bool Hide = CheckRight(CharacterID, NO_STATISTICS);
+	bool Hide = check_right(CharacterID, NO_STATISTICS);
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
 		if(Player->Connection == NULL || Player->PlayerData == NULL){
 			continue;
 		}
 
-		if(Hide && !CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL)){
+		if(Hide && !check_right(Player->ID, READ_GAMEMASTER_CHANNEL)){
 			continue;
 		}
 
@@ -1945,7 +1945,7 @@ void CreatePlayerList(bool Online){
 		NumberOfPlayers = 0;
 		for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 			TPlayer *Player = *PlayerList.at(Index);
-			if(CheckRight(Player->ID, NO_STATISTICS)){
+			if(check_right(Player->ID, NO_STATISTICS)){
 				continue;
 			}
 
@@ -1954,16 +1954,16 @@ void CreatePlayerList(bool Online){
 			PlayerProfessions[NumberOfPlayers] = Player->GetActiveProfession();
 			NumberOfPlayers += 1;
 		}
-		Log("load", "%d %d\n", (int)time(NULL), FirstFreePlayer);
+		log_message("load", "%d %d\n", (int)time(NULL), FirstFreePlayer);
 	}
 
-	PlayerlistOrder(NumberOfPlayers, PlayerNames, PlayerLevels, PlayerProfessions);
+	playerlist_order(NumberOfPlayers, PlayerNames, PlayerLevels, PlayerProfessions);
 }
 
 void PrintPlayerPositions(void){
 	for(int Index = 0; Index < FirstFreePlayer; Index += 1){
 		TPlayer *Player = *PlayerList.at(Index);
-		Log("players", "[%d,%d,%d] %d %d\n",
+		log_message("players", "[%d,%d,%d] %d %d\n",
 				Player->posx, Player->posy, Player->posz,
 				Player->Skills[SKILL_LEVEL]->Get(),
 				Player->GetActiveProfession());
@@ -1981,7 +1981,7 @@ void LoadDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 		throw ERROR;
 	}
 
-	if(!Con.getObjectType().getFlag(CONTAINER)){
+	if(!Con.get_object_type().get_flag(CONTAINER)){
 		error("LoadDepot: Passed object is not a container.\n");
 		throw ERROR;
 	}
@@ -1992,13 +1992,13 @@ void LoadDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 	}
 
 	if(PlayerData->Depot[DepotNr] == NULL){
-		Create(Con, GetSpecialObject(DEPOT_CHEST), 0);
+		create(Con, get_special_object(DEPOT_CHEST), 0);
 	}else{
 		try{
 			TReadBuffer ReadBuffer(
 					PlayerData->Depot[DepotNr],
 					PlayerData->DepotSize[DepotNr]);
-			LoadObjects(&ReadBuffer, Con);
+			load_objects(&ReadBuffer, Con);
 		}catch(const char *str){
 			error("LoadDepot: Cannot read depot (%s).\n", str);
 			throw ERROR;
@@ -2017,7 +2017,7 @@ void SaveDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 		throw ERROR;
 	}
 
-	if(!Con.getObjectType().getFlag(CONTAINER)){
+	if(!Con.get_object_type().get_flag(CONTAINER)){
 		error("SaveDepot: Passed object is not a container.\n");
 		throw ERROR;
 	}
@@ -2034,7 +2034,7 @@ void SaveDepot(TPlayerData *PlayerData, int DepotNr, Object Con){
 
 	try{
 		TDynamicWriteBuffer HelpBuffer(kb(16));
-		SaveObjects(GetFirstContainerObject(Con), &HelpBuffer, false);
+		save_objects(get_first_container_object(Con), &HelpBuffer, false);
 
 		if(HelpBuffer.Position > 0){
 			int DepotSize = HelpBuffer.Position;
@@ -2173,105 +2173,105 @@ bool LoadPlayerData(TPlayerData *Slot){
 		// TODO(fusion): Same thing as house loaders. Data is expected to be in
 		// an exact order and we don't check identifiers
 		TDynamicWriteBuffer HelpBuffer(kb(16));
-		TReadScriptFile Script;
+		ReadScriptFile Script;
 		Script.open(FileName);
 
-		Script.readIdentifier(); // "id"
-		Script.readSymbol('=');
-		Script.readNumber();
+		Script.read_identifier(); // "id"
+		Script.read_symbol('=');
+		Script.read_number();
 
-		Script.readIdentifier(); // "name"
-		Script.readSymbol('=');
-		strcpy(Slot->Name, Script.readString());
+		Script.read_identifier(); // "name"
+		Script.read_symbol('=');
+		strcpy(Slot->Name, Script.read_string());
 
-		Script.readIdentifier(); // "race"
-		Script.readSymbol('=');
-		Slot->Race = Script.readNumber();
+		Script.read_identifier(); // "race"
+		Script.read_symbol('=');
+		Slot->Race = Script.read_number();
 
-		Script.readIdentifier(); // "profession"
-		Script.readSymbol('=');
-		Slot->Profession = (uint8)Script.readNumber();
+		Script.read_identifier(); // "profession"
+		Script.read_symbol('=');
+		Slot->Profession = (uint8)Script.read_number();
 
-		Script.readIdentifier(); // "originaloutfit"
-		Script.readSymbol('=');
+		Script.read_identifier(); // "originaloutfit"
+		Script.read_symbol('=');
 		Slot->OriginalOutfit = ReadOutfit(&Script);
 
-		Script.readIdentifier(); // "currentoutfit"
-		Script.readSymbol('=');
+		Script.read_identifier(); // "currentoutfit"
+		Script.read_symbol('=');
 		Slot->CurrentOutfit = ReadOutfit(&Script);
 
-		Script.readIdentifier(); // "lastlogin"
-		Script.readSymbol('=');
-		Slot->LastLoginTime = (time_t)Script.readNumber();
+		Script.read_identifier(); // "lastlogin"
+		Script.read_symbol('=');
+		Slot->LastLoginTime = (time_t)Script.read_number();
 
-		Script.readIdentifier(); // "lastlogout"
-		Script.readSymbol('=');
-		Slot->LastLogoutTime = (time_t)Script.readNumber();
+		Script.read_identifier(); // "lastlogout"
+		Script.read_symbol('=');
+		Slot->LastLogoutTime = (time_t)Script.read_number();
 
-		Script.readIdentifier(); // "startposition"
-		Script.readSymbol('=');
-		Script.readCoordinate(&Slot->startx, &Slot->starty, &Slot->startz);
+		Script.read_identifier(); // "startposition"
+		Script.read_symbol('=');
+		Script.read_coordinate(&Slot->startx, &Slot->starty, &Slot->startz);
 
-		Script.readIdentifier(); // "currentposition"
-		Script.readSymbol('=');
-		Script.readCoordinate(&Slot->posx, &Slot->posy, &Slot->posz);
+		Script.read_identifier(); // "currentposition"
+		Script.read_symbol('=');
+		Script.read_coordinate(&Slot->posx, &Slot->posy, &Slot->posz);
 
-		Script.readIdentifier(); // "playerkillerend"
-		Script.readSymbol('=');
-		Slot->PlayerkillerEnd = Script.readNumber();
+		Script.read_identifier(); // "playerkillerend"
+		Script.read_symbol('=');
+		Slot->PlayerkillerEnd = Script.read_number();
 
-		while(strcmp(Script.readIdentifier(), "skill") == 0){
-			Script.readSymbol('=');
-			Script.readSymbol('(');
-			int SkillNr = Script.readNumber();
+		while(strcmp(Script.read_identifier(), "skill") == 0){
+			Script.read_symbol('=');
+			Script.read_symbol('(');
+			int SkillNr = Script.read_number();
 			if(SkillNr < 0 || SkillNr >= NARRAY(Slot->Minimum)){
 				Script.error("illegal skill number");
 			}
-			Script.readSymbol(',');
-			Slot->Actual[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->Maximum[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->Minimum[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->DeltaAct[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->MagicDeltaAct[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->Cycle[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->MaxCycle[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->Count[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->MaxCount[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->AddLevel[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->Experience[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->FactorPercent[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->NextLevel[SkillNr] = Script.readNumber();
-			Script.readSymbol(',');
-			Slot->Delta[SkillNr] = Script.readNumber();
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			Slot->Actual[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->Maximum[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->Minimum[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->DeltaAct[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->MagicDeltaAct[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->Cycle[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->MaxCycle[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->Count[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->MaxCount[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->AddLevel[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->Experience[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->FactorPercent[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->NextLevel[SkillNr] = Script.read_number();
+			Script.read_symbol(',');
+			Slot->Delta[SkillNr] = Script.read_number();
+			Script.read_symbol(')');
 		}
 
 		// "spells", already primed in the loop condition above
-		Script.readSymbol('=');
-		Script.readSymbol('{');
+		Script.read_symbol('=');
+		Script.read_symbol('{');
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			if(Script.Token == SPECIAL){
-				if(Script.getSpecial() == '}'){
+				if(Script.get_special() == '}'){
 					break;
-				}else if(Script.getSpecial() == ','){
+				}else if(Script.get_special() == ','){
 					continue;
 				}
 			}
 
-			int SpellNr = Script.getNumber();
+			int SpellNr = Script.get_number();
 			if(SpellNr < 0 || SpellNr >= NARRAY(Slot->SpellList)){
 				Script.error("illegal spell number");
 			}
@@ -2279,11 +2279,11 @@ bool LoadPlayerData(TPlayerData *Slot){
 			Slot->SpellList[SpellNr] = 1;
 		}
 
-		Script.readIdentifier(); // "questvalues"
-		Script.readSymbol('=');
-		Script.readSymbol('{');
+		Script.read_identifier(); // "questvalues"
+		Script.read_symbol('=');
+		Script.read_symbol('{');
 		while(true){
-			char Special = Script.readSpecial();
+			char Special = Script.read_special();
 			if(Special == '}'){
 				break;
 			}else if(Special == ','){
@@ -2292,24 +2292,24 @@ bool LoadPlayerData(TPlayerData *Slot){
 				Script.error("'(' expected");
 			}
 
-			int QuestNr = Script.readNumber();
+			int QuestNr = Script.read_number();
 			if(QuestNr < 0 || QuestNr >= NARRAY(Slot->QuestValues)){
 				Script.error("illegal quest number");
 			}
-			Script.readSymbol(',');
-			Slot->QuestValues[QuestNr] = Script.readNumber();
-			Script.readSymbol(')');
+			Script.read_symbol(',');
+			Slot->QuestValues[QuestNr] = Script.read_number();
+			Script.read_symbol(')');
 		}
 
-		Script.readIdentifier(); // "murders"
-		Script.readSymbol('=');
-		Script.readSymbol('{');
+		Script.read_identifier(); // "murders"
+		Script.read_symbol('=');
+		Script.read_symbol('{');
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			if(Script.Token == SPECIAL){
-				if(Script.getSpecial() == '}'){
+				if(Script.get_special() == '}'){
 					break;
-				}else if(Script.getSpecial() == ','){
+				}else if(Script.get_special() == ','){
 					continue;
 				}
 			}
@@ -2318,66 +2318,66 @@ bool LoadPlayerData(TPlayerData *Slot){
 				Slot->MurderTimestamps[i - 1] = Slot->MurderTimestamps[i];
 			}
 
-			Slot->MurderTimestamps[NARRAY(Slot->MurderTimestamps) - 1] = Script.getNumber();
+			Slot->MurderTimestamps[NARRAY(Slot->MurderTimestamps) - 1] = Script.get_number();
 		}
 
 		HelpBuffer.Position = 0;
-		Script.readIdentifier(); // "inventory"
-		Script.readSymbol('=');
-		Script.readSymbol('{');
+		Script.read_identifier(); // "inventory"
+		Script.read_symbol('=');
+		Script.read_symbol('{');
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			if(Script.Token == SPECIAL){
-				if(Script.getSpecial() == '}'){
+				if(Script.get_special() == '}'){
 					break;
-				}else if(Script.getSpecial() == ','){
+				}else if(Script.get_special() == ','){
 					continue;
 				}
 			}
 
-			int Position = Script.getNumber();
+			int Position = Script.get_number();
 			if(Position < INVENTORY_FIRST || Position > INVENTORY_LAST){
 				Script.error("illegal inventory position");
 			}
 
-			Script.readIdentifier(); // "content"
-			Script.readSymbol('=');
+			Script.read_identifier(); // "content"
+			Script.read_symbol('=');
 			HelpBuffer.writeByte((uint8)Position);
-			LoadObjects(&Script, &HelpBuffer, false);
+			load_objects(&Script, &HelpBuffer, false);
 		}
 		HelpBuffer.writeByte(0xFF);
 		Slot->Inventory = new uint8[HelpBuffer.Position];
 		Slot->InventorySize = HelpBuffer.Position;
 		memcpy(Slot->Inventory, HelpBuffer.Data, HelpBuffer.Position);
 
-		Script.readIdentifier(); // "depots"
-		Script.readSymbol('=');
-		Script.readSymbol('{');
+		Script.read_identifier(); // "depots"
+		Script.read_symbol('=');
+		Script.read_symbol('{');
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			if(Script.Token == SPECIAL){
-				if(Script.getSpecial() == '}'){
+				if(Script.get_special() == '}'){
 					break;
-				}else if(Script.getSpecial() == ','){
+				}else if(Script.get_special() == ','){
 					continue;
 				}
 			}
 
-			int DepotNr = Script.getNumber();
+			int DepotNr = Script.get_number();
 			if(DepotNr < 0 || DepotNr >= MAX_DEPOTS){
 				Script.error("illegal depot number");
 			}
 
-			Script.readIdentifier(); // "content"
-			Script.readSymbol('=');
+			Script.read_identifier(); // "content"
+			Script.read_symbol('=');
 			HelpBuffer.Position = 0;
-			LoadObjects(&Script, &HelpBuffer, false);
+			load_objects(&Script, &HelpBuffer, false);
 			Slot->Depot[DepotNr] = new uint8[HelpBuffer.Position];
 			Slot->DepotSize[DepotNr] = HelpBuffer.Position;
 			memcpy(Slot->Depot[DepotNr], HelpBuffer.Data, HelpBuffer.Position);
 		}
 
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token != ENDOFFILE){
 			Script.error("end of file expected");
 		}
@@ -2425,53 +2425,53 @@ void SavePlayerData(TPlayerData *Slot){
 	char FileName[4096];
 	PlayerDataPath(FileName, sizeof(FileName), Slot->CharacterID);
 	try{
-		TWriteScriptFile Script;
+		WriteScriptFile Script;
 		Script.open(FileName);
 
-		Script.writeText("ID              = ");
-		Script.writeNumber(Slot->CharacterID);
-		Script.writeLn();
+		Script.write_text("ID              = ");
+		Script.write_number(Slot->CharacterID);
+		Script.write_ln();
 
-		Script.writeText("Name            = ");
-		Script.writeString(Slot->Name);
-		Script.writeLn();
+		Script.write_text("Name            = ");
+		Script.write_string(Slot->Name);
+		Script.write_ln();
 
-		Script.writeText("Race            = ");
-		Script.writeNumber(Slot->Race);
-		Script.writeLn();
+		Script.write_text("Race            = ");
+		Script.write_number(Slot->Race);
+		Script.write_ln();
 
-		Script.writeText("Profession      = ");
-		Script.writeNumber(Slot->Profession);
-		Script.writeLn();
+		Script.write_text("Profession      = ");
+		Script.write_number(Slot->Profession);
+		Script.write_ln();
 
-		Script.writeText("OriginalOutfit  = ");
+		Script.write_text("OriginalOutfit  = ");
 		WriteOutfit(&Script, Slot->OriginalOutfit);
-		Script.writeLn();
+		Script.write_ln();
 
-		Script.writeText("CurrentOutfit   = ");
+		Script.write_text("CurrentOutfit   = ");
 		WriteOutfit(&Script, Slot->CurrentOutfit);
-		Script.writeLn();
+		Script.write_ln();
 
-		Script.writeText("LastLogin       = ");
-		Script.writeNumber((int)Slot->LastLoginTime);
-		Script.writeLn();
+		Script.write_text("LastLogin       = ");
+		Script.write_number((int)Slot->LastLoginTime);
+		Script.write_ln();
 
-		Script.writeText("LastLogout      = ");
-		Script.writeNumber((int)Slot->LastLogoutTime);
-		Script.writeLn();
+		Script.write_text("LastLogout      = ");
+		Script.write_number((int)Slot->LastLogoutTime);
+		Script.write_ln();
 
-		Script.writeText("StartPosition   = ");
-		Script.writeCoordinate(Slot->startx, Slot->starty, Slot->startz);
-		Script.writeLn();
+		Script.write_text("StartPosition   = ");
+		Script.write_coordinate(Slot->startx, Slot->starty, Slot->startz);
+		Script.write_ln();
 
-		Script.writeText("CurrentPosition = ");
-		Script.writeCoordinate(Slot->posx, Slot->posy, Slot->posz);
-		Script.writeLn();
+		Script.write_text("CurrentPosition = ");
+		Script.write_coordinate(Slot->posx, Slot->posy, Slot->posz);
+		Script.write_ln();
 
-		Script.writeText("PlayerkillerEnd = ");
-		Script.writeNumber(Slot->PlayerkillerEnd);
-		Script.writeLn();
-		Script.writeLn();
+		Script.write_text("PlayerkillerEnd = ");
+		Script.write_number(Slot->PlayerkillerEnd);
+		Script.write_ln();
+		Script.write_ln();
 
 		for(int SkillNr = 0;
 				SkillNr < NARRAY(Slot->Minimum);
@@ -2480,96 +2480,96 @@ void SavePlayerData(TPlayerData *Slot){
 				continue;
 			}
 
-			Script.writeText("Skill = (");
-			Script.writeNumber(SkillNr);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Actual[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Maximum[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Minimum[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->DeltaAct[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->MagicDeltaAct[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Cycle[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->MaxCycle[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Count[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->MaxCount[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->AddLevel[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Experience[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->FactorPercent[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->NextLevel[SkillNr]);
-			Script.writeText(",");
-			Script.writeNumber(Slot->Delta[SkillNr]);
-			Script.writeText(")");
-			Script.writeLn();
+			Script.write_text("Skill = (");
+			Script.write_number(SkillNr);
+			Script.write_text(",");
+			Script.write_number(Slot->Actual[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->Maximum[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->Minimum[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->DeltaAct[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->MagicDeltaAct[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->Cycle[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->MaxCycle[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->Count[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->MaxCount[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->AddLevel[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->Experience[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->FactorPercent[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->NextLevel[SkillNr]);
+			Script.write_text(",");
+			Script.write_number(Slot->Delta[SkillNr]);
+			Script.write_text(")");
+			Script.write_ln();
 		}
-		Script.writeLn();
+		Script.write_ln();
 
 		bool FirstSpell = true;
-		Script.writeText("Spells      = {");
+		Script.write_text("Spells      = {");
 		for(int SpellNr = 0;
 				SpellNr < NARRAY(Slot->SpellList);
 				SpellNr += 1){
 			if(Slot->SpellList[SpellNr] != 0){
 				if(!FirstSpell){
-					Script.writeText(",");
+					Script.write_text(",");
 				}
-				Script.writeNumber(SpellNr);
+				Script.write_number(SpellNr);
 				FirstSpell = false;
 			}
 		}
-		Script.writeText("}");
-		Script.writeLn();
+		Script.write_text("}");
+		Script.write_ln();
 
 		bool FirstQuest = true;
-		Script.writeText("QuestValues = {");
+		Script.write_text("QuestValues = {");
 		for(int QuestNr = 0;
 				QuestNr < NARRAY(Slot->QuestValues);
 				QuestNr += 1){
 			if(Slot->QuestValues[QuestNr] != 0){
 				if(!FirstQuest){
-					Script.writeText(",");
+					Script.write_text(",");
 				}
-				Script.writeText("(");
-				Script.writeNumber(QuestNr);
-				Script.writeText(",");
-				Script.writeNumber(Slot->QuestValues[QuestNr]);
-				Script.writeText(")");
+				Script.write_text("(");
+				Script.write_number(QuestNr);
+				Script.write_text(",");
+				Script.write_number(Slot->QuestValues[QuestNr]);
+				Script.write_text(")");
 				FirstQuest = false;
 			}
 		}
-		Script.writeText("}");
-		Script.writeLn();
+		Script.write_text("}");
+		Script.write_ln();
 
 		bool FirstMurder = true;
 		int Now = (int)time(NULL);
-		Script.writeText("Murders     = {");
+		Script.write_text("Murders     = {");
 		for(int i = 0; i < NARRAY(Slot->MurderTimestamps); i += 1){
 			// NOTE(fusion): Save murder timestamps for up to a month.
 			if((Now - Slot->MurderTimestamps[i]) < (30 * 24 * 60 * 60)){
 				if(!FirstMurder){
-					Script.writeText(",");
+					Script.write_text(",");
 				}
-				Script.writeNumber(Slot->MurderTimestamps[i]);
+				Script.write_number(Slot->MurderTimestamps[i]);
 				FirstMurder = false;
 			}
 		}
-		Script.writeText("}");
-		Script.writeLn();
-		Script.writeLn();
+		Script.write_text("}");
+		Script.write_ln();
+		Script.write_ln();
 
 		bool FirstPosition = true;
-		Script.writeText("Inventory   = {");
+		Script.write_text("Inventory   = {");
 		if(Slot->Inventory != NULL){
 			TReadBuffer Buffer(Slot->Inventory, Slot->InventorySize);
 			while(true){
@@ -2579,38 +2579,38 @@ void SavePlayerData(TPlayerData *Slot){
 				}
 
 				if(!FirstPosition){
-					Script.writeText(",");
-					Script.writeLn();
-					Script.writeText("               ");
+					Script.write_text(",");
+					Script.write_ln();
+					Script.write_text("               ");
 				}
-				Script.writeNumber(Position);
-				Script.writeText(" Content=");
-				SaveObjects(&Buffer, &Script);
+				Script.write_number(Position);
+				Script.write_text(" Content=");
+				save_objects(&Buffer, &Script);
 				FirstPosition = false;
 			}
 		}
-		Script.writeText("}");
-		Script.writeLn();
-		Script.writeLn();
+		Script.write_text("}");
+		Script.write_ln();
+		Script.write_ln();
 
 		bool FirstDepot = true;
-		Script.writeText("Depots      = {");
+		Script.write_text("Depots      = {");
 		for(int DepotNr = 0; DepotNr < MAX_DEPOTS; DepotNr += 1){
 			if(Slot->Depot[DepotNr] != NULL){
 				TReadBuffer Buffer(Slot->Depot[DepotNr], Slot->DepotSize[DepotNr]);
 				if(!FirstDepot){
-					Script.writeText(",");
-					Script.writeLn();
-					Script.writeText("               ");
+					Script.write_text(",");
+					Script.write_ln();
+					Script.write_text("               ");
 				}
-				Script.writeNumber(DepotNr);
-				Script.writeText(" Content=");
-				SaveObjects(&Buffer, &Script);
+				Script.write_number(DepotNr);
+				Script.write_text(" Content=");
+				save_objects(&Buffer, &Script);
 				FirstDepot = false;
 			}
 		}
-		Script.writeText("}");
-		Script.writeLn();
+		Script.write_text("}");
+		Script.write_ln();
 		Script.close();
 
 	}catch(const char *str){
@@ -2776,7 +2776,7 @@ TPlayerData *AssignPlayerPoolSlot(uint32 CharacterID, bool DontWait){
 	print(3, "Loading data for player %u.\n", CharacterID);
 
 	if(!PlayerDataExists(CharacterID)){
-		Log("game", "Player %u logs in for the first time.\n", CharacterID);
+		log_message("game", "Player %u logs in for the first time.\n", CharacterID);
 	}
 
 	if(!LoadPlayerData(Slot)){
@@ -2952,7 +2952,7 @@ void ExitPlayerPool(void){
 		while(Slot->Sticky > 0){
 			DelayThread(1, 0);
 			AttachPlayerPoolSlot(Slot, false);
-			SendMails(Slot);
+			send_mails(Slot);
 			DecreasePlayerPoolSlotSticky(Slot);
 			ReleasePlayerPoolSlot(Slot);
 		}

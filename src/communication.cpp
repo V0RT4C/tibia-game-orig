@@ -155,8 +155,8 @@ void NetLoad(int Amount, bool Send){
 
 void NetLoadSummary(void){
 	CommunicationThreadMutex.down();
-	Log("netload", "sent:     %d bytes.\n", TotalSend);
-	Log("netload", "received: %d bytes.\n", TotalRecv);
+	log_message("netload", "sent:     %d bytes.\n", TotalSend);
+	log_message("netload", "received: %d bytes.\n", TotalRecv);
 	TotalSend = 0;
 	TotalRecv = 0;
 	CommunicationThreadMutex.up();
@@ -194,7 +194,7 @@ void NetLoadCheck(void){
 	if(RoundNr >= EarliestLagCheckRound && PlayersOnline >= 50){
 		int AvgDeltaRecvPerPlayer = (TotalLoad / NARRAY(LoadHistory));
 		if(DeltaRecvPerPlayer < (AvgDeltaRecvPerPlayer / 2)){
-			Log("game", "Lag detected!\n");
+			log_message("game", "Lag detected!\n");
 			LagEnd = RoundNr + 30;
 
 			// NOTE(fusion): This formula looks weird but when we take `MaxPlayers` 
@@ -239,7 +239,7 @@ void InitLoadHistory(void){
 	TotalRecv = 0;
 	LagEnd = 0;
 	EarliestFreeAccountAdmissionRound = 0;
-	InitLog("netload");
+	init_log("netload");
 }
 
 void ExitLoadHistory(void){
@@ -309,7 +309,7 @@ bool WriteToSocket(TConnection *Connection, uint8 *Buffer, int Size, int MaxSize
 		}else if(errno != EINTR){
 			if(errno != EAGAIN || Attempts <= 0){
 				if(errno == ECONNRESET || errno == EPIPE || errno == EAGAIN){
-					Log("game", "Connection on socket %d has broken down.\n",
+					log_message("game", "Connection on socket %d has broken down.\n",
 							Connection->GetSocket());
 				}else{
 					error("WriteToSocket: Error %d while sending to socket %d.\n",
@@ -359,7 +359,7 @@ bool SendLoginMessage(TConnection *Connection, int Type, const char *Message, in
 		WriteBuffer.writeWord(0); // EncryptedSize
 		WriteBuffer.writeWord(0); // DataSize
 		WriteBuffer.writeByte((uint8)Type);
-		WriteBuffer.writeString(Message);
+		WriteBuffer.write_string(Message);
 		if(Type == LOGIN_MESSAGE_WAITINGLIST){
 			WriteBuffer.writeByte(WaitingTime);
 		}
@@ -468,7 +468,7 @@ void InsertWaitinglistEntry(const char *Name, uint32 NextTry, bool FreeAccount, 
 	CommunicationThreadMutex.up();
 
 	if(NewEntry){
-		Log("queue", "Adding %s to the waiting list.\n", Name);
+		log_message("queue", "Adding %s to the waiting list.\n", Name);
 	}
 }
 
@@ -562,7 +562,7 @@ int CheckWaitingTime(const char *Name, TConnection *Connection, bool FreeAccount
 	int Position = GetWaitinglistPosition(Name, FreeAccount, Newbie);
 	int PlayersOnline = GetPlayersOnline();
 	int NewbiesOnline = GetNewbiesOnline();
-	if((PlayersOnline + Position) > GetOrderBufferSpace()){
+	if((PlayersOnline + Position) > get_order_buffer_space()){
 		print(3, "Order buffer is almost full.\n");
 		Reason = "The server is overloaded.";
 		WaitingTime = (Position / 2) + 10;
@@ -743,7 +743,7 @@ TPlayerData *PerformRegistration(TConnection *Connection, char *PlayerName,
 		}
 
 		case 6:{
-			Log("game", "Wrong password for player %s; login from %s.\n",
+			log_message("game", "Wrong password for player %s; login from %s.\n",
 					PlayerName, Connection->GetIPAddress());
 			SendLoginMessage(Connection, LOGIN_MESSAGE_ERROR,
 					"Accountnumber or password is not correct.", -1);
@@ -751,7 +751,7 @@ TPlayerData *PerformRegistration(TConnection *Connection, char *PlayerName,
 		}
 
 		case 7:{
-			Log("game", "Player %s blocked; login from %s.\n",
+			log_message("game", "Player %s blocked; login from %s.\n",
 					PlayerName, Connection->GetIPAddress());
 			SendLoginMessage(Connection, LOGIN_MESSAGE_ERROR,
 					"Account disabled for five minutes. Please wait.", -1);
@@ -759,14 +759,14 @@ TPlayerData *PerformRegistration(TConnection *Connection, char *PlayerName,
 		}
 
 		case 8:{
-			Log("game", "Account of player %s has been deleted.\n", PlayerName);
+			log_message("game", "Account of player %s has been deleted.\n", PlayerName);
 			SendLoginMessage(Connection, LOGIN_MESSAGE_ERROR,
 					"Accountnumber or password is not correct.", -1);
 			return NULL;
 		}
 
 		case 9:{
-			Log("game", "IP address %s blocked for player %s.\n",
+			log_message("game", "IP address %s blocked for player %s.\n",
 					Connection->GetIPAddress(), PlayerName);
 			SendLoginMessage(Connection, LOGIN_MESSAGE_ERROR,
 					"IP address blocked for 30 minutes. Please wait.", -1);
@@ -858,7 +858,7 @@ TPlayerData *PerformRegistration(TConnection *Connection, char *PlayerName,
 				"Have a lot of fun in Tibia.", -1);
 	}
 
-	Log("game", "Player %s logging in on socket %d from %s.\n",
+	log_message("game", "Player %s logging in on socket %d from %s.\n",
 			PlayerName, Connection->GetSocket(), Connection->GetIPAddress());
 
 	TPlayerData *PlayerData = AssignPlayerPoolSlot(CharacterID, true);
@@ -953,8 +953,8 @@ bool HandleLogin(TConnection *Connection){
 #endif
 		GamemasterClient = ReadBuffer.readByte() != 0;
 		AccountID = ReadBuffer.readQuad();
-		ReadBuffer.readString(PlayerName, sizeof(PlayerName));
-		ReadBuffer.readString(PlayerPassword, sizeof(PlayerPassword));
+		ReadBuffer.read_string(PlayerName, sizeof(PlayerName));
+		ReadBuffer.read_string(PlayerPassword, sizeof(PlayerPassword));
 	}catch(const char *str){
 		print(3, "Error while reading the login data (%s).\n", str);
 		SendLoginMessage(Connection, LOGIN_MESSAGE_ERROR,
@@ -1012,7 +1012,7 @@ bool HandleLogin(TConnection *Connection){
 		print(3, "Player on waiting list.\n");
 		if(NextTry > RoundNr){
 			int WaitingTime = (int)(NextTry - RoundNr);
-			Log("queue", "%s is logging in %d seconds too early.\n",
+			log_message("queue", "%s is logging in %d seconds too early.\n",
 					PlayerName, WaitingTime);
 			SendLoginMessage(Connection, LOGIN_MESSAGE_WAITINGLIST,
 					"It's not your turn yet.", WaitingTime);
@@ -1020,7 +1020,7 @@ bool HandleLogin(TConnection *Connection){
 		}
 
 		if(RoundNr > (NextTry + 60)){
-			Log("queue", "%s is logging in %d seconds too late.\n",
+			log_message("queue", "%s is logging in %d seconds too late.\n",
 					PlayerName, (RoundNr - NextTry));
 			DeleteWaitinglistEntry(PlayerName);
 			continue;
@@ -1197,7 +1197,7 @@ bool ReceiveCommand(TConnection *Connection){
 			// correctly size its packet.
 			if((Size % 8) != 0){
 				print(3, "Invalid packet length %d for encrypted packet from %s.\n",
-						Size, Connection->GetName());
+						Size, Connection->get_name());
 				return false;
 			}
 

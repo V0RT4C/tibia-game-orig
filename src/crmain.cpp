@@ -48,7 +48,7 @@ TFindCreatures::TFindCreatures(int RadiusX, int RadiusY, Object Obj, int Mask){
 	}
 
 	int ObjX, ObjY, ObjZ;
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 	this->initSearch(RadiusX, RadiusY, ObjX, ObjY, Mask);
 }
 
@@ -183,8 +183,8 @@ TCreature::~TCreature(void){
 
 		if(PoolLiquid != LIQUID_NONE){
 			try{
-				CreatePool(GetMapContainer(this->CrObject),
-						GetSpecialObject(BLOOD_POOL),
+				create_pool(get_map_container(this->CrObject),
+						get_special_object(BLOOD_POOL),
 						PoolLiquid);
 			}catch(RESULT r){
 				if(r != NOROOM && r != DESTROYED){
@@ -198,13 +198,13 @@ TCreature::~TCreature(void){
 				? RaceData[Race].MaleCorpse
 				: RaceData[Race].FemaleCorpse;
 
-		if(CorpseType.getFlag(MAGICFIELD)){
-			Object Obj = GetFirstObject(this->posx, this->posy, this->posz);
+		if(CorpseType.get_flag(MAGICFIELD)){
+			Object Obj = get_first_object(this->posx, this->posy, this->posz);
 			while(Obj != NONE){
-				Object Next = Obj.getNextObject();
-				if(Obj.getObjectType().getFlag(MAGICFIELD)){
+				Object Next = Obj.get_next_object();
+				if(Obj.get_object_type().get_flag(MAGICFIELD)){
 					try{
-						Delete(Obj, -1);
+						delete_op(Obj, -1);
 					}catch(RESULT r){
 						error("TCreature::~TCreature: Exception %d when deleting a field.\n", r);
 					}
@@ -214,9 +214,9 @@ TCreature::~TCreature(void){
 		}
 
 		try{
-			Object Con = GetMapContainer(this->posx, this->posy, this->posz);
-			Object Corpse = Create(Con, CorpseType, 0);
-			Log("game", "Death of %s: LoseInventory=%d.\n", this->Name, this->LoseInventory);
+			Object Con = get_map_container(this->posx, this->posy, this->posz);
+			Object Corpse = create(Con, CorpseType, 0);
+			log_message("game", "Death of %s: LoseInventory=%d.\n", this->Name, this->LoseInventory);
 
 			if(this->Type == PLAYER){
 				char Help[128];
@@ -229,22 +229,22 @@ TCreature::~TCreature(void){
 					}
 					strcat(Help, this->Murderer);
 				}
-				Change(Corpse, TEXTSTRING, AddDynamicString(Help));
+				change(Corpse, TEXTSTRING, AddDynamicString(Help));
 			}
 
 			if(this->LoseInventory != LOSE_INVENTORY_NONE){
 				for(int Position = INVENTORY_FIRST;
 						Position <= INVENTORY_LAST;
 						Position += 1){
-					Object Item = GetBodyObject(this->ID, Position);
+					Object Item = get_body_object(this->ID, Position);
 					if(Item == NONE){
 						continue;
 					}
 
 					if(this->LoseInventory == LOSE_INVENTORY_ALL
-							|| Item.getObjectType().getFlag(CONTAINER)
+							|| Item.get_object_type().get_flag(CONTAINER)
 							|| random(0, 9) == 0){
-						::Move(0, Item, Corpse, -1, false, NONE);
+						::move(0, Item, Corpse, -1, false, NONE);
 					}
 				}
 			}
@@ -388,7 +388,7 @@ int TCreature::LogoutPossible(void){
 			return 1; // LOGOUT_COMBAT ?
 		}
 
-		if(IsNoLogoutField(this->posx, this->posy, this->posz)){
+		if(is_no_logout_field(this->posx, this->posy, this->posz)){
 			return 2; // LOGOUT_FIELD ?
 		}
 
@@ -403,7 +403,7 @@ void TCreature::BlockLogout(int Delay, bool BlockProtectionZone){
 		BlockProtectionZone = false;
 	}
 
-	if(this->Type == PLAYER && !CheckRight(this->ID, NO_LOGOUT_BLOCK)){
+	if(this->Type == PLAYER && !check_right(this->ID, NO_LOGOUT_BLOCK)){
 		if(BlockProtectionZone || this->EarliestProtectionZoneRound > RoundNr){
 			uint32 EarliestProtectionZoneRound = RoundNr + Delay;
 			if(this->EarliestProtectionZoneRound < EarliestProtectionZoneRound){
@@ -501,41 +501,41 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	}
 
 	if(this->Type == PLAYER){
-		if(CheckRight(this->ID, INVULNERABLE)){
+		if(check_right(this->ID, INVULNERABLE)){
 			Damage = 0;
 		}
 
 		for(int Position = INVENTORY_FIRST;
 				Position <= INVENTORY_LAST && Damage > 0;
 				Position += 1){
-			Object Obj = GetBodyObject(this->ID, Position);
+			Object Obj = get_body_object(this->ID, Position);
 			if(Obj == NONE){
 				continue;
 			}
 
-			ObjectType ObjType = Obj.getObjectType();
-			if(ObjType.getFlag(PROTECTION) && ObjType.getFlag(CLOTHES)
-					&& (int)ObjType.getAttribute(BODYPOSITION) == Position
-					&& (ObjType.getAttribute(PROTECTIONDAMAGETYPES) & DamageType) != 0){
-				int DamageReduction = ObjType.getAttribute(DAMAGEREDUCTION);
+			ObjectType ObjType = Obj.get_object_type();
+			if(ObjType.get_flag(PROTECTION) && ObjType.get_flag(CLOTHES)
+					&& (int)ObjType.get_attribute(BODYPOSITION) == Position
+					&& (ObjType.get_attribute(PROTECTIONDAMAGETYPES) & DamageType) != 0){
+				int DamageReduction = ObjType.get_attribute(DAMAGEREDUCTION);
 				Damage = (Damage * (100 - DamageReduction)) / 100;
-				if(ObjType.getFlag(WEAROUT)){
+				if(ObjType.get_flag(WEAROUT)){
 					// TODO(fusion): Ugh... The try..catch block might be used only
 					// when changing the object's type.
 					try{
-						uint32 RemainingUses = Obj.getAttribute(REMAININGUSES);
+						uint32 RemainingUses = Obj.get_attribute(REMAININGUSES);
 						if(RemainingUses > 1){
-							Change(Obj, REMAININGUSES, RemainingUses - 1);
+							change(Obj, REMAININGUSES, RemainingUses - 1);
 						}else{
-							ObjectType WearOutType = (int)ObjType.getAttribute(WEAROUTTARGET);
-							Change(Obj, WearOutType, 0);
+							ObjectType WearOutType = (int)ObjType.get_attribute(WEAROUTTARGET);
+							change(Obj, WearOutType, 0);
 						}
 					}catch(RESULT r){
 						error("TCreature::Damage: Exception %d when wearing out object %d.\n",
 								r, ObjType.TypeID);
 					}
 				}
-			}else if(ObjType.getFlag(PROTECTION) && !ObjType.getFlag(CLOTHES)){
+			}else if(ObjType.get_flag(PROTECTION) && !ObjType.get_flag(CLOTHES)){
 				error("TCreature::Damage: Object %d has PROTECTION, but not CLOTHES.\n",
 						ObjType.TypeID);
 			}
@@ -543,7 +543,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	}
 
 	if(Damage <= 0){
-		GraphicalEffect(this->CrObject, EFFECT_POFF);
+		graphical_effect(this->CrObject, EFFECT_POFF);
 		return 0;
 	}
 
@@ -585,14 +585,14 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	|| (DamageType == DAMAGE_FIRE && RaceData[this->Race].NoBurning)
 	|| (DamageType == DAMAGE_ENERGY && RaceData[this->Race].NoEnergy)
 	|| (DamageType == DAMAGE_LIFEDRAIN && RaceData[this->Race].NoLifeDrain)){
-		GraphicalEffect(this->CrObject, EFFECT_BLOCK_HIT);
+		graphical_effect(this->CrObject, EFFECT_BLOCK_HIT);
 		return 0;
 	}
 
 	if(DamageType == DAMAGE_PHYSICAL){
 		Damage -= this->Combat.GetArmorStrength();
 		if(Damage <= 0){
-			GraphicalEffect(this->CrObject, EFFECT_BLOCK_HIT);
+			graphical_effect(this->CrObject, EFFECT_BLOCK_HIT);
 			return 0;
 		}
 	}
@@ -604,8 +604,8 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	if(this->Type != PLAYER && this->IsInvisible()){
 		this->SetTimer(SKILL_ILLUSION, 0, 0, 0, -1);
 		this->Outfit = this->OrgOutfit;
-		AnnounceChangedCreature(this->ID, CREATURE_OUTFIT_CHANGED);
-		NotifyAllCreatures(this->CrObject, OBJECT_CHANGED, NONE);
+		announce_changed_creature(this->ID, CREATURE_OUTFIT_CHANGED);
+		notify_all_creatures(this->CrObject, OBJECT_CHANGED, NONE);
 	}
 
 	if(DamageType == DAMAGE_MANADRAIN){
@@ -620,8 +620,8 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 				SendMessage(this->Connection, TALK_STATUS_MESSAGE,
 						"You lose %d mana.", Damage);
 			}
-			GraphicalEffect(this->CrObject, EFFECT_MAGIC_RED);
-			TextualEffect(this->CrObject, COLOR_BLUE, "%d", Damage);
+			graphical_effect(this->CrObject, EFFECT_MAGIC_RED);
+			textual_effect(this->CrObject, COLOR_BLUE, "%d", Damage);
 		}
 
 		return Damage;
@@ -635,8 +635,8 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 		int ManaPoints = this->Skills[SKILL_MANA]->Get();
 		if(Damage <= ManaPoints){
 			this->Skills[SKILL_MANA]->Change(-Damage);
-			GraphicalEffect(this->CrObject, EFFECT_MANA_HIT);
-			TextualEffect(this->CrObject, COLOR_BLUE, "%d", Damage);
+			graphical_effect(this->CrObject, EFFECT_MANA_HIT);
+			textual_effect(this->CrObject, COLOR_BLUE, "%d", Damage);
 			if(this->Type == PLAYER && this->Connection != NULL){
 				if(Attacker != NULL){
 					SendMessage(this->Connection, TALK_STATUS_MESSAGE,
@@ -729,12 +729,12 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 	}
 
 	if(HitEffect != EFFECT_NONE){
-		GraphicalEffect(this->CrObject, HitEffect);
-		TextualEffect(this->CrObject, TextColor, "%d", Damage);
+		graphical_effect(this->CrObject, HitEffect);
+		textual_effect(this->CrObject, TextColor, "%d", Damage);
 		if(SplashLiquid != LIQUID_NONE){
 			try{
-				CreatePool(GetMapContainer(this->CrObject),
-							GetSpecialObject(BLOOD_SPLASH),
+				create_pool(get_map_container(this->CrObject),
+							get_special_object(BLOOD_SPLASH),
 							SplashLiquid);
 			}catch(RESULT r){
 				// TODO(fusion): Ignore?
@@ -760,19 +760,19 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 			for(int Position = INVENTORY_FIRST;
 					Position <= INVENTORY_LAST;
 					Position += 1){
-				Object Obj = GetBodyObject(this->ID, Position);
+				Object Obj = get_body_object(this->ID, Position);
 				if(Obj == NONE){
 					continue;
 				}
 
-				ObjectType ObjType = Obj.getObjectType();
-				if(ObjType.getFlag(CLOTHES) && (int)ObjType.getAttribute(BODYPOSITION) == Position){
-					ObjectType AmuletOfLossType = GetNewObjectType(77, 12);
+				ObjectType ObjType = Obj.get_object_type();
+				if(ObjType.get_flag(CLOTHES) && (int)ObjType.get_attribute(BODYPOSITION) == Position){
+					ObjectType AmuletOfLossType = get_new_object_type(77, 12);
 					if(ObjType == AmuletOfLossType){
-						Log("game", "%s dies with Amulet of Loss.\n", this->Name);
+						log_message("game", "%s dies with Amulet of Loss.\n", this->Name);
 						this->LoseInventory = LOSE_INVENTORY_NONE;
 						try{
-							Delete(Obj, -1);
+							delete_op(Obj, -1);
 							// TODO(fusion): Shouldn't we break here? We could also
 							// just check if there is an amulet of loss in the necklace
 							// container instead of iterating over all inventory.
@@ -839,7 +839,7 @@ int TCreature::Damage(TCreature *Attacker, int Damage, int DamageType){
 		}
 	}
 
-	AnnounceChangedCreature(this->ID, CREATURE_HEALTH_CHANGED);
+	announce_changed_creature(this->ID, CREATURE_HEALTH_CHANGED);
 	return Damage;
 }
 
@@ -852,13 +852,13 @@ bool TCreature::MovePossible(int x, int y, int z, bool Execute, bool Jump){
 	bool Result;
 
 	if(Jump){
-		Result = JumpPossible(x, y, z, false);
+		Result = jump_possible(x, y, z, false);
 	}else{
-		Result = CoordinateFlag(x, y, z, BANK)
-			&& !CoordinateFlag(x, y, z, UNPASS);
+		Result = coordinate_flag(x, y, z, BANK)
+			&& !coordinate_flag(x, y, z, UNPASS);
 	}
 
-	if(Result && !Execute && CoordinateFlag(x, y, z, AVOID)){
+	if(Result && !Execute && coordinate_flag(x, y, z, AVOID)){
 		Result = false;
 	}
 
@@ -906,7 +906,7 @@ void TCreature::CreatureMoveStimulus(uint32 CreatureID, int Type){
 		return;
 	}
 
-	int Distance = ObjectDistance(this->CrObject, Target->CrObject);
+	int Distance = object_distance(this->CrObject, Target->CrObject);
 	if(Distance <= 1){
 		return;
 	}
@@ -953,7 +953,7 @@ TCreature *GetCreature(uint32 CreatureID){
 }
 
 TCreature *GetCreature(Object Obj){
-	return GetCreature(Obj.getCreatureID());
+	return GetCreature(Obj.get_creature_id());
 }
 
 void InsertChainCreature(TCreature *Creature, int CoordX, int CoordY){
@@ -1050,7 +1050,7 @@ void ProcessCreatures(void){
 		// life ring, etc...
 		int RegenInterval = Creature->Skills[SKILL_FED]->Get();
 		if(RegenInterval > 0 && (RoundNr % RegenInterval) == 0 && !Creature->IsDead
-				&& !IsProtectionZone(Creature->posx, Creature->posy, Creature->posz)){
+				&& !is_protection_zone(Creature->posx, Creature->posy, Creature->posz)){
 			Creature->Skills[SKILL_HITPOINTS]->Change(1);
 			Creature->Skills[SKILL_MANA]->Change(4);
 			if(Creature->Type == PLAYER){
@@ -1171,7 +1171,7 @@ void WriteKillStatistics(void){
 		NumberOfRaces += 1;
 	}
 
-	KillStatisticsOrder(NumberOfRaces, RaceNames, KilledPlayers, KilledCreatures);
+	kill_statistics_order(NumberOfRaces, RaceNames, KilledPlayers, KilledCreatures);
 	InitKillStatistics();
 }
 
@@ -1327,47 +1327,47 @@ bool GetRaceUnpushable(int Race){
 }
 
 // TODO(fusion): Probably move this somewhere else?
-TOutfit ReadOutfit(TReadScriptFile *Script){
+TOutfit ReadOutfit(ReadScriptFile *Script){
 	TOutfit Outfit = {};
-	Script->readSymbol('(');
-	Outfit.OutfitID = Script->readNumber();
-	Script->readSymbol(',');
+	Script->read_symbol('(');
+	Outfit.OutfitID = Script->read_number();
+	Script->read_symbol(',');
 	if(Outfit.OutfitID == 0){
-		Outfit.ObjectType = Script->readNumber();
+		Outfit.ObjectType = Script->read_number();
 	}else{
-		memcpy(Outfit.Colors, Script->readBytesequence(), sizeof(Outfit.Colors));
+		memcpy(Outfit.Colors, Script->read_bytesequence(), sizeof(Outfit.Colors));
 	}
-	Script->readSymbol(')');
+	Script->read_symbol(')');
 	return Outfit;
 }
 
 // TODO(fusion): Probably move this somewhere else?
-void WriteOutfit(TWriteScriptFile *Script, TOutfit Outfit){
-	Script->writeText("(");
-	Script->writeNumber(Outfit.OutfitID);
-	Script->writeText(",");
+void WriteOutfit(WriteScriptFile *Script, TOutfit Outfit){
+	Script->write_text("(");
+	Script->write_number(Outfit.OutfitID);
+	Script->write_text(",");
 	if(Outfit.OutfitID == 0){
-		Script->writeNumber(Outfit.ObjectType);
+		Script->write_number(Outfit.ObjectType);
 	}else{
-		Script->writeBytesequence(Outfit.Colors, sizeof(Outfit.Colors));
+		Script->write_bytesequence(Outfit.Colors, sizeof(Outfit.Colors));
 	}
-	Script->writeText(")");
+	Script->write_text(")");
 }
 
 void LoadRace(const char *FileName){
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 
 	Script.open(FileName);
 
 	// NOTE(fusion): It seems we expect `RaceNumber` to be the first attribute
 	// declared in a race file.
-	if(strcmp(Script.readIdentifier(), "racenumber") != 0){
+	if(strcmp(Script.read_identifier(), "racenumber") != 0){
 		Script.error("race number expected");
 	}
 
-	Script.readSymbol('=');
+	Script.read_symbol('=');
 
-	int RaceNumber = Script.readNumber();
+	int RaceNumber = Script.read_number();
 	if(!IsRaceValid(RaceNumber)){
 		Script.error("illegal race number");
 	}
@@ -1381,32 +1381,32 @@ void LoadRace(const char *FileName){
 	Race->Outfit.OutfitID = RaceNumber;
 
 	while(true){
-		Script.nextToken();
+		Script.next_token();
 		if(Script.Token == ENDOFFILE){
 			Script.close();
 			break;
 		}
 
 		char Identifier[MAX_IDENT_LENGTH];
-		strcpy(Identifier, Script.getIdentifier());
-		Script.readSymbol('=');
+		strcpy(Identifier, Script.get_identifier());
+		Script.read_symbol('=');
 
 		if(strcmp(Identifier, "name") == 0){
-			strcpy(Race->Name, Script.readString());
+			strcpy(Race->Name, Script.read_string());
 		}else if(strcmp(Identifier, "article") == 0){
-			strcpy(Race->Article, Script.readString());
+			strcpy(Race->Article, Script.read_string());
 		}else if(strcmp(Identifier, "outfit") == 0){
 			Race->Outfit = ReadOutfit(&Script);
 		}else if(strcmp(Identifier, "corpse") == 0){
-			int CorpseTypeID = Script.readNumber();
+			int CorpseTypeID = Script.read_number();
 			Race->MaleCorpse = CorpseTypeID;
 			Race->FemaleCorpse = CorpseTypeID;
 		}else if(strcmp(Identifier, "corpses") == 0){
-			Race->MaleCorpse = Script.readNumber();
-			Script.readSymbol(',');
-			Race->FemaleCorpse = Script.readNumber();
+			Race->MaleCorpse = Script.read_number();
+			Script.read_symbol(',');
+			Race->FemaleCorpse = Script.read_number();
 		}else if(strcmp(Identifier, "blood") == 0){
-			const char *Blood = Script.readIdentifier();
+			const char *Blood = Script.read_identifier();
 			if(strcmp(Blood, "blood") == 0){
 				Race->Blood = BT_BLOOD;
 			}else if(strcmp(Blood, "slime") == 0){
@@ -1421,35 +1421,35 @@ void LoadRace(const char *FileName){
 				Script.error("unknown blood type");
 			}
 		}else if(strcmp(Identifier, "experience") == 0){
-			Race->ExperiencePoints = Script.readNumber();
+			Race->ExperiencePoints = Script.read_number();
 		}else if(strcmp(Identifier, "summoncost") == 0){
-			Race->SummonCost = Script.readNumber();
+			Race->SummonCost = Script.read_number();
 		}else if(strcmp(Identifier, "fleethreshold") == 0){
-			Race->FleeThreshold = Script.readNumber();
+			Race->FleeThreshold = Script.read_number();
 		}else if(strcmp(Identifier, "attack") == 0){
-			Race->Attack = Script.readNumber();
+			Race->Attack = Script.read_number();
 		}else if(strcmp(Identifier, "defend") == 0){
-			Race->Defend = Script.readNumber();
+			Race->Defend = Script.read_number();
 		}else if(strcmp(Identifier, "armor") == 0){
-			Race->Armor = Script.readNumber();
+			Race->Armor = Script.read_number();
 		}else if(strcmp(Identifier, "poison") == 0){
-			Race->Poison = Script.readNumber();
+			Race->Poison = Script.read_number();
 		}else if(strcmp(Identifier, "losetarget") == 0){
-			Race->LoseTarget = Script.readNumber();
+			Race->LoseTarget = Script.read_number();
 		}else if(strcmp(Identifier, "strategy") == 0){
-			Script.readSymbol('(');
-			Race->Strategy[0] = Script.readNumber();
-			Script.readSymbol(',');
-			Race->Strategy[1] = Script.readNumber();
-			Script.readSymbol(',');
-			Race->Strategy[2] = Script.readNumber();
-			Script.readSymbol(',');
-			Race->Strategy[3] = Script.readNumber();
-			Script.readSymbol(')');
+			Script.read_symbol('(');
+			Race->Strategy[0] = Script.read_number();
+			Script.read_symbol(',');
+			Race->Strategy[1] = Script.read_number();
+			Script.read_symbol(',');
+			Race->Strategy[2] = Script.read_number();
+			Script.read_symbol(',');
+			Race->Strategy[3] = Script.read_number();
+			Script.read_symbol(')');
 		}else if(strcmp(Identifier, "flags") == 0){
-			Script.readSymbol('{');
+			Script.read_symbol('{');
 			do{
-				const char *Flag = Script.readIdentifier();
+				const char *Flag = Script.read_identifier();
 				if(strcmp(Flag, "kickboxes") == 0){
 					Race->KickBoxes = true;
 				}else if(strcmp(Flag, "kickcreatures") == 0){
@@ -1481,12 +1481,12 @@ void LoadRace(const char *FileName){
 				}else{
 					Script.error("unknown flag");
 				}
-			}while(Script.readSpecial() != '}');
+			}while(Script.read_special() != '}');
 		}else if(strcmp(Identifier, "skills") == 0){
-			Script.readSymbol('{');
+			Script.read_symbol('{');
 			do{
-				Script.readSymbol('(');
-				int SkillNr = GetSkillByName(Script.readIdentifier());
+				Script.read_symbol('(');
+				int SkillNr = GetSkillByName(Script.read_identifier());
 				if(SkillNr == -1){
 					Script.error("unknown skill name");
 				}
@@ -1495,43 +1495,43 @@ void LoadRace(const char *FileName){
 				Race->Skills += 1;
 				TSkillData *SkillData = Race->Skill.at(Race->Skills);
 				SkillData->Nr = SkillNr;
-				Script.readSymbol(',');
-				SkillData->Actual = Script.readNumber();
-				Script.readSymbol(',');
-				SkillData->Minimum = Script.readNumber();
-				Script.readSymbol(',');
-				SkillData->Maximum = Script.readNumber();
-				Script.readSymbol(',');
-				SkillData->NextLevel = Script.readNumber();
-				Script.readSymbol(',');
-				SkillData->FactorPercent = Script.readNumber();
-				Script.readSymbol(',');
-				SkillData->AddLevel = Script.readNumber();
-				Script.readSymbol(')');
-			}while(Script.readSpecial() != '}');
+				Script.read_symbol(',');
+				SkillData->Actual = Script.read_number();
+				Script.read_symbol(',');
+				SkillData->Minimum = Script.read_number();
+				Script.read_symbol(',');
+				SkillData->Maximum = Script.read_number();
+				Script.read_symbol(',');
+				SkillData->NextLevel = Script.read_number();
+				Script.read_symbol(',');
+				SkillData->FactorPercent = Script.read_number();
+				Script.read_symbol(',');
+				SkillData->AddLevel = Script.read_number();
+				Script.read_symbol(')');
+			}while(Script.read_special() != '}');
 		}else if(strcmp(Identifier, "talk") == 0){
-			Script.readSymbol('{');
+			Script.read_symbol('{');
 			do{
 				// NOTE(fusion): Talks are indexed from 1.
 				Race->Talks += 1;
-				*Race->Talk.at(Race->Talks) = AddDynamicString(Script.readString());
-			}while(Script.readSpecial() != '}');
+				*Race->Talk.at(Race->Talks) = AddDynamicString(Script.read_string());
+			}while(Script.read_special() != '}');
 		}else if(strcmp(Identifier, "inventory") == 0){
-			Script.readSymbol('{');
+			Script.read_symbol('{');
 			do{
 				// NOTE(fusion): Items are indexed from 1.
 				Race->Items += 1;
 				TItemData *ItemData = Race->Item.at(Race->Items);
-				Script.readSymbol('(');
-				ItemData->Type = Script.readNumber();
-				Script.readSymbol(',');
-				ItemData->Maximum = Script.readNumber();
-				Script.readSymbol(',');
-				ItemData->Probability = Script.readNumber();
-				Script.readSymbol(')');
-			}while(Script.readSpecial() != '}');
+				Script.read_symbol('(');
+				ItemData->Type = Script.read_number();
+				Script.read_symbol(',');
+				ItemData->Maximum = Script.read_number();
+				Script.read_symbol(',');
+				ItemData->Probability = Script.read_number();
+				Script.read_symbol(')');
+			}while(Script.read_special() != '}');
 		}else if(strcmp(Identifier, "spells") == 0){
-			Script.readSymbol('{');
+			Script.read_symbol('{');
 			do{
 				// NOTE(fusion): Spells are indexed from 1.
 				Race->Spells += 1;
@@ -1539,139 +1539,139 @@ void LoadRace(const char *FileName){
 
 				// NOTE(fusion): Spell shape.
 				{
-					const char *SpellShape = Script.readIdentifier();
+					const char *SpellShape = Script.read_identifier();
 					if(strcmp(SpellShape, "actor") == 0){
 						SpellData->Shape = SHAPE_ACTOR;
-						Script.readSymbol('(');
-						SpellData->ShapeParam1 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ShapeParam1 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellShape, "victim") == 0){
 						SpellData->Shape = SHAPE_VICTIM;
-						Script.readSymbol('(');
-						SpellData->ShapeParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam3 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ShapeParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam3 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellShape, "origin") == 0){
 						SpellData->Shape = SHAPE_ORIGIN;
-						Script.readSymbol('(');
-						SpellData->ShapeParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam2 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ShapeParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam2 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellShape, "destination") == 0){
 						SpellData->Shape = SHAPE_DESTINATION;
-						Script.readSymbol('(');
-						SpellData->ShapeParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam3 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam4 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ShapeParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam3 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam4 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellShape, "angle") == 0){
 						SpellData->Shape = SHAPE_ANGLE;
-						Script.readSymbol('(');
-						SpellData->ShapeParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ShapeParam3 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ShapeParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ShapeParam3 = Script.read_number();
+						Script.read_symbol(')');
 					}else{
 						Script.error("unknown spell shape");
 					}
 				}
 
-				Script.readSymbol('I');
+				Script.read_symbol('I');
 
 				// NOTE(fusion): Spell impact.
 				{
-					const char *SpellImpact = Script.readIdentifier();
+					const char *SpellImpact = Script.read_identifier();
 					if(strcmp(SpellImpact, "damage") == 0){
 						SpellData->Impact = IMPACT_DAMAGE;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam3 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam3 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "field") == 0){
 						SpellData->Impact = IMPACT_FIELD;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "healing") == 0){
 						SpellData->Impact = IMPACT_HEALING;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam2 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam2 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "speed") == 0){
 						SpellData->Impact = IMPACT_SPEED;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam3 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam3 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "drunken") == 0){
 						SpellData->Impact = IMPACT_DRUNKEN;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam3 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam3 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "strength") == 0){
 						SpellData->Impact = IMPACT_STRENGTH;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam2 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam3 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam4 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam2 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam3 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam4 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "outfit") == 0){
 						SpellData->Impact = IMPACT_OUTFIT;
-						Script.readSymbol('(');
+						Script.read_symbol('(');
 						TOutfit Outfit = ReadOutfit(&Script);
 						SpellData->ImpactParam1 = Outfit.OutfitID;
 						SpellData->ImpactParam2 = Outfit.ObjectType;
-						Script.readSymbol(',');
-						SpellData->ImpactParam3 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol(',');
+						SpellData->ImpactParam3 = Script.read_number();
+						Script.read_symbol(')');
 					}else if(strcmp(SpellImpact, "summon") == 0){
 						SpellData->Impact = IMPACT_SUMMON;
-						Script.readSymbol('(');
-						SpellData->ImpactParam1 = Script.readNumber();
-						Script.readSymbol(',');
-						SpellData->ImpactParam2 = Script.readNumber();
-						Script.readSymbol(')');
+						Script.read_symbol('(');
+						SpellData->ImpactParam1 = Script.read_number();
+						Script.read_symbol(',');
+						SpellData->ImpactParam2 = Script.read_number();
+						Script.read_symbol(')');
 					}else{
 						Script.error("unknown spell impact");
 					}
 				}
 
-				Script.readSymbol(':');
+				Script.read_symbol(':');
 
 				// NOTE(fusion): Spell delay.
 				{
-					SpellData->Delay = Script.readNumber();
+					SpellData->Delay = Script.read_number();
 					if(SpellData->Delay == 0){
 						Script.error("zero spell delay");
 					}
 				}
-			}while(Script.readSpecial() != '}');
+			}while(Script.read_special() != '}');
 		}else{
 			Script.error("unknown race property");
 		}
@@ -1767,77 +1767,77 @@ void LoadMonsterRaid(const char *FileName, int Start,
 	// don't need to be in any specific order but specifying `Delay` will wrap
 	// the previous wave (if any) and start a new one.
 
-	TReadScriptFile Script;
+	ReadScriptFile Script;
 	Script.open(FileName);
 
 	// NOTE(fusion): Optional `Description` attribute.
-	Script.nextToken();
-	if(strcmp(Script.getIdentifier(), "description") == 0){
-		Script.readSymbol('=');
-		Script.readString();
-		Script.nextToken();
+	Script.next_token();
+	if(strcmp(Script.get_identifier(), "description") == 0){
+		Script.read_symbol('=');
+		Script.read_string();
+		Script.next_token();
 	}
 
-	if(strcmp(Script.getIdentifier(), "type") == 0){
+	if(strcmp(Script.get_identifier(), "type") == 0){
 		// NOTE(fusion): The type can be either "BigRaid" or "SmallRaid" so it uses
 		// a boolean for `Type` to tell whether it is a big raid or not. It could be
 		// renamed to `BigRaid` or something.
-		Script.readSymbol('=');
-		*Type = (strcmp(Script.readIdentifier(), "bigraid") == 0);
+		Script.read_symbol('=');
+		*Type = (strcmp(Script.read_identifier(), "bigraid") == 0);
 	}else{
 		Script.error("type expected");
 	}
 
-	Script.nextToken();
-	if(strcmp(Script.getIdentifier(), "date") == 0){
-		Script.readSymbol('=');
-		*Date = Script.readNumber();
-	}else if(strcmp(Script.getIdentifier(), "interval") == 0){
-		Script.readSymbol('=');
-		*Interval = Script.readNumber();
+	Script.next_token();
+	if(strcmp(Script.get_identifier(), "date") == 0){
+		Script.read_symbol('=');
+		*Date = Script.read_number();
+	}else if(strcmp(Script.get_identifier(), "interval") == 0){
+		Script.read_symbol('=');
+		*Interval = Script.read_number();
 	}else{
 		Script.error("date or interval expected");
 	}
 
-	Script.nextToken();
+	Script.next_token();
 	while(Script.Token != ENDOFFILE){
-		if(strcmp(Script.getIdentifier(), "delay") != 0){
+		if(strcmp(Script.get_identifier(), "delay") != 0){
 			Script.error("delay expected");
 		}
 
-		Script.readSymbol('=');
-		int Delay = Script.readNumber();
+		Script.read_symbol('=');
+		int Delay = Script.read_number();
 		TAttackWave *Wave = new TAttackWave;
 		while(true){
-			Script.nextToken();
+			Script.next_token();
 			if(Script.Token == ENDOFFILE){
 				break;
 			}
 
-			if(strcmp(Script.getIdentifier(), "delay") == 0){
+			if(strcmp(Script.get_identifier(), "delay") == 0){
 				break;
 			}
 
 			char Identifier[MAX_IDENT_LENGTH];
-			strcpy(Identifier, Script.getIdentifier());
-			Script.readSymbol('=');
+			strcpy(Identifier, Script.get_identifier());
+			Script.read_symbol('=');
 			if(strcmp(Identifier, "location") == 0){
-				Script.readString();
+				Script.read_string();
 			}else if(strcmp(Identifier, "position") == 0){
-				Script.readCoordinate(&Wave->x, &Wave->y, &Wave->z);
+				Script.read_coordinate(&Wave->x, &Wave->y, &Wave->z);
 			}else if(strcmp(Identifier, "spread") == 0){
-				Wave->Spread = Script.readNumber();
+				Wave->Spread = Script.read_number();
 			}else if(strcmp(Identifier, "race") == 0){
-				Wave->Race = Script.readNumber();
+				Wave->Race = Script.read_number();
 				if(!IsRaceValid(Wave->Race)){
 					Script.error("illegal race number");
 				}
 			}else if(strcmp(Identifier, "count") == 0){
-				Script.readSymbol('(');
-				Wave->MinCount = Script.readNumber();
-				Script.readSymbol(',');
-				Wave->MaxCount = Script.readNumber();
-				Script.readSymbol(')');
+				Script.read_symbol('(');
+				Wave->MinCount = Script.read_number();
+				Script.read_symbol(',');
+				Wave->MaxCount = Script.read_number();
+				Script.read_symbol(')');
 
 				if(Wave->MaxCount < Wave->MinCount){
 					Script.error("mincount greater than maxcount");
@@ -1847,25 +1847,25 @@ void LoadMonsterRaid(const char *FileName, int Start,
 					Script.error("illegal number of monsters");
 				}
 			}else if(strcmp(Identifier, "radius") == 0){
-				Wave->Radius = Script.readNumber();
+				Wave->Radius = Script.read_number();
 			}else if(strcmp(Identifier, "lifetime") == 0){
-				Wave->Lifetime = Script.readNumber();
+				Wave->Lifetime = Script.read_number();
 			}else if(strcmp(Identifier, "message") == 0){
-				Wave->Message = AddDynamicString(Script.readString());
+				Wave->Message = AddDynamicString(Script.read_string());
 			}else if(strcmp(Identifier, "inventory") == 0){
-				Script.readSymbol('{');
+				Script.read_symbol('{');
 				do{
 					// NOTE(fusion): Items are indexed from 1.
 					Wave->ExtraItems += 1;
 					TItemData *ItemData = Wave->ExtraItem.at(Wave->ExtraItems);
-					Script.readSymbol('(');
-					ItemData->Type = Script.readNumber();
-					Script.readSymbol(',');
-					ItemData->Maximum = Script.readNumber();
-					Script.readSymbol(',');
-					ItemData->Probability = Script.readNumber();
-					Script.readSymbol(')');
-				}while(Script.readSpecial() != '}');
+					Script.read_symbol('(');
+					ItemData->Type = Script.read_number();
+					Script.read_symbol(',');
+					ItemData->Maximum = Script.read_number();
+					Script.read_symbol(',');
+					ItemData->Probability = Script.read_number();
+					Script.read_symbol(')');
+				}while(Script.read_special() != '}');
 			}else{
 				Script.error("unknown attack wave property");
 			}
@@ -2015,8 +2015,8 @@ void ProcessMonsterRaids(void){
 			int SpawnX = Wave->x + random(-Wave->Spread, Wave->Spread);
 			int SpawnY = Wave->y + random(-Wave->Spread, Wave->Spread);
 			int SpawnZ = Wave->z;
-			if(!SearchFreeField(&SpawnX, &SpawnY, &SpawnZ, 1, 0, false)
-					|| IsProtectionZone(SpawnX, SpawnY, SpawnZ)){
+			if(!search_free_field(&SpawnX, &SpawnY, &SpawnZ, 1, 0, false)
+					|| is_protection_zone(SpawnX, SpawnY, SpawnZ)){
 				continue;
 			}
 
@@ -2041,11 +2041,11 @@ void ProcessMonsterRaids(void){
 				}
 
 				TCreature *Creature = Spawned[random(0, NumSpawned - 1)];
-				Object Bag = GetBodyObject(Creature->ID, INVENTORY_BAG);
+				Object Bag = get_body_object(Creature->ID, INVENTORY_BAG);
 				if(Bag == NONE){
 					try{
-						Bag = Create(GetBodyContainer(Creature->ID, INVENTORY_BAG),
-								GetSpecialObject(DEFAULT_CONTAINER),
+						Bag = create(get_body_container(Creature->ID, INVENTORY_BAG),
+								get_special_object(DEFAULT_CONTAINER),
 								0);
 					}catch(RESULT r){
 						error("ProcessMonsterRaids: Exception %d for race %d"
@@ -2057,15 +2057,15 @@ void ProcessMonsterRaids(void){
 				ObjectType ItemType = ItemData->Type;
 				int Amount = random(1, ItemData->Maximum);
 				int Repeat = 1;
-				if(!ItemType.getFlag(CUMULATIVE)){
+				if(!ItemType.get_flag(CUMULATIVE)){
 					Repeat = Amount;
 					Amount = 0;
 				}
 
 				print(2, "Distributing %d objects of type %d.\n", Amount, ItemType.TypeID);
 				for(int j = 0; j < Repeat; j += 1){
-					// TODO(fusion): What's the difference between using `Create`
-					// and `CreateAtCreature` here? Maybe it checks carry strength,
+					// TODO(fusion): What's the difference between using `create`
+					// and `create_at_creature` here? Maybe it checks carry strength,
 					// but then why? Don't they have some check to make sure items
 					// are not dropped onto the map? This is very confusing and
 					// using exception handlers all over the place doesn't help
@@ -2074,17 +2074,17 @@ void ProcessMonsterRaids(void){
 					try{
 						// TODO(fusion): Possibly an inlined function to check for
 						// weapons or equipment?
-						if(ItemType.getFlag(WEAPON)
-								|| ItemType.getFlag(SHIELD)
-								|| ItemType.getFlag(BOW)
-								|| ItemType.getFlag(THROW)
-								|| ItemType.getFlag(WAND)
-								|| ItemType.getFlag(WEAROUT)
-								|| ItemType.getFlag(EXPIRE)
-								|| ItemType.getFlag(EXPIRESTOP)){
-							Item = Create(Bag, ItemType, 0);
+						if(ItemType.get_flag(WEAPON)
+								|| ItemType.get_flag(SHIELD)
+								|| ItemType.get_flag(BOW)
+								|| ItemType.get_flag(THROW)
+								|| ItemType.get_flag(WAND)
+								|| ItemType.get_flag(WEAROUT)
+								|| ItemType.get_flag(EXPIRE)
+								|| ItemType.get_flag(EXPIRESTOP)){
+							Item = create(Bag, ItemType, 0);
 						}else{
-							Item = CreateAtCreature(Creature->ID, ItemType, Amount);
+							Item = create_at_creature(Creature->ID, ItemType, Amount);
 						}
 					}catch(RESULT r){
 						error("ProcessMonsterRaids: Exception %d for race %d, consider"
@@ -2092,18 +2092,18 @@ void ProcessMonsterRaids(void){
 						break;
 					}
 
-					if(Item.getContainer().getObjectType().isMapContainer()){
+					if(Item.get_container().get_object_type().is_map_container()){
 						error("ProcessMonsterRaids: Object falls on the map."
 								" Increase CarryStrength for race %d.\n", Wave->Race);
-						Delete(Item, -1);
+						delete_op(Item, -1);
 						// TODO(fusion): Should probably stop this inner loop here.
 					}
 				}
 
 				// NOTE(fusion): `Bag` could be empty if we failed to add any
 				// items to it in the loop above.
-				if(GetFirstContainerObject(Bag) == NONE){
-					Delete(Bag, -1);
+				if(get_first_container_object(Bag) == NONE){
+					delete_op(Bag, -1);
 				}
 			}
 		}

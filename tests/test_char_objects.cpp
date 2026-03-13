@@ -22,33 +22,33 @@ TEST_CASE("ObjectType equality operators") {
     CHECK_FALSE(a == c);
 }
 
-TEST_CASE("ObjectType::isMapContainer") {
+TEST_CASE("ObjectType::is_map_container") {
     ObjectType map_con(TYPEID_MAP_CONTAINER);
     ObjectType head(TYPEID_HEAD_CONTAINER);
-    CHECK(map_con.isMapContainer());
-    CHECK_FALSE(head.isMapContainer());
+    CHECK(map_con.is_map_container());
+    CHECK_FALSE(head.is_map_container());
 }
 
-TEST_CASE("ObjectType::isBodyContainer") {
-    CHECK(ObjectType(TYPEID_HEAD_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_NECK_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_BAG_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_TORSO_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_RIGHTHAND_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_LEFTHAND_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_LEGS_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_FEET_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_FINGER_CONTAINER).isBodyContainer());
-    CHECK(ObjectType(TYPEID_AMMO_CONTAINER).isBodyContainer());
-    CHECK_FALSE(ObjectType(TYPEID_MAP_CONTAINER).isBodyContainer());
-    CHECK_FALSE(ObjectType(TYPEID_CREATURE_CONTAINER).isBodyContainer());
-    CHECK_FALSE(ObjectType(500).isBodyContainer());
+TEST_CASE("ObjectType::is_body_container") {
+    CHECK(ObjectType(TYPEID_HEAD_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_NECK_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_BAG_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_TORSO_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_RIGHTHAND_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_LEFTHAND_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_LEGS_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_FEET_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_FINGER_CONTAINER).is_body_container());
+    CHECK(ObjectType(TYPEID_AMMO_CONTAINER).is_body_container());
+    CHECK_FALSE(ObjectType(TYPEID_MAP_CONTAINER).is_body_container());
+    CHECK_FALSE(ObjectType(TYPEID_CREATURE_CONTAINER).is_body_container());
+    CHECK_FALSE(ObjectType(500).is_body_container());
 }
 
-TEST_CASE("ObjectType::isCreatureContainer") {
-    CHECK(ObjectType(TYPEID_CREATURE_CONTAINER).isCreatureContainer());
-    CHECK_FALSE(ObjectType(TYPEID_MAP_CONTAINER).isCreatureContainer());
-    CHECK_FALSE(ObjectType(TYPEID_HEAD_CONTAINER).isCreatureContainer());
+TEST_CASE("ObjectType::is_creature_container") {
+    CHECK(ObjectType(TYPEID_CREATURE_CONTAINER).is_creature_container());
+    CHECK_FALSE(ObjectType(TYPEID_MAP_CONTAINER).is_creature_container());
+    CHECK_FALSE(ObjectType(TYPEID_HEAD_CONTAINER).is_creature_container());
 }
 
 TEST_CASE("TYPEID enum values are correct") {

@@ -8,15 +8,15 @@
 
 #include <dirent.h>
 
-static fifo<TStatement> Statements(1024);
-static fifo<TListener> Listeners(1024);
+static fifo<Statement> Statements(1024);
+static fifo<Listener> Listeners(1024);
 
-static vector<TChannel> Channel(0, PUBLIC_CHANNELS + 10, 10);
+static vector<Channel> ChannelArray(0, PUBLIC_CHANNELS + 10, 10);
 static int Channels = PUBLIC_CHANNELS;
 static int CurrentChannelID;
 static int CurrentSubscriberNumber;
 
-static vector<TParty> Party(0, 100, 50);
+static vector<Party> PartyArray(0, 100, 50);
 static int Parties;
 
 // World Operations
@@ -28,15 +28,15 @@ static int Parties;
 // consider the regular client's viewport dimensions of 15x11 visible fields or
 // 18x14 total fields.
 
-void AnnounceMovingCreature(uint32 CreatureID, Object Con){
+void announce_moving_creature(uint32 CreatureID, Object Con){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("AnnounceMovingCreature: Creature %d does not exist.\n", CreatureID);
+		error("announce_moving_creature: Creature %d does not exist.\n", CreatureID);
 		return;
 	}
 
 	int ConX, ConY, ConZ;
-	GetObjectCoordinates(Con, &ConX, &ConY, &ConZ);
+	get_object_coordinates(Con, &ConX, &ConY, &ConZ);
 
 	int SearchRadiusX = 16 + (std::abs(Creature->posx - ConX) / 2) + 1;
 	int SearchRadiusY = 14 + (std::abs(Creature->posy - ConY) / 2) + 1;
@@ -58,10 +58,10 @@ void AnnounceMovingCreature(uint32 CreatureID, Object Con){
 	}
 }
 
-void AnnounceChangedCreature(uint32 CreatureID, int Type){
+void announce_changed_creature(uint32 CreatureID, int Type){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("AnnounceChangedCreature: Creature %d does not exist (Type=%d).\n", CreatureID, Type);
+		error("announce_changed_creature: Creature %d does not exist (Type=%d).\n", CreatureID, Type);
 		return;
 	}
 
@@ -89,14 +89,14 @@ void AnnounceChangedCreature(uint32 CreatureID, int Type){
 	}
 }
 
-void AnnounceChangedField(Object Obj, int Type){
+void announce_changed_field(Object Obj, int Type){
 	if(!Obj.exists()){
-		error("AnnounceChangedField: Passed object does not exist.\n");
+		error("announce_changed_field: Passed object does not exist.\n");
 		return;
 	}
 
 	int ObjX, ObjY, ObjZ;
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 	TFindCreatures Search(16, 14, ObjX, ObjY, FIND_PLAYERS);
 	while(true){
 		uint32 CharacterID = Search.getNext();
@@ -118,20 +118,20 @@ void AnnounceChangedField(Object Obj, int Type){
 			case OBJECT_CREATED: SendAddField(Player->Connection,    ObjX, ObjY, ObjZ, Obj); break;
 			case OBJECT_CHANGED: SendChangeField(Player->Connection, ObjX, ObjY, ObjZ, Obj); break;
 			default:{
-				error("AnnounceChangedField: Invalid type %d.\n", Type);
+				error("announce_changed_field: Invalid type %d.\n", Type);
 				return;
 			}
 		}
 	}
 }
 
-void AnnounceChangedContainer(Object Obj, int Type){
+void announce_changed_container(Object Obj, int Type){
 	if(!Obj.exists()){
-		error("AnnounceChangedContainer: Passed object does not exist.\n");
+		error("announce_changed_container: Passed object does not exist.\n");
 		return;
 	}
 
-	Object Con = Obj.getContainer();
+	Object Con = Obj.get_container();
 	TFindCreatures Search(1, 1, Obj, FIND_PLAYERS);
 	while(true){
 		uint32 CharacterID = Search.getNext();
@@ -156,7 +156,7 @@ void AnnounceChangedContainer(Object Obj, int Type){
 				case OBJECT_CREATED: SendCreateInContainer(Player->Connection, ContainerNr, Obj); break;
 				case OBJECT_CHANGED: SendChangeInContainer(Player->Connection, ContainerNr, Obj); break;
 				default:{
-					error("AnnounceChangedContainer: Invalid type %d.\n", Type);
+					error("announce_changed_container: Invalid type %d.\n", Type);
 					return;
 				}
 			}
@@ -164,16 +164,16 @@ void AnnounceChangedContainer(Object Obj, int Type){
 	}
 }
 
-void AnnounceChangedInventory(Object Obj, int Type){
+void announce_changed_inventory(Object Obj, int Type){
 	if(!Obj.exists()){
-		error("AnnounceChangedInventory: Passed object does not exist.\n");
+		error("announce_changed_inventory: Passed object does not exist.\n");
 		return;
 	}
 
-	uint32 OwnerID = GetObjectCreatureID(Obj);
+	uint32 OwnerID = get_object_creature_id(Obj);
 	TCreature *Creature = GetCreature(OwnerID);
 	if(Creature == NULL){
-		error("AnnounceChangedInventory: Object is not in any inventory.\n");
+		error("announce_changed_inventory: Object is not in any inventory.\n");
 		return;
 	}
 
@@ -181,37 +181,37 @@ void AnnounceChangedInventory(Object Obj, int Type){
 		return;
 	}
 
-	int Position = GetObjectBodyPosition(Obj);
+	int Position = get_object_body_position(Obj);
 	switch(Type){
 		case OBJECT_DELETED: SendDeleteInventory(Creature->Connection, Position); break;
 		case OBJECT_CREATED: SendSetInventory(Creature->Connection, Position, Obj); break;
 		case OBJECT_CHANGED: SendSetInventory(Creature->Connection, Position, Obj); break;
 		default:{
-			error("AnnounceChangedInventory: Invalid type %d.\n", Type);
+			error("announce_changed_inventory: Invalid type %d.\n", Type);
 			return;
 		}
 	}
 }
 
-void AnnounceChangedObject(Object Obj, int Type){
+void announce_changed_object(Object Obj, int Type){
 	if(!Obj.exists()){
-		error("AnnounceChangedObject: Passed object does not exist.\n");
+		error("announce_changed_object: Passed object does not exist.\n");
 		return;
 	}
 
-	Object Con = Obj.getContainer();
-	ObjectType ConType = Con.getObjectType();
-	if(ConType.isMapContainer()){
-		AnnounceChangedField(Obj, Type);
-	}else if(ConType.isBodyContainer()){
-		AnnounceChangedInventory(Obj, Type);
+	Object Con = Obj.get_container();
+	ObjectType ConType = Con.get_object_type();
+	if(ConType.is_map_container()){
+		announce_changed_field(Obj, Type);
+	}else if(ConType.is_body_container()){
+		announce_changed_inventory(Obj, Type);
 	}else{
-		AnnounceChangedContainer(Obj, Type);
+		announce_changed_container(Obj, Type);
 	}
 }
 
-void AnnounceGraphicalEffect(int x, int y, int z, int Type){
-	if(!IsOnMap(x, y, z)){
+void announce_graphical_effect(int x, int y, int z, int Type){
+	if(!is_on_map(x, y, z)){
 		return;
 	}
 
@@ -235,8 +235,8 @@ void AnnounceGraphicalEffect(int x, int y, int z, int Type){
 	}
 }
 
-void AnnounceTextualEffect(int x, int y, int z, int Color, const char *Text){
-	if(!IsOnMap(x, y, z)){
+void announce_textual_effect(int x, int y, int z, int Color, const char *Text){
+	if(!is_on_map(x, y, z)){
 		return;
 	}
 
@@ -260,9 +260,9 @@ void AnnounceTextualEffect(int x, int y, int z, int Color, const char *Text){
 	}
 }
 
-void AnnounceMissile(int OrigX, int OrigY, int OrigZ,
+void announce_missile(int OrigX, int OrigY, int OrigZ,
 		int DestX, int DestY, int DestZ, int Type){
-	if(!IsOnMap(OrigX, OrigY, OrigZ) || !IsOnMap(DestX, DestY, DestZ)){
+	if(!is_on_map(OrigX, OrigY, OrigZ) || !is_on_map(DestX, DestY, DestZ)){
 		return;
 	}
 
@@ -293,9 +293,9 @@ void AnnounceMissile(int OrigX, int OrigY, int OrigZ,
 	}
 }
 
-void CheckTopMoveObject(uint32 CreatureID, Object Obj, Object Ignore){
+void check_top_move_object(uint32 CreatureID, Object Obj, Object Ignore){
 	if(!Obj.exists()){
-		error("CheckTopMoveObject: Object does not exist.\n");
+		error("check_top_move_object: Object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -303,37 +303,37 @@ void CheckTopMoveObject(uint32 CreatureID, Object Obj, Object Ignore){
 		return;
 	}
 
-	Object Con = Obj.getContainer();
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.isMapContainer()){
+	Object Con = Obj.get_container();
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.is_map_container()){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isCreatureContainer() && Obj.getCreatureID() == CreatureID){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_creature_container() && Obj.get_creature_id() == CreatureID){
 		return;
 	}
 
 	Object Best = NONE;
 	bool BestIsCreature = false;
-	Object Help = GetFirstContainerObject(Con);
+	Object Help = get_first_container_object(Con);
 	while(Help != NONE){
 		if(Help != Ignore){
-			ObjectType HelpType = Help.getObjectType();
+			ObjectType HelpType = Help.get_object_type();
 
 			// NOTE(fusion): We're looking for the top move object. The creature
 			// check here makes sure only the first creature found is kept as the
 			// best candidate, since creatures on a map container are in a sequence.
-			if(Best == NONE || (!HelpType.getFlag(UNMOVE) && (!BestIsCreature || !HelpType.isCreatureContainer()))){
+			if(Best == NONE || (!HelpType.get_flag(UNMOVE) && (!BestIsCreature || !HelpType.is_creature_container()))){
 				Best = Help;
-				BestIsCreature = HelpType.isCreatureContainer();
+				BestIsCreature = HelpType.is_creature_container();
 			}
 
-			if(GetObjectPriority(Help) == PRIORITY_LOW){
+			if(get_object_priority(Help) == PRIORITY_LOW){
 				break;
 			}
 		}
-		Help = Help.getNextObject();
+		Help = Help.get_next_object();
 	}
 
 	if(Obj != Best){
@@ -341,9 +341,9 @@ void CheckTopMoveObject(uint32 CreatureID, Object Obj, Object Ignore){
 	}
 }
 
-void CheckTopUseObject(uint32 CreatureID, Object Obj){
+void check_top_use_object(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("CheckTopUseObject: Object does not exist.\n");
+		error("check_top_use_object: Object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -351,25 +351,25 @@ void CheckTopUseObject(uint32 CreatureID, Object Obj){
 		return;
 	}
 
-	Object Con = Obj.getContainer();
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.isMapContainer()){
+	Object Con = Obj.get_container();
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.is_map_container()){
 		return;
 	}
 
 	Object Best = NONE;
-	Object Help = GetFirstContainerObject(Con);
+	Object Help = get_first_container_object(Con);
 	while(Help != NONE){
-		ObjectType HelpType = Help.getObjectType();
-		if(Best == NONE || (!HelpType.isCreatureContainer() && !HelpType.getFlag(LIQUIDPOOL))){
+		ObjectType HelpType = Help.get_object_type();
+		if(Best == NONE || (!HelpType.is_creature_container() && !HelpType.get_flag(LIQUIDPOOL))){
 			Best = Help;
 		}
 
-		if(HelpType.getFlag(FORCEUSE) || GetObjectPriority(Help) == PRIORITY_LOW){
+		if(HelpType.get_flag(FORCEUSE) || get_object_priority(Help) == PRIORITY_LOW){
 			break;
 		}
 
-		Help = Help.getNextObject();
+		Help = Help.get_next_object();
 	}
 
 	if(Obj != Best){
@@ -377,9 +377,9 @@ void CheckTopUseObject(uint32 CreatureID, Object Obj){
 	}
 }
 
-void CheckTopMultiuseObject(uint32 CreatureID, Object Obj){
+void check_top_multiuse_object(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("CheckTopMultiuseObject: Object does not exist.\n");
+		error("check_top_multiuse_object: Object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -387,27 +387,27 @@ void CheckTopMultiuseObject(uint32 CreatureID, Object Obj){
 		return;
 	}
 
-	Object Con = Obj.getContainer();
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.isMapContainer()){
+	Object Con = Obj.get_container();
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.is_map_container()){
 		return;
 	}
 
 	Object Best = NONE;
-	Object Help = GetFirstContainerObject(Con);
+	Object Help = get_first_container_object(Con);
 	while(Help != NONE){
-		ObjectType HelpType = Help.getObjectType();
-		if(Best == NONE || !HelpType.getFlag(LIQUIDPOOL)){
+		ObjectType HelpType = Help.get_object_type();
+		if(Best == NONE || !HelpType.get_flag(LIQUIDPOOL)){
 			Best = Help;
 		}
 
-		if(HelpType.getFlag(FORCEUSE)
-				|| GetObjectPriority(Help) == PRIORITY_CREATURE
-				|| GetObjectPriority(Help) == PRIORITY_LOW){
+		if(HelpType.get_flag(FORCEUSE)
+				|| get_object_priority(Help) == PRIORITY_CREATURE
+				|| get_object_priority(Help) == PRIORITY_LOW){
 			break;
 		}
 
-		Help = Help.getNextObject();
+		Help = Help.get_next_object();
 	}
 
 	if(Obj != Best){
@@ -415,24 +415,24 @@ void CheckTopMultiuseObject(uint32 CreatureID, Object Obj){
 	}
 }
 
-void CheckMoveObject(uint32 CreatureID, Object Obj, bool Take){
+void check_move_object(uint32 CreatureID, Object Obj, bool Take){
 	if(CreatureID == 0){
 		return;
 	}
 
-	if(!ObjectAccessible(CreatureID, Obj, 1)){
+	if(!object_accessible(CreatureID, Obj, 1)){
 		throw NOTACCESSIBLE;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(UNMOVE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(UNMOVE)){
 		throw NOTMOVABLE;
 	}
 
-	if(ObjType.isCreatureContainer() && Obj.getCreatureID() != CreatureID){
+	if(ObjType.is_creature_container() && Obj.get_creature_id() != CreatureID){
 		TCreature *MovingCreature = GetCreature(Obj);
 		if(MovingCreature == NULL){
-			error("CheckMoveObject: Creature does not exist.\n");
+			error("check_move_object: Creature does not exist.\n");
 			throw ERROR;
 		}
 
@@ -441,28 +441,28 @@ void CheckMoveObject(uint32 CreatureID, Object Obj, bool Take){
 		}
 	}
 
-	if(Take && !ObjType.getFlag(TAKE)){
+	if(Take && !ObjType.get_flag(TAKE)){
 		throw NOTTAKABLE;
 	}
 }
 
-// NOTE(fusion): This is a helper function for `CheckMapDestination` and `CheckMapPlace`
+// NOTE(fusion): This is a helper function for `check_map_destination` and `check_map_place`
 // and improves the readability of otherwise two convoluted functions.
 static bool IsMapBlocked(int DestX, int DestY, int DestZ, ObjectType Type){
-	bool HasBank = CoordinateFlag(DestX, DestY, DestZ, BANK);
-	if(HasBank && !CoordinateFlag(DestX, DestY, DestZ, UNPASS)){
+	bool HasBank = coordinate_flag(DestX, DestY, DestZ, BANK);
+	if(HasBank && !coordinate_flag(DestX, DestY, DestZ, UNPASS)){
 		return false;
 	}
 
-	if(!Type.getFlag(UNPASS)){
-		if(HasBank && !CoordinateFlag(DestX, DestY, DestZ, UNLAY)){
+	if(!Type.get_flag(UNPASS)){
+		if(HasBank && !coordinate_flag(DestX, DestY, DestZ, UNLAY)){
 			return false;
 		}
 
-		if(Type.getFlag(HANG)){
-			bool HasHook = CoordinateFlag(DestX, DestY, DestZ, HOOKSOUTH)
-						|| CoordinateFlag(DestX, DestY, DestZ, HOOKEAST);
-			if(HasHook && !CoordinateFlag(DestX, DestY, DestZ, HANG)){
+		if(Type.get_flag(HANG)){
+			bool HasHook = coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH)
+						|| coordinate_flag(DestX, DestY, DestZ, HOOKEAST);
+			if(HasHook && !coordinate_flag(DestX, DestY, DestZ, HANG)){
 				return false;
 			}
 		}
@@ -471,22 +471,22 @@ static bool IsMapBlocked(int DestX, int DestY, int DestZ, ObjectType Type){
 	return true;
 }
 
-void CheckMapDestination(uint32 CreatureID, Object Obj, Object MapCon){
+void check_map_destination(uint32 CreatureID, Object Obj, Object MapCon){
 	if(CreatureID == 0){
 		return;
 	}
 
 	int OrigX, OrigY, OrigZ;
 	int DestX, DestY, DestZ;
-	ObjectType ObjType = Obj.getObjectType();
-	GetObjectCoordinates(Obj, &OrigX, &OrigY, &OrigZ);
-	GetObjectCoordinates(MapCon, &DestX, &DestY, &DestZ);
-	if(!ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	get_object_coordinates(Obj, &OrigX, &OrigY, &OrigZ);
+	get_object_coordinates(MapCon, &DestX, &DestY, &DestZ);
+	if(!ObjType.is_creature_container()){
 		if(IsMapBlocked(DestX, DestY, DestZ, ObjType)){
 			throw NOROOM;
 		}
 
-		if(!ObjType.getFlag(TAKE) && !ObjectInRange(CreatureID, MapCon, 2)){
+		if(!ObjType.get_flag(TAKE) && !object_in_range(CreatureID, MapCon, 2)){
 			throw OUTOFRANGE;
 		}
 	}else{
@@ -497,18 +497,18 @@ void CheckMapDestination(uint32 CreatureID, Object Obj, Object MapCon){
 		}
 
 		if(DestZ == (OrigZ - 1)){
-			if(GetHeight(OrigX, OrigY, OrigZ) < 24){ // JUMP_HEIGHT ?
+			if(get_height(OrigX, OrigY, OrigZ) < 24){ // JUMP_HEIGHT ?
 				throw NOROOM;
 			}
 		}else if(DestZ == (OrigZ + 1)){
-			if(GetHeight(DestX, DestY, DestZ) < 24){ // JUMP_HEIGHT ?
+			if(get_height(DestX, DestY, DestZ) < 24){ // JUMP_HEIGHT ?
 				throw NOWAY;
 			}
 		}
 
 		TCreature *MovingCreature = GetCreature(Obj);
 		if(MovingCreature == NULL){
-			error("CheckMapDestination: Moving creature is NULL.");
+			error("check_map_destination: Moving creature is NULL.");
 			throw ERROR;
 		}
 
@@ -522,26 +522,26 @@ void CheckMapDestination(uint32 CreatureID, Object Obj, Object MapCon){
 			}
 
 			if(CreatureID != MovingCreature->ID){
-				if(CoordinateFlag(DestX, DestY, DestZ, AVOID)){
+				if(coordinate_flag(DestX, DestY, DestZ, AVOID)){
 					throw NOROOM;
 				}
 
-				if(IsProtectionZone(OrigX, OrigY, OrigZ) && !IsProtectionZone(DestX, DestY, DestZ)){
+				if(is_protection_zone(OrigX, OrigY, OrigZ) && !is_protection_zone(DestX, DestY, DestZ)){
 					throw PROTECTIONZONE;
 				}
 			}
 		}
 	}
 
-	// TODO(fusion): This looks awfully similar to `ObjectAccessible` outside
+	// TODO(fusion): This looks awfully similar to `object_accessible` outside
 	// from the exceptions and floor check.
-	if(ObjType.getFlag(HANG)){
-		bool HookSouth = CoordinateFlag(DestX, DestY, DestZ, HOOKSOUTH);
-		bool HookEast = CoordinateFlag(DestX, DestY, DestZ, HOOKEAST);
+	if(ObjType.get_flag(HANG)){
+		bool HookSouth = coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH);
+		bool HookEast = coordinate_flag(DestX, DestY, DestZ, HOOKEAST);
 		if(HookSouth || HookEast){
 			TCreature *Creature = GetCreature(CreatureID);
 			if(Creature == NULL){
-				error("CheckMapDestination: Executing creature does not exist.\n");
+				error("check_map_destination: Executing creature does not exist.\n");
 				throw ERROR;
 			}
 
@@ -573,22 +573,22 @@ void CheckMapDestination(uint32 CreatureID, Object Obj, Object MapCon){
 		}
 	}
 
-	if(!ThrowPossible(OrigX, OrigY, OrigZ, DestX, DestY, DestZ, 1)){
+	if(!throw_possible(OrigX, OrigY, OrigZ, DestX, DestY, DestZ, 1)){
 		throw CANNOTTHROW;
 	}
 }
 
-void CheckMapPlace(uint32 CreatureID, ObjectType Type, Object MapCon){
+void check_map_place(uint32 CreatureID, ObjectType Type, Object MapCon){
 	int DestX, DestY, DestZ;
-	GetObjectCoordinates(MapCon, &DestX, &DestY, &DestZ);
+	get_object_coordinates(MapCon, &DestX, &DestY, &DestZ);
 
-	if(!Type.getFlag(UNMOVE) && !CoordinateFlag(DestX, DestY, DestZ, BANK)){
-		if(!Type.getFlag(HANG)){
+	if(!Type.get_flag(UNMOVE) && !coordinate_flag(DestX, DestY, DestZ, BANK)){
+		if(!Type.get_flag(HANG)){
 			throw NOROOM;
 		}
 
-		if(!CoordinateFlag(DestX, DestY, DestZ, HOOKSOUTH)
-		&& !CoordinateFlag(DestX, DestY, DestZ, HOOKEAST)){
+		if(!coordinate_flag(DestX, DestY, DestZ, HOOKSOUTH)
+		&& !coordinate_flag(DestX, DestY, DestZ, HOOKEAST)){
 			throw NOROOM;
 		}
 	}
@@ -596,46 +596,46 @@ void CheckMapPlace(uint32 CreatureID, ObjectType Type, Object MapCon){
 	// TODO(fusion): The original function used a slightly modified version of
 	// `IsMapBlocked` which wouldn't check if there was already a HANG item at
 	// the destination but since this function seems to only be called from
-	// `Create` which sets `CreatureID` to zero, I assume this was probably an
+	// `create` which sets `CreatureID` to zero, I assume this was probably an
 	// oversight?
 	if(CreatureID != 0 && IsMapBlocked(DestX, DestY, DestZ, Type)){
 		throw NOROOM;
 	}
 }
 
-void CheckContainerDestination(Object Obj, Object Con){
-	if(IsHeldByContainer(Con, Obj)){
+void check_container_destination(Object Obj, Object Con){
+	if(is_held_by_container(Con, Obj)){
 		throw CROSSREFERENCE;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CHEST)){
-		int ConObjects = CountObjectsInContainer(Con);
-		int ConCapacity = (int)ConType.getAttribute(CAPACITY);
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CHEST)){
+		int ConObjects = count_objects_in_container(Con);
+		int ConCapacity = (int)ConType.get_attribute(CAPACITY);
 		if(ConObjects >= ConCapacity){
 			throw CONTAINERFULL;
 		}
 	}
 }
 
-void CheckContainerPlace(ObjectType Type, Object Con, Object OldObj){
-	if(Type == GetSpecialObject(DEPOT_CHEST)){
+void check_container_place(ObjectType Type, Object Con, Object OldObj){
+	if(Type == get_special_object(DEPOT_CHEST)){
 		return;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CHEST)){
-		if(Type.getFlag(UNMOVE)){
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CHEST)){
+		if(Type.get_flag(UNMOVE)){
 			throw NOTMOVABLE;
 		}
 
-		if(!Type.getFlag(TAKE)){
+		if(!Type.get_flag(TAKE)){
 			throw NOTTAKABLE;
 		}
 
 		if(OldObj == NONE){
-			int ConObjects = CountObjectsInContainer(Con);
-			int ConCapacity = (int)ConType.getAttribute(CAPACITY);
+			int ConObjects = count_objects_in_container(Con);
+			int ConCapacity = (int)ConType.get_attribute(CAPACITY);
 			if(ConObjects >= ConCapacity){
 				throw CONTAINERFULL;
 			}
@@ -643,19 +643,19 @@ void CheckContainerPlace(ObjectType Type, Object Con, Object OldObj){
 	}
 }
 
-void CheckDepotSpace(uint32 CreatureID, Object Source, Object Destination, int Count){
+void check_depot_space(uint32 CreatureID, Object Source, Object Destination, int Count){
 	if(CreatureID == 0){
 		return;
 	}
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("CheckDepotSpace: Creature %u does not exist.\n", CreatureID);
+		error("check_depot_space: Creature %u does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
 	if(Destination == NONE){
-		error("CheckDepotSpace: Destination does not exist.\n");
+		error("check_depot_space: Destination does not exist.\n");
 		throw ERROR;
 	}
 
@@ -665,25 +665,25 @@ void CheckDepotSpace(uint32 CreatureID, Object Source, Object Destination, int C
 			return;
 		}
 
-		if(!IsHeldByContainer(Source, Player->Depot)
-		&& IsHeldByContainer(Destination, Player->Depot)){
+		if(!is_held_by_container(Source, Player->Depot)
+		&& is_held_by_container(Destination, Player->Depot)){
 			throw CONTAINERFULL;
 		}
 	}
 }
 
-void CheckInventoryDestination(Object Obj, Object Con, bool Split){
-	ObjectType ObjType = Obj.getObjectType();
-	int ConPosition = GetObjectBodyPosition(Con);
+void check_inventory_destination(Object Obj, Object Con, bool Split){
+	ObjectType ObjType = Obj.get_object_type();
+	int ConPosition = get_object_body_position(Con);
 	bool HandContainer = ConPosition == INVENTORY_RIGHTHAND
 					|| ConPosition == INVENTORY_LEFTHAND;
 
 	if(!HandContainer && ConPosition != INVENTORY_AMMO){
-		if(!ObjType.getFlag(CLOTHES)){
+		if(!ObjType.get_flag(CLOTHES)){
 			throw WRONGPOSITION;
 		}
 
-		int ObjPosition = (int)ObjType.getAttribute(BODYPOSITION);
+		int ObjPosition = (int)ObjType.get_attribute(BODYPOSITION);
 		if(ObjPosition == 0){
 			throw WRONGPOSITION2;
 		}else if(ObjPosition != ConPosition){
@@ -691,14 +691,14 @@ void CheckInventoryDestination(Object Obj, Object Con, bool Split){
 		}
 	}
 
-	uint32 CreatureID = GetObjectCreatureID(Con);
-	if(HandContainer && ObjType.isTwoHanded()){
-		Object RightHand = GetBodyObject(CreatureID, INVENTORY_RIGHTHAND);
+	uint32 CreatureID = get_object_creature_id(Con);
+	if(HandContainer && ObjType.is_two_handed()){
+		Object RightHand = get_body_object(CreatureID, INVENTORY_RIGHTHAND);
 		if(RightHand != NONE && RightHand != Obj){
 			throw HANDSNOTFREE;
 		}
 
-		Object LeftHand = GetBodyObject(CreatureID, INVENTORY_LEFTHAND);
+		Object LeftHand = get_body_object(CreatureID, INVENTORY_LEFTHAND);
 		if(LeftHand != NONE && LeftHand != Obj){
 			throw HANDSNOTFREE;
 		}
@@ -706,7 +706,7 @@ void CheckInventoryDestination(Object Obj, Object Con, bool Split){
 		return;
 	}
 
-	if(GetBodyObject(CreatureID, ConPosition) != NONE){
+	if(get_body_object(CreatureID, ConPosition) != NONE){
 		throw NOROOM;
 	}
 
@@ -714,15 +714,15 @@ void CheckInventoryDestination(Object Obj, Object Con, bool Split){
 		for(int Position = INVENTORY_HAND_FIRST;
 				Position <= INVENTORY_HAND_LAST;
 				Position += 1){
-			Object Other = GetBodyObject(CreatureID, Position);
+			Object Other = get_body_object(CreatureID, Position);
 			if(Other != NONE){
-				ObjectType OtherType = Other.getObjectType();
-				if(OtherType.isTwoHanded()){
+				ObjectType OtherType = Other.get_object_type();
+				if(OtherType.is_two_handed()){
 					throw HANDBLOCKED;
 				}
 
 				if(Split || Other != Obj){
-					if(OtherType.isWeapon() && ObjType.isWeapon()){
+					if(OtherType.is_weapon() && ObjType.is_weapon()){
 						throw ONEWEAPONONLY;
 					}
 				}
@@ -731,20 +731,20 @@ void CheckInventoryDestination(Object Obj, Object Con, bool Split){
 	}
 }
 
-void CheckInventoryPlace(ObjectType Type, Object Con, Object OldObj){
-	// TODO(fusion): This is awfully similar to `CheckInventoryDestination` with
+void check_inventory_place(ObjectType Type, Object Con, Object OldObj){
+	// TODO(fusion): This is awfully similar to `check_inventory_destination` with
 	// a few subtle differences. Perhaps they use the same underlying function?
 
-	int ConPosition = GetObjectBodyPosition(Con);
+	int ConPosition = get_object_body_position(Con);
 	bool HandContainer = ConPosition == INVENTORY_RIGHTHAND
 					|| ConPosition == INVENTORY_LEFTHAND;
 
 	if(!HandContainer && ConPosition != INVENTORY_AMMO){
-		if(!Type.getFlag(CLOTHES)){
+		if(!Type.get_flag(CLOTHES)){
 			throw WRONGPOSITION;
 		}
 
-		int TypePosition = (int)Type.getAttribute(BODYPOSITION);
+		int TypePosition = (int)Type.get_attribute(BODYPOSITION);
 		if(TypePosition == 0){
 			throw WRONGPOSITION2;
 		}else if(TypePosition != ConPosition){
@@ -752,14 +752,14 @@ void CheckInventoryPlace(ObjectType Type, Object Con, Object OldObj){
 		}
 	}
 
-	uint32 CreatureID = GetObjectCreatureID(Con);
-	if(HandContainer && Type.isTwoHanded()){
-		Object RightHand = GetBodyObject(CreatureID, INVENTORY_RIGHTHAND);
+	uint32 CreatureID = get_object_creature_id(Con);
+	if(HandContainer && Type.is_two_handed()){
+		Object RightHand = get_body_object(CreatureID, INVENTORY_RIGHTHAND);
 		if(RightHand != NONE && RightHand != OldObj){
 			throw HANDSNOTFREE;
 		}
 
-		Object LeftHand = GetBodyObject(CreatureID, INVENTORY_LEFTHAND);
+		Object LeftHand = get_body_object(CreatureID, INVENTORY_LEFTHAND);
 		if(LeftHand != NONE && LeftHand != OldObj){
 			throw HANDSNOTFREE;
 		}
@@ -767,8 +767,8 @@ void CheckInventoryPlace(ObjectType Type, Object Con, Object OldObj){
 		return;
 	}
 
-	if(GetBodyObject(CreatureID, ConPosition) != NONE
-	&& GetBodyObject(CreatureID, ConPosition) != OldObj){
+	if(get_body_object(CreatureID, ConPosition) != NONE
+	&& get_body_object(CreatureID, ConPosition) != OldObj){
 		throw NOROOM;
 	}
 
@@ -776,14 +776,14 @@ void CheckInventoryPlace(ObjectType Type, Object Con, Object OldObj){
 		for(int Position = INVENTORY_HAND_FIRST;
 				Position <= INVENTORY_HAND_LAST;
 				Position += 1){
-			Object Other = GetBodyObject(CreatureID, Position);
+			Object Other = get_body_object(CreatureID, Position);
 			if(Other != NONE && Other != OldObj){
-				ObjectType OtherType = Other.getObjectType();
-				if(OtherType.isTwoHanded()){
+				ObjectType OtherType = Other.get_object_type();
+				if(OtherType.is_two_handed()){
 					throw HANDBLOCKED;
 				}
 
-				if(OtherType.isWeapon() && Type.isWeapon()){
+				if(OtherType.is_weapon() && Type.is_weapon()){
 					throw ONEWEAPONONLY;
 				}
 			}
@@ -791,86 +791,86 @@ void CheckInventoryPlace(ObjectType Type, Object Con, Object OldObj){
 	}
 }
 
-void CheckWeight(uint32 CreatureID, Object Obj, int Count){
-	if(GetObjectCreatureID(Obj) == CreatureID){
+void check_weight(uint32 CreatureID, Object Obj, int Count){
+	if(get_object_creature_id(Obj) == CreatureID){
 		return;
 	}
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("CheckWeight: Creature %d does not exist.\n", CreatureID);
+		error("check_weight: Creature %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(TAKE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(TAKE)){
 		throw TOOHEAVY;
 	}
 
 	if(Creature->Type == PLAYER){
-		if(CheckRight(CreatureID, UNLIMITED_CAPACITY)){
+		if(check_right(CreatureID, UNLIMITED_CAPACITY)){
 			return;
 		}
 
-		if(CheckRight(CreatureID, ZERO_CAPACITY)){
+		if(check_right(CreatureID, ZERO_CAPACITY)){
 			throw TOOHEAVY;
 		}
 	}
 
 	TSkill *CarryStrength = Creature->Skills[SKILL_CARRY_STRENGTH];
 	if(CarryStrength == NULL){
-		error("CheckWeight: Skill CARRYSTRENGTH does not exist.\n");
+		error("check_weight: Skill CARRYSTRENGTH does not exist.\n");
 		throw ERROR;
 	}
 
 	int ObjWeight;
-	if(ObjType.getFlag(CUMULATIVE)){
-		ObjWeight = GetWeight(Obj, Count);
+	if(ObjType.get_flag(CUMULATIVE)){
+		ObjWeight = get_weight(Obj, Count);
 	}else{
-		ObjWeight = GetCompleteWeight(Obj);
+		ObjWeight = get_complete_weight(Obj);
 	}
 
-	int InventoryWeight = GetInventoryWeight(CreatureID);
+	int InventoryWeight = get_inventory_weight(CreatureID);
 	int MaxWeight = CarryStrength->Get() * 100;
 	if((InventoryWeight + ObjWeight) > MaxWeight){
 		throw TOOHEAVY;
 	}
 }
 
-void CheckWeight(uint32 CreatureID, ObjectType Type, uint32 Value, int OldWeight){
+void check_weight(uint32 CreatureID, ObjectType Type, uint32 Value, int OldWeight){
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("CheckWeight: Creature %d does not exist.\n", CreatureID);
+		error("check_weight: Creature %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
-	if(!Type.getFlag(TAKE)){
+	if(!Type.get_flag(TAKE)){
 		throw TOOHEAVY;
 	}
 
 	if(Creature->Type == PLAYER){
-		if(CheckRight(CreatureID, UNLIMITED_CAPACITY)){
+		if(check_right(CreatureID, UNLIMITED_CAPACITY)){
 			return;
 		}
 
-		if(CheckRight(CreatureID, ZERO_CAPACITY)){
+		if(check_right(CreatureID, ZERO_CAPACITY)){
 			throw TOOHEAVY;
 		}
 	}
 
 	TSkill *CarryStrength = Creature->Skills[SKILL_CARRY_STRENGTH];
 	if(CarryStrength == NULL){
-		error("CheckWeight: Skill CARRYSTRENGTH does not exist.\n");
+		error("check_weight: Skill CARRYSTRENGTH does not exist.\n");
 		throw ERROR;
 	}
 
-	int TypeWeight = (int)Type.getAttribute(WEIGHT);
-	if(Type.getFlag(CUMULATIVE) && (int)Value > 1){
+	int TypeWeight = (int)Type.get_attribute(WEIGHT);
+	if(Type.get_flag(CUMULATIVE) && (int)Value > 1){
 		TypeWeight *= (int)Value;
 	}
 
 	if(TypeWeight > OldWeight){
-		int InventoryWeight = GetInventoryWeight(CreatureID);
+		int InventoryWeight = get_inventory_weight(CreatureID);
 		int MaxWeight = CarryStrength->Get() * 100;
 		if((InventoryWeight + TypeWeight) > MaxWeight){
 			throw TOOHEAVY;
@@ -878,28 +878,28 @@ void CheckWeight(uint32 CreatureID, ObjectType Type, uint32 Value, int OldWeight
 	}
 }
 
-void NotifyCreature(uint32 CreatureID, Object Obj, bool Inventory){
+void notify_creature(uint32 CreatureID, Object Obj, bool Inventory){
 	if(CreatureID == 0){
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.is_creature_container()){
 		TCreature *Creature = GetCreature(CreatureID);
 		if(Creature == NULL){
-			error("NotifyCreature: Creature does not exist.\n");
+			error("notify_creature: Creature does not exist.\n");
 			return;
 		}
 
-		if(Inventory && ObjType.getFlag(LIGHT)){
-			AnnounceChangedCreature(CreatureID, CREATURE_LIGHT_CHANGED);
+		if(Inventory && ObjType.get_flag(LIGHT)){
+			announce_changed_creature(CreatureID, CREATURE_LIGHT_CHANGED);
 		}
 
 		Creature->NotifyChangeInventory();
 	}
 }
 
-void NotifyCreature(uint32 CreatureID, ObjectType Type, bool Inventory){
+void notify_creature(uint32 CreatureID, ObjectType Type, bool Inventory){
 	if(CreatureID == 0){
 		return;
 	}
@@ -908,31 +908,31 @@ void NotifyCreature(uint32 CreatureID, ObjectType Type, bool Inventory){
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("NotifyCreature: Creature does not exist.\n");
+		error("notify_creature: Creature does not exist.\n");
 		return;
 	}
 
-	if(Inventory && Type.getFlag(LIGHT)){
-		AnnounceChangedCreature(CreatureID, CREATURE_LIGHT_CHANGED);
+	if(Inventory && Type.get_flag(LIGHT)){
+		announce_changed_creature(CreatureID, CREATURE_LIGHT_CHANGED);
 	}
 
 	Creature->NotifyChangeInventory();
 }
 
-void NotifyAllCreatures(Object Obj, int Type, Object OldCon){
+void notify_all_creatures(Object Obj, int Type, Object OldCon){
 	if(!Obj.exists()){
-		error("NotifyAllCreatures: Passed object does not exist.\n");
+		error("notify_all_creatures: Passed object does not exist.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.is_creature_container()){
 		return;
 	}
 
 	int ObjX, ObjY, ObjZ;
-	uint32 CreatureID = Obj.getCreatureID();
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	uint32 CreatureID = Obj.get_creature_id();
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 
 	constexpr int StimulusRadius = 10;
 	int SearchRadiusX = StimulusRadius;
@@ -941,7 +941,7 @@ void NotifyAllCreatures(Object Obj, int Type, Object OldCon){
 	int SearchCenterY = ObjY;
 	if(Type == OBJECT_MOVED){
 		if(!OldCon.exists()){
-			error("NotifyAllCreatures: Passed old container does not exist.\n");
+			error("notify_all_creatures: Passed old container does not exist.\n");
 			return;
 		}
 
@@ -951,7 +951,7 @@ void NotifyAllCreatures(Object Obj, int Type, Object OldCon){
 		// NOTE(fusion): Perform a secondary search if the distances are beyond
 		// the stimulus diameter or, extend the primary search otherwise.
 		int OldX, OldY, OldZ;
-		GetObjectCoordinates(OldCon, &OldX, &OldY, &OldZ);
+		get_object_coordinates(OldCon, &OldX, &OldY, &OldZ);
 		int DistanceX = std::abs(ObjX - OldX);
 		int DistanceY = std::abs(ObjY - OldY);
 		if(DistanceX > (StimulusRadius * 2) || DistanceY > (StimulusRadius * 2)){
@@ -987,14 +987,14 @@ void NotifyAllCreatures(Object Obj, int Type, Object OldCon){
 	}
 }
 
-void NotifyTrades(Object Obj){
+void notify_trades(Object Obj){
 	if(!Obj.exists()){
-		error("NotifyTrades: Passed object does not exist.\n");
+		error("notify_trades: Passed object does not exist.\n");
 		return;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_creature_container()){
 		return;
 	}
 
@@ -1016,7 +1016,7 @@ void NotifyTrades(Object Obj){
 
 		Object TradeObject = Player->InspectTrade(true, 0);
 		if(TradeObject != NONE){
-			if(IsHeldByContainer(Obj, TradeObject) || IsHeldByContainer(TradeObject, Obj)){
+			if(is_held_by_container(Obj, TradeObject) || is_held_by_container(TradeObject, Obj)){
 				SendCloseTrade(Player->Connection);
 				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE, "Trade cancelled.");
 				Player->RejectTrade();
@@ -1025,21 +1025,21 @@ void NotifyTrades(Object Obj){
 	}
 }
 
-void NotifyDepot(uint32 CreatureID, Object Obj, int Count){
+void notify_depot(uint32 CreatureID, Object Obj, int Count){
 	if(CreatureID == 0){
 		return;
 	}
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("NotifyDepot: Creature %u does not exist.\n", CreatureID);
+		error("notify_depot: Creature %u does not exist.\n", CreatureID);
 		// TODO(fusion): We should probably also throw here.
 		//throw ERROR;
 		return;
 	}
 
 	if(!Obj.exists()){
-		error("NotifyDepot: Object does not exist.\n");
+		error("notify_depot: Object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1049,7 +1049,7 @@ void NotifyDepot(uint32 CreatureID, Object Obj, int Count){
 			return;
 		}
 
-		if(IsHeldByContainer(Obj, Player->Depot)){
+		if(is_held_by_container(Obj, Player->Depot)){
 			Player->DepotSpace += Count;
 			print(3, "New depot free space for %s: %d\n",
 					Player->Name, Player->DepotSpace);
@@ -1057,18 +1057,18 @@ void NotifyDepot(uint32 CreatureID, Object Obj, int Count){
 	}
 }
 
-void CloseContainer(Object Con, bool Force){
+void close_container(Object Con, bool Force){
 	if(!Con.exists()){
-		error("CloseContainer: Passed container does not exist.\n");
+		error("close_container: Passed container does not exist.\n");
 		return;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(ConType.isCreatureContainer()){
+	ObjectType ConType = Con.get_object_type();
+	if(ConType.is_creature_container()){
 		return;
 	}
 
-	// TODO(fusion): Similar to `NotifyTrades`.
+	// TODO(fusion): Similar to `notify_trades`.
 	TFindCreatures Search(12, 10, Con, FIND_PLAYERS);
 	while(true){
 		uint32 CharacterID = Search.getNext();
@@ -1078,7 +1078,7 @@ void CloseContainer(Object Con, bool Force){
 
 		TPlayer *Player = GetPlayer(CharacterID);
 		if(Player == NULL){
-			error("CloseContainer: Player does not exist.\n");
+			error("close_container: Player does not exist.\n");
 			continue;
 		}
 
@@ -1086,8 +1086,8 @@ void CloseContainer(Object Con, bool Force){
 				ContainerNr < NARRAY(Player->OpenContainer);
 				ContainerNr += 1){
 			Object OpenCon = Player->GetOpenContainer(ContainerNr);
-			if(IsHeldByContainer(OpenCon, Con)){
-				if(Force || !ObjectAccessible(Player->ID, Con, 1)){
+			if(is_held_by_container(OpenCon, Con)){
+				if(Force || !object_accessible(Player->ID, Con, 1)){
 					Player->SetOpenContainer(ContainerNr, NONE);
 					SendCloseContainer(Player->Connection, ContainerNr);
 				}else{
@@ -1099,46 +1099,46 @@ void CloseContainer(Object Con, bool Force){
 	}
 }
 
-Object Create(Object Con, ObjectType Type, uint32 Value){
+Object create(Object Con, ObjectType Type, uint32 Value){
 	if(!Con.exists()){
-		error("Create: Destination object does not exist.\n");
+		error("create: Destination object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER) && !ConType.getFlag(CHEST)){
-		error("Create: Destination object is not a container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER) && !ConType.get_flag(CHEST)){
+		error("create: Destination object is not a container.\n");
 		throw ERROR;
 	}
 
 	// TODO(fusion): The map container does indeed use type id zero but it seems
 	// it is also considered a "no type" id so we might also want to add an alias
 	// to it as `isValid()`, `isVoid()`, `isNone()`, or `isNull()` perhaps.
-	if(Type.isMapContainer()){
-		error("Create: Object type does not exist.\n");
+	if(Type.is_map_container()){
+		error("create: Object type does not exist.\n");
 		throw ERROR;
 	}
 
-	if(ConType.isMapContainer()){
-		CheckMapPlace(0, Type, Con);
-	}else if(ConType.isBodyContainer()){
-		CheckInventoryPlace(Type, Con, NONE);
+	if(ConType.is_map_container()){
+		check_map_place(0, Type, Con);
+	}else if(ConType.is_body_container()){
+		check_inventory_place(Type, Con, NONE);
 	}else{
-		CheckContainerPlace(Type, Con, NONE);
+		check_container_place(Type, Con, NONE);
 	}
 
-	uint32 ConOwnerID = GetObjectCreatureID(Con);
+	uint32 ConOwnerID = get_object_creature_id(Con);
 	if(ConOwnerID != 0){
-		CheckWeight(ConOwnerID, Type, Value, 0);
+		check_weight(ConOwnerID, Type, Value, 0);
 	}
 
 	// NOTE(fusion): Attempt to merge with top object.
-	if(ConType.isMapContainer() && Type.getFlag(CUMULATIVE)){
+	if(ConType.is_map_container() && Type.get_flag(CUMULATIVE)){
 		int ConX, ConY, ConZ;
-		GetObjectCoordinates(Con, &ConX, &ConY, &ConZ);
-		Object Top = GetTopObject(ConX, ConY, ConZ, true);
-		if(Top != NONE && Top.getObjectType() == Type){
-			uint32 Count = Top.getAttribute(AMOUNT);
+		get_object_coordinates(Con, &ConX, &ConY, &ConZ);
+		Object Top = get_top_object(ConX, ConY, ConZ, true);
+		if(Top != NONE && Top.get_object_type() == Type){
+			uint32 Count = Top.get_attribute(AMOUNT);
 			if(Value != 0){
 				Count += Value;
 			}else{
@@ -1146,7 +1146,7 @@ Object Create(Object Con, ObjectType Type, uint32 Value){
 			}
 
 			if(Count <= 100){
-				Change(Top, AMOUNT, Count);
+				change(Top, AMOUNT, Count);
 				return Top;
 			}
 		}
@@ -1154,163 +1154,163 @@ Object Create(Object Con, ObjectType Type, uint32 Value){
 
 	// TODO(fusion): I feel these usages of `Value` should be exclusive?
 
-	Object Obj = SetObject(Con, Type, (Type.isCreatureContainer() ? Value : 0));
+	Object Obj = set_object(Con, Type, (Type.is_creature_container() ? Value : 0));
 
-	if(Type.getFlag(CUMULATIVE)){
-		ChangeObject(Obj, AMOUNT, Value);
+	if(Type.get_flag(CUMULATIVE)){
+		change_object(Obj, AMOUNT, Value);
 	}
 
-	if(Type.getFlag(MAGICFIELD)){
-		ChangeObject(Obj, RESPONSIBLE, Value);
+	if(Type.get_flag(MAGICFIELD)){
+		change_object(Obj, RESPONSIBLE, Value);
 	}
 
-	if(Type.getFlag(LIQUIDPOOL)){
-		ChangeObject(Obj, POOLLIQUIDTYPE, Value);
+	if(Type.get_flag(LIQUIDPOOL)){
+		change_object(Obj, POOLLIQUIDTYPE, Value);
 	}
 
-	if(Type.getFlag(LIQUIDCONTAINER)){
-		ChangeObject(Obj, CONTAINERLIQUIDTYPE, Value);
+	if(Type.get_flag(LIQUIDCONTAINER)){
+		change_object(Obj, CONTAINERLIQUIDTYPE, Value);
 	}
 
-	if(Type.getFlag(KEY)){
-		ChangeObject(Obj, KEYNUMBER, Value);
+	if(Type.get_flag(KEY)){
+		change_object(Obj, KEYNUMBER, Value);
 	}
 
-	if(Type.getFlag(RUNE)){
-		ChangeObject(Obj, CHARGES, Value);
+	if(Type.get_flag(RUNE)){
+		change_object(Obj, CHARGES, Value);
 	}
 
-	if(Type.isCreatureContainer()){
+	if(Type.is_creature_container()){
 		// BUG(fusion): We should just check this before creating the object.
-		// Also, using `Delete` instead of `DeleteObject` here is problematic
+		// Also, using `delete_op` instead of `delete_object` here is problematic
 		// because the object's placement wasn't yet broadcasted.
 		TCreature *Creature = GetCreature(Value);
 		if(Creature == NULL){
-			error("Create: Invalid creature ID %u\n", Value);
-			Delete(Obj, -1);
+			error("create: Invalid creature ID %u\n", Value);
+			delete_op(Obj, -1);
 			throw ERROR;
 		}
 
 		// IMPORTANT(fusion): Creature body containers are created here and their
 		// type ids match inventory slots exactly. We're looping in reverse because
-		// `SetObject` will insert objects at the front of the object chain.
+		// `set_object` will insert objects at the front of the object chain.
 		for(int Position = INVENTORY_LAST;
 				Position >= INVENTORY_FIRST;
 				Position -= 1){
-			SetObject(Obj, ObjectType(Position), 0);
+			set_object(Obj, ObjectType(Position), 0);
 		}
 
 		Creature->CrObject = Obj;
 		Creature->NotifyCreate();
 	}
 
-	AnnounceChangedObject(Obj, OBJECT_CREATED);
-	NotifyTrades(Obj);
-	NotifyCreature(ConOwnerID, Obj, ConType.isBodyContainer());
-	MovementEvent(Obj, Con, Con); // TODO(fusion): This one doesn't make a lot of sense.
-	CollisionEvent(Obj, Con);
-	NotifyAllCreatures(Obj, OBJECT_CREATED, NONE);
+	announce_changed_object(Obj, OBJECT_CREATED);
+	notify_trades(Obj);
+	notify_creature(ConOwnerID, Obj, ConType.is_body_container());
+	movement_event(Obj, Con, Con); // TODO(fusion): This one doesn't make a lot of sense.
+	collision_event(Obj, Con);
+	notify_all_creatures(Obj, OBJECT_CREATED, NONE);
 	return Obj;
 }
 
-Object Copy(Object Con, Object Source){
+Object copy(Object Con, Object Source){
 	if(!Con.exists()){
-		error("Copy: Destination does not exist.\n");
+		error("copy: Destination does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER) && !ConType.getFlag(CHEST)){
-		error("Copy: Destination is not a container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER) && !ConType.get_flag(CHEST)){
+		error("copy: Destination is not a container.\n");
 		throw ERROR;
 	}
 
 	if(!Source.exists()){
-		error("Copy: Source does not exist.\n");
+		error("copy: Source does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType SourceType = Source.getObjectType();
-	if(SourceType.isCreatureContainer()){
-		error("Copy: Source is a creature.\n");
+	ObjectType SourceType = Source.get_object_type();
+	if(SourceType.is_creature_container()){
+		error("copy: Source is a creature.\n");
 		throw ERROR;
 	}
 
-	if(ConType.isMapContainer()){
-		CheckMapDestination(0, Source, Con);
-	}else if(ConType.isBodyContainer()){
+	if(ConType.is_map_container()){
+		check_map_destination(0, Source, Con);
+	}else if(ConType.is_body_container()){
 		// TODO(fusion): Not sure about this third param.
-		CheckInventoryDestination(Source, Con, true);
+		check_inventory_destination(Source, Con, true);
 	}else{
-		CheckContainerDestination(Source, Con);
+		check_container_destination(Source, Con);
 	}
 
-	uint32 ConOwnerID = GetObjectCreatureID(Con);
+	uint32 ConOwnerID = get_object_creature_id(Con);
 	if(ConOwnerID != 0){
-		CheckWeight(ConOwnerID, Source, -1);
+		check_weight(ConOwnerID, Source, -1);
 	}
 
-	// TODO(fusion): Using `Copy` recursively here should work because the object
-	// is placed when `CopyObject` is called. The thing is, announce and notify
+	// TODO(fusion): Using `copy` recursively here should work because the object
+	// is placed when `copy_object` is called. The thing is, announce and notify
 	// functions will do meaningless work there (I think, check what happens when
 	// we're actually running).
-	Object Obj = CopyObject(Con, Source);
-	if(SourceType.getFlag(CONTAINER)){
-		Object Help = GetFirstContainerObject(Source);
+	Object Obj = copy_object(Con, Source);
+	if(SourceType.get_flag(CONTAINER)){
+		Object Help = get_first_container_object(Source);
 		while(Help != NONE){
-			Copy(Obj, Help);
-			Help = Help.getNextObject();
+			copy(Obj, Help);
+			Help = Help.get_next_object();
 		}
 	}
 
-	AnnounceChangedObject(Obj, OBJECT_CREATED);
-	NotifyTrades(Obj);
-	NotifyCreature(ConOwnerID, Obj, ConType.isBodyContainer());
-	MovementEvent(Obj, Con, Con); // TODO(fusion): Same as `Create`.
-	CollisionEvent(Obj, Con);
-	NotifyAllCreatures(Obj, OBJECT_CREATED, NONE);
+	announce_changed_object(Obj, OBJECT_CREATED);
+	notify_trades(Obj);
+	notify_creature(ConOwnerID, Obj, ConType.is_body_container());
+	movement_event(Obj, Con, Con); // TODO(fusion): Same as `create`.
+	collision_event(Obj, Con);
+	notify_all_creatures(Obj, OBJECT_CREATED, NONE);
 	return Obj;
 }
 
-void Move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Object Ignore){
+void move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Object Ignore){
 	if(!Obj.exists()){
-		error("Move: Passed object does not exist.\n");
+		error("move: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Con.exists()){
 		int ObjX, ObjY, ObjZ;
-		ObjectType ObjType = Obj.getObjectType();
-		GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-		error("Move: Destination object does not exist.\n");
+		ObjectType ObjType = Obj.get_object_type();
+		get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+		error("move: Destination object does not exist.\n");
 		error("# Object %d at [%d,%d,%d]\n", ObjType.TypeID, ObjX, ObjY, ObjZ);
 		throw ERROR;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER)){
-		error("Move: Destination object is not a container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER)){
+		error("move: Destination object is not a container.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(CUMULATIVE) && (Count == 0 || Count > (int)Obj.getAttribute(AMOUNT))){
-		error("Move: Invalid count %d of %d parts for cumulative object.\n",
-				Count, (int)Obj.getAttribute(AMOUNT));
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(CUMULATIVE) && (Count == 0 || Count > (int)Obj.get_attribute(AMOUNT))){
+		error("move: Invalid count %d of %d parts for cumulative object.\n",
+				Count, (int)Obj.get_attribute(AMOUNT));
 		throw ERROR;
 	}
 
-	Object OldCon = Obj.getContainer();
-	if(!NoMerge && ConType.isMapContainer()
-			&& ObjType.getFlag(CUMULATIVE)
+	Object OldCon = Obj.get_container();
+	if(!NoMerge && ConType.is_map_container()
+			&& ObjType.get_flag(CUMULATIVE)
 			&& OldCon != Con){
 		int ConX, ConY, ConZ;
-		GetObjectCoordinates(Con, &ConX, &ConY, &ConZ);
-		Object Top = GetTopObject(ConX, ConY, ConZ, true);
+		get_object_coordinates(Con, &ConX, &ConY, &ConZ);
+		Object Top = get_top_object(ConX, ConY, ConZ, true);
 		if(Top != NONE){
 			try{
-				Merge(CreatureID, Obj, Top, Count, Ignore);
-				return; // <-- EARLY RETURN IF `Merge` SUCCEEDS.
+				merge(CreatureID, Obj, Top, Count, Ignore);
+				return; // <-- EARLY RETURN IF `merge` SUCCEEDS.
 			}catch(RESULT r){
 				if(r == DESTROYED){
 					throw;
@@ -1319,7 +1319,7 @@ void Move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Ob
 		}
 	}
 
-	// TODO(fusion): The only event inside `Merge` that could modify the object
+	// TODO(fusion): The only event inside `merge` that could modify the object
 	// and still throw some non `DESTROYED` error is the separation event.
 	//	From what I've seen, it is used exclusively with non CUMULATIVE objects
 	// like depot switches to perform "step out" events but using them with
@@ -1328,15 +1328,15 @@ void Move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Ob
 	// that transforming the object then would already make the merge "invalid".
 
 	if(!Obj.exists()){
-		error("Move: Passed object no longer exists.\n");
+		error("move: Passed object no longer exists.\n");
 	}
 
 	// NOTE(fusion): Refresh object type just in case a merge event modified it.
-	ObjType = Obj.getObjectType();
+	ObjType = Obj.get_object_type();
 
 	int ObjCount = 1;
-	if(ObjType.getFlag(CUMULATIVE)){
-		ObjCount = (int)Obj.getAttribute(AMOUNT);
+	if(ObjType.get_flag(CUMULATIVE)){
+		ObjCount = (int)Obj.get_attribute(AMOUNT);
 	}
 
 	if(Count == -1){
@@ -1344,28 +1344,28 @@ void Move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Ob
 	}
 
 	bool Split = Count < ObjCount;
-	uint32 ObjOwnerID = GetObjectCreatureID(Obj);
-	uint32 ConOwnerID = GetObjectCreatureID(Con);
-	CheckTopMoveObject(CreatureID, Obj, Ignore);
-	if(ConType.isMapContainer()){
-		CheckMoveObject(CreatureID, Obj, false);
-		CheckMapDestination(CreatureID, Obj, Con);
+	uint32 ObjOwnerID = get_object_creature_id(Obj);
+	uint32 ConOwnerID = get_object_creature_id(Con);
+	check_top_move_object(CreatureID, Obj, Ignore);
+	if(ConType.is_map_container()){
+		check_move_object(CreatureID, Obj, false);
+		check_map_destination(CreatureID, Obj, Con);
 	}else{
-		CheckMoveObject(CreatureID, Obj, true);
-		if(ConType.isBodyContainer()){
-			CheckInventoryDestination(Obj, Con, Split);
+		check_move_object(CreatureID, Obj, true);
+		if(ConType.is_body_container()){
+			check_inventory_destination(Obj, Con, Split);
 		}else{
-			CheckContainerDestination(Obj, Con);
+			check_container_destination(Obj, Con);
 		}
 
 		if(Split){
-			CheckDepotSpace(CreatureID, NONE, Con, 1);
+			check_depot_space(CreatureID, NONE, Con, 1);
 		}else{
-			CheckDepotSpace(CreatureID, Obj, Con, CountObjects(Obj));
+			check_depot_space(CreatureID, Obj, Con, count_objects(Obj));
 		}
 
 		if(ConOwnerID != 0){
-			CheckWeight(ConOwnerID, Obj, Count);
+			check_weight(ConOwnerID, Obj, Count);
 		}
 	}
 
@@ -1373,93 +1373,93 @@ void Move(uint32 CreatureID, Object Obj, Object Con, int Count, bool NoMerge, Ob
 	Object Remainder = NONE;
 	if(Split){
 		Remainder = Obj;
-		Obj = SplitObject(Obj, Count);
+		Obj = split_object(Obj, Count);
 	}
 
 	if(OldCon != Con){
-		SeparationEvent(Obj, OldCon);
+		separation_event(Obj, OldCon);
 	}
 
 	// TODO(fusion): There is surely a way to reduce these creature checks?
 	// perhaps split them into two linear paths, with a few duplications but
 	// easier to read.
 
-	if(!ObjType.isCreatureContainer() && Remainder == NONE){
-		AnnounceChangedObject(Obj, OBJECT_DELETED);
-		NotifyTrades(Obj);
-		NotifyDepot(CreatureID, Obj, CountObjects(Obj));
+	if(!ObjType.is_creature_container() && Remainder == NONE){
+		announce_changed_object(Obj, OBJECT_DELETED);
+		notify_trades(Obj);
+		notify_depot(CreatureID, Obj, count_objects(Obj));
 	}
 
 	// TODO(fusion): This could probably be moved to the end of the function
-	// along with the other `CloseContainer`.
+	// along with the other `close_container`.
 	//	Probably the other way around, since events could modify the object
 	// and I don't think it makes a difference if we close it before or after
 	// performing the move.
 	//	Except it does because the object's position will be different lol.
-	if(ObjType.getFlag(CONTAINER) && CreatureID == 0){
-		CloseContainer(Obj, true);
+	if(ObjType.get_flag(CONTAINER) && CreatureID == 0){
+		close_container(Obj, true);
 	}
 
-	if(ObjType.isCreatureContainer()){
-		uint32 MovingCreatureID = Obj.getCreatureID();
+	if(ObjType.is_creature_container()){
+		uint32 MovingCreatureID = Obj.get_creature_id();
 		TCreature *Creature = GetCreature(MovingCreatureID);
 		if(Creature != NULL){
 			Creature->NotifyTurn(Con);
 		}else{
-			error("Move: Creature with invalid ID %d.\n", MovingCreatureID);
+			error("move: Creature with invalid ID %d.\n", MovingCreatureID);
 		}
-		AnnounceMovingCreature(MovingCreatureID, Con);
+		announce_moving_creature(MovingCreatureID, Con);
 	}
 
-	MoveObject(Obj, Con);
+	move_object(Obj, Con);
 
-	if(!ObjType.isCreatureContainer()){
-		AnnounceChangedObject(Obj, OBJECT_CREATED);
-		NotifyTrades(Obj);
-		NotifyDepot(CreatureID, Obj, -CountObjects(Obj));
+	if(!ObjType.is_creature_container()){
+		announce_changed_object(Obj, OBJECT_CREATED);
+		notify_trades(Obj);
+		notify_depot(CreatureID, Obj, -count_objects(Obj));
 	}
 
 	if(Remainder != NONE){
-		AnnounceChangedObject(Remainder, OBJECT_CHANGED);
-		NotifyTrades(Remainder);
+		announce_changed_object(Remainder, OBJECT_CHANGED);
+		notify_trades(Remainder);
 	}
 
-	if(ObjType.isCreatureContainer()){
-		uint32 MovingCreatureID = Obj.getCreatureID();
+	if(ObjType.is_creature_container()){
+		uint32 MovingCreatureID = Obj.get_creature_id();
 		TCreature *Creature = GetCreature(MovingCreatureID);
 		if(Creature != NULL){
 			Creature->NotifyGo();
 		}else{
-			error("Move: Creature with invalid ID %d.\n", MovingCreatureID);
+			error("move: Creature with invalid ID %d.\n", MovingCreatureID);
 		}
 	}
 
-	NotifyCreature(ObjOwnerID, Obj, OldCon.getObjectType().isBodyContainer());
-	NotifyCreature(ConOwnerID, Obj, Con.getObjectType().isBodyContainer());
+	notify_creature(ObjOwnerID, Obj, OldCon.get_object_type().is_body_container());
+	notify_creature(ConOwnerID, Obj, Con.get_object_type().is_body_container());
 
-	if(ObjType.getFlag(CONTAINER)){
-		CloseContainer(Obj, false);
+	if(ObjType.get_flag(CONTAINER)){
+		close_container(Obj, false);
 	}
 
-	MovementEvent(Obj, OldCon, Con);
-	CollisionEvent(Obj, Con);
-	NotifyAllCreatures(Obj, OBJECT_MOVED, OldCon);
+	movement_event(Obj, OldCon, Con);
+	collision_event(Obj, Con);
+	notify_all_creatures(Obj, OBJECT_MOVED, OldCon);
 }
 
-void Merge(uint32 CreatureID, Object Obj, Object Dest, int Count, Object Ignore){
+void merge(uint32 CreatureID, Object Obj, Object Dest, int Count, Object Ignore){
 	if(!Obj.exists()){
-		error("Merge: Passed object does not exist.\n");
+		error("merge: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Dest.exists()){
-		error("Merge: Destination object does not exist.\n");
+		error("merge: Destination object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(CUMULATIVE) && (Count == 0 || Count > (int)Obj.getAttribute(AMOUNT))){
-		error("Merge: Invalid count %d of parts for cumulative object.\n", Count);
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(CUMULATIVE) && (Count == 0 || Count > (int)Obj.get_attribute(AMOUNT))){
+		error("merge: Invalid count %d of parts for cumulative object.\n", Count);
 		throw ERROR;
 	}
 
@@ -1467,16 +1467,16 @@ void Merge(uint32 CreatureID, Object Obj, Object Dest, int Count, Object Ignore)
 		return;
 	}
 
-	if(ObjType != Dest.getObjectType()){
+	if(ObjType != Dest.get_object_type()){
 		throw NOMATCH;
 	}
 
-	if(!ObjType.getFlag(CUMULATIVE)){
+	if(!ObjType.get_flag(CUMULATIVE)){
 		throw NOTCUMULABLE;
 	}
 
-	int ObjCount = Obj.getAttribute(AMOUNT);
-	int DestCount = Dest.getAttribute(AMOUNT);
+	int ObjCount = Obj.get_attribute(AMOUNT);
+	int DestCount = Dest.get_attribute(AMOUNT);
 	if(Count == -1){
 		Count = ObjCount;
 	}
@@ -1485,161 +1485,161 @@ void Merge(uint32 CreatureID, Object Obj, Object Dest, int Count, Object Ignore)
 		throw TOOMANYPARTS;
 	}
 
-	Object DestCon = Dest.getContainer();
-	uint32 DestOwnerID = GetObjectCreatureID(Dest);
-	CheckTopMoveObject(CreatureID, Obj, Ignore);
-	if(DestCon.getObjectType().isMapContainer()){
-		CheckMoveObject(CreatureID, Obj, false);
-		CheckMapDestination(CreatureID, Obj, DestCon);
+	Object DestCon = Dest.get_container();
+	uint32 DestOwnerID = get_object_creature_id(Dest);
+	check_top_move_object(CreatureID, Obj, Ignore);
+	if(DestCon.get_object_type().is_map_container()){
+		check_move_object(CreatureID, Obj, false);
+		check_map_destination(CreatureID, Obj, DestCon);
 	}else{
-		CheckMoveObject(CreatureID, Obj, true);
-		CheckDepotSpace(CreatureID, Obj, DestCon, 0);
+		check_move_object(CreatureID, Obj, true);
+		check_depot_space(CreatureID, Obj, DestCon, 0);
 		if(DestOwnerID != 0){
-			CheckWeight(DestOwnerID, Obj, Count);
+			check_weight(DestOwnerID, Obj, Count);
 		}
 	}
 
-	Object ObjCon = Obj.getContainer();
-	uint32 ObjOwnerID = GetObjectCreatureID(Obj);
+	Object ObjCon = Obj.get_container();
+	uint32 ObjOwnerID = get_object_creature_id(Obj);
 
 	// TODO(fusion): What is even going on here?
-	if(ObjType.getFlag(MOVEMENTEVENT)){
-		error("Merge: Movement event for cumulative object %d is not triggered.\n", ObjType.TypeID);
+	if(ObjType.get_flag(MOVEMENTEVENT)){
+		error("merge: Movement event for cumulative object %d is not triggered.\n", ObjType.TypeID);
 	}
 
 	if(ObjCon != DestCon){
-		SeparationEvent(Obj, ObjCon);
+		separation_event(Obj, ObjCon);
 	}
 
 	if(Count < ObjCount){
-		ChangeObject(Obj, AMOUNT, ObjCount - Count);
-		AnnounceChangedObject(Obj, OBJECT_CHANGED);
-		NotifyTrades(Obj);
-		ChangeObject(Dest, AMOUNT, DestCount + Count);
+		change_object(Obj, AMOUNT, ObjCount - Count);
+		announce_changed_object(Obj, OBJECT_CHANGED);
+		notify_trades(Obj);
+		change_object(Dest, AMOUNT, DestCount + Count);
 	}else{
-		AnnounceChangedObject(Obj, OBJECT_DELETED);
-		NotifyTrades(Obj);
-		NotifyDepot(CreatureID, Obj, 1);
-		MergeObjects(Obj, Dest);
+		announce_changed_object(Obj, OBJECT_DELETED);
+		notify_trades(Obj);
+		notify_depot(CreatureID, Obj, 1);
+		merge_objects(Obj, Dest);
 	}
 
-	AnnounceChangedObject(Dest, OBJECT_CHANGED);
-	NotifyTrades(Dest);
-	NotifyCreature(ObjOwnerID, Dest, ObjCon.getObjectType().isBodyContainer());
-	NotifyCreature(DestOwnerID, Dest, DestCon.getObjectType().isBodyContainer());
-	CollisionEvent(Dest, DestCon);
-	NotifyAllCreatures(Dest, OBJECT_CHANGED, NONE);
+	announce_changed_object(Dest, OBJECT_CHANGED);
+	notify_trades(Dest);
+	notify_creature(ObjOwnerID, Dest, ObjCon.get_object_type().is_body_container());
+	notify_creature(DestOwnerID, Dest, DestCon.get_object_type().is_body_container());
+	collision_event(Dest, DestCon);
+	notify_all_creatures(Dest, OBJECT_CHANGED, NONE);
 }
 
-void Change(Object Obj, ObjectType NewType, uint32 Value){
+void change(Object Obj, ObjectType NewType, uint32 Value){
 	if(!Obj.exists()){
-		error("Change: Passed object does not exist.\n");
+		error("change: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType OldType = Obj.getObjectType();
-	if(OldType.isCreatureContainer() || NewType.isCreatureContainer()){
-		error("Change: Cannot change creatures.\n");
+	ObjectType OldType = Obj.get_object_type();
+	if(OldType.is_creature_container() || NewType.is_creature_container()){
+		error("change: Cannot change creatures.\n");
 		throw ERROR;
 	}
 
-	// TODO(fusion): Same thing as `Create`. The zero type id is also used as
+	// TODO(fusion): Same thing as `create`. The zero type id is also used as
 	// a "no type" id.
-	if(NewType.isMapContainer()){
-		Delete(Obj, -1);
+	if(NewType.is_map_container()){
+		delete_op(Obj, -1);
 		return;
 	}
 
-	if(OldType.getFlag(CONTAINER)){
-		if(!NewType.getFlag(CONTAINER) && GetFirstContainerObject(Obj) != NONE){
-			error("Change: Target object %d for %d is no longer a container.\n",
+	if(OldType.get_flag(CONTAINER)){
+		if(!NewType.get_flag(CONTAINER) && get_first_container_object(Obj) != NONE){
+			error("change: Target object %d for %d is no longer a container.\n",
 					NewType.TypeID, OldType.TypeID);
 			throw EMPTYCONTAINER;
 		}
 
-		if(NewType.getFlag(CONTAINER)){
-			int ObjectCount = CountObjectsInContainer(Obj);
-			int NewCapacity = (int)NewType.getAttribute(CAPACITY);
+		if(NewType.get_flag(CONTAINER)){
+			int ObjectCount = count_objects_in_container(Obj);
+			int NewCapacity = (int)NewType.get_attribute(CAPACITY);
 			if(ObjectCount > NewCapacity){
-				error("Change: Target object %d for %d is a smaller container.\n",
+				error("change: Target object %d for %d is a smaller container.\n",
 						NewType.TypeID, OldType.TypeID);
 				throw EMPTYCONTAINER;
 			}
 		}
 	}
 
-	if(OldType.getFlag(CHEST) && !NewType.getFlag(CHEST)){
-		error("Change: Treasure chest must remain a treasure chest.\n");
+	if(OldType.get_flag(CHEST) && !NewType.get_flag(CHEST)){
+		error("change: Treasure chest must remain a treasure chest.\n");
 		throw ERROR;
 	}
 
-	if(OldType.getFlag(CUMULATIVE)
+	if(OldType.get_flag(CUMULATIVE)
 			&& OldType != NewType
-			&& Obj.getAttribute(AMOUNT) > 1){
+			&& Obj.get_attribute(AMOUNT) > 1){
 		throw SPLITOBJECT;
 	}
 
-	Object Con = Obj.getContainer();
-	ObjectType ConType = Con.getObjectType();
-	uint32 ObjOwnerID = GetObjectCreatureID(Obj);
+	Object Con = Obj.get_container();
+	ObjectType ConType = Con.get_object_type();
+	uint32 ObjOwnerID = get_object_creature_id(Obj);
 	if(ObjOwnerID != 0 && OldType != NewType){
-		if(ConType.isBodyContainer()){
-			CheckInventoryPlace(NewType, Con, Obj);
+		if(ConType.is_body_container()){
+			check_inventory_place(NewType, Con, Obj);
 		}else{
-			CheckContainerPlace(NewType, Con, Obj);
+			check_container_place(NewType, Con, Obj);
 		}
 
 		uint32 Count = 1;
-		if(OldType.getFlag(CUMULATIVE)){
-			Count = Obj.getAttribute(AMOUNT);
+		if(OldType.get_flag(CUMULATIVE)){
+			Count = Obj.get_attribute(AMOUNT);
 		}
 
-		int OldWeight = GetWeight(Obj, -1);
-		CheckWeight(ObjOwnerID, NewType, Count, OldWeight);
+		int OldWeight = get_weight(Obj, -1);
+		check_weight(ObjOwnerID, NewType, Count, OldWeight);
 	}
 
-	if(OldType.getFlag(CONTAINER) && !NewType.getFlag(CONTAINER)){
-		CloseContainer(Obj, true);
+	if(OldType.get_flag(CONTAINER) && !NewType.get_flag(CONTAINER)){
+		close_container(Obj, true);
 	}
 
-	ChangeObject(Obj, NewType);
+	change_object(Obj, NewType);
 
-	// TODO(fusion): Same thing as `Create`. I feel these usages of `Value`
+	// TODO(fusion): Same thing as `create`. I feel these usages of `Value`
 	// should be exclusive.
 
-	if(NewType.getFlag(CUMULATIVE) && !OldType.getFlag(CUMULATIVE)){
-		ChangeObject(Obj, AMOUNT, Value);
+	if(NewType.get_flag(CUMULATIVE) && !OldType.get_flag(CUMULATIVE)){
+		change_object(Obj, AMOUNT, Value);
 	}
 
-	if(NewType.getFlag(MAGICFIELD) && !OldType.getFlag(MAGICFIELD)){
-		ChangeObject(Obj, RESPONSIBLE, Value);
+	if(NewType.get_flag(MAGICFIELD) && !OldType.get_flag(MAGICFIELD)){
+		change_object(Obj, RESPONSIBLE, Value);
 	}
 
-	if(NewType.getFlag(LIQUIDPOOL) && !OldType.getFlag(LIQUIDPOOL)){
-		ChangeObject(Obj, POOLLIQUIDTYPE, Value);
+	if(NewType.get_flag(LIQUIDPOOL) && !OldType.get_flag(LIQUIDPOOL)){
+		change_object(Obj, POOLLIQUIDTYPE, Value);
 	}
 
-	if(NewType.getFlag(LIQUIDCONTAINER) && !OldType.getFlag(LIQUIDCONTAINER)){
-		ChangeObject(Obj, CONTAINERLIQUIDTYPE, Value);
+	if(NewType.get_flag(LIQUIDCONTAINER) && !OldType.get_flag(LIQUIDCONTAINER)){
+		change_object(Obj, CONTAINERLIQUIDTYPE, Value);
 	}
 
-	if(NewType.getFlag(KEY) && !OldType.getFlag(KEY)){
-		ChangeObject(Obj, KEYNUMBER, Value);
+	if(NewType.get_flag(KEY) && !OldType.get_flag(KEY)){
+		change_object(Obj, KEYNUMBER, Value);
 	}
 
-	if(NewType.getFlag(RUNE) && !OldType.getFlag(RUNE)){
-		ChangeObject(Obj, CHARGES, Value);
+	if(NewType.get_flag(RUNE) && !OldType.get_flag(RUNE)){
+		change_object(Obj, CHARGES, Value);
 	}
 
-	AnnounceChangedObject(Obj, OBJECT_CHANGED);
-	NotifyTrades(Obj);
-	NotifyCreature(ObjOwnerID, Obj, ConType.isBodyContainer());
-	NotifyAllCreatures(Obj, OBJECT_CHANGED, NONE);
+	announce_changed_object(Obj, OBJECT_CHANGED);
+	notify_trades(Obj);
+	notify_creature(ObjOwnerID, Obj, ConType.is_body_container());
+	notify_all_creatures(Obj, OBJECT_CHANGED, NONE);
 }
 
-void Change(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value){
+void change(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value){
 	if(!Obj.exists()){
-		error("Change: Passed object does not exist.\n");
+		error("change: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
@@ -1650,64 +1650,64 @@ void Change(Object Obj, INSTANCEATTRIBUTE Attribute, uint32 Value){
 			|| Attribute == DOORQUESTVALUE
 			|| Attribute == ABSTELEPORTDESTINATION
 			|| Attribute == REMAININGEXPIRETIME){
-		error("Change: Cannot change attribute %d.\n", Attribute);
+		error("change: Cannot change attribute %d.\n", Attribute);
 		throw ERROR;
 	}
 
-	uint32 ObjOwnerID = GetObjectCreatureID(Obj);
-	if(ObjOwnerID != 0 && Attribute == AMOUNT && Value > Obj.getAttribute(AMOUNT)){
-		int OldWeight = GetWeight(Obj, -1);
-		CheckWeight(ObjOwnerID, Obj.getObjectType(), Value, OldWeight);
+	uint32 ObjOwnerID = get_object_creature_id(Obj);
+	if(ObjOwnerID != 0 && Attribute == AMOUNT && Value > Obj.get_attribute(AMOUNT)){
+		int OldWeight = get_weight(Obj, -1);
+		check_weight(ObjOwnerID, Obj.get_object_type(), Value, OldWeight);
 	}
 
-	ChangeObject(Obj, Attribute, Value);
+	change_object(Obj, Attribute, Value);
 	if(Attribute == AMOUNT
 			|| Attribute == CONTAINERLIQUIDTYPE
 			|| Attribute == POOLLIQUIDTYPE){
-		AnnounceChangedObject(Obj, OBJECT_CHANGED);
+		announce_changed_object(Obj, OBJECT_CHANGED);
 	}
 
-	NotifyTrades(Obj);
-	NotifyCreature(ObjOwnerID, Obj, Obj.getContainer().getObjectType().isBodyContainer());
+	notify_trades(Obj);
+	notify_creature(ObjOwnerID, Obj, Obj.get_container().get_object_type().is_body_container());
 }
 
-void Delete(Object Obj, int Count){
+void delete_op(Object Obj, int Count){
 	if(!Obj.exists()){
-		error("Delete: Passed object does not exist.\n");
+		error("delete_op: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.getFlag(CUMULATIVE) && Count > (int)Obj.getAttribute(AMOUNT)){
-		error("Delete: Invalid count %d of parts for cumulative object.\n", Count);
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.get_flag(CUMULATIVE) && Count > (int)Obj.get_attribute(AMOUNT)){
+		error("delete_op: Invalid count %d of parts for cumulative object.\n", Count);
 		throw ERROR;
 	}
 
 	Object Remainder = NONE;
-	if(ObjType.getFlag(CUMULATIVE) && Count != -1
-			&& Count < (int)Obj.getAttribute(AMOUNT)){
+	if(ObjType.get_flag(CUMULATIVE) && Count != -1
+			&& Count < (int)Obj.get_attribute(AMOUNT)){
 		Remainder = Obj;
-		Obj = SplitObject(Obj, Count);
+		Obj = split_object(Obj, Count);
 	}else{
-		NotifyTrades(Obj);
+		notify_trades(Obj);
 	}
 
-	if(ObjType.getFlag(CONTAINER) || ObjType.getFlag(CHEST)){
-		if(ObjType.getFlag(CONTAINER)){
-			CloseContainer(Obj, true);
+	if(ObjType.get_flag(CONTAINER) || ObjType.get_flag(CHEST)){
+		if(ObjType.get_flag(CONTAINER)){
+			close_container(Obj, true);
 		}
 
-		Object Help = GetFirstContainerObject(Obj);
+		Object Help = get_first_container_object(Obj);
 		while(Help != NONE){
-			Object Next = Help.getNextObject();
-			DeleteObject(Help);
+			Object Next = Help.get_next_object();
+			delete_object(Help);
 			Help = Next;
 		}
 	}
 
-	Object Con = Obj.getContainer();
-	uint32 ObjOwnerID = GetObjectCreatureID(Obj);
-	SeparationEvent(Obj, Con);
+	Object Con = Obj.get_container();
+	uint32 ObjOwnerID = get_object_creature_id(Obj);
+	separation_event(Obj, Con);
 
 	// BUG(fusion): Object may have been destroyed by the separation event? This
 	// looks suspicious because even if the object is properly destroyed, its
@@ -1717,79 +1717,79 @@ void Delete(Object Obj, int Count){
 	// after it is empty.
 	if(Obj.exists()){
 		if(Remainder == NONE){
-			AnnounceChangedObject(Obj, OBJECT_DELETED);
+			announce_changed_object(Obj, OBJECT_DELETED);
 		}
 
-		NotifyAllCreatures(Obj, OBJECT_DELETED, NONE);
-		if(ObjType.isCreatureContainer()){
+		notify_all_creatures(Obj, OBJECT_DELETED, NONE);
+		if(ObjType.is_creature_container()){
 			TCreature *Creature = GetCreature(ObjOwnerID);
 			if(Creature != NULL){
 				Creature->NotifyDelete();
 			}else{
-				error("Delete: Creature with invalid ID %d.\n", ObjOwnerID);
+				error("delete_op: Creature with invalid ID %d.\n", ObjOwnerID);
 			}
 		}
 
-		DeleteObject(Obj);
+		delete_object(Obj);
 
 		if(Remainder != NONE){
-			AnnounceChangedObject(Remainder, OBJECT_CHANGED);
-			NotifyTrades(Remainder);
+			announce_changed_object(Remainder, OBJECT_CHANGED);
+			notify_trades(Remainder);
 		}
 
-		NotifyCreature(ObjOwnerID, ObjType, Con.getObjectType().isBodyContainer());
+		notify_creature(ObjOwnerID, ObjType, Con.get_object_type().is_body_container());
 	}
 }
 
-void Empty(Object Con, int Remainder){
+void empty(Object Con, int Remainder){
 	if(!Con.exists()){
-		error("Empty: Passed container does not exist.\n");
+		error("empty: Passed container does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Remainder < 0){
-		error("Empty: Invalid remainder %d.\n", Remainder);
+		error("empty: Invalid remainder %d.\n", Remainder);
 		throw ERROR;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.getFlag(CONTAINER)){
-		error("Empty: Passed object is not a container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.get_flag(CONTAINER)){
+		error("empty: Passed object is not a container.\n");
 		throw ERROR;
 	}
 
-	CloseContainer(Con, true);
+	close_container(Con, true);
 
-	bool IsCorpse = ConType.getFlag(CORPSE);
-	int ObjectCount = CountObjectsInContainer(Con);
-	Object Help = GetFirstContainerObject(Con);
+	bool IsCorpse = ConType.get_flag(CORPSE);
+	int ObjectCount = count_objects_in_container(Con);
+	Object Help = get_first_container_object(Con);
 	while(Help != NONE && ObjectCount > Remainder){
-		Object Next = Help.getNextObject();
+		Object Next = Help.get_next_object();
 		if(IsCorpse){
-			Delete(Help, -1);
+			delete_op(Help, -1);
 		}else{
-			Move(0, Help, Con.getContainer(), -1, false, NONE);
+			move(0, Help, Con.get_container(), -1, false, NONE);
 		}
 		Help = Next;
 		ObjectCount -= 1;
 	}
 }
 
-void GraphicalEffect(int x, int y, int z, int Type){
-	AnnounceGraphicalEffect(x, y, z, Type);
+void graphical_effect(int x, int y, int z, int Type){
+	announce_graphical_effect(x, y, z, Type);
 }
 
-void GraphicalEffect(Object Obj, int Type){
+void graphical_effect(Object Obj, int Type){
 	if(Obj.exists()){
 		int ObjX, ObjY, ObjZ;
-		GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-		AnnounceGraphicalEffect(ObjX, ObjY, ObjZ, Type);
+		get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+		announce_graphical_effect(ObjX, ObjY, ObjZ, Type);
 	}
 }
 
-void TextualEffect(Object Obj, int Color, const char *Format, ...){
+void textual_effect(Object Obj, int Color, const char *Format, ...){
 	if(!Obj.exists()){
-		error("TextualEffect: Passed map container does not exist.\n");
+		error("textual_effect: Passed map container does not exist.\n");
 		return;
 	}
 
@@ -1800,49 +1800,49 @@ void TextualEffect(Object Obj, int Color, const char *Format, ...){
 	va_end(ap);
 
 	int ObjX, ObjY, ObjZ;
-	GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
-	AnnounceTextualEffect(ObjX, ObjY, ObjZ, Color, Buffer);
+	get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
+	announce_textual_effect(ObjX, ObjY, ObjZ, Color, Buffer);
 }
 
-void Missile(Object Start, Object Dest, int Type){
+void missile(Object Start, Object Dest, int Type){
 	if(!Start.exists()){
-		error("Missile: Passed start point does not exist.\n");
+		error("missile: Passed start point does not exist.\n");
 		return;
 	}
 
 	if(!Dest.exists()){
-		error("Missile: Passed destination point does not exist.\n");
+		error("missile: Passed destination point does not exist.\n");
 		return;
 	}
 
 	int StartX, StartY, StartZ;
 	int DestX, DestY, DestZ;
-	GetObjectCoordinates(Start, &StartX, &StartY, &StartZ);
-	GetObjectCoordinates(Dest, &DestX, &DestY, &DestZ);
-	AnnounceMissile(StartX, StartY, StartZ, DestX, DestY, DestZ, Type);
+	get_object_coordinates(Start, &StartX, &StartY, &StartZ);
+	get_object_coordinates(Dest, &DestX, &DestY, &DestZ);
+	announce_missile(StartX, StartY, StartZ, DestX, DestY, DestZ, Type);
 }
 
-void Look(uint32 CreatureID, Object Obj){
+void look(uint32 CreatureID, Object Obj){
 	// TODO(fusion): Honestly one of the first things we should focus on, after
 	// the server is running, is to implement a small stack buffer writer/formatter
 	// to retire `strcpy`, `strcat`, and `sprintf`.
 
 	TPlayer *Player = GetPlayer(CreatureID);
 	if(Player == NULL){
-		error("Look: Creature does not exist.\n");
+		error("look: Creature does not exist.\n");
 		throw ERROR;
 	}
 
 	if(!Obj.exists()){
-		error("Look: Object does not exist.\n");
+		error("look: Object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(ObjType.isCreatureContainer()){
+	ObjectType ObjType = Obj.get_object_type();
+	if(ObjType.is_creature_container()){
 		TCreature *Target = GetCreature(Obj);
 		if(Target == NULL){
-			error("Look: Object %d has no creature!\n", ObjType.TypeID);
+			error("look: Object %d has no creature!\n", ObjType.TypeID);
 			return;
 		}
 
@@ -1921,70 +1921,70 @@ void Look(uint32 CreatureID, Object Obj){
 		char Description[500] = {};
 		char Help[500] = {};
 
-		snprintf(Description, sizeof(Description), "You see %s", GetName(Obj));
+		snprintf(Description, sizeof(Description), "You see %s", get_name(Obj));
 
-		if(ObjType.getFlag(LEVELDOOR)){
+		if(ObjType.get_flag(LEVELDOOR)){
 			snprintf(Help, sizeof(Help), " for level %u",
-					Obj.getAttribute(DOORLEVEL));
+					Obj.get_attribute(DOORLEVEL));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(CONTAINER)){
+		if(ObjType.get_flag(CONTAINER)){
 			snprintf(Help, sizeof(Help), " (Vol:%u)",
-					ObjType.getAttribute(CAPACITY));
+					ObjType.get_attribute(CAPACITY));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(WEAPON)){
+		if(ObjType.get_flag(WEAPON)){
 			snprintf(Help, sizeof(Help), " (Atk:%u Def:%u)",
-					ObjType.getAttribute(WEAPONATTACKVALUE),
-					ObjType.getAttribute(WEAPONDEFENDVALUE));
+					ObjType.get_attribute(WEAPONATTACKVALUE),
+					ObjType.get_attribute(WEAPONDEFENDVALUE));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(THROW)){
+		if(ObjType.get_flag(THROW)){
 			snprintf(Help, sizeof(Help), " (Atk:%u Def:%u)",
-					ObjType.getAttribute(THROWATTACKVALUE),
-					ObjType.getAttribute(THROWDEFENDVALUE));
+					ObjType.get_attribute(THROWATTACKVALUE),
+					ObjType.get_attribute(THROWDEFENDVALUE));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(SHIELD)){
+		if(ObjType.get_flag(SHIELD)){
 			snprintf(Help, sizeof(Help), " (Def:%u)",
-					ObjType.getAttribute(SHIELDDEFENDVALUE));
+					ObjType.get_attribute(SHIELDDEFENDVALUE));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(ARMOR)){
+		if(ObjType.get_flag(ARMOR)){
 			snprintf(Help, sizeof(Help), " (Arm:%u)",
-					ObjType.getAttribute(ARMORVALUE));
+					ObjType.get_attribute(ARMORVALUE));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(KEY)){
+		if(ObjType.get_flag(KEY)){
 			snprintf(Help, sizeof(Help), " (Key:%04u)",
-					Obj.getAttribute(KEYNUMBER));
+					Obj.get_attribute(KEYNUMBER));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(KEYDOOR) && CheckRight(Player->ID, SHOW_KEYHOLE_NUMBERS)){
+		if(ObjType.get_flag(KEYDOOR) && check_right(Player->ID, SHOW_KEYHOLE_NUMBERS)){
 			snprintf(Help, sizeof(Help), " (Door:%04u)",
-					Obj.getAttribute(KEYHOLENUMBER));
+					Obj.get_attribute(KEYHOLENUMBER));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(SHOWDETAIL)){
-			if(ObjType.getFlag(WEAROUT) && ObjType.getAttribute(TOTALUSES) > 1){
-				uint32 RemainingUses = Obj.getAttribute(REMAININGUSES);
+		if(ObjType.get_flag(SHOWDETAIL)){
+			if(ObjType.get_flag(WEAROUT) && ObjType.get_attribute(TOTALUSES) > 1){
+				uint32 RemainingUses = Obj.get_attribute(REMAININGUSES);
 				snprintf(Help, sizeof(Help), " that has %u charge%s left",
 						RemainingUses, (RemainingUses != 1 ? "s" : ""));
 				strcat(Description, Help);
-			}else if(ObjType.getFlag(EXPIRE) || ObjType.getFlag(EXPIRESTOP)){
+			}else if(ObjType.get_flag(EXPIRE) || ObjType.get_flag(EXPIRESTOP)){
 				uint32 SecondsLeft;
-				if(ObjType.getFlag(EXPIRE)){
-					SecondsLeft = CronInfo(Obj, false);
+				if(ObjType.get_flag(EXPIRE)){
+					SecondsLeft = cron_info(Obj, false);
 				}else{
-					SecondsLeft = Obj.getAttribute(SAVEDEXPIRETIME);
+					SecondsLeft = Obj.get_attribute(SAVEDEXPIRETIME);
 				}
 
 				uint32 MinutesLeft = (SecondsLeft + 59) / 60;
@@ -1996,15 +1996,15 @@ void Look(uint32 CreatureID, Object Obj){
 				}
 				strcat(Description, Help);
 			}else{
-				error("Look: Object %d has flag SHOWDETAIL, but neither WEAROUT nor EXPIRE.\n", ObjType.TypeID);
+				error("look: Object %d has flag SHOWDETAIL, but neither WEAROUT nor EXPIRE.\n", ObjType.TypeID);
 			}
 		}
 
-		if(ObjType.getFlag(RESTRICTLEVEL) || ObjType.getFlag(RESTRICTPROFESSION)){
+		if(ObjType.get_flag(RESTRICTLEVEL) || ObjType.get_flag(RESTRICTPROFESSION)){
 			strcat(Description, ".\nIt can only be wielded by ");
-			if(ObjType.getFlag(RESTRICTPROFESSION)){
+			if(ObjType.get_flag(RESTRICTPROFESSION)){
 				int ProfessionCount = 0;
-				uint32 ProfessionMask = ObjType.getAttribute(PROFESSIONS);
+				uint32 ProfessionMask = ObjType.get_attribute(PROFESSIONS);
 
 				if(ProfessionMask & 1){
 					ProfessionCount += 1;
@@ -2041,19 +2041,19 @@ void Look(uint32 CreatureID, Object Obj){
 				strcpy(Help, "players");
 			}
 
-			if(ObjType.getFlag(RESTRICTLEVEL)){
+			if(ObjType.get_flag(RESTRICTLEVEL)){
 				char Temp[200] = {};
 				snprintf(Temp, sizeof(Temp), " of level %u or higher",
-						ObjType.getAttribute(MINIMUMLEVEL));
+						ObjType.get_attribute(MINIMUMLEVEL));
 				strcat(Help, Temp);
 			}
 
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(RUNE)){
+		if(ObjType.get_flag(RUNE)){
 			int MagicLevel;
-			GetMagicItemDescription(Obj, Help, &MagicLevel);
+			get_magic_item_description(Obj, Help, &MagicLevel);
 			if(MagicLevel != 0){
 				char Temp[200] = {};
 				snprintf(Temp, sizeof(Temp), " for magic level %d", MagicLevel);
@@ -2064,12 +2064,12 @@ void Look(uint32 CreatureID, Object Obj){
 			strcat(Description, Help);
 			strcat(Description, "\"-spell");
 
-			snprintf(Help, sizeof(Help), " (%ux)", Obj.getAttribute(CHARGES));
+			snprintf(Help, sizeof(Help), " (%ux)", Obj.get_attribute(CHARGES));
 			strcat(Description, Help);
 		}
 
-		if(ObjType.getFlag(BED)){
-			uint32 Sleeper = Obj.getAttribute(TEXTSTRING);
+		if(ObjType.get_flag(BED)){
+			uint32 Sleeper = Obj.get_attribute(TEXTSTRING);
 			if(Sleeper != 0){
 				snprintf(Help, sizeof(Help), ". %s is sleeping there",
 						GetDynamicString(Sleeper));
@@ -2077,68 +2077,68 @@ void Look(uint32 CreatureID, Object Obj){
 			}
 		}
 
-		if(ObjType.getFlag(NAMEDOOR)){
+		if(ObjType.get_flag(NAMEDOOR)){
 			int ObjX, ObjY, ObjZ;
-			GetObjectCoordinates(Obj, &ObjX, &ObjY, &ObjZ);
+			get_object_coordinates(Obj, &ObjX, &ObjY, &ObjZ);
 
-			uint16 HouseID = GetHouseID(ObjX, ObjY, ObjZ);
+			uint16 HouseID = get_house_id(ObjX, ObjY, ObjZ);
 			if(HouseID != 0){
-				const char *HouseOwner = GetHouseOwner(HouseID);
+				const char *HouseOwner = get_house_owner(HouseID);
 				if(HouseOwner == NULL || HouseOwner[0] == 0){
 					HouseOwner = "Nobody";
 				}
 
 				snprintf(Help, sizeof(Help),
 						". It belongs to house '%s'. %s owns this house",
-						GetHouseName(HouseID), HouseOwner);
+						get_house_name(HouseID), HouseOwner);
 				strcat(Description, Help);
 			}else{
-				error("Look: NameDoor at [%d,%d,%d] does not belong to any house.\n", ObjX, ObjY, ObjZ);
+				error("look: NameDoor at [%d,%d,%d] does not belong to any house.\n", ObjX, ObjY, ObjZ);
 			}
 		}
 
 		strcat(Description, ".");
 
-		if((ObjType.getFlag(LIQUIDCONTAINER) && Obj.getAttribute(CONTAINERLIQUIDTYPE) == LIQUID_NONE)
-		|| (ObjType.getFlag(LIQUIDPOOL)      && Obj.getAttribute(POOLLIQUIDTYPE)      == LIQUID_NONE)){
+		if((ObjType.get_flag(LIQUIDCONTAINER) && Obj.get_attribute(CONTAINERLIQUIDTYPE) == LIQUID_NONE)
+		|| (ObjType.get_flag(LIQUIDPOOL)      && Obj.get_attribute(POOLLIQUIDTYPE)      == LIQUID_NONE)){
 			strcat(Description, " It is empty.");
 		}
 
 		// TODO(fusion): This looks like an inlined function because we'd have
 		// already returned at the beginning if `CreatureID` was zero.
-		if(CreatureID == 0 || ObjectInRange(CreatureID, Obj, 1)){
-			if(ObjType.getFlag(TAKE) && GetWeight(Obj, -1) > 0){
-				int ObjWeight = GetCompleteWeight(Obj);
-				bool Multiple = ObjType.getFlag(CUMULATIVE)
-						&& Obj.getAttribute(AMOUNT) > 1
-						&& IsCountable(ObjType.getName(1));
+		if(CreatureID == 0 || object_in_range(CreatureID, Obj, 1)){
+			if(ObjType.get_flag(TAKE) && get_weight(Obj, -1) > 0){
+				int ObjWeight = get_complete_weight(Obj);
+				bool Multiple = ObjType.get_flag(CUMULATIVE)
+						&& Obj.get_attribute(AMOUNT) > 1
+						&& IsCountable(ObjType.get_name(1));
 				snprintf(Help, sizeof(Help), "\n%s %d.%02d oz.",
 						(Multiple ? "They weigh" : "It weighs"),
 						(ObjWeight / 100), (ObjWeight % 100));
 				strcat(Description, Help);
 			}
 
-			const char *ObjInfo = GetInfo(Obj);
+			const char *ObjInfo = get_info(Obj);
 			if(ObjInfo != NULL){
 				snprintf(Help, sizeof(Help), "\n%s.", ObjInfo);
 				strcat(Description, Help);
 			}
 		}
 
-		if(ObjType.getFlag(TEXT)){
-			int FontSize = (int)ObjType.getAttribute(FONTSIZE);
+		if(ObjType.get_flag(TEXT)){
+			int FontSize = (int)ObjType.get_attribute(FONTSIZE);
 			if(FontSize == 0){
-				uint32 Text = Obj.getAttribute(TEXTSTRING);
+				uint32 Text = Obj.get_attribute(TEXTSTRING);
 				if(Text != 0){
 					snprintf(Help, sizeof(Help), "\n%s.", GetDynamicString(Text));
 					strcat(Description, Help);
 				}
 			}else if(FontSize >= 2){
-				uint32 Text = Obj.getAttribute(TEXTSTRING);
+				uint32 Text = Obj.get_attribute(TEXTSTRING);
 				if(Text != 0){
 					// TODO(fusion): Again, `CreatureID` can't be zero here.
-					if(CreatureID == 0 || ObjectInRange(CreatureID, Obj, FontSize)){
-						uint32 Editor = Obj.getAttribute(EDITOR);
+					if(CreatureID == 0 || object_in_range(CreatureID, Obj, FontSize)){
+						uint32 Editor = Obj.get_attribute(EDITOR);
 						if(Editor != 0){
 							snprintf(Help, sizeof(Help), "\n%s has written: %s",
 									GetDynamicString(Editor),
@@ -2161,7 +2161,7 @@ void Look(uint32 CreatureID, Object Obj){
 	}
 }
 
-void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, bool CheckSpamming){
+void talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, bool CheckSpamming){
 	// TODO(fusion): `Text` was originally `char*`, but I wanted to improve
 	// string handling overall and modifying string parameters is a bad idea,
 	// specially when you don't know their capacity.
@@ -2172,18 +2172,18 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("Talk: Passed creature %d does not exist.\n", CreatureID);
+		error("talk: Passed creature %d does not exist.\n", CreatureID);
 		throw ERROR;
 	}
 
 	if(Text == NULL){
-		error("Talk: Text is NULL (speaker: %s, mode: %d).\n", Creature->Name, Mode);
+		error("talk: Text is NULL (speaker: %s, mode: %d).\n", Creature->Name, Mode);
 		throw ERROR;
 	}
 
 	int TextLen = (int)strlen(Text);
 	if(TextLen >= 256){
-		error("Talk: Text is too long (speaker: %s, length: %d).\n", Creature->Name, TextLen);
+		error("talk: Text is too long (speaker: %s, length: %d).\n", Creature->Name, TextLen);
 		throw ERROR;
 	}
 
@@ -2195,7 +2195,7 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		// TODO(fusion): Check if `Addressee` is NULL?
 		Channel = atoi(Addressee);
 		if(Channel < 0 || Channel >= Channels){
-			error("Talk: Invalid channel %d.\n", Channel);
+			error("talk: Invalid channel %d.\n", Channel);
 			return;
 		}
 	}
@@ -2228,7 +2228,7 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 
 		int SpellType = 0;
 		if(Muting == 0){
-			SpellType = CheckForSpell(CreatureID, Text);
+			SpellType = check_for_spell(CreatureID, Text);
 			if(SpellType < 0 || SpellType == 1 || SpellType == 5){
 				return;
 			}
@@ -2260,7 +2260,7 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		}
 
 		if(CheckSpamming && SpellType == 0 && TalkMuteable
-				&& !CheckRight(Player->ID, NO_BANISHMENT)){
+				&& !check_right(Player->ID, NO_BANISHMENT)){
 			Muting = Player->RecordTalk();
 			if(Muting > 0){
 				SendMessage(Player->Connection, TALK_FAILURE_MESSAGE,
@@ -2279,24 +2279,24 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			|| Mode == TALK_ANONYMOUS_MESSAGE){
 		// TODO(fusion): These assumed the creature was a player but it wasn't checked.
 		if(Creature->Type != PLAYER){
-			error("Talk: Expected player creature for message talk modes.");
+			error("talk: Expected player creature for message talk modes.");
 			throw ERROR;
 		}
 
 		if(Addressee == NULL){
-			error("Talk: Addressee for message not specified.\n");
+			error("talk: Addressee for message not specified.\n");
 			throw ERROR;
 		}
 
 		TPlayer *Player = (TPlayer*)Creature;
 		TPlayer *Receiver;
-		bool IgnoreGamemasters = !CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL);
+		bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
 		switch(IdentifyPlayer(Addressee, false, IgnoreGamemasters, &Receiver)){
 			case  0:	break; // PLAYERFOUND ?
 			case -1:	throw PLAYERNOTONLINE;
 			case -2:	throw NAMEAMBIGUOUS;
 			default:{
-				error("Talk: Invalid return value from IdentifyPlayer.\n");
+				error("talk: Invalid return value from IdentifyPlayer.\n");
 				throw ERROR;
 			}
 		}
@@ -2312,9 +2312,9 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 		}
 
 		if(Mode != TALK_ANONYMOUS_MESSAGE){
-			uint32 StatementID = LogCommunication(CreatureID, Mode, 0, Text);
-			LogListener(StatementID, Player);
-			SendTalk(Receiver->Connection, LogListener(StatementID, Receiver),
+			uint32 StatementID = log_communication(CreatureID, Mode, 0, Text);
+			log_listener(StatementID, Player);
+			SendTalk(Receiver->Connection, log_listener(StatementID, Receiver),
 					(Mode == TALK_GAMEMASTER_ANSWER ? "Gamemaster" : Player->Name),
 					Mode, Text, 0);
 		}else{
@@ -2331,7 +2331,7 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			|| Mode == TALK_ANIMAL_LOUD){
 		uint32 StatementID;
 		if(Creature->Type == PLAYER){
-			StatementID = LogCommunication(CreatureID, Mode, 0, Text);
+			StatementID = log_communication(CreatureID, Mode, 0, Text);
 		}else{
 			StatementID = 0;
 		}
@@ -2386,17 +2386,17 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			}
 
 			SendTalk(Spectator->Connection,
-					LogListener(StatementID, Spectator),
+					log_listener(StatementID, Spectator),
 					Creature->Name, Mode,
 					Creature->posx, Creature->posy, Creature->posz, Text);
 		}
 	}else if(Mode == TALK_GAMEMASTER_BROADCAST){
-		uint32 StatementID = LogCommunication(CreatureID, Mode, 0, Text);
+		uint32 StatementID = log_communication(CreatureID, Mode, 0, Text);
 		TConnection *Connection = GetFirstConnection();
 		while(Connection != NULL){
 			if(Connection->Live()){
 				SendTalk(Connection,
-						LogListener(StatementID, Connection->GetPlayer()),
+						log_listener(StatementID, Connection->GetPlayer()),
 						Creature->Name, Mode, Text, 0);
 			}
 
@@ -2417,13 +2417,13 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			|| Mode == TALK_ANONYMOUS_CHANNELCALL){
 		uint32 StatementID = 0;
 		if(Mode != TALK_ANONYMOUS_CHANNELCALL){
-			StatementID = LogCommunication(CreatureID, Mode, Channel, Text);
+			StatementID = log_communication(CreatureID, Mode, Channel, Text);
 		}
 
 		// TODO(fusion): We should probably cleanup these global iterators.
-		for(uint32 SubscriberID = GetFirstSubscriber(Channel);
+		for(uint32 SubscriberID = get_first_subscriber(Channel);
 				SubscriberID != 0;
-				SubscriberID = GetNextSubscriber()){
+				SubscriberID = get_next_subscriber()){
 			TPlayer *Subscriber = GetPlayer(SubscriberID);
 			if(Subscriber == NULL){
 				continue;
@@ -2437,15 +2437,15 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 			}
 
 			// TODO(fusion): There was some weird logic here to select the statement
-			// id and it didn't seem to make a difference since `LogListener` was
+			// id and it didn't seem to make a difference since `log_listener` was
 			// always called, regardless.
 			SendTalk(Subscriber->Connection,
-					LogListener(StatementID, Subscriber),
+					log_listener(StatementID, Subscriber),
 					Creature->Name, Mode, Channel, Text);
 		}
 	}else{
 		// TODO(fusion): Put private messages into this if-else chain.
-		error("Talk: Invalid talk mode %d.\n", Mode);
+		error("talk: Invalid talk mode %d.\n", Mode);
 	}
 
 	if(Mode == TALK_SAY && Creature->Type == PLAYER){
@@ -2458,7 +2458,7 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 
 			TCreature *Spectator = GetCreature(SpectatorID);
 			if(Spectator == NULL){
-				error("Talk: Creature does not exist.\n");
+				error("talk: Creature does not exist.\n");
 				continue;
 			}
 
@@ -2469,189 +2469,189 @@ void Talk(uint32 CreatureID, int Mode, const char *Addressee, const char *Text, 
 	}
 }
 
-void Use(uint32 CreatureID, Object Obj1, Object Obj2, uint8 Info){
+void use(uint32 CreatureID, Object Obj1, Object Obj2, uint8 Info){
 	if(!Obj1.exists()){
-		error("Use: Passed object Obj 1 does not exist.\n");
+		error("use: Passed object Obj 1 does not exist.\n");
 		throw ERROR;
 	}
 
 	if(Obj2 != NONE && !Obj2.exists()){
-		error("Use: Passed object Obj 2 does not exist.\n");
+		error("use: Passed object Obj 2 does not exist.\n");
 		throw ERROR;
 	}
 
-	CheckTopUseObject(CreatureID, Obj1);
-	if(!ObjectAccessible(CreatureID, Obj1, 1)){
+	check_top_use_object(CreatureID, Obj1);
+	if(!object_accessible(CreatureID, Obj1, 1)){
 		throw NOTACCESSIBLE;
 	}
 
-	ObjectType ObjType1 = Obj1.getObjectType();
+	ObjectType ObjType1 = Obj1.get_object_type();
 	if(Obj2 != NONE){
 		// TODO(fusion): Is this correct?
-		if(!ObjType1.getFlag(DISTUSE)){
-			CheckTopMultiuseObject(CreatureID, Obj2);
+		if(!ObjType1.get_flag(DISTUSE)){
+			check_top_multiuse_object(CreatureID, Obj2);
 		}
 
-		if(!ObjectAccessible(CreatureID, Obj2, 1)){
-			if(!ObjType1.getFlag(DISTUSE)){
+		if(!object_accessible(CreatureID, Obj2, 1)){
+			if(!ObjType1.get_flag(DISTUSE)){
 				throw NOTACCESSIBLE;
 			}
 
 			TCreature *Creature = GetCreature(CreatureID);
 			if(Creature == NULL){
-				error("Use: Causing creature does not exist.\n");
+				error("use: Causing creature does not exist.\n");
 				throw ERROR;
 			}
 
 			int ObjX2, ObjY2, ObjZ2;
-			GetObjectCoordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
+			get_object_coordinates(Obj2, &ObjX2, &ObjY2, &ObjZ2);
 			if(Creature->posz > ObjZ2){
 				throw UPSTAIRS;
 			}else if(Creature->posz < ObjZ2){
 				throw DOWNSTAIRS;
 			}
 
-			if(!ThrowPossible(Creature->posx, Creature->posy, Creature->posz, ObjX2, ObjY2, ObjZ2, 0)){
+			if(!throw_possible(Creature->posx, Creature->posy, Creature->posz, ObjX2, ObjY2, ObjZ2, 0)){
 				throw CANNOTTHROW;
 			}
 		}
 	}
 
-	if(ObjType1.getFlag(CONTAINER)){
-		UseContainer(CreatureID, Obj1, Info);
-	}else if(ObjType1.getFlag(CHEST)){
-		UseChest(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(LIQUIDCONTAINER)){
-		UseLiquidContainer(CreatureID, Obj1, Obj2);
-	}else if(ObjType1.getFlag(FOOD)){
-		UseFood(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(WRITE) || ObjType1.getFlag(WRITEONCE)){
-		UseTextObject(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(INFORMATION)){
-		UseAnnouncer(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(RUNE)){
-		UseMagicItem(CreatureID, Obj1, Obj2);
-	}else if(ObjType1.getFlag(KEY)){
-		UseKeyDoor(CreatureID, Obj1, Obj2);
-	}else if(ObjType1.getFlag(NAMEDOOR)){
-		UseNameDoor(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(LEVELDOOR)){
-		UseLevelDoor(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(QUESTDOOR)){
-		UseQuestDoor(CreatureID, Obj1);
-	}else if(ObjType1.isCloseWeapon()
+	if(ObjType1.get_flag(CONTAINER)){
+		use_container(CreatureID, Obj1, Info);
+	}else if(ObjType1.get_flag(CHEST)){
+		use_chest(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(LIQUIDCONTAINER)){
+		use_liquid_container(CreatureID, Obj1, Obj2);
+	}else if(ObjType1.get_flag(FOOD)){
+		use_food(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(WRITE) || ObjType1.get_flag(WRITEONCE)){
+		use_text_object(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(INFORMATION)){
+		use_announcer(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(RUNE)){
+		use_magic_item(CreatureID, Obj1, Obj2);
+	}else if(ObjType1.get_flag(KEY)){
+		use_key_door(CreatureID, Obj1, Obj2);
+	}else if(ObjType1.get_flag(NAMEDOOR)){
+		use_name_door(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(LEVELDOOR)){
+		use_level_door(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(QUESTDOOR)){
+		use_quest_door(CreatureID, Obj1);
+	}else if(ObjType1.is_close_weapon()
 			&& Obj2 != NONE
-			&& Obj2.getObjectType().getFlag(DESTROY)){
-		UseWeapon(CreatureID, Obj1, Obj2);
-	}else if(ObjType1.getFlag(CHANGEUSE)){
-		UseChangeObject(CreatureID, Obj1);
-	}else if(ObjType1.getFlag(USEEVENT)){
+			&& Obj2.get_object_type().get_flag(DESTROY)){
+		use_weapon(CreatureID, Obj1, Obj2);
+	}else if(ObjType1.get_flag(CHANGEUSE)){
+		use_change_object(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(USEEVENT)){
 		if(Obj2 != NONE){
-			UseObjects(CreatureID, Obj1, Obj2);
+			use_objects(CreatureID, Obj1, Obj2);
 		}else{
-			UseObject(CreatureID, Obj1);
+			use_object(CreatureID, Obj1);
 		}
-	}else if(ObjType1.getFlag(TEXT)
-			&& ObjType1.getAttribute(FONTSIZE) == 1){
-		UseTextObject(CreatureID, Obj1);
+	}else if(ObjType1.get_flag(TEXT)
+			&& ObjType1.get_attribute(FONTSIZE) == 1){
+		use_text_object(CreatureID, Obj1);
 	}else{
 		throw NOTUSABLE;
 	}
 }
 
-void Turn(uint32 CreatureID, Object Obj){
+void turn(uint32 CreatureID, Object Obj){
 	if(!Obj.exists()){
-		error("Turn: Passed object does not exist.\n");
+		error("turn: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	if(!ObjectAccessible(CreatureID, Obj, 1)){
+	if(!object_accessible(CreatureID, Obj, 1)){
 		throw NOTACCESSIBLE;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(ROTATE)){
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(ROTATE)){
 		throw NOTTURNABLE;
 	}
 
-	ObjectType RotateTarget = (int)ObjType.getAttribute(ROTATETARGET);
+	ObjectType RotateTarget = (int)ObjType.get_attribute(ROTATETARGET);
 	if(RotateTarget == ObjType){
-		error("Turn: Object %d is destroyed by rotation.\n", ObjType.TypeID);
+		error("turn: Object %d is destroyed by rotation.\n", ObjType.TypeID);
 	}
 
-	Change(Obj, RotateTarget, 0);
+	change(Obj, RotateTarget, 0);
 }
 
-void CreatePool(Object Con, ObjectType Type, uint32 Value){
+void create_pool(Object Con, ObjectType Type, uint32 Value){
 	if(!Con.exists()){
-		error("CreatePool: Passed map container does not exist.\n");
+		error("create_pool: Passed map container does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ConType = Con.getObjectType();
-	if(!ConType.isMapContainer()){
-		error("CreatePool: Passed object is not a map container.\n");
+	ObjectType ConType = Con.get_object_type();
+	if(!ConType.is_map_container()){
+		error("create_pool: Passed object is not a map container.\n");
 		throw ERROR;
 	}
 
 	// NOTE(fusion): There can be no liquid pools on fields with other BOTTOM
 	// objects, with the exception of other liquid pools, in which case the new
 	// liquid pool would replace the old one.
-	Object Help = GetFirstContainerObject(Con);
+	Object Help = get_first_container_object(Con);
 	while(Help != NONE){
-		Object Next = Help.getNextObject();
-		ObjectType HelpType = Help.getObjectType();
-		if(HelpType.getFlag(BOTTOM)){
-			if(!HelpType.getFlag(LIQUIDPOOL)){
+		Object Next = Help.get_next_object();
+		ObjectType HelpType = Help.get_object_type();
+		if(HelpType.get_flag(BOTTOM)){
+			if(!HelpType.get_flag(LIQUIDPOOL)){
 				throw NOROOM;
 			}
 
 			try{
-				Delete(Help, -1);
+				delete_op(Help, -1);
 			}catch(RESULT r){
-				error("CreatePool: Exception %d while deleting the old pool.\n", r);
+				error("create_pool: Exception %d while deleting the old pool.\n", r);
 			}
 		}
 		Help = Next;
 	}
 
-	Create(Con, Type, Value);
+	create(Con, Type, Value);
 }
 
-void EditText(uint32 CreatureID, Object Obj, const char *Text){
+void edit_text(uint32 CreatureID, Object Obj, const char *Text){
 	if(!Obj.exists()){
-		error("EditText: Passed object does not exist.\n");
+		error("edit_text: Passed object does not exist.\n");
 		throw ERROR;
 	}
 
-	ObjectType ObjType = Obj.getObjectType();
-	if(!ObjType.getFlag(WRITE) && (!ObjType.getFlag(WRITEONCE) || Obj.getAttribute(TEXTSTRING) != 0)){
-		error("EditText: Object is not writable.\n");
+	ObjectType ObjType = Obj.get_object_type();
+	if(!ObjType.get_flag(WRITE) && (!ObjType.get_flag(WRITEONCE) || Obj.get_attribute(TEXTSTRING) != 0)){
+		error("edit_text: Object is not writable.\n");
 		throw ERROR;
 	}
 
 	TCreature *Creature = GetCreature(CreatureID);
 	if(Creature == NULL){
-		error("EditText: Creature does not exist.\n");
+		error("edit_text: Creature does not exist.\n");
 		throw ERROR;
 	}
 
 	int TextLength = (int)strlen(Text);
-	int MaxLength = (ObjType.getFlag(WRITE)
-			? (int)ObjType.getAttribute(MAXLENGTH)
-			: (int)ObjType.getAttribute(MAXLENGTHONCE));
+	int MaxLength = (ObjType.get_flag(WRITE)
+			? (int)ObjType.get_attribute(MAXLENGTH)
+			: (int)ObjType.get_attribute(MAXLENGTHONCE));
 	if(TextLength >= MaxLength){
 		throw TOOLONG;
 	}
 
-	// TODO(fusion): Similar to maybe inlined function in `Look`.
-	// TODO(fusion): Same as in `Look`. `CreatureID` can't be zero here or we'd
+	// TODO(fusion): Similar to maybe inlined function in `look`.
+	// TODO(fusion): Same as in `look`. `CreatureID` can't be zero here or we'd
 	// have already returned so its probably some inlined function.
-	if(CreatureID != 0 && !ObjectAccessible(CreatureID, Obj, 1)){
+	if(CreatureID != 0 && !object_accessible(CreatureID, Obj, 1)){
 		throw NOTACCESSIBLE;
 	}
 
-	uint32 ObjText = Obj.getAttribute(TEXTSTRING);
+	uint32 ObjText = Obj.get_attribute(TEXTSTRING);
 	if((ObjText != 0 && strcmp(GetDynamicString(ObjText), Text) == 0)
 			|| (ObjText == 0 && Text[0] == 0)){
 		print(3, "Text has not changed.\n");
@@ -2659,13 +2659,13 @@ void EditText(uint32 CreatureID, Object Obj, const char *Text){
 	}
 
 	DeleteDynamicString(ObjText);
-	Change(Obj, TEXTSTRING, AddDynamicString(Text));
+	change(Obj, TEXTSTRING, AddDynamicString(Text));
 
-	DeleteDynamicString(Obj.getAttribute(EDITOR));
-	Change(Obj, EDITOR, AddDynamicString(Creature->Name));
+	DeleteDynamicString(Obj.get_attribute(EDITOR));
+	change(Obj, EDITOR, AddDynamicString(Creature->Name));
 }
 
-Object CreateAtCreature(uint32 CreatureID, ObjectType Type, uint32 Value){
+Object create_at_creature(uint32 CreatureID, ObjectType Type, uint32 Value){
 	// TODO(fusion): Bruhh...
 
 	TCreature *Creature = GetCreature(CreatureID);
@@ -2676,28 +2676,28 @@ Object CreateAtCreature(uint32 CreatureID, ObjectType Type, uint32 Value){
 	}
 
 	try{
-		CheckWeight(CreatureID, Type, Value, 0);
+		check_weight(CreatureID, Type, Value, 0);
 	}catch(RESULT r){
-		return Create(GetMapContainer(Creature->CrObject), Type, Value);
+		return create(get_map_container(Creature->CrObject), Type, Value);
 	}
 
 	Object Obj = NONE;
-	bool CheckContainers = Type.getFlag(MOVEMENTEVENT);
+	bool CheckContainers = Type.get_flag(MOVEMENTEVENT);
 	for(int i = 0; i < 2; i += 1){
 		bool TooHeavy = false;
 		for(int Position = INVENTORY_FIRST;
 				Position <= INVENTORY_LAST;
 				Position += 1){
 			try{
-				Object BodyObj = GetBodyObject(CreatureID, Position);
+				Object BodyObj = get_body_object(CreatureID, Position);
 				if(CheckContainers){
-					if(BodyObj != NONE && BodyObj.getObjectType().getFlag(CONTAINER)){
-						Obj = Create(BodyObj, Type, Value);
+					if(BodyObj != NONE && BodyObj.get_object_type().get_flag(CONTAINER)){
+						Obj = create(BodyObj, Type, Value);
 						break;
 					}
 				}else{
 					if(BodyObj == NONE){
-						Obj = Create(GetBodyContainer(CreatureID, Position), Type, Value);
+						Obj = create(get_body_container(CreatureID, Position), Type, Value);
 						break;
 					}
 				}
@@ -2719,70 +2719,70 @@ Object CreateAtCreature(uint32 CreatureID, ObjectType Type, uint32 Value){
 	}
 
 	if(Obj == NONE){
-		Obj = Create(GetMapContainer(Creature->CrObject), Type, Value);
+		Obj = create(get_map_container(Creature->CrObject), Type, Value);
 	}
 
 	return Obj;
 }
 
-void DeleteAtCreature(uint32 CreatureID, ObjectType Type, int Amount, uint32 Value){
+void delete_at_creature(uint32 CreatureID, ObjectType Type, int Amount, uint32 Value){
 	while(Amount > 0){
-		Object Obj = GetInventoryObject(CreatureID, Type, Value);
+		Object Obj = get_inventory_object(CreatureID, Type, Value);
 		if(Obj == NONE){
-			error("DeleteAtCreature: No object found.\n");
+			error("delete_at_creature: No object found.\n");
 			throw ERROR;
 		}
 
-		if(Type.getFlag(CUMULATIVE)){
-			int ObjAmount = (int)Obj.getAttribute(AMOUNT);
+		if(Type.get_flag(CUMULATIVE)){
+			int ObjAmount = (int)Obj.get_attribute(AMOUNT);
 			if(ObjAmount <= Amount){
-				Delete(Obj, -1);
+				delete_op(Obj, -1);
 				Amount -= ObjAmount;
 			}else{
-				Change(Obj, AMOUNT, (ObjAmount - Amount));
+				change(Obj, AMOUNT, (ObjAmount - Amount));
 				Amount = 0;
 			}
 		}else{
-			Delete(Obj, -1);
+			delete_op(Obj, -1);
 			Amount -= 1;
 		}
 	}
 }
 
-void ProcessCronSystem(void){
+void process_cron_system(void){
 	while(true){
-		Object Obj = CronCheck();
+		Object Obj = cron_check();
 		if(Obj == NONE){
 			break;
 		}
 
 		try{
-			ObjectType ObjType = Obj.getObjectType();
-			ObjectType ExpireTarget = (int)ObjType.getAttribute(EXPIRETARGET);
-			if(ObjType.getFlag(CONTAINER)){
+			ObjectType ObjType = Obj.get_object_type();
+			ObjectType ExpireTarget = (int)ObjType.get_attribute(EXPIRETARGET);
+			if(ObjType.get_flag(CONTAINER)){
 				int Remainder = 0;
-				if(!ExpireTarget.isMapContainer() && ExpireTarget.getFlag(CONTAINER)){
-					Remainder = (int)ExpireTarget.getAttribute(CAPACITY);
+				if(!ExpireTarget.is_map_container() && ExpireTarget.get_flag(CONTAINER)){
+					Remainder = (int)ExpireTarget.get_attribute(CAPACITY);
 				}
 
-				Empty(Obj, Remainder);
+				empty(Obj, Remainder);
 			}
 
-			Change(Obj, ExpireTarget, 0);
+			change(Obj, ExpireTarget, 0);
 		}catch(RESULT r){
-			error("ProcessCronSystem: Exception %d while decaying %d.\n",
-					r, Obj.getObjectType().TypeID);
+			error("process_cron_system: Exception %d while decaying %d.\n",
+					r, Obj.get_object_type().TypeID);
 
 			try{
-				Delete(Obj, -1);
+				delete_op(Obj, -1);
 			}catch(RESULT r){
-				error("ProcessCronSystem: Cannot delete object - exception %d.\n", r);
+				error("process_cron_system: Cannot delete object - exception %d.\n", r);
 			}
 		}
 	}
 }
 
-bool SectorRefreshable(int SectorX, int SectorY, int SectorZ){
+bool sector_refreshable(int SectorX, int SectorY, int SectorZ){
 	// TODO(fusion): Have the sector size defined as a constant in `map.hh`?
 	//constexpr int SectorSize = 32;
 	int SearchRadiusX = 32 - 1;
@@ -2798,7 +2798,7 @@ bool SectorRefreshable(int SectorX, int SectorY, int SectorZ){
 
 		TPlayer *Player = GetPlayer(CharacterID);
 		if(Player == NULL){
-			error("SectorRefreshable: Creature does not exist.\n");
+			error("sector_refreshable: Creature does not exist.\n");
 			continue;
 		}
 
@@ -2810,15 +2810,15 @@ bool SectorRefreshable(int SectorX, int SectorY, int SectorZ){
 	return true;
 }
 
-void RefreshSector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int Count){
-	if(!SectorRefreshable(SectorX, SectorY, SectorZ)){
+void refresh_sector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int Count){
+	if(!sector_refreshable(SectorX, SectorY, SectorZ)){
 		return;
 	}
 
 	TReadBuffer Buffer(Data, Count);
-	RefreshSector(SectorX, SectorY, SectorZ, &Buffer);
+	refresh_sector(SectorX, SectorY, SectorZ, &Buffer);
 
-	// TODO(fusion): This function is very similar to `ApplyPatch`.
+	// TODO(fusion): This function is very similar to `apply_patch`.
 	int SearchRadiusX = 32 / 2;
 	int SearchRadiusY = 32 / 2;
 	int SearchCenterX = SectorX * 32 + (32 / 2);
@@ -2832,7 +2832,7 @@ void RefreshSector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int
 
 		TCreature *Creature = GetCreature(CreatureID);
 		if(Creature == NULL){
-			error("RefreshSector: Creature does not exist.\n");
+			error("refresh_sector: Creature does not exist.\n");
 			continue;
 		}
 
@@ -2844,19 +2844,19 @@ void RefreshSector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int
 		int FieldX = Creature->posx;
 		int FieldY = Creature->posy;
 		int FieldZ = Creature->posz;
-		Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+		Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 		while(Obj != NONE){
-			ObjectType ObjType = Obj.getObjectType();
-			if(!ObjType.isCreatureContainer() && ObjType.getFlag(UNPASS)){
+			ObjectType ObjType = Obj.get_object_type();
+			if(!ObjType.is_creature_container() && ObjType.get_flag(UNPASS)){
 				FieldBlocked = true;
 				break;
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 
 		if(FieldBlocked){
 			try{
-				if(!SearchFreeField(&FieldX, &FieldY, &FieldZ, 1, 0, false)){
+				if(!search_free_field(&FieldX, &FieldY, &FieldZ, 1, 0, false)){
 					if(Creature->Type == NPC){
 						print(2, "NPC at [%d,%d,%d] must be reset to its start.\n", FieldX, FieldY, FieldZ);
 						FieldX = Creature->startx;
@@ -2872,21 +2872,21 @@ void RefreshSector(int SectorX, int SectorY, int SectorZ, const uint8 *Data, int
 					}
 				}
 
-				Object MapCon = GetMapContainer(FieldX, FieldY, FieldZ);
-				Move(0, Creature->CrObject, MapCon, -1, false, NONE);
+				Object MapCon = get_map_container(FieldX, FieldY, FieldZ);
+				move(0, Creature->CrObject, MapCon, -1, false, NONE);
 			}catch(RESULT r){
-				error("RefreshSector: Exception %d while repositioning the monster.\n", r);
+				error("refresh_sector: Exception %d while repositioning the monster.\n", r);
 			}
 		}
 	}
 }
 
-void RefreshMap(void){
+void refresh_map(void){
 	TDynamicWriteBuffer HelpBuffer(kb(64));
 	for(int SectorZ = SectorZMin; SectorZ <= SectorZMax; SectorZ += 1)
 	for(int SectorY = SectorYMin; SectorY <= SectorYMax; SectorY += 1)
 	for(int SectorX = SectorXMin; SectorX <= SectorXMax; SectorX += 1){
-		if(!SectorRefreshable(SectorX, SectorY, SectorZ)){
+		if(!sector_refreshable(SectorX, SectorY, SectorZ)){
 			continue;
 		}
 
@@ -2902,55 +2902,55 @@ void RefreshMap(void){
 		bool Refreshable = false;
 		HelpBuffer.Position = 0;
 		try{
-			TReadScriptFile Script;
+			ReadScriptFile Script;
 			Script.open(FileName);
 			while(true){
-				Script.nextToken();
+				Script.next_token();
 				if(Script.Token == ENDOFFILE){
 					Script.close();
 					break;
 				}
 
-				if(Script.Token == SPECIAL && Script.getSpecial() == ','){
+				if(Script.Token == SPECIAL && Script.get_special() == ','){
 					continue;
 				}
 
 				if(Script.Token == BYTES){
-					uint8 *SectorOffset = Script.getBytesequence();
+					uint8 *SectorOffset = Script.get_bytesequence();
 					OffsetX = (int)SectorOffset[0];
 					OffsetY = (int)SectorOffset[1];
 					Refreshable = false;
-					Script.readSymbol(':');
+					Script.read_symbol(':');
 				}else if(Script.Token == IDENTIFIER){
 					if(OffsetX == -1 || OffsetY == -1){
 						Script.error("coordinate expected");
 					}
 
-					const char *Identifier = Script.getIdentifier();
+					const char *Identifier = Script.get_identifier();
 					if(strcmp(Identifier, "refresh") == 0){
 						Refreshable = true;
 					}else if(strcmp(Identifier, "content") == 0){
-						Script.readSymbol('=');
+						Script.read_symbol('=');
 						if(Refreshable){
 							HelpBuffer.writeByte((uint8)OffsetX);
 							HelpBuffer.writeByte((uint8)OffsetY);
 						}
-						LoadObjects(&Script, &HelpBuffer, !Refreshable);
+						load_objects(&Script, &HelpBuffer, !Refreshable);
 					}
 				}
 			}
 
 			if(HelpBuffer.Position > 0){
 				TReadBuffer ReadBuffer(HelpBuffer.Data, HelpBuffer.Position);
-				RefreshSector(SectorX, SectorY, SectorZ, &ReadBuffer);
+				refresh_sector(SectorX, SectorY, SectorZ, &ReadBuffer);
 			}
 		}catch(const char *str){
-			error("RefreshMap: Error processing file (%s).\n", str);
+			error("refresh_map: Error processing file (%s).\n", str);
 		}
 	}
 }
 
-void RefreshCylinders(void){
+void refresh_cylinders(void){
 	// TODO(fusion): `RefreshedCylinders` is the number of cylinders we attempt to
 	// refresh in this function, which is called every minute or so by `AdvanceGame`.
 	// We should probably rename it to something clearer.
@@ -2971,26 +2971,26 @@ void RefreshCylinders(void){
 		for(int RefreshZ = SectorZMin;
 				RefreshZ <= SectorZMax;
 				RefreshZ += 1){
-			if(SectorRefreshable(RefreshX, RefreshY, RefreshZ)){
-				LoadSectorOrder(RefreshX, RefreshY, RefreshZ);
+			if(sector_refreshable(RefreshX, RefreshY, RefreshZ)){
+				load_sector_order(RefreshX, RefreshY, RefreshZ);
 			}
 		}
 	}
 }
 
-void ApplyPatch(int SectorX, int SectorY, int SectorZ,
-		bool FullSector, TReadScriptFile *Script, bool SaveHouses){
+void apply_patch(int SectorX, int SectorY, int SectorZ,
+		bool FullSector, ReadScriptFile *Script, bool SaveHouses){
 	if(SectorX < SectorXMin || SectorX > SectorXMax
 	|| SectorY < SectorYMin || SectorY > SectorYMax
 	|| SectorZ < SectorZMin || SectorZ > SectorZMax){
 		return;
 	}
 
-	PrepareHouseCleanup();
-	PatchSector(SectorX, SectorY, SectorZ, FullSector, Script, SaveHouses);
-	FinishHouseCleanup();
+	prepare_house_cleanup();
+	patch_sector(SectorX, SectorY, SectorZ, FullSector, Script, SaveHouses);
+	finish_house_cleanup();
 
-	// TODO(fusion): Similar to `SectorRefreshable` but with a reduced radius.
+	// TODO(fusion): Similar to `sector_refreshable` but with a reduced radius.
 	int SearchRadiusX = 32 / 2;
 	int SearchRadiusY = 32 / 2;
 	int SearchCenterX = SectorX * 32 + (32 / 2);
@@ -3004,7 +3004,7 @@ void ApplyPatch(int SectorX, int SectorY, int SectorZ,
 
 		TCreature *Creature = GetCreature(CreatureID);
 		if(Creature == NULL){
-			error("ApplyPatch: Creature does not exist.\n");
+			error("apply_patch: Creature does not exist.\n");
 			continue;
 		}
 
@@ -3016,25 +3016,25 @@ void ApplyPatch(int SectorX, int SectorY, int SectorZ,
 		int FieldX = Creature->posx;
 		int FieldY = Creature->posy;
 		int FieldZ = Creature->posz;
-		Object Obj = GetFirstObject(FieldX, FieldY, FieldZ);
+		Object Obj = get_first_object(FieldX, FieldY, FieldZ);
 		while(Obj != NONE){
-			ObjectType ObjType = Obj.getObjectType();
-			if(!ObjType.isCreatureContainer() && ObjType.getFlag(UNPASS)){
+			ObjectType ObjType = Obj.get_object_type();
+			if(!ObjType.is_creature_container() && ObjType.get_flag(UNPASS)){
 				FieldBlocked = true;
 				break;
 			}
-			Obj = Obj.getNextObject();
+			Obj = Obj.get_next_object();
 		}
 
 		if(!FieldBlocked){
 			// TODO(fusion): Not sure why we're moving the creature to the same
-			// field, specially with `MoveObject`. Does `PatchSector` leave
+			// field, specially with `move_object`. Does `patch_sector` leave
 			// creatures on invalid indices?
-			Object MapCon = GetMapContainer(FieldX, FieldY, FieldZ);
-			MoveObject(Creature->CrObject, MapCon);
+			Object MapCon = get_map_container(FieldX, FieldY, FieldZ);
+			move_object(Creature->CrObject, MapCon);
 		}else{
 			try{
-				if(!SearchFreeField(&FieldX, &FieldY, &FieldZ, 1, 0, false)){
+				if(!search_free_field(&FieldX, &FieldY, &FieldZ, 1, 0, false)){
 					if(Creature->Type == NPC){
 						print(2, "NPC at [%d,%d,%d] must be reset to its start.\n", FieldX, FieldY, FieldZ);
 						FieldX = Creature->startx;
@@ -3042,7 +3042,7 @@ void ApplyPatch(int SectorX, int SectorY, int SectorZ,
 						FieldZ = Creature->startz;
 					}else if(Creature->Type == MONSTER){
 						print(2, "Monster at [%d,%d,%d] must be deleted.\n", FieldX, FieldY, FieldZ);
-						Delete(Creature->CrObject, -1);
+						delete_op(Creature->CrObject, -1);
 						Creature->StartLogout(false, false);
 						continue;
 					}else{
@@ -3051,16 +3051,16 @@ void ApplyPatch(int SectorX, int SectorY, int SectorZ,
 					}
 				}
 
-				Object MapCon = GetMapContainer(FieldX, FieldY, FieldZ);
-				Move(0, Creature->CrObject, MapCon, -1, false, NONE);
+				Object MapCon = get_map_container(FieldX, FieldY, FieldZ);
+				move(0, Creature->CrObject, MapCon, -1, false, NONE);
 			}catch(RESULT r){
-				error("ApplyPatch: Exception %d while repositioning the monster.\n", r);
+				error("apply_patch: Exception %d while repositioning the monster.\n", r);
 			}
 		}
 	}
 }
 
-void ApplyPatches(void){
+void apply_patches(void){
 	// TODO(fusion): We don't handle any script exceptions in here which could
 	// lead to `PatchDir` being leaked. It may not be a problem overall because
 	// this function is only called at startup by `InitAll`.
@@ -3076,7 +3076,7 @@ void ApplyPatches(void){
 
 	DIR *PatchDir = opendir(SAVEPATH);
 	if(PatchDir == NULL){
-		error("ApplyPatches: Subdirectory %s not found.\n", SAVEPATH);
+		error("apply_patches: Subdirectory %s not found.\n", SAVEPATH);
 		return;
 	}
 
@@ -3104,9 +3104,9 @@ void ApplyPatches(void){
 				print(2,"Patching complete sector %d/%d/%d ...\n", SectorX, SectorY, SectorZ);
 				snprintf(FileName, sizeof(FileName), "%s/%s", SAVEPATH, DirEntry->d_name);
 
-				TReadScriptFile Script;
+				ReadScriptFile Script;
 				Script.open(FileName);
-				ApplyPatch(SectorX, SectorY, SectorZ, true, &Script, SaveHouses);
+				apply_patch(SectorX, SectorY, SectorZ, true, &Script, SaveHouses);
 				Script.close();
 				unlink(FileName);
 			}
@@ -3118,21 +3118,21 @@ void ApplyPatches(void){
 	for(int Patch = 0; Patch <= MaxPatch; Patch += 1){
 		snprintf(FileName, sizeof(FileName), "%s/%03d.pat", SAVEPATH, Patch);
 		if(FileExists(FileName)){
-			TReadScriptFile Script;
+			ReadScriptFile Script;
 			Script.open(FileName);
-			if(strcmp(Script.readIdentifier(), "sector") != 0){
+			if(strcmp(Script.read_identifier(), "sector") != 0){
 				Script.error("Sector expected");
 			}
 
-			int SectorX = Script.readNumber();
-			Script.readSymbol(',');
-			int SectorY = Script.readNumber();
-			Script.readSymbol(',');
-			int SectorZ = Script.readNumber();
+			int SectorX = Script.read_number();
+			Script.read_symbol(',');
+			int SectorY = Script.read_number();
+			Script.read_symbol(',');
+			int SectorZ = Script.read_number();
 
 			print(2, "Patching parts of sector %d/%d/%d (patch %d) ...\n",
 					SectorX, SectorY, SectorZ, Patch);
-			ApplyPatch(SectorX, SectorY, SectorZ, false, &Script, false);
+			apply_patch(SectorX, SectorY, SectorZ, false, &Script, false);
 			Script.close();
 			unlink(FileName);
 		}
@@ -3141,66 +3141,66 @@ void ApplyPatches(void){
 
 // Communication Logging
 // =============================================================================
-uint32 LogCommunication(uint32 CreatureID, int Mode, int Channel, const char *Text){
+uint32 log_communication(uint32 CreatureID, int Mode, int Channel, const char *Text){
 	static uint32 StatementID = 0;
 
 	if(Text == NULL){
-		error("LogCommunication: Text is NULL.\n");
+		error("log_communication: Text is NULL.\n");
 		return 0;
 	}
 
 	if(CreatureID == 0){
-		error("LogCommunication: CharacterID is zero.\n");
+		error("log_communication: CharacterID is zero.\n");
 		return 0;
 	}
 
 	StatementID += 1;
 
-	TStatement *Statement = Statements.append();
-	Statement->StatementID = StatementID;
-	Statement->TimeStamp = (uint32)time(NULL);
-	Statement->CharacterID = CreatureID;
-	Statement->Mode = Mode;
-	Statement->Channel = Channel;
-	Statement->Text = AddDynamicString(Text);
-	Statement->Reported = false;
+	Statement *Stmt = Statements.append();
+	Stmt->StatementID = StatementID;
+	Stmt->TimeStamp = (uint32)time(NULL);
+	Stmt->CharacterID = CreatureID;
+	Stmt->Mode = Mode;
+	Stmt->Channel = Channel;
+	Stmt->Text = AddDynamicString(Text);
+	Stmt->Reported = false;
 	return StatementID;
 }
 
-uint32 LogListener(uint32 StatementID, TPlayer *Player){
+uint32 log_listener(uint32 StatementID, TPlayer *Player){
 	if(StatementID == 0 || Player == NULL
-			|| !CheckRight(Player->ID, LOG_COMMUNICATION)){
+			|| !check_right(Player->ID, LOG_COMMUNICATION)){
 		return 0;
 	}
 
-	TListener *Listener = Listeners.append();
-	Listener->StatementID = StatementID;
-	Listener->CharacterID = Player->ID;
+	Listener *ListenerEntry = Listeners.append();
+	ListenerEntry->StatementID = StatementID;
+	ListenerEntry->CharacterID = Player->ID;
 	return StatementID;
 }
 
-void ProcessCommunicationControl(void){
+void process_communication_control(void){
 	// NOTE(fusion): Remove statements older than 30 minutes.
 	int Now = (int)time(NULL);
 	uint32 Limit = 0;
 	while(true){
-		TStatement *Statement = Statements.next();
-		if(Statement == NULL || Now <= (Statement->TimeStamp + 1800)){
-			if(Statement != NULL){
-				Limit = Statement->StatementID;
+		Statement *Stmt = Statements.next();
+		if(Stmt == NULL || Now <= (Stmt->TimeStamp + 1800)){
+			if(Stmt != NULL){
+				Limit = Stmt->StatementID;
 			}
 			break;
 		}
 
-		DeleteDynamicString(Statement->Text);
+		DeleteDynamicString(Stmt->Text);
 		Statements.remove();
 	}
 
 	// TODO(fusion): If there are no statements left we'll end up with `Limit`
 	// equal to zero which will prevent any listeners entry from being removed.
 	while(true){
-		TListener *Listener = Listeners.next();
-		if(Listener == NULL || Listener->StatementID >= Limit){
+		Listener *ListenerEntry = Listeners.next();
+		if(ListenerEntry == NULL || ListenerEntry->StatementID >= Limit){
 			break;
 		}
 
@@ -3208,39 +3208,39 @@ void ProcessCommunicationControl(void){
 	}
 }
 
-int GetCommunicationContext(uint32 CharacterID, uint32 StatementID,
-		int *NumberOfStatements, vector<TReportedStatement> **ReportedStatements){
-	TStatement *Statement = NULL;
+int get_communication_context(uint32 CharacterID, uint32 StatementID,
+		int *NumberOfStatements, vector<ReportedStatement> **ReportedStatements){
+	Statement *Stmt = NULL;
 	int StatementsIter = Statements.iterFirst();
 	while(true){
-		Statement = Statements.iterNext(&StatementsIter);
-		if(Statement == NULL || Statement->StatementID == StatementID){
+		Stmt = Statements.iterNext(&StatementsIter);
+		if(Stmt == NULL || Stmt->StatementID == StatementID){
 			break;
 		}
 	}
 
-	if(Statement == NULL){
+	if(Stmt == NULL){
 		return 1; // STATEMENT_UNKNOWN ?
 	}
 
 	if(CharacterID == 0){
-		bool ChannelMode = Statement->Mode == TALK_CHANNEL_CALL
-				|| Statement->Mode == TALK_GAMEMASTER_CHANNELCALL
-				|| Statement->Mode == TALK_HIGHLIGHT_CHANNELCALL;
+		bool ChannelMode = Stmt->Mode == TALK_CHANNEL_CALL
+				|| Stmt->Mode == TALK_GAMEMASTER_CHANNELCALL
+				|| Stmt->Mode == TALK_HIGHLIGHT_CHANNELCALL;
 
-		bool ReportableChannel = Statement->Channel == CHANNEL_TUTOR
-				|| Statement->Channel == CHANNEL_GAMECHAT
-				|| Statement->Channel == CHANNEL_TRADE
-				|| Statement->Channel == CHANNEL_RLCHAT
-				|| Statement->Channel == CHANNEL_HELP;
+		bool ReportableChannel = Stmt->Channel == CHANNEL_TUTOR
+				|| Stmt->Channel == CHANNEL_GAMECHAT
+				|| Stmt->Channel == CHANNEL_TRADE
+				|| Stmt->Channel == CHANNEL_RLCHAT
+				|| Stmt->Channel == CHANNEL_HELP;
 
 		if(!ChannelMode || !ReportableChannel){
-			error("GetCommunicationContext: Statement should not be reported.\n");
+			error("get_communication_context: Statement should not be reported.\n");
 			return 1; // STATEMENT_UNKNOWN ?
 		}
 	}
 
-	if(Statement->Reported){
+	if(Stmt->Reported){
 		return 2; // STATEMENT_ALREADY_REPORTED ?
 	}
 
@@ -3248,27 +3248,27 @@ int GetCommunicationContext(uint32 CharacterID, uint32 StatementID,
 	// seems to grow/shrink with the size of the text plus an extra 46 bytes for
 	// each statement entry. This flat memory overhead of 46 bytes could be some
 	// compilation/decompilation artifact so I've left it out for now.
-	//	The end point of this data is `ProcessPunishmentOrder` which may record
+	//	The end point of this data is `process_punishment_order` which may record
 	// statements into the database so it may be related to that.
 
 	bool StatementContained = false;
 	int FreeSpace = kb(16);
 	*NumberOfStatements = 0;
-	*ReportedStatements = new vector<TReportedStatement>(0, 100, 100);
+	*ReportedStatements = new vector<ReportedStatement>(0, 100, 100);
 	StatementsIter = Statements.iterLast();
 	while(true){
-		TStatement *Current = Statements.iterPrev(&StatementsIter);
+		Statement *Current = Statements.iterPrev(&StatementsIter);
 		if(Current == NULL){
 			break;
 		}
 
-		if(Current->TimeStamp < (Statement->TimeStamp - 180)
-		|| Current->TimeStamp > (Statement->TimeStamp + 60)){
+		if(Current->TimeStamp < (Stmt->TimeStamp - 180)
+		|| Current->TimeStamp > (Stmt->TimeStamp + 60)){
 			continue;
 		}
 
-		if(FreeSpace <= 0 && Current->TimeStamp > Statement->TimeStamp){
-			error("GetCommunicationContext: Context is getting too large. Trimming end.\n");
+		if(FreeSpace <= 0 && Current->TimeStamp > Stmt->TimeStamp){
+			error("get_communication_context: Context is getting too large. Trimming end.\n");
 			break;
 		}
 
@@ -3276,29 +3276,29 @@ int GetCommunicationContext(uint32 CharacterID, uint32 StatementID,
 			bool ChannelMode = Current->Mode == TALK_CHANNEL_CALL
 					|| Current->Mode == TALK_GAMEMASTER_CHANNELCALL
 					|| Current->Mode == TALK_HIGHLIGHT_CHANNELCALL;
-			if(!ChannelMode || Current->Channel != Statement->Channel){
+			if(!ChannelMode || Current->Channel != Stmt->Channel){
 				continue;
 			}
 		}else{
 			// NOTE(fusion): Check if the character listened to the current statement.
-			TListener *Listener = NULL;
+			Listener *ListenerEntry = NULL;
 			int ListenersIter = Listeners.iterLast();
 			while(true){
-				Listener = Listeners.iterPrev(&ListenersIter);
-				if(Listener == NULL
-						|| Listener->StatementID > Current->StatementID
-						|| (Listener->StatementID == Current->StatementID
-								&& Listener->CharacterID == CharacterID)){
+				ListenerEntry = Listeners.iterPrev(&ListenersIter);
+				if(ListenerEntry == NULL
+						|| ListenerEntry->StatementID > Current->StatementID
+						|| (ListenerEntry->StatementID == Current->StatementID
+								&& ListenerEntry->CharacterID == CharacterID)){
 					break;
 				}
 			}
 
-			if(Listener == NULL || Listener->StatementID != Current->StatementID){
+			if(ListenerEntry == NULL || ListenerEntry->StatementID != Current->StatementID){
 				continue;
 			}
 		}
 
-		TReportedStatement *Entry = (*ReportedStatements)->at(*NumberOfStatements);
+		ReportedStatement *Entry = (*ReportedStatements)->at(*NumberOfStatements);
 		Entry->StatementID = Current->StatementID;
 		Entry->TimeStamp = Current->TimeStamp;
 		Entry->CharacterID = Current->CharacterID;
@@ -3319,10 +3319,10 @@ int GetCommunicationContext(uint32 CharacterID, uint32 StatementID,
 	}
 
 	if(FreeSpace < 0){
-		error("GetCommunicationContext: Context is %d bytes too large. Deleting beginning.\n", -FreeSpace);
+		error("get_communication_context: Context is %d bytes too large. Deleting beginning.\n", -FreeSpace);
 
 		for(int i = 0; i < *NumberOfStatements && FreeSpace < 0; i += 1){
-			TReportedStatement *Entry = (*ReportedStatements)->at(i);
+			ReportedStatement *Entry = (*ReportedStatements)->at(i);
 			if(Entry->StatementID != StatementID){
 				Entry->StatementID = 0;
 				FreeSpace += (int)strlen(Entry->Text);
@@ -3330,36 +3330,36 @@ int GetCommunicationContext(uint32 CharacterID, uint32 StatementID,
 		}
 
 		if(FreeSpace < 0){
-			error("GetCommunicationContext: FreeSpace is still negative (%d).\n", FreeSpace);
+			error("get_communication_context: FreeSpace is still negative (%d).\n", FreeSpace);
 		}
 	}
 
 	if(!StatementContained){
-		error("GetCommunicationContext: Statement is not contained in context.\n");
+		error("get_communication_context: Statement is not contained in context.\n");
 		delete *ReportedStatements;
 		*NumberOfStatements = 0;
 		*ReportedStatements = NULL;
 		return 1; // STATEMENT_UNKNOWN ?
 	}
 
-	Statement->Reported = true;
+	Stmt->Reported = true;
 	return 0; // STATEMENT_REPORTED ?
 }
 
 // Channel
 // =============================================================================
-TChannel::TChannel(void) : Subscriber(0, 10, 10), InvitedPlayer(0, 10, 10) {
+Channel::Channel(void) : Subscriber(0, 10, 10), InvitedPlayer(0, 10, 10) {
 	this->Moderator = 0;
 	this->ModeratorName[0] = 0;
 	this->Subscribers = 0;
 	this->InvitedPlayers = 0;
 }
 
-TChannel::TChannel(const TChannel &Other) : TChannel() {
+Channel::Channel(const Channel &Other) : Channel() {
 	this->operator=(Other);
 }
 
-void TChannel::operator=(const TChannel &Other){
+void Channel::operator=(const Channel &Other){
 	this->Moderator = Other.Moderator;
 	memcpy(this->ModeratorName, Other.ModeratorName, sizeof(this->ModeratorName));
 
@@ -3374,42 +3374,42 @@ void TChannel::operator=(const TChannel &Other){
 	}
 }
 
-int GetNumberOfChannels(void){
+int get_number_of_channels(void){
     return Channels;
 }
 
-bool ChannelActive(int ChannelID){
+bool channel_active(int ChannelID){
 	if(ChannelID < 0 || ChannelID >= Channels){
-		error("ChannelActive: Invalid channel number %d.\n", ChannelID);
+		error("channel_active: Invalid channel number %d.\n", ChannelID);
 		return false;
 	}
 
-	return ChannelID < FIRST_PRIVATE_CHANNEL || Channel.at(ChannelID)->Moderator != 0;
+	return ChannelID < FIRST_PRIVATE_CHANNEL || ChannelArray.at(ChannelID)->Moderator != 0;
 }
 
-bool ChannelAvailable(int ChannelID, uint32 CharacterID){
-	if(!ChannelActive(ChannelID)){
+bool channel_available(int ChannelID, uint32 CharacterID){
+	if(!channel_active(ChannelID)){
 		return false;
 	}
 
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("ChannelAvailable: Player does not exist.\n");
+		error("channel_available: Player does not exist.\n");
 		return false;
 	}
 
 	switch(ChannelID){
 		case CHANNEL_GUILD:          return Player->Guild[0] != 0;
-		case CHANNEL_GAMEMASTER:     return CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL);
-		case CHANNEL_TUTOR:          return CheckRight(Player->ID, READ_TUTOR_CHANNEL);
-		case CHANNEL_RULEVIOLATIONS: return CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL);
+		case CHANNEL_GAMEMASTER:     return check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
+		case CHANNEL_TUTOR:          return check_right(Player->ID, READ_TUTOR_CHANNEL);
+		case CHANNEL_RULEVIOLATIONS: return check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
 		case CHANNEL_GAMECHAT:       return true;
 		case CHANNEL_TRADE:          return true;
 		case CHANNEL_RLCHAT:         return true;
 		case CHANNEL_HELP:           return true;
 		default:{
 			if(ChannelID >= FIRST_PRIVATE_CHANNEL){
-				TChannel *Chan = Channel.at(ChannelID);
+				Channel *Chan = ChannelArray.at(ChannelID);
 				if(Chan->Moderator == CharacterID){
 					return true;
 				}
@@ -3425,16 +3425,16 @@ bool ChannelAvailable(int ChannelID, uint32 CharacterID){
 	}
 }
 
-const char *GetChannelName(int ChannelID, uint32 CharacterID){
+const char *get_channel_name(int ChannelID, uint32 CharacterID){
 	static char ChannelName[40];
 
-	if(!ChannelActive(ChannelID)){
+	if(!channel_active(ChannelID)){
 		return "Unknown";
 	}
 
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("GetChannelName: Player does not exist.\n");
+		error("get_channel_name: Player does not exist.\n");
 		return "Unknown";
 	}
 
@@ -3450,22 +3450,22 @@ const char *GetChannelName(int ChannelID, uint32 CharacterID){
 		default:{
 			if(ChannelID >= FIRST_PRIVATE_CHANNEL){
 				snprintf(ChannelName, sizeof(ChannelName), "%s's Channel",
-						Channel.at(ChannelID)->ModeratorName);
+						ChannelArray.at(ChannelID)->ModeratorName);
 				return ChannelName;
 			}else{
-				error("GetChannelName: Unused channel %d.\n", ChannelID);
+				error("get_channel_name: Unused channel %d.\n", ChannelID);
 				return "Unknown";
 			}
 		}
 	}
 }
 
-bool ChannelSubscribed(int ChannelID, uint32 CharacterID){
-	if(!ChannelActive(ChannelID)){
+bool channel_subscribed(int ChannelID, uint32 CharacterID){
+	if(!channel_active(ChannelID)){
 		return false;
 	}
 
-	TChannel *Chan = Channel.at(ChannelID);
+	Channel *Chan = ChannelArray.at(ChannelID);
 	for(int i = 0; i < Chan->Subscribers; i += 1){
 		if(*Chan->Subscriber.at(i) == CharacterID){
 			return true;
@@ -3476,19 +3476,19 @@ bool ChannelSubscribed(int ChannelID, uint32 CharacterID){
 }
 
 // TODO(fusion): This could have been a simple for loop?
-uint32 GetFirstSubscriber(int ChannelID){
+uint32 get_first_subscriber(int ChannelID){
 	CurrentChannelID = ChannelID;
 	CurrentSubscriberNumber = 0;
-	return GetNextSubscriber();
+	return get_next_subscriber();
 }
 
-uint32 GetNextSubscriber(void){
-	if(!ChannelActive(CurrentChannelID)){
+uint32 get_next_subscriber(void){
+	if(!channel_active(CurrentChannelID)){
 		return 0;
 	}
 
 	uint32 Subscriber = 0;
-	TChannel *Chan = Channel.at(CurrentChannelID);
+	Channel *Chan = ChannelArray.at(CurrentChannelID);
 	if(CurrentSubscriberNumber < Chan->Subscribers){
 		Subscriber = *Chan->Subscriber.at(CurrentSubscriberNumber);
 		CurrentSubscriberNumber += 1;
@@ -3497,18 +3497,18 @@ uint32 GetNextSubscriber(void){
 	return Subscriber;
 }
 
-bool MayOpenChannel(uint32 CharacterID){
+bool may_open_channel(uint32 CharacterID){
 	if(Channels >= MAX_CHANNELS){
 		return false;
 	}
 
-	if(!CheckRight(CharacterID, PREMIUM_ACCOUNT)){
+	if(!check_right(CharacterID, PREMIUM_ACCOUNT)){
 		return false;
 	}
 
 	// NOTE(fusion): Check if character is already moderator of any non-public channel.
 	for(int ChannelID = FIRST_PRIVATE_CHANNEL; ChannelID < Channels; ChannelID += 1){
-		if(Channel.at(ChannelID)->Moderator == CharacterID){
+		if(ChannelArray.at(ChannelID)->Moderator == CharacterID){
 			return false;
 		}
 	}
@@ -3516,26 +3516,26 @@ bool MayOpenChannel(uint32 CharacterID){
 	return true;
 }
 
-void OpenChannel(uint32 CharacterID){
+void open_channel(uint32 CharacterID){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("OpenChannel: Creature %u does not exist.\n", CharacterID);
+		error("open_channel: Creature %u does not exist.\n", CharacterID);
 		throw ERROR;
 	}
 
 	// TODO(fusion): Shouldn't we scan for a free channel before returning here?
 	if(Channels >= MAX_CHANNELS){
-		error("OpenChannel: Too many channels.\n");
+		error("open_channel: Too many channels.\n");
 		throw ERROR;
 	}
 
-	if(!CheckRight(CharacterID, PREMIUM_ACCOUNT)){
+	if(!check_right(CharacterID, PREMIUM_ACCOUNT)){
 		throw NOPREMIUMACCOUNT;
 	}
 
 	// NOTE(fusion): Check if character already has an open channel.
 	for(int ChannelID = FIRST_PRIVATE_CHANNEL; ChannelID < Channels; ChannelID += 1){
-		if(Channel.at(ChannelID)->Moderator == CharacterID){
+		if(ChannelArray.at(ChannelID)->Moderator == CharacterID){
 			SendOpenOwnChannel(Player->Connection, ChannelID);
 			return;
 		}
@@ -3544,7 +3544,7 @@ void OpenChannel(uint32 CharacterID){
 	// NOTE(fusion): Assign free channel to character.
 	int ChannelID = FIRST_PRIVATE_CHANNEL;
 	while(ChannelID < Channels){
-		if(Channel.at(ChannelID)->Moderator == 0){
+		if(ChannelArray.at(ChannelID)->Moderator == 0){
 			break;
 		}
 		ChannelID += 1;
@@ -3554,7 +3554,7 @@ void OpenChannel(uint32 CharacterID){
 		Channels += 1;
 	}
 
-	TChannel *Chan = Channel.at(ChannelID);
+	Channel *Chan = ChannelArray.at(ChannelID);
 	Chan->Moderator = CharacterID;
 	strcpy(Chan->ModeratorName, Player->Name);
 	*Chan->Subscriber.at(0) = CharacterID;
@@ -3563,31 +3563,31 @@ void OpenChannel(uint32 CharacterID){
 	SendOpenOwnChannel(Player->Connection, ChannelID);
 }
 
-void CloseChannel(int ChannelID){
+void close_channel(int ChannelID){
 	if(ChannelID < FIRST_PRIVATE_CHANNEL || ChannelID >= Channels){
-		error("CloseChannel: Invalid ChannelID %d.\n", ChannelID);
+		error("close_channel: Invalid ChannelID %d.\n", ChannelID);
 		return;
 	}
 
-	TChannel *Chan = Channel.at(ChannelID);
+	Channel *Chan = ChannelArray.at(ChannelID);
 	if(Chan->Moderator == 0){
-		error("CloseChannel: Channel is already closed.\n");
+		error("close_channel: Channel is already closed.\n");
 		return;
 	}
 
 	Chan->Moderator = 0;
 }
 
-void InviteToChannel(uint32 CharacterID, const char *Name){
+void invite_to_channel(uint32 CharacterID, const char *Name){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("InviteToChannel: Creature %u does not exist.\n", CharacterID);
+		error("invite_to_channel: Creature %u does not exist.\n", CharacterID);
 		return;
 	}
 
 	int ChannelID = FIRST_PRIVATE_CHANNEL;
 	while(ChannelID < Channels){
-		if(Channel.at(ChannelID)->Moderator == CharacterID){
+		if(ChannelArray.at(ChannelID)->Moderator == CharacterID){
 			break;
 		}
 		ChannelID += 1;
@@ -3599,7 +3599,7 @@ void InviteToChannel(uint32 CharacterID, const char *Name){
 
 	TPlayer *Other = NULL;
 	uint32 OtherID = 0;
-	bool IgnoreGamemasters = !CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(Name, false, IgnoreGamemasters, &Other)){
 		case 0:{ // PLAYERFOUND ?
 			OtherID = Other->ID;
@@ -3630,14 +3630,14 @@ void InviteToChannel(uint32 CharacterID, const char *Name){
 		default:{
 			// TODO(fusion): This wasn't here but I don't think `IdentifyPlayer`
 			// can return anything else than 0, -1, and -2 anyways.
-			error("InviteToChannel: Invalid return value from IdentifyPlayer.\n");
+			error("invite_to_channel: Invalid return value from IdentifyPlayer.\n");
 			throw ERROR;
 		}
 	}
 
 	print(3, "Inviting player %s (%u) to private channel.\n", Name, OtherID);
 	if(CharacterID != OtherID){
-		TChannel *Chan = Channel.at(ChannelID);
+		Channel *Chan = ChannelArray.at(ChannelID);
 		for(int i = 0; i < Chan->InvitedPlayers; i += 1){
 			if(*Chan->InvitedPlayer.at(i) == OtherID){
 				SendMessage(Player->Connection, TALK_INFO_MESSAGE,
@@ -3660,16 +3660,16 @@ void InviteToChannel(uint32 CharacterID, const char *Name){
 	}
 }
 
-void ExcludeFromChannel(uint32 CharacterID, const char *Name){
+void exclude_from_channel(uint32 CharacterID, const char *Name){
 	TPlayer *Player = GetPlayer(CharacterID);
 	if(Player == NULL){
-		error("ExcludeFromChannel: Creature %u does not exist.\n", CharacterID);
+		error("exclude_from_channel: Creature %u does not exist.\n", CharacterID);
 		return;
 	}
 
 	int ChannelID = FIRST_PRIVATE_CHANNEL;
 	while(ChannelID < Channels){
-		if(Channel.at(ChannelID)->Moderator == CharacterID){
+		if(ChannelArray.at(ChannelID)->Moderator == CharacterID){
 			break;
 		}
 		ChannelID += 1;
@@ -3680,10 +3680,10 @@ void ExcludeFromChannel(uint32 CharacterID, const char *Name){
 	}
 
 	// TODO(fusion): Why don't we call `GetCharacterName` as we do in
-	// `InviteToChannel`, when the player is not found?
+	// `invite_to_channel`, when the player is not found?
 	TPlayer *Other = NULL;
 	uint32 OtherID = 0;
-	bool IgnoreGamemasters = !CheckRight(Player->ID, READ_GAMEMASTER_CHANNEL);
+	bool IgnoreGamemasters = !check_right(Player->ID, READ_GAMEMASTER_CHANNEL);
 	switch(IdentifyPlayer(Name, false, IgnoreGamemasters, &Other)){
 		case 0:{ // PLAYERFOUND ?
 			OtherID = Other->ID;
@@ -3708,8 +3708,8 @@ void ExcludeFromChannel(uint32 CharacterID, const char *Name){
 		}
 
 		default:{
-			// TODO(fusion): Same as `InviteToChannel`.
-			error("ExcludeFromChannel: Invalid return value from IdentifyPlayer.\n");
+			// TODO(fusion): Same as `invite_to_channel`.
+			error("exclude_from_channel: Invalid return value from IdentifyPlayer.\n");
 			throw ERROR;
 		}
 	}
@@ -3717,7 +3717,7 @@ void ExcludeFromChannel(uint32 CharacterID, const char *Name){
 	print(3, "Excluding player %s (%u) from private channel.\n", Name, OtherID);
 	if(CharacterID != OtherID){
 		bool Removed = false;
-		TChannel *Chan = Channel.at(ChannelID);
+		Channel *Chan = ChannelArray.at(ChannelID);
 		for(int i = 0; i < Chan->InvitedPlayers; i += 1){
 			if(*Chan->InvitedPlayer.at(i) == OtherID){
 				// NOTE(fusion): A little swap and pop action.
@@ -3734,11 +3734,11 @@ void ExcludeFromChannel(uint32 CharacterID, const char *Name){
 		}else{
 			SendMessage(Player->Connection, TALK_INFO_MESSAGE,
 					"%s has been excluded.", Name);
-			if(ChannelSubscribed(ChannelID, OtherID)){
-				LeaveChannel(ChannelID, OtherID, false);
+			if(channel_subscribed(ChannelID, OtherID)){
+				leave_channel(ChannelID, OtherID, false);
 
 				// TODO(fusion): We didn't check if `Other` was NULL here. It
-				// seems that the player destructor will call `LeaveAllChannels`
+				// seems that the player destructor will call `leave_all_channels`
 				// to make sure a player is only subscribed if it is still valid.
 				//	Nevertheless, this check should become invisible to the branch
 				// predictor and it's always best to be safe.
@@ -3750,17 +3750,17 @@ void ExcludeFromChannel(uint32 CharacterID, const char *Name){
 	}
 }
 
-bool JoinChannel(int ChannelID, uint32 CharacterID){
-	if(!ChannelActive(ChannelID)){
+bool join_channel(int ChannelID, uint32 CharacterID){
+	if(!channel_active(ChannelID)){
 		throw ERROR;
 	}
 
-	if(!ChannelAvailable(ChannelID, CharacterID)){
+	if(!channel_available(ChannelID, CharacterID)){
 		throw NOTACCESSIBLE;
 	}
 
-	TChannel *Chan = Channel.at(ChannelID);
-	if(!ChannelSubscribed(ChannelID, CharacterID)){
+	Channel *Chan = ChannelArray.at(ChannelID);
+	if(!channel_subscribed(ChannelID, CharacterID)){
 		*Chan->Subscriber.at(Chan->Subscribers) = CharacterID;
 		Chan->Subscribers += 1;
 	}
@@ -3768,12 +3768,12 @@ bool JoinChannel(int ChannelID, uint32 CharacterID){
 	return CharacterID == Chan->Moderator;
 }
 
-void LeaveChannel(int ChannelID, uint32 CharacterID, bool Close){
-	if(!ChannelActive(ChannelID)){
+void leave_channel(int ChannelID, uint32 CharacterID, bool Close){
+	if(!channel_active(ChannelID)){
 		return;
 	}
 
-	TChannel *Chan = Channel.at(ChannelID);
+	Channel *Chan = ChannelArray.at(ChannelID);
 	for(int i = 0; i < Chan->Subscribers; i += 1){
 		if(*Chan->Subscriber.at(i) == CharacterID){
 			// NOTE(fusion): A little swap and pop action.
@@ -3795,31 +3795,31 @@ void LeaveChannel(int ChannelID, uint32 CharacterID, bool Close){
 	}
 
 	if(ChannelID >= FIRST_PRIVATE_CHANNEL && Chan->Subscribers == 0){
-		CloseChannel(ChannelID);
+		close_channel(ChannelID);
 	}
 }
 
-void LeaveAllChannels(uint32 CharacterID){
+void leave_all_channels(uint32 CharacterID){
 	for(int ChannelID = 0; ChannelID < Channels; ChannelID += 1){
-		if(ChannelActive(ChannelID)){
-			LeaveChannel(ChannelID, CharacterID, false);
+		if(channel_active(ChannelID)){
+			leave_channel(ChannelID, CharacterID, false);
 		}
 	}
 }
 
 // Party
 // =============================================================================
-TParty::TParty(void) : Member(0, 10, 10), InvitedPlayer(0, 10, 10) {
+Party::Party(void) : Member(0, 10, 10), InvitedPlayer(0, 10, 10) {
 	this->Leader = 0;
 	this->Members = 0;
 	this->InvitedPlayers = 0;
 }
 
-TParty::TParty(const TParty &Other) : TParty() {
+Party::Party(const Party &Other) : Party() {
 	this->operator=(Other);
 }
 
-void TParty::operator=(const TParty &Other){
+void Party::operator=(const Party &Other){
 	this->Leader = Other.Leader;
 
 	this->Members = Other.Members;
@@ -3833,20 +3833,20 @@ void TParty::operator=(const TParty &Other){
 	}
 }
 
-TParty *GetParty(uint32 LeaderID){
-	TParty *Result = NULL;
+Party *get_party(uint32 LeaderID){
+	Party *Result = NULL;
 	for(int i = 0; i < Parties; i += 1){
-		if(Party.at(i)->Leader == LeaderID){
-			Result = Party.at(i);
+		if(PartyArray.at(i)->Leader == LeaderID){
+			Result = PartyArray.at(i);
 			break;
 		}
 	}
 	return Result;
 }
 
-bool IsInvitedToParty(uint32 GuestID, uint32 HostID){
+bool is_invited_to_party(uint32 GuestID, uint32 HostID){
 	bool Result = false;
-	TParty *P = GetParty(HostID);
+	Party *P = get_party(HostID);
 	if(P != NULL){
 		for(int i = 0; i < P->InvitedPlayers; i += 1){
 			if(*P->InvitedPlayer.at(i) == GuestID){
@@ -3858,10 +3858,10 @@ bool IsInvitedToParty(uint32 GuestID, uint32 HostID){
 	return Result;
 }
 
-void DisbandParty(uint32 LeaderID){
-	TParty *P = GetParty(LeaderID);
+void disband_party(uint32 LeaderID){
+	Party *P = get_party(LeaderID);
 	if(P == NULL){
-		error("DisbandParty: Party of leader %u not found.\n", LeaderID);
+		error("disband_party: Party of leader %u not found.\n", LeaderID);
 		return;
 	}
 
@@ -3905,14 +3905,14 @@ void DisbandParty(uint32 LeaderID){
 	}
 }
 
-void InviteToParty(uint32 HostID, uint32 GuestID){
+void invite_to_party(uint32 HostID, uint32 GuestID){
 	if(HostID == GuestID){
 		return;
 	}
 
 	TPlayer *Host = GetPlayer(HostID);
 	if(Host == NULL){
-		error("InviteToParty: Inviting player %u does not exist.\n", HostID);
+		error("invite_to_party: Inviting player %u does not exist.\n", HostID);
 		return;
 	}
 
@@ -3929,9 +3929,9 @@ void InviteToParty(uint32 HostID, uint32 GuestID){
 			return;
 		}
 
-		TParty *P = GetParty(0);
+		Party *P = get_party(0);
 		if(P == NULL){
-			P = Party.at(Parties);
+			P = PartyArray.at(Parties);
 			Parties += 1;
 		}
 
@@ -3959,9 +3959,9 @@ void InviteToParty(uint32 HostID, uint32 GuestID){
 			return;
 		}
 
-		TParty *P = GetParty(HostID);
+		Party *P = get_party(HostID);
 		if(P == NULL){
-			error("InviteToParty: Party of leader %u not found.\n", HostID);
+			error("invite_to_party: Party of leader %u not found.\n", HostID);
 			return;
 		}
 
@@ -3989,10 +3989,10 @@ void InviteToParty(uint32 HostID, uint32 GuestID){
 	}
 }
 
-void RevokeInvitation(uint32 HostID, uint32 GuestID){
+void revoke_invitation(uint32 HostID, uint32 GuestID){
 	TPlayer *Host = GetPlayer(HostID);
 	if(Host == NULL){
-		error("RevokeInvitation: Inviting player %u does not exist.\n", HostID);
+		error("revoke_invitation: Inviting player %u does not exist.\n", HostID);
 		return;
 	}
 
@@ -4002,9 +4002,9 @@ void RevokeInvitation(uint32 HostID, uint32 GuestID){
 		return;
 	}
 
-	TParty *P = GetParty(HostID);
+	Party *P = get_party(HostID);
 	if(P == NULL){
-		error("RevokeInvitation: Party of leader %u not found.\n", HostID);
+		error("revoke_invitation: Party of leader %u not found.\n", HostID);
 		return;
 	}
 
@@ -4029,7 +4029,7 @@ void RevokeInvitation(uint32 HostID, uint32 GuestID){
 	}
 
 	// TODO(fusion): This ordered removal isn't relevant at all. It could be a
-	// swap and pop just like in `JoinParty`, unlike when removing members.
+	// swap and pop just like in `join_party`, unlike when removing members.
 	P->InvitedPlayers -= 1;
 	for(int i = InviteIndex; i < P->InvitedPlayers; i += 1){
 		*P->InvitedPlayer.at(i) = *P->InvitedPlayer.at(i + 1);
@@ -4049,18 +4049,18 @@ void RevokeInvitation(uint32 HostID, uint32 GuestID){
 	}
 
 	if(P->Members == 1 && P->InvitedPlayers == 0){
-		DisbandParty(HostID);
+		disband_party(HostID);
 	}
 }
 
-void JoinParty(uint32 GuestID, uint32 HostID){
+void join_party(uint32 GuestID, uint32 HostID){
 	if(GuestID == HostID){
 		return;
 	}
 
 	TPlayer *Guest = GetPlayer(GuestID);
 	if(Guest == NULL){
-		error("JoinParty: Invited player %u does not exist.\n", GuestID);
+		error("join_party: Invited player %u does not exist.\n", GuestID);
 		return;
 	}
 
@@ -4077,7 +4077,7 @@ void JoinParty(uint32 GuestID, uint32 HostID){
 		return;
 	}
 
-	TParty *P = GetParty(HostID);
+	Party *P = get_party(HostID);
 	if(P == NULL){
 		SendMessage(Guest->Connection, TALK_INFO_MESSAGE,
 				"%s has not invited you.", Host->Name);
@@ -4124,14 +4124,14 @@ void JoinParty(uint32 GuestID, uint32 HostID){
 	}
 }
 
-void PassLeadership(uint32 OldLeaderID, uint32 NewLeaderID){
+void pass_leadership(uint32 OldLeaderID, uint32 NewLeaderID){
 	if(OldLeaderID == NewLeaderID){
 		return;
 	}
 
 	TPlayer *OldLeader = GetPlayer(OldLeaderID);
 	if(OldLeader == NULL){
-		error("PassLeadership: Old leader %u does not exist.\n", OldLeaderID);
+		error("pass_leadership: Old leader %u does not exist.\n", OldLeaderID);
 		return;
 	}
 
@@ -4153,15 +4153,15 @@ void PassLeadership(uint32 OldLeaderID, uint32 NewLeaderID){
 		return;
 	}
 
-	TParty *P = GetParty(OldLeaderID);
+	Party *P = get_party(OldLeaderID);
 	if(P == NULL){
-		error("PassLeadership: Party of leader %u not found.\n", OldLeaderID);
+		error("pass_leadership: Party of leader %u not found.\n", OldLeaderID);
 		return;
 	}
 
 	P->Leader = NewLeaderID;
 
-	// NOTE(fusion): Same as `DisbandParty`.
+	// NOTE(fusion): Same as `disband_party`.
 	for(int i = 0; i < P->Members; i += 1){
 		uint32 MemberID = *P->Member.at(i);
 		TPlayer *Member = GetPlayer(MemberID);
@@ -4200,16 +4200,16 @@ void PassLeadership(uint32 OldLeaderID, uint32 NewLeaderID){
 	}
 }
 
-void LeaveParty(uint32 MemberID, bool Forced){
+void leave_party(uint32 MemberID, bool Forced){
 	TPlayer *Member = GetPlayer(MemberID);
 	if(Member == NULL){
-		error("LeaveParty: Member does not exist.\n");
+		error("leave_party: Member does not exist.\n");
 		return;
 	}
 
 	uint32 LeaderID = Member->GetPartyLeader(false);
 	if(LeaderID == 0){
-		error("LeaveParty: Player is not a member of a party.\n");
+		error("leave_party: Player is not a member of a party.\n");
 		return;
 	}
 
@@ -4219,14 +4219,14 @@ void LeaveParty(uint32 MemberID, bool Forced){
 		return;
 	}
 
-	TParty *P = GetParty(LeaderID);
+	Party *P = get_party(LeaderID);
 	if(P == NULL){
-		error("LeaveParty: Party of leader %u not found.\n", LeaderID);
+		error("leave_party: Party of leader %u not found.\n", LeaderID);
 		return;
 	}
 
 	if(P->Members == 1 || (P->Members == 2 && P->InvitedPlayers == 0)){
-		DisbandParty(LeaderID);
+		disband_party(LeaderID);
 		return;
 	}
 
@@ -4235,7 +4235,7 @@ void LeaveParty(uint32 MemberID, bool Forced){
 		if(LeaderID == MemberID){
 			LeaderID = *P->Member.at(1);
 		}
-		PassLeadership(MemberID, LeaderID);
+		pass_leadership(MemberID, LeaderID);
 	}
 
 	int MemberIndex = 0;
@@ -4247,7 +4247,7 @@ void LeaveParty(uint32 MemberID, bool Forced){
 	}
 
 	if(MemberIndex >= P->Members){
-		error("LeaveParty: Member not found.\n");
+		error("leave_party: Member not found.\n");
 		return;
 	}
 

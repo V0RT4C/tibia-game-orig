@@ -13,7 +13,7 @@ enum : int {
 	FIELD_TYPE_WILDGROWTH = 5,
 };
 
-struct TImpact{
+struct Impact{
 	// VIRTUAL FUNCTIONS
 	// =========================================================================
 	virtual void handleField(int x, int y, int z);										// VTABLE[0]
@@ -23,7 +23,7 @@ struct TImpact{
 	// NOTE(fusion): I don't think the original version had a destructor declared
 	// here but the compiler complains when calling delete (which seems to only be
 	// used in `TMonster::IdleStimulus`).
-	virtual ~TImpact(void){
+	virtual ~Impact(void){
 		// no-op
 	}
 
@@ -32,8 +32,8 @@ struct TImpact{
 	//void *VTABLE;	// IMPLICIT
 };
 
-struct TDamageImpact: TImpact {
-	TDamageImpact(TCreature *Actor, int DamageType, int Power, bool AllowDefense);
+struct DamageImpact: Impact {
+	DamageImpact(TCreature *Actor, int DamageType, int Power, bool AllowDefense);
 	void handleCreature(TCreature *Victim) override;
 
 	TCreature *Actor;
@@ -42,16 +42,16 @@ struct TDamageImpact: TImpact {
 	bool AllowDefense;
 };
 
-struct TFieldImpact: TImpact {
-	TFieldImpact(TCreature *Actor, int FieldType);
+struct FieldImpact: Impact {
+	FieldImpact(TCreature *Actor, int FieldType);
 	void handleField(int x, int y, int z) override;
 
 	TCreature *Actor;
 	int FieldType;
 };
 
-struct THealingImpact: TImpact {
-	THealingImpact(TCreature *Actor, int Power);
+struct HealingImpact: Impact {
+	HealingImpact(TCreature *Actor, int Power);
 	void handleCreature(TCreature *Victim) override;
 	bool isAggressive(void) override;
 
@@ -59,8 +59,8 @@ struct THealingImpact: TImpact {
 	int Power;
 };
 
-struct TSpeedImpact: TImpact {
-	TSpeedImpact(TCreature *Actor, int Percent, int Duration);
+struct SpeedImpact: Impact {
+	SpeedImpact(TCreature *Actor, int Percent, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
 	TCreature *Actor;
@@ -68,8 +68,8 @@ struct TSpeedImpact: TImpact {
 	int Duration;
 };
 
-struct TDrunkenImpact: TImpact {
-	TDrunkenImpact(TCreature *Actor, int Power, int Duration);
+struct DrunkenImpact: Impact {
+	DrunkenImpact(TCreature *Actor, int Power, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
 	TCreature *Actor;
@@ -77,8 +77,8 @@ struct TDrunkenImpact: TImpact {
 	int Duration;
 };
 
-struct TStrengthImpact: TImpact {
-	TStrengthImpact(TCreature *Actor, int Skills, int Percent, int Duration);
+struct StrengthImpact: Impact {
+	StrengthImpact(TCreature *Actor, int Skills, int Percent, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
 	TCreature *Actor;
@@ -87,8 +87,8 @@ struct TStrengthImpact: TImpact {
 	int Duration;
 };
 
-struct TOutfitImpact: TImpact {
-	TOutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration);
+struct OutfitImpact: Impact {
+	OutfitImpact(TCreature *Actor, TOutfit Outfit, int Duration);
 	void handleCreature(TCreature *Victim) override;
 
 	TCreature *Actor;
@@ -96,8 +96,8 @@ struct TOutfitImpact: TImpact {
 	int Duration;
 };
 
-struct TSummonImpact: TImpact {
-	TSummonImpact(TCreature *Actor, int Race, int Maximum);
+struct SummonImpact: Impact {
+	SummonImpact(TCreature *Actor, int Race, int Maximum);
 	void handleField(int x, int y, int z) override;
 
 	TCreature *Actor;
@@ -105,107 +105,107 @@ struct TSummonImpact: TImpact {
 	int Maximum;
 };
 
-void ActorShapeSpell(TCreature *Actor, TImpact *Impact, int Effect);
-void VictimShapeSpell(TCreature *Actor, TCreature *Victim,
-		int Range, int Animation, TImpact *Impact, int Effect);
-void OriginShapeSpell(TCreature *Actor, int Radius, TImpact *Impact, int Effect);
-void CircleShapeSpell(TCreature *Actor, int DestX, int DestY, int DestZ,
-		int Range, int Animation, int Radius, TImpact *Impact, int Effect);
-void DestinationShapeSpell(TCreature *Actor, TCreature *Victim,
-		int Range, int Animation, int Radius, TImpact *Impact, int Effect);
-void AngleShapeSpell(TCreature *Actor, int Angle, int Range, TImpact *Impact, int Effect);
-void CheckSpellbook(TCreature *Actor, int SpellNr);
-void CheckAccount(TCreature *Actor, int SpellNr);
-void CheckLevel(TCreature *Actor, int SpellNr);
-void CheckRuneLevel(TCreature *Actor, int SpellNr);
-void CheckMagicItem(TCreature *Actor, ObjectType Type);
-void CheckRing(TCreature *Actor, int SpellNr);
-void CheckAffectedPlayers(TCreature *Actor, int x, int y, int z);
-void CheckMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay);
-int ComputeDamage(TCreature *Actor, int SpellNr, int Damage, int Variation);
-bool IsAggressiveSpell(int SpellNr);
-void MassCombat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
+void actor_shape_spell(TCreature *Actor, Impact *Impact, int Effect);
+void victim_shape_spell(TCreature *Actor, TCreature *Victim,
+		int Range, int Animation, Impact *Impact, int Effect);
+void origin_shape_spell(TCreature *Actor, int Radius, Impact *Impact, int Effect);
+void circle_shape_spell(TCreature *Actor, int DestX, int DestY, int DestZ,
+		int Range, int Animation, int Radius, Impact *Impact, int Effect);
+void destination_shape_spell(TCreature *Actor, TCreature *Victim,
+		int Range, int Animation, int Radius, Impact *Impact, int Effect);
+void angle_shape_spell(TCreature *Actor, int Angle, int Range, Impact *Impact, int Effect);
+void check_spellbook(TCreature *Actor, int SpellNr);
+void check_account(TCreature *Actor, int SpellNr);
+void check_level(TCreature *Actor, int SpellNr);
+void check_rune_level(TCreature *Actor, int SpellNr);
+void check_magic_item(TCreature *Actor, ObjectType Type);
+void check_ring(TCreature *Actor, int SpellNr);
+void check_affected_players(TCreature *Actor, int x, int y, int z);
+void check_mana(TCreature *Actor, int ManaPoints, int SoulPoints, int Delay);
+int compute_damage(TCreature *Actor, int SpellNr, int Damage, int Variation);
+bool is_aggressive_spell(int SpellNr);
+void mass_combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Radius, int DamageType, int Animation);
-void AngleCombat(TCreature *Actor, int ManaPoints, int SoulPoints,
+void angle_combat(TCreature *Actor, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Range, int Angle, int DamageType);
-void Combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
+void combat(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints,
 		int Damage, int Effect, int Animation, int DamageType);
-int GetDirection(int dx, int dy); // TODO(fusion): Move this one elsewhere? Maybe `info.cc`.
-void KillAllMonsters(TCreature *Actor, int Effect, int Radius);
-void CreateField(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful);
-void CreateField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType);
-void CreateField(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType);
-void MassCreateField(TCreature *Actor, Object Target,
+int get_direction(int dx, int dy); // TODO(fusion): Move this one elsewhere? Maybe `info.cc`.
+void kill_all_monsters(TCreature *Actor, int Effect, int Radius);
+void create_field(int x, int y, int z, int FieldType, uint32 Owner, bool Peaceful);
+void create_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int FieldType);
+void create_field(TCreature *Actor, int ManaPoints, int SoulPoints, int FieldType);
+void mass_create_field(TCreature *Actor, Object Target,
 		int ManaPoints, int SoulPoints, int FieldType, int Radius);
-void CreateFieldWall(TCreature *Actor, Object Target,
+void create_field_wall(TCreature *Actor, Object Target,
 		int ManaPoints, int SoulPoints, int FieldType, int Width);
-void DeleteField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
-void CleanupField(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
-void CleanupField(TCreature *Actor);
-void Teleport(TCreature *Actor, const char *Param);
-void TeleportToCreature(TCreature *Actor, const char *Name);
-void TeleportPlayerToMe(TCreature *Actor, const char *Name);
-void MagicRope(TCreature *Actor, int ManaPoints, int SoulPoints);
-void MagicClimbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Param);
-void MagicClimbing(TCreature *Actor, const char *Param);
-void CreateThing(TCreature *Actor, const char *Param1, const char *Param2);
-void CreateMoney(TCreature *Actor, const char *Param);
-void CreateFood(TCreature *Actor, int ManaPoints, int SoulPoints);
-void CreateArrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowType, int Count);
-void SummonCreature(TCreature *Actor, int ManaPoints, int Race, bool God);
-void SummonCreature(TCreature *Actor, int ManaPoints, const char *RaceName, bool God);
-void StartMonsterraid(TCreature *Actor, const char *RaidName);
-void RaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
-void MassRaiseDead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius);
-void Heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount);
-void MassHeal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Amount, int Radius);
-void HealFriend(TCreature *Actor, const char *TargetName, int ManaPoints, int SoulPoints, int Amount);
-void RefreshMana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount);
-void MagicGoStrength(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints, int Percent, int Duration);
-void Shielding(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration);
-void NegatePoison(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints);
-void Enlight(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius, int Duration);
-void Invisibility(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration);
-void CancelInvisibility(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius);
-void CreatureIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, const char *RaceName, int Duration);
-void ObjectIllusion(TCreature *Actor, int ManaPoints, int SoulPoints, Object Target, int Duration);
-void ChangeData(TCreature *Actor, const char *Param);
-void EnchantObject(TCreature *Actor, int ManaPoints, int SoulPoints, ObjectType OldType, ObjectType NewType);
-void Convince(TCreature *Actor, TCreature *Target);
-void Challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius);
-void FindPerson(TCreature *Actor, int ManaPoints, int SoulPoints, const char *TargetName);
-void GetPosition(TCreature *Actor);
-void GetQuestValue(TCreature *Actor, const char *Param);
-void SetQuestValue(TCreature *Actor, const char *Param1, const char *Param2);
-void ClearQuestValues(TCreature *Actor);
-void CreateKnowledge(TCreature *Actor, const char *Param1, const char *Param2);
-void ChangeProfession(TCreature *Actor, const char *Param);
-void EditGuests(TCreature *Actor);
-void EditSubowners(TCreature *Actor);
-void EditNameDoor(TCreature *Actor);
-void KickGuest(TCreature *Actor, const char *GuestName);
-void Notation(TCreature *Actor, const char *Name, const char *Comment);
-void NameLock(TCreature *Actor, const char *Name);
-void BanishAccount(TCreature *Actor, const char *Name, int Duration, const char *Reason);
-void DeleteAccount(TCreature *Actor, const char *Name, const char *Reason);
-void BanishCharacter(TCreature *Actor, const char *Name, int Duration, const char *Reason);
-void DeleteCharacter(TCreature *Actor, const char *Name, const char *Reason);
-void IPBanishment(TCreature *Actor, const char *Name, const char *Reason);
-void SetNameRule(TCreature *Actor, const char *Name);
-void KickPlayer(TCreature *Actor, const char *Name);
-void HomeTeleport(TCreature *Actor, const char *Name);
+void delete_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
+void cleanup_field(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
+void cleanup_field(TCreature *Actor);
+void teleport(TCreature *Actor, const char *Param);
+void teleport_to_creature(TCreature *Actor, const char *Name);
+void teleport_player_to_me(TCreature *Actor, const char *Name);
+void magic_rope(TCreature *Actor, int ManaPoints, int SoulPoints);
+void magic_climbing(TCreature *Actor, int ManaPoints, int SoulPoints, const char *Param);
+void magic_climbing(TCreature *Actor, const char *Param);
+void create_thing(TCreature *Actor, const char *Param1, const char *Param2);
+void create_money(TCreature *Actor, const char *Param);
+void create_food(TCreature *Actor, int ManaPoints, int SoulPoints);
+void create_arrows(TCreature *Actor, int ManaPoints, int SoulPoints, int ArrowType, int Count);
+void summon_creature(TCreature *Actor, int ManaPoints, int Race, bool God);
+void summon_creature(TCreature *Actor, int ManaPoints, const char *RaceName, bool God);
+void start_monsterraid(TCreature *Actor, const char *RaidName);
+void raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints);
+void mass_raise_dead(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius);
+void heal(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount);
+void mass_heal(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Amount, int Radius);
+void heal_friend(TCreature *Actor, const char *TargetName, int ManaPoints, int SoulPoints, int Amount);
+void refresh_mana(TCreature *Actor, int ManaPoints, int SoulPoints, int Amount);
+void magic_go_strength(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints, int Percent, int Duration);
+void shielding(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration);
+void negate_poison(TCreature *Actor, TCreature *Target, int ManaPoints, int SoulPoints);
+void enlight(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius, int Duration);
+void invisibility(TCreature *Actor, int ManaPoints, int SoulPoints, int Duration);
+void cancel_invisibility(TCreature *Actor, Object Target, int ManaPoints, int SoulPoints, int Radius);
+void creature_illusion(TCreature *Actor, int ManaPoints, int SoulPoints, const char *RaceName, int Duration);
+void object_illusion(TCreature *Actor, int ManaPoints, int SoulPoints, Object Target, int Duration);
+void change_data(TCreature *Actor, const char *Param);
+void enchant_object(TCreature *Actor, int ManaPoints, int SoulPoints, ObjectType OldType, ObjectType NewType);
+void convince(TCreature *Actor, TCreature *Target);
+void challenge(TCreature *Actor, int ManaPoints, int SoulPoints, int Radius);
+void find_person(TCreature *Actor, int ManaPoints, int SoulPoints, const char *TargetName);
+void get_position(TCreature *Actor);
+void get_quest_value(TCreature *Actor, const char *Param);
+void set_quest_value(TCreature *Actor, const char *Param1, const char *Param2);
+void clear_quest_values(TCreature *Actor);
+void create_knowledge(TCreature *Actor, const char *Param1, const char *Param2);
+void change_profession(TCreature *Actor, const char *Param);
+void edit_guests(TCreature *Actor);
+void edit_subowners(TCreature *Actor);
+void edit_name_door(TCreature *Actor);
+void kick_guest(TCreature *Actor, const char *GuestName);
+void notation(TCreature *Actor, const char *Name, const char *Comment);
+void name_lock(TCreature *Actor, const char *Name);
+void banish_account(TCreature *Actor, const char *Name, int Duration, const char *Reason);
+void delete_account(TCreature *Actor, const char *Name, const char *Reason);
+void banish_character(TCreature *Actor, const char *Name, int Duration, const char *Reason);
+void delete_character(TCreature *Actor, const char *Name, const char *Reason);
+void ip_banishment(TCreature *Actor, const char *Name, const char *Reason);
+void set_name_rule(TCreature *Actor, const char *Name);
+void kick_player(TCreature *Actor, const char *Name);
+void home_teleport(TCreature *Actor, const char *Name);
 
 // TODO(fusion): These are unsafe like strcpy.
-void GetMagicItemDescription(Object Obj, char *SpellString, int *MagicLevel);
-void GetSpellbook(uint32 CharacterID, char *Buffer);
+void get_magic_item_description(Object Obj, char *SpellString, int *MagicLevel);
+void get_spellbook(uint32 CharacterID, char *Buffer);
 
-int GetSpellLevel(int SpellNr);
+int get_spell_level(int SpellNr);
 
-int CheckForSpell(uint32 CreatureID, const char *Text);
-void UseMagicItem(uint32 CreatureID, Object Obj, Object Dest);
-void DrinkPotion(uint32 CreatureID, Object Obj);
+int check_for_spell(uint32 CreatureID, const char *Text);
+void use_magic_item(uint32 CreatureID, Object Obj, Object Dest);
+void drink_potion(uint32 CreatureID, Object Obj);
 
-void InitMagic(void);
-void ExitMagic(void);
+void init_magic(void);
+void exit_magic(void);
 
 #endif //TIBIA_MAGIC_H_

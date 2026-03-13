@@ -72,7 +72,7 @@ static void SigHupHandler(int signr){
 
 static void SigAbortHandler(int signr){
 	print(1, "SigAbortHandler: shutting down writer thread.\n");
-	AbortWriter();
+	abort_writer();
 }
 
 static void DefaultHandler(int signr){
@@ -251,23 +251,23 @@ static void InitAll(void){
 		LoadWorldConfig();
 		InitSHM(!BeADaemon);
 		LockGame();
-		InitLog("game");
+		init_log("game");
 		srand(time(NULL));
 		InitSignalHandler();
 		InitConnections();
 		InitCommunication();
 		InitStrings();
-		InitWriter();
-		InitReader();
-		InitObjects();
-		InitMap();
-		InitInfo();
-		InitMoveUse();
-		InitMagic();
+		init_writer();
+		init_reader();
+		init_objects();
+		init_map();
+		init_info();
+		init_move_use();
+		init_magic();
 		InitCr();
-		InitHouses();
+		init_houses();
 		InitTime();
-		ApplyPatches();
+		apply_patches();
 	}catch(const char *str){
 		error("Initialization error: %s\n", str);
 		exit(EXIT_FAILURE);
@@ -278,14 +278,14 @@ static void ExitAll(void){
 	EndGame();
 	ExitTime();
 	ExitCr();
-	ExitMagic();
-	ExitMoveUse();
-	ExitInfo();
-	ExitHouses();
-	ExitMap(SaveMapOn);
-	ExitObjects();
-	ExitReader();
-	ExitWriter();
+	exit_magic();
+	exit_move_use();
+	exit_info();
+	exit_houses();
+	exit_map(SaveMapOn);
+	exit_objects();
+	exit_reader();
+	exit_writer();
 	ExitStrings();
 	ExitCommunication();
 	ExitConnections();
@@ -332,7 +332,7 @@ static void AdvanceGame(int Delay){
 
 	if(CronTimeCounter >= 1500){
 		CronTimeCounter -= 1000;
-		ProcessCronSystem();
+		process_cron_system();
 	}
 
 	if(SkillTimeCounter >= 1250){
@@ -349,9 +349,9 @@ static void AdvanceGame(int Delay){
 		ProcessConnections();
 		ProcessMonsterhomes();
 		ProcessMonsterRaids();
-		ProcessCommunicationControl();
-		ProcessReaderThreadReplies(RefreshSector, SendMails);
-		ProcessWriterThreadReplies();
+		process_communication_control();
+		process_reader_thread_replies(refresh_sector, send_mails);
+		process_writer_thread_replies();
 		ProcessCommand();
 
 		// TODO(fusion): Shouldn't we be checking both brightness and color?
@@ -376,12 +376,12 @@ static void AdvanceGame(int Delay){
 			int Hour, Minute;
 			GetRealTime(&Hour, &Minute);
 
-			RefreshCylinders();
+			refresh_cylinders();
 			if(Minute % 5 == 0){
 				CreatePlayerList(true);
 			}
 			if(Minute % 15 == 0){
-				SavePlayerDataOrder();
+				save_player_data_order();
 			}
 			if(Minute == 0){
 				NetLoadSummary();
@@ -421,9 +421,9 @@ static void AdvanceGame(int Delay){
 				LogoutAllPlayers();
 				SendAll();
 				if(Reboot){
-					RefreshMap();
+					refresh_map();
 				}
-				SaveMap();
+				save_map();
 				SaveMapOn = false;
 				EndGame();
 			}
@@ -434,7 +434,7 @@ static void AdvanceGame(int Delay){
 	}
 
 	if(Delay > Beat){
-		Log("lag", "Delay %d msec.\n", Delay);
+		log_message("lag", "Delay %d msec.\n", Delay);
 	}
 
 	// TODO(fusion): Why would we delay creature movement yet another beat?

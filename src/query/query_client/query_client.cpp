@@ -261,7 +261,7 @@ void QueryClient::sendQuad(uint32 Quad){
 
 void QueryClient::sendString(const char *String){
 	try{
-		this->WriteBuffer.writeString(String);
+		this->WriteBuffer.write_string(String);
 	}catch(const char *str){
 		error("QueryClient::sendString: %s.\n", str);
 		this->QueryOk = false;
@@ -277,7 +277,7 @@ void QueryClient::sendBytes(const uint8 *Buffer, int Count){
 	}
 }
 
-bool QueryClient::getFlag(void){
+bool QueryClient::get_flag(void){
 	return this->getByte() != 0;
 }
 
@@ -311,11 +311,11 @@ uint32 QueryClient::getQuad(void){
 	return Result;
 }
 
-void QueryClient::getString(char *Buffer, int MaxLength){
+void QueryClient::get_string(char *Buffer, int MaxLength){
 	try{
-		this->ReadBuffer.readString(Buffer, MaxLength);
+		this->ReadBuffer.read_string(Buffer, MaxLength);
 	}catch(const char *str){
-		error("QueryClient::getString: %s.\n", str);
+		error("QueryClient::get_string: %s.\n", str);
 		if(MaxLength > 0){
 			Buffer[0] = 0;
 		}
@@ -460,8 +460,8 @@ int QueryClient::loginAdmin(uint32 AccountID, bool PrivateWorld,
 	if(Status == QUERY_STATUS_OK){
 		*NumberOfCharacters = this->getByte();
 		for(int i = 0; i < *NumberOfCharacters; i += 1){
-			this->getString(Characters[i], 30);
-			this->getString(Worlds[i], 30);
+			this->get_string(Characters[i], 30);
+			this->get_string(Worlds[i], 30);
 			this->getBytes(IPAddresses[i], 4);
 			Ports[i] = this->getWord();
 		}
@@ -726,11 +726,11 @@ int QueryClient::loginGame(uint32 AccountID, char *PlayerName,
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status == QUERY_STATUS_OK){
 		*CharacterID = this->getQuad();
-		this->getString(PlayerName, 30);
+		this->get_string(PlayerName, 30);
 		*Sex = this->getByte();
-		this->getString(Guild, 30);
-		this->getString(Rank, 30);
-		this->getString(Title, 30);
+		this->get_string(Guild, 30);
+		this->get_string(Rank, 30);
+		this->get_string(Title, 30);
 		*NumberOfBuddies = this->getByte();
 
 		int SkipBuddies = 0;
@@ -743,14 +743,14 @@ int QueryClient::loginGame(uint32 AccountID, char *PlayerName,
 
 		for(int i = 0; i < *NumberOfBuddies; i += 1){
 			BuddyIDs[i] = this->getQuad();
-			this->getString(BuddyNames[i], 30);
+			this->get_string(BuddyNames[i], 30);
 		}
 
 		if(SkipBuddies > 0){
 			char BuddyName[30];
 			for(int i = 0; i < SkipBuddies; i += 1){
 				this->getQuad();
-				this->getString(BuddyName, 30);
+				this->get_string(BuddyName, 30);
 			}
 		}
 
@@ -758,7 +758,7 @@ int QueryClient::loginGame(uint32 AccountID, char *PlayerName,
 		memset(Rights, 0, 12); // MAX_RIGHT_BYTES ?
 		for(int i = 0; i < NumberOfRights; i += 1){
 			char RightName[30];
-			this->getString(RightName, 30);
+			this->get_string(RightName, 30);
 			int Right = GetRightByName(RightName);
 			if(Right != -1){
 				SetBit(Rights, Right);
@@ -767,7 +767,7 @@ int QueryClient::loginGame(uint32 AccountID, char *PlayerName,
 			}
 		}
 
-		*PremiumAccountActivated = this->getFlag();
+		*PremiumAccountActivated = this->get_flag();
 	}else if(Status == QUERY_STATUS_ERROR){
 		int ErrorCode = this->getByte();
 		if(ErrorCode >= 1 && ErrorCode <= 15){
@@ -855,7 +855,7 @@ int QueryClient::banishAccount(uint32 GamemasterID, const char *PlayerName,
 	if(Status == QUERY_STATUS_OK){
 		*BanishmentID = this->getQuad();
 		*Days = this->getByte();
-		*FinalWarning = this->getFlag();
+		*FinalWarning = this->get_flag();
 		if(*Days == 0xFF){
 			*Days = -1;
 		}
@@ -1009,7 +1009,7 @@ int QueryClient::finishAuctions(int *NumberOfAuctions, uint16 *HouseIDs,
 		for(int i = 0; i < *NumberOfAuctions; i += 1){
 			HouseIDs[i] = this->getWord();
 			CharacterIDs[i] = this->getQuad();
-			this->getString(CharacterNames[i], 30);
+			this->get_string(CharacterNames[i], 30);
 			Bids[i] = (int)this->getQuad();
 		}
 	}else{
@@ -1047,7 +1047,7 @@ int QueryClient::transferHouses(int *NumberOfTransfers, uint16 *HouseIDs,
 		for(int i = 0; i < *NumberOfTransfers; i += 1){
 			HouseIDs[i] = this->getWord();
 			NewOwnerIDs[i] = this->getQuad();
-			this->getString(NewOwnerNames[i], 30);
+			this->get_string(NewOwnerNames[i], 30);
 			Prices[i] = (int)this->getQuad();
 		}
 	}else{
@@ -1190,7 +1190,7 @@ int QueryClient::getHouseOwners(int *NumberOfOwners, uint16 *HouseIDs,
 		for(int i = 0; i < *NumberOfOwners; i += 1){
 			HouseIDs[i] = this->getWord();
 			OwnerIDs[i] = this->getQuad();
-			this->getString(OwnerNames[i], 30);
+			this->get_string(OwnerNames[i], 30);
 			PaidUntils[i] = (int)this->getQuad();
 		}
 	}else{
@@ -1290,7 +1290,7 @@ int QueryClient::createPlayerlist(int NumberOfPlayers, const char **Names,
 	int Status = this->executeQuery(240, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status == QUERY_STATUS_OK){
-		*NewRecord = this->getFlag();
+		*NewRecord = this->get_flag();
 	}else{
 		error("QueryClient::createPlayerlist: Request failed.\n");
 	}
@@ -1328,7 +1328,7 @@ int QueryClient::loadPlayers(uint32 MinimumCharacterID, int *NumberOfPlayers,
 		// which could be a problem.
 		*NumberOfPlayers = (int)this->getQuad();
 		for(int i = 0; i < *NumberOfPlayers; i += 1){
-			this->getString(Names[i], 30);
+			this->get_string(Names[i], 30);
 			CharacterIDs[i] = this->getQuad();
 		}
 	}else{
@@ -1404,7 +1404,7 @@ int QueryClient::getHiddenCharacters(uint32 MinimumCharacterID,
 
 int QueryClient::createHighscores(int NumberOfPlayers, uint32 *CharacterIDs,
 		int *ExpPoints, int *ExpLevel, int *Fist, int *Club, int *Axe,
-		int *Sword, int *Distance, int *Shielding, int *Magic, int *Fishing){
+		int *Sword, int *Distance, int *shielding, int *Magic, int *Fishing){
 	this->prepareQuery(204);
 
 	this->sendQuad((uint32)NumberOfPlayers);
@@ -1417,7 +1417,7 @@ int QueryClient::createHighscores(int NumberOfPlayers, uint32 *CharacterIDs,
 		this->sendWord((uint16)Axe[i]);
 		this->sendWord((uint16)Sword[i]);
 		this->sendWord((uint16)Distance[i]);
-		this->sendWord((uint16)Shielding[i]);
+		this->sendWord((uint16)shielding[i]);
 		this->sendWord((uint16)Magic[i]);
 		this->sendWord((uint16)Fishing[i]);
 	}
@@ -1457,7 +1457,7 @@ int QueryClient::getPlayersOnline(int *NumberOfWorlds, char (*Names)[30], uint16
 	if(Status == QUERY_STATUS_OK){
 		*NumberOfWorlds = this->getByte();
 		for(int i = 0; i < *NumberOfWorlds; i += 1){
-			this->getString(Names[i], 30);
+			this->get_string(Names[i], 30);
 			Players[i] = this->getWord();
 		}
 	}else{
@@ -1473,7 +1473,7 @@ int QueryClient::getWorlds(int *NumberOfWorlds, char (*Names)[30]){
 	if(Status == QUERY_STATUS_OK){
 		*NumberOfWorlds = this->getByte();
 		for(int i = 0; i < *NumberOfWorlds; i += 1){
-			this->getString(Names[i], 30);
+			this->get_string(Names[i], 30);
 		}
 	}else{
 		error("QueryClient::getWorlds: Request failed.\n");
@@ -1575,8 +1575,8 @@ int QueryClient::cancelPaymentOld(uint32 PurchaseNr, uint32 ReferenceNr,
 	int Status = this->executeQuery(360, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status == QUERY_STATUS_OK){
-		*IllegalUse = this->getFlag();
-		this->getString(EMailAddress, 50);
+		*IllegalUse = this->get_flag();
+		this->get_string(EMailAddress, 50);
 	}else if(Status == QUERY_STATUS_ERROR){
 		int ErrorCode = this->getByte();
 		if(ErrorCode >= 1 && ErrorCode <= 2){
@@ -1641,7 +1641,7 @@ int QueryClient::addPaymentNew(const char *PaymentKey, uint32 PaymentID,
 	if(Status == QUERY_STATUS_OK){
 		*ActionTaken = this->getByte();
 		if(*ActionTaken == 5){
-			this->getString(EMailReceiver, 100);
+			this->get_string(EMailReceiver, 100);
 		}
 	}else if(Status == QUERY_STATUS_ERROR){
 		int ErrorCode = this->getByte();
@@ -1665,9 +1665,9 @@ int QueryClient::cancelPaymentNew(uint32 PurchaseNr, uint32 ReferenceNr,
 	int Status = this->executeQuery(360, true);
 	int Result = (Status == QUERY_STATUS_OK ? 0 : -1);
 	if(Status == QUERY_STATUS_OK){
-		*IllegalUse = this->getFlag();
-		*Present = this->getFlag();
-		this->getString(EMailAddress, 50);
+		*IllegalUse = this->get_flag();
+		*Present = this->get_flag();
+		this->get_string(EMailAddress, 50);
 	}else if(Status == QUERY_STATUS_ERROR){
 		int ErrorCode = this->getByte();
 		if(ErrorCode == 1){

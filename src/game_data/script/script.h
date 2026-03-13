@@ -7,59 +7,59 @@
 
 #define MAX_IDENT_LENGTH 30
 
-struct TReadScriptFile {
-	TReadScriptFile(void);
-	~TReadScriptFile(void);
+struct ReadScriptFile {
+	ReadScriptFile(void);
+	~ReadScriptFile(void);
 	void open(const char *FileName);
 	void close(void);
 	void error(const char *Text);
-	void nextToken(void);
-	char *getIdentifier(void);
-	int getNumber(void);
-	char *getString(void);
-	uint8 *getBytesequence(void);
-	void getCoordinate(int *x, int *y, int *z);
-	char getSpecial(void);
+	void next_token(void);
+	char *get_identifier(void);
+	int get_number(void);
+	char *get_string(void);
+	uint8 *get_bytesequence(void);
+	void get_coordinate(int *x, int *y, int *z);
+	char get_special(void);
 
-	char *readIdentifier(void){
-		this->nextToken();
-		return this->getIdentifier();
+	char *read_identifier(void){
+		this->next_token();
+		return this->get_identifier();
 	}
 
-	int readNumber(void){
-		this->nextToken();
+	int read_number(void){
+		this->next_token();
 
 		int Sign = 1;
 		if(this->Token == SPECIAL && this->Special == '-'){
 			Sign = -1;
-			this->nextToken();
+			this->next_token();
 		}
 
-		return Sign * this->getNumber();
+		return Sign * this->get_number();
 	}
 
-	char *readString(void){
-		this->nextToken();
-		return this->getString();
+	char *read_string(void){
+		this->next_token();
+		return this->get_string();
 	}
 
-	uint8 *readBytesequence(void){
-		this->nextToken();
-		return this->getBytesequence();
+	uint8 *read_bytesequence(void){
+		this->next_token();
+		return this->get_bytesequence();
 	}
 
-	void readCoordinate(int *x, int *y, int *z){
-		this->nextToken();
-		this->getCoordinate(x, y, z);
+	void read_coordinate(int *x, int *y, int *z){
+		this->next_token();
+		this->get_coordinate(x, y, z);
 	}
 
-	char readSpecial(void){
-		this->nextToken();
-		return this->getSpecial();
+	char read_special(void){
+		this->next_token();
+		return this->get_special();
 	}
 
-	void readSymbol(char Symbol){
-		if(this->readSpecial() != Symbol){
+	void read_symbol(char Symbol){
+		if(this->read_special() != Symbol){
 			this->error("symbol mismatch");
 		}
 	}
@@ -80,18 +80,18 @@ struct TReadScriptFile {
 	char Special;
 };
 
-struct TWriteScriptFile {
-	TWriteScriptFile(void);
-	~TWriteScriptFile(void);
+struct WriteScriptFile {
+	WriteScriptFile(void);
+	~WriteScriptFile(void);
 	void open(const char *FileName);
 	void close(void);
 	void error(const char *Text);
-	void writeLn(void);
-	void writeText(const char *Text);
-	void writeNumber(int Number);
-	void writeString(const char *Text);
-	void writeCoordinate(int x ,int y ,int z);
-	void writeBytesequence(const uint8 *Sequence, int Length);
+	void write_ln(void);
+	void write_text(const char *Text);
+	void write_number(int Number);
+	void write_string(const char *Text);
+	void write_coordinate(int x ,int y ,int z);
+	void write_bytesequence(const uint8 *Sequence, int Length);
 
 	// DATA
 	// =================

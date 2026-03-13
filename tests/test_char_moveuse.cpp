@@ -39,31 +39,31 @@ TEST_CASE("MOVEUSE_MAX_PARAMETERS") {
     CHECK(MOVEUSE_MAX_PARAMETERS == 5);
 }
 
-TEST_CASE("TMoveUseAction struct layout") {
-    TMoveUseAction a{};
+TEST_CASE("MoveUseAction struct layout") {
+    MoveUseAction a{};
     CHECK(sizeof(a.Parameters) == MOVEUSE_MAX_PARAMETERS * sizeof(int));
 }
 
-TEST_CASE("TMoveUseCondition struct layout") {
-    TMoveUseCondition c{};
+TEST_CASE("MoveUseCondition struct layout") {
+    MoveUseCondition c{};
     CHECK(sizeof(c.Parameters) == MOVEUSE_MAX_PARAMETERS * sizeof(int));
 }
 
-TEST_CASE("TMoveUseRule struct layout") {
-    TMoveUseRule r{};
+TEST_CASE("MoveUseRule struct layout") {
+    MoveUseRule r{};
     CHECK(r.FirstCondition == 0);
     CHECK(r.LastCondition == 0);
     CHECK(r.FirstAction == 0);
     CHECK(r.LastAction == 0);
 }
 
-TEST_CASE("TMoveUseDatabase default construction") {
-    TMoveUseDatabase db;
+TEST_CASE("MoveUseDatabase default construction") {
+    MoveUseDatabase db;
     CHECK(db.NumberOfRules == 0);
 }
 
-TEST_CASE("TDelayedMail struct layout") {
-    TDelayedMail m{};
+TEST_CASE("DelayedMail struct layout") {
+    DelayedMail m{};
     CHECK(m.CharacterID == 0);
     CHECK(m.DepotNumber == 0);
     CHECK(m.Packet == nullptr);

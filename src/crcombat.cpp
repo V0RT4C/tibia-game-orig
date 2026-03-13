@@ -51,49 +51,49 @@ void TCombat::GetWeapon(void){
 	for(int Position = INVENTORY_HAND_FIRST;
 			Position <= INVENTORY_HAND_LAST;
 			Position += 1){
-		Object Obj = GetBodyObject(Master->ID, Position);
+		Object Obj = get_body_object(Master->ID, Position);
 		if(Obj == NONE){
 			continue;
 		}
 
-		ObjectType ObjType = Obj.getObjectType();
+		ObjectType ObjType = Obj.get_object_type();
 
-		if(ObjType.getFlag(RESTRICTLEVEL)){
+		if(ObjType.get_flag(RESTRICTLEVEL)){
 			int CurrentLevel = Master->Skills[SKILL_LEVEL]->Get();
-			int MinimumLevel = (int)ObjType.getAttribute(MINIMUMLEVEL);
+			int MinimumLevel = (int)ObjType.get_attribute(MINIMUMLEVEL);
 			if(CurrentLevel < MinimumLevel){
 				continue;
 			}
 		}
 
-		if(ObjType.getFlag(RESTRICTPROFESSION) && Master->Type == PLAYER){
-			uint32 ProfessionMask = ObjType.getAttribute(PROFESSIONS);
+		if(ObjType.get_flag(RESTRICTPROFESSION) && Master->Type == PLAYER){
+			uint32 ProfessionMask = ObjType.get_attribute(PROFESSIONS);
 			uint8 Profession = ((TPlayer*)Master)->GetEffectiveProfession();
 			if((ProfessionMask & (1 << Profession)) == 0){
 				continue;
 			}
 		}
 
-		if(ObjType.getFlag(SHIELD)){
+		if(ObjType.get_flag(SHIELD)){
 			this->Shield = Obj;
 		}
 
-		if(ObjType.getFlag(WEAPON)){
+		if(ObjType.get_flag(WEAPON)){
 			this->Close = Obj;
 			this->Fist = false;
 		}
 
-		if(ObjType.getFlag(BOW)){
+		if(ObjType.get_flag(BOW)){
 			this->Missile = Obj;
 			this->Fist = false;
 		}
 
-		if(ObjType.getFlag(THROW)){
+		if(ObjType.get_flag(THROW)){
 			this->Throw = Obj;
 			this->Fist = false;
 		}
 
-		if(ObjType.getFlag(WAND)){
+		if(ObjType.get_flag(WAND)){
 			this->Wand = Obj;
 			this->Fist = false;
 		}
@@ -111,13 +111,13 @@ void TCombat::GetAmmo(void){
 	}
 
 	// TODO(fusion): Check if `Master` is NULL?
-	Object Ammo = GetBodyObject(this->Master->ID, INVENTORY_AMMO);
+	Object Ammo = get_body_object(this->Master->ID, INVENTORY_AMMO);
 	this->Ammo = NONE;
 	if(Ammo != NONE){
-		ObjectType AmmoType = Ammo.getObjectType();
-		if(AmmoType.getFlag(AMMO)){
-			ObjectType BowType = this->Missile.getObjectType();
-			if(AmmoType.getAttribute(AMMOTYPE) == BowType.getAttribute(BOWAMMOTYPE)){
+		ObjectType AmmoType = Ammo.get_object_type();
+		if(AmmoType.get_flag(AMMO)){
+			ObjectType BowType = this->Missile.get_object_type();
+			if(AmmoType.get_attribute(AMMOTYPE) == BowType.get_attribute(BOWAMMOTYPE)){
 				this->Ammo = Ammo;
 			}
 		}
@@ -164,16 +164,16 @@ void TCombat::GetAttackValue(int *Value, int *SkillNr){
 	int AttackValue;
 	int WeaponType;
 	if(this->Close != NONE){
-		ObjectType CloseType = this->Close.getObjectType();
-		AttackValue = (int)CloseType.getAttribute(WEAPONATTACKVALUE);
-		WeaponType = (int)CloseType.getAttribute(WEAPONTYPE);
+		ObjectType CloseType = this->Close.get_object_type();
+		AttackValue = (int)CloseType.get_attribute(WEAPONATTACKVALUE);
+		WeaponType = (int)CloseType.get_attribute(WEAPONTYPE);
 	}else if(this->Missile != NONE){
-		ObjectType AmmoType = this->Ammo.getObjectType();
-		AttackValue = (int)AmmoType.getAttribute(AMMOATTACKVALUE);
+		ObjectType AmmoType = this->Ammo.get_object_type();
+		AttackValue = (int)AmmoType.get_attribute(AMMOATTACKVALUE);
 		WeaponType = WEAPON_AMMO;
 	}else if(this->Throw != NONE){
-		ObjectType ThrowType = this->Throw.getObjectType();
-		AttackValue = (int)ThrowType.getAttribute(THROWATTACKVALUE);
+		ObjectType ThrowType = this->Throw.get_object_type();
+		AttackValue = (int)ThrowType.get_attribute(THROWATTACKVALUE);
 		WeaponType = WEAPON_THROW;
 	}else if(this->Wand != NONE){
 		AttackValue = 0;
@@ -191,16 +191,16 @@ void TCombat::GetDefendValue(int *Value, int *SkillNr){
 	int DefenseValue;
 	int WeaponType;
 	if(this->Shield != NONE){
-		ObjectType ShieldType = this->Shield.getObjectType();
-		DefenseValue = (int)ShieldType.getAttribute(SHIELDDEFENDVALUE);
+		ObjectType ShieldType = this->Shield.get_object_type();
+		DefenseValue = (int)ShieldType.get_attribute(SHIELDDEFENDVALUE);
 		WeaponType = WEAPON_SHIELD;
 	}else if(this->Close != NONE){
-		ObjectType CloseType = this->Close.getObjectType();
-		DefenseValue = (int)CloseType.getAttribute(WEAPONDEFENDVALUE);
-		WeaponType = (int)CloseType.getAttribute(WEAPONTYPE);
+		ObjectType CloseType = this->Close.get_object_type();
+		DefenseValue = (int)CloseType.get_attribute(WEAPONDEFENDVALUE);
+		WeaponType = (int)CloseType.get_attribute(WEAPONTYPE);
 	}else if(this->Throw != NONE){
-		ObjectType ThrowType = this->Throw.getObjectType();
-		DefenseValue = (int)ThrowType.getAttribute(THROWDEFENDVALUE);
+		ObjectType ThrowType = this->Throw.get_object_type();
+		DefenseValue = (int)ThrowType.get_attribute(THROWDEFENDVALUE);
 		WeaponType = WEAPON_THROW;
 	}else if(this->Missile != NONE){
 		// TODO(fusion): This might be correct. Having a bow equipped will reduce
@@ -263,16 +263,16 @@ int TCombat::GetDefendDamage(void){
 
 	Object Shield = this->Shield;
 	if(Shield != NONE){
-		ObjectType ShieldType = Shield.getObjectType();
-		if(ShieldType.getFlag(WEAROUT)){
-			uint32 RemainingUses = Shield.getAttribute(REMAININGUSES);
+		ObjectType ShieldType = Shield.get_object_type();
+		if(ShieldType.get_flag(WEAROUT)){
+			uint32 RemainingUses = Shield.get_attribute(REMAININGUSES);
 			if(RemainingUses > 1){
-				Change(Shield, REMAININGUSES, RemainingUses - 1);
+				change(Shield, REMAININGUSES, RemainingUses - 1);
 			}else{
-				ObjectType WearOutType = (int)ShieldType.getAttribute(WEAROUTTARGET);
-				Change(Shield, WearOutType, 0);
+				ObjectType WearOutType = (int)ShieldType.get_attribute(WEAROUTTARGET);
+				change(Shield, WearOutType, 0);
 				// TODO(fusion): Probably just check anyways, to be sure.
-				if(!Shield.exists() || !WearOutType.getFlag(SHIELD)){
+				if(!Shield.exists() || !WearOutType.get_flag(SHIELD)){
 					this->CheckCombatValues();
 				}
 			}
@@ -288,12 +288,12 @@ int TCombat::GetArmorStrength(void){
 	for(int Position = INVENTORY_FIRST;
 			Position <= INVENTORY_LAST;
 			Position += 1){
-		Object Obj = GetBodyObject(Master->ID, Position);
+		Object Obj = get_body_object(Master->ID, Position);
 		if(Obj.exists()){
-			ObjectType ObjType = Obj.getObjectType();
-			if(ObjType.getFlag(CLOTHES) && ObjType.getFlag(ARMOR)
-			&& (int)ObjType.getAttribute(BODYPOSITION) == Position){
-				Armor += (int)ObjType.getAttribute(ARMORVALUE);
+			ObjectType ObjType = Obj.get_object_type();
+			if(ObjType.get_flag(CLOTHES) && ObjType.get_flag(ARMOR)
+			&& (int)ObjType.get_attribute(BODYPOSITION) == Position){
+				Armor += (int)ObjType.get_attribute(ARMORVALUE);
 			}
 		}
 	}
@@ -379,22 +379,22 @@ void TCombat::SetAttackDest(uint32 TargetID, bool Follow){
 			}
 		}
 
-		if(Master->Type == PLAYER && !CheckRight(Master->ID, ATTACK_EVERYWHERE)){
-			if(IsProtectionZone(Master->posx, Master->posy, Master->posz)
-			|| IsProtectionZone(Target->posx, Target->posy, Target->posz)){
+		if(Master->Type == PLAYER && !check_right(Master->ID, ATTACK_EVERYWHERE)){
+			if(is_protection_zone(Master->posx, Master->posy, Master->posz)
+			|| is_protection_zone(Target->posx, Target->posy, Target->posz)){
 				this->StopAttack(0);
 				throw PROTECTIONZONE;
 			}
 		}
 
-		if(Master->Type == PLAYER && CheckRight(Master->ID, NO_ATTACK)){
+		if(Master->Type == PLAYER && check_right(Master->ID, NO_ATTACK)){
 			this->StopAttack(0);
 			throw ATTACKNOTALLOWED;
 		}
 
 		if(Master->Type == PLAYER && Target->Type == PLAYER){
 			if(((TPlayer*)Master)->GetRealProfession() == PROFESSION_NONE
-					&& !CheckRight(Master->ID, ATTACK_EVERYWHERE)){
+					&& !check_right(Master->ID, ATTACK_EVERYWHERE)){
 				this->StopAttack(0);
 				throw ATTACKNOTALLOWED;
 			}
@@ -406,7 +406,7 @@ void TCombat::SetAttackDest(uint32 TargetID, bool Follow){
 		}
 
 		if(WorldType == NON_PVP && Master->IsPeaceful() && Target->IsPeaceful()){
-			if(Master->Type != PLAYER || !CheckRight(Master->ID, ATTACK_EVERYWHERE)){
+			if(Master->Type != PLAYER || !check_right(Master->ID, ATTACK_EVERYWHERE)){
 				this->StopAttack(0);
 				throw ATTACKNOTALLOWED;
 			}
@@ -420,7 +420,7 @@ void TCombat::SetAttackDest(uint32 TargetID, bool Follow){
 		}
 	}
 
-	int Distance = ObjectDistance(Master->CrObject, Target->CrObject);
+	int Distance = object_distance(Master->CrObject, Target->CrObject);
 	if(Distance > 8){
 		this->StopAttack(0);
 		throw TARGETLOST;
@@ -474,7 +474,7 @@ void TCombat::CanToDoAttack(void){
 
 		if(WorldType == NON_PVP){
 			if(Master->IsPeaceful() && Target->IsPeaceful()){
-				if(Master->Type != PLAYER || !CheckRight(Master->ID, ATTACK_EVERYWHERE)){
+				if(Master->Type != PLAYER || !check_right(Master->ID, ATTACK_EVERYWHERE)){
 					this->StopAttack(0);
 					throw ATTACKNOTALLOWED;
 				}
@@ -482,7 +482,7 @@ void TCombat::CanToDoAttack(void){
 		}
 	}
 
-	int Distance = ObjectDistance(Master->CrObject, Target->CrObject);
+	int Distance = object_distance(Master->CrObject, Target->CrObject);
 	if(Distance > 8){
 		this->StopAttack(0);
 		throw TARGETLOST;
@@ -502,7 +502,7 @@ void TCombat::CanToDoAttack(void){
 			Master->ToDoGo(Target->posx, Target->posy, Target->posz, false, Distance - 4);
 		}else if(Distance < 4){
 			int DestX, DestY, DestZ;
-			if(SearchFlightField(Master->ID, Target->ID, &DestX, &DestY, &DestZ)){
+			if(search_flight_field(Master->ID, Target->ID, &DestX, &DestY, &DestZ)){
 				Master->ToDoGo(DestX, DestY, DestZ, true, -1);
 			}
 		}
@@ -570,7 +570,7 @@ void TCombat::Attack(void){
 	// TODO(fusion): It is weird that max attack distance is hardcoded.
 	// Actually, it is related to the maximum visible distance on a
 	// creature's viewport.
-	int Distance = ObjectDistance(Master->CrObject, Target->CrObject);
+	int Distance = object_distance(Master->CrObject, Target->CrObject);
 	if(Distance > 8){
 		this->StopAttack(0);
 		throw TARGETLOST;
@@ -578,21 +578,21 @@ void TCombat::Attack(void){
 
 	if(Master->Type == PLAYER && Target->Type == PLAYER){
 		if(((TPlayer*)Master)->GetRealProfession() == PROFESSION_NONE
-				&& !CheckRight(Master->ID, ATTACK_EVERYWHERE)){
+				&& !check_right(Master->ID, ATTACK_EVERYWHERE)){
 			this->StopAttack(0);
 			throw ATTACKNOTALLOWED;
 		}
 	}
 
 	if(Master->Type == PLAYER){
-		if(CheckRight(Master->ID, NO_ATTACK)){
+		if(check_right(Master->ID, NO_ATTACK)){
 			this->StopAttack(0);
 			throw ATTACKNOTALLOWED;
 		}
 	}
 
-	if(IsProtectionZone(Master->posx, Master->posy, Master->posz)
-	|| IsProtectionZone(Target->posx, Target->posy, Target->posz)){
+	if(is_protection_zone(Master->posx, Master->posy, Master->posz)
+	|| is_protection_zone(Target->posx, Target->posy, Target->posz)){
 		this->StopAttack(0);
 		throw PROTECTIONZONE;
 	}
@@ -672,14 +672,14 @@ void TCombat::CloseAttack(TCreature *Target){
 
 	Object Close = this->Close;
 	if(Close != NONE){
-		ObjectType CloseType = Close.getObjectType();
-		if(CloseType.getFlag(WEAROUT)){
-			uint32 RemainingUses = Close.getAttribute(REMAININGUSES);
+		ObjectType CloseType = Close.get_object_type();
+		if(CloseType.get_flag(WEAROUT)){
+			uint32 RemainingUses = Close.get_attribute(REMAININGUSES);
 			if(RemainingUses > 1){
-				Change(Close, REMAININGUSES, RemainingUses - 1);
+				change(Close, REMAININGUSES, RemainingUses - 1);
 			}else{
-				ObjectType WearOutType = (int)CloseType.getAttribute(WEAROUTTARGET);
-				Change(Close, WearOutType, 0);
+				ObjectType WearOutType = (int)CloseType.get_attribute(WEAROUTTARGET);
+				change(Close, WearOutType, 0);
 				this->CheckCombatValues();
 			}
 		}
@@ -694,24 +694,24 @@ void TCombat::WandAttack(TCreature *Target){
 			std::abs(Master->posx - Target->posx),
 			std::abs(Master->posy - Target->posy));
 
-	ObjectType WandType = this->Wand.getObjectType();
-	if(Distance > (int)WandType.getAttribute(WANDRANGE)){
+	ObjectType WandType = this->Wand.get_object_type();
+	if(Distance > (int)WandType.get_attribute(WANDRANGE)){
 		throw TARGETOUTOFRANGE;
 	}
 
-	if(!ThrowPossible(Master->posx, Master->posy, Master->posz,
+	if(!throw_possible(Master->posx, Master->posy, Master->posz,
 				Target->posx, Target->posy, Target->posz, 0)){
 		throw TARGETHIDDEN;
 	}
 
-	int DamageType = WandType.getAttribute(WANDDAMAGETYPE);
-	int AnimType = WandType.getAttribute(WANDMISSILE);
-	int ManaConsumption = WandType.getAttribute(WANDMANACONSUMPTION);
-	int AttackStrength = WandType.getAttribute(WANDATTACKSTRENGTH);
-	int AttackVariation = (int)WandType.getAttribute(WANDATTACKVARIATION);
+	int DamageType = WandType.get_attribute(WANDDAMAGETYPE);
+	int AnimType = WandType.get_attribute(WANDMISSILE);
+	int ManaConsumption = WandType.get_attribute(WANDMANACONSUMPTION);
+	int AttackStrength = WandType.get_attribute(WANDATTACKSTRENGTH);
+	int AttackVariation = (int)WandType.get_attribute(WANDATTACKVARIATION);
 
 	try{
-		CheckMana(Master, ManaConsumption, 0, 0);
+		check_mana(Master, ManaConsumption, 0, 0);
 	}catch(RESULT r){
 		if(r == NOTENOUGHMANA){
 			throw OUTOFAMMO;
@@ -725,7 +725,7 @@ void TCombat::WandAttack(TCreature *Target){
 		this->ActivateLearning();
 	}
 
-	::Missile(Master->CrObject, Target->CrObject, AnimType);
+	::missile(Master->CrObject, Target->CrObject, AnimType);
 }
 
 void TCombat::DistanceAttack(TCreature *Target){
@@ -749,34 +749,34 @@ void TCombat::DistanceAttack(TCreature *Target){
 			throw OUTOFAMMO;
 		}
 
-		ObjectType BowType = this->Missile.getObjectType();
-		ObjectType AmmoType = this->Ammo.getObjectType();
-		if(Distance > (int)BowType.getAttribute(BOWRANGE)){
+		ObjectType BowType = this->Missile.get_object_type();
+		ObjectType AmmoType = this->Ammo.get_object_type();
+		if(Distance > (int)BowType.get_attribute(BOWRANGE)){
 			throw TARGETOUTOFRANGE;
 		}
 
 		HitChance = 90;
 		DamageType = DAMAGE_PHYSICAL;
-		AnimType = AmmoType.getAttribute(AMMOMISSILE);
+		AnimType = AmmoType.get_attribute(AMMOMISSILE);
 		Fragility = 100;
-		SpecialEffect = AmmoType.getAttribute(AMMOSPECIALEFFECT);
-		EffectStrength = AmmoType.getAttribute(AMMOEFFECTSTRENGTH);
+		SpecialEffect = AmmoType.get_attribute(AMMOSPECIALEFFECT);
+		EffectStrength = AmmoType.get_attribute(AMMOEFFECTSTRENGTH);
 	}else{
 		ASSERT(this->Throw != NONE);
-		ObjectType ThrowType = this->Throw.getObjectType();
-		if(Distance > (int)ThrowType.getAttribute(THROWRANGE)){
+		ObjectType ThrowType = this->Throw.get_object_type();
+		if(Distance > (int)ThrowType.get_attribute(THROWRANGE)){
 			throw TARGETOUTOFRANGE;
 		}
 
 		HitChance = 75;
 		DamageType = DAMAGE_PHYSICAL;
-		AnimType = ThrowType.getAttribute(THROWMISSILE);
-		Fragility = ThrowType.getAttribute(THROWFRAGILITY);
-		SpecialEffect = ThrowType.getAttribute(THROWSPECIALEFFECT);
-		EffectStrength = ThrowType.getAttribute(THROWEFFECTSTRENGTH);
+		AnimType = ThrowType.get_attribute(THROWMISSILE);
+		Fragility = ThrowType.get_attribute(THROWFRAGILITY);
+		SpecialEffect = ThrowType.get_attribute(THROWSPECIALEFFECT);
+		EffectStrength = ThrowType.get_attribute(THROWEFFECTSTRENGTH);
 	}
 
-	if(!ThrowPossible(Master->posx, Master->posy, Master->posz,
+	if(!throw_possible(Master->posx, Master->posy, Master->posz,
 				Target->posx, Target->posy, Target->posz, 0)){
 		throw TARGETHIDDEN;
 	}
@@ -811,33 +811,33 @@ void TCombat::DistanceAttack(TCreature *Target){
 			DropY += (rand() % 3) - 1;
 		}
 
-		if(!CoordinateFlag(DropX, DropY, DropZ, BANK)
-		|| CoordinateFlag(DropX, DropY, DropZ, UNLAY)
-		|| !ThrowPossible(Master->posx, Master->posy, Master->posz, DropX, DropY, DropZ, 0)){
+		if(!coordinate_flag(DropX, DropY, DropZ, BANK)
+		|| coordinate_flag(DropX, DropY, DropZ, UNLAY)
+		|| !throw_possible(Master->posx, Master->posy, Master->posz, DropX, DropY, DropZ, 0)){
 			DropX = Target->posx;
 			DropY = Target->posy;
 		}
 	}
 
-	Object DropCon = GetMapContainer(DropX, DropY, DropZ);
-	::Missile(Master->CrObject, DropCon, AnimType);
+	Object DropCon = get_map_container(DropX, DropY, DropZ);
+	::missile(Master->CrObject, DropCon, AnimType);
 
 	if(SpecialEffect == 1){ // POISON ARROW
 		if(Hit){
 			Target->Damage(Master, EffectStrength, DAMAGE_POISON_PERIODIC);
 		}
 	}else if(SpecialEffect == 2){ // BURST ARROW
-		int Damage = ComputeDamage(Master, 0, EffectStrength, EffectStrength);
-		TDamageImpact Impact(Master, DAMAGE_PHYSICAL, Damage, false);
-		CircleShapeSpell(Master, DropX, DropY, DropZ, INT_MAX,
+		int Damage = compute_damage(Master, 0, EffectStrength, EffectStrength);
+		DamageImpact Impact(Master, DAMAGE_PHYSICAL, Damage, false);
+		circle_shape_spell(Master, DropX, DropY, DropZ, INT_MAX,
 				ANIMATION_NONE, 2, &Impact, EFFECT_FIRE_BURST);
 	}
 
 	try{
 		if(random(0, 99) < Fragility){
-			Delete(this->Ammo, 1);
+			delete_op(this->Ammo, 1);
 		}else{
-			Move(0, this->Ammo, DropCon, 1, false, NONE);
+			move(0, this->Ammo, DropCon, 1, false, NONE);
 		}
 	}catch(RESULT r){
 		if(r != DESTROYED){
@@ -847,7 +847,7 @@ void TCombat::DistanceAttack(TCreature *Target){
 	}
 
 	if(!Hit){
-		GraphicalEffect(DropX, DropY, DropZ, EFFECT_POFF);
+		graphical_effect(DropX, DropY, DropZ, EFFECT_POFF);
 	}
 }
 
@@ -947,7 +947,7 @@ void TCombat::DistributeExperiencePoints(uint32 Exp){
 			}
 
 			Attacker->Skills[SKILL_LEVEL]->Increase(Amount);
-			TextualEffect(Attacker->CrObject, COLOR_WHITE, "%d", Amount);
+			textual_effect(Attacker->CrObject, COLOR_WHITE, "%d", Amount);
 		}
 	}
 }
