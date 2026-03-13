@@ -20,7 +20,7 @@ set(SOURCES
     src/crmain.cpp
     src/crnonpl.cpp
     src/crplayer.cpp
-    src/crskill.cpp
+    src/creature/skill/skill.cpp
     src/crypto/xtea/xtea.cpp
     src/crypto/rsa/rsa.cpp
     src/game_data/houses/houses.cpp
