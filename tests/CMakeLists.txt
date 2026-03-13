@@ -93,3 +93,16 @@ target_compile_features(test_semaphore PRIVATE cxx_std_17)
 target_compile_definitions(test_semaphore PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
 target_link_libraries(test_semaphore PRIVATE pthread)
 add_test(NAME test_semaphore COMMAND test_semaphore)
+
+add_executable(test_char_script test_char_script.cpp
+    ${CMAKE_SOURCE_DIR}/src/game_data/script/script.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/binary_file/binary_file.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/read_stream/read_stream.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/write_stream/write_stream.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/strings/strings.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/utils/utils.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_char_script PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_char_script PRIVATE cxx_std_17)
+target_compile_definitions(test_char_script PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+add_test(NAME test_char_script COMMAND test_char_script)

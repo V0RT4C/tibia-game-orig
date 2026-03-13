@@ -35,7 +35,7 @@ set(SOURCES
     src/query/query_connection_pool/query_connection_pool.cpp
     src/reader.cpp
     src/receiving.cpp
-    src/script.cpp
+    src/game_data/script/script.cpp
     src/sending.cpp
     src/shm/shm.cpp
     src/common/strings/strings.cpp

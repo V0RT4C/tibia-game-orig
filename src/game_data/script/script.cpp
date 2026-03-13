@@ -1,4 +1,4 @@
-#include "script.h"
+#include "game_data/script/script.h"
 
 // NOTE(fusion): Throwing a character array on the stack as an exception won't
 // work because it implicitly decays into a character pointer which would then
