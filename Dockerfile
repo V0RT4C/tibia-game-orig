@@ -34,9 +34,6 @@ COPY core/npc/ /initial-data/npc/
 RUN mkdir -p /initial-data/usr && \
     for i in $(seq -w 0 99); do mkdir -p /initial-data/usr/$i; done
 
-# Static config
-COPY core/dottibia_example /initial-data/.tibia
-
 COPY gameserver/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
