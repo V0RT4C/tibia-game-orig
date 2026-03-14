@@ -11,29 +11,6 @@ for dir in dat map origmap mon npc usr; do
     fi
 done
 
-# Copy .tibia config if not present
-if [ ! -f .tibia ]; then
-    cp /initial-data/.tibia .tibia
-fi
-
-# Apply QueryManagerPassword from environment if set (requires disguise)
-if [ -n "$QUERYMANAGER_PASSWORD" ]; then
-    KEY="Pm-,o%yD"
-    PW_LEN=${#QUERYMANAGER_PASSWORD}
-    DISGUISED=""
-    i=0
-    while [ "$i" -lt "$PW_LEN" ]; do
-        k_char=$(printf '%s' "$KEY" | cut -c$((i + 1)))
-        p_char=$(printf '%s' "$QUERYMANAGER_PASSWORD" | cut -c$((i + 1)))
-        K=$(printf '%d' "'$k_char")
-        P=$(printf '%d' "'$p_char")
-        C=$(( (K - P + 94) % 94 + 33 ))
-        DISGUISED="${DISGUISED}$(printf "\\$(printf '%03o' "$C")")"
-        i=$((i + 1))
-    done
-    sed -i "s/^QueryManager.*/QueryManager = {(\"127.0.0.1\",7173,\"$DISGUISED\")}/" .tibia
-fi
-
 # Ensure log and save directories exist
 mkdir -p ./log ./save
 
@@ -41,10 +18,12 @@ mkdir -p ./log ./save
 rm -f ./save/game.pid
 
 # Wait for querymanager to be reachable
-echo "Waiting for querymanager on port 7173..."
+QM_HOST="${SENJA_QM_HOST:-127.0.0.1}"
+QM_PORT="${SENJA_QM_PORT:-7173}"
+echo "Waiting for querymanager on $QM_HOST:$QM_PORT..."
 i=0
 while [ "$i" -lt 60 ]; do
-    if nc -z 127.0.0.1 7173 2>/dev/null; then
+    if nc -z "$QM_HOST" "$QM_PORT" 2>/dev/null; then
         echo "querymanager is reachable."
         break
     fi
