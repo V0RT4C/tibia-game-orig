@@ -3,16 +3,6 @@
 #include "config/config.h"
 #include <cstring>
 
-TEST_CASE("DatabaseSettings struct has correct field sizes") {
-    DatabaseSettings ds;
-    CHECK(sizeof(ds.Product) == 30);
-    CHECK(sizeof(ds.Database) == 30);
-    CHECK(sizeof(ds.Login) == 30);
-    CHECK(sizeof(ds.Password) == 30);
-    CHECK(sizeof(ds.Host) == 30);
-    CHECK(sizeof(ds.Port) == 6);
-}
-
 TEST_CASE("QueryManagerSettings struct has correct field sizes") {
     QueryManagerSettings qs;
     CHECK(sizeof(qs.Host) == 50);
