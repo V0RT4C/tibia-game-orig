@@ -53,25 +53,25 @@ static void EnvCopy(char *Dest, usize DestSize, const char *Name, const char *De
 
 void ReadConfig(void){
 	// Paths
-	EnvCopy(BINPATH, sizeof(BINPATH), "SENJA_BINPATH", ".");
-	EnvCopy(MAPPATH, sizeof(MAPPATH), "SENJA_MAPPATH", "./map");
-	EnvCopy(ORIGMAPPATH, sizeof(ORIGMAPPATH), "SENJA_ORIGMAPPATH", "./origmap");
-	EnvCopy(DATAPATH, sizeof(DATAPATH), "SENJA_DATAPATH", "./dat");
-	EnvCopy(USERPATH, sizeof(USERPATH), "SENJA_USERPATH", "./usr");
-	EnvCopy(LOGPATH, sizeof(LOGPATH), "SENJA_LOGPATH", "./log");
-	EnvCopy(SAVEPATH, sizeof(SAVEPATH), "SENJA_SAVEPATH", "./save");
-	EnvCopy(MONSTERPATH, sizeof(MONSTERPATH), "SENJA_MONSTERPATH", "./mon");
-	EnvCopy(NPCPATH, sizeof(NPCPATH), "SENJA_NPCPATH", "./npc");
+	EnvCopy(BINPATH, sizeof(BINPATH), "SENJA_GAMESERVER_BINPATH", ".");
+	EnvCopy(MAPPATH, sizeof(MAPPATH), "SENJA_GAMESERVER_MAPPATH", "./map");
+	EnvCopy(ORIGMAPPATH, sizeof(ORIGMAPPATH), "SENJA_GAMESERVER_ORIGMAPPATH", "./origmap");
+	EnvCopy(DATAPATH, sizeof(DATAPATH), "SENJA_GAMESERVER_DATAPATH", "./dat");
+	EnvCopy(USERPATH, sizeof(USERPATH), "SENJA_GAMESERVER_USERPATH", "./usr");
+	EnvCopy(LOGPATH, sizeof(LOGPATH), "SENJA_GAMESERVER_LOGPATH", "./log");
+	EnvCopy(SAVEPATH, sizeof(SAVEPATH), "SENJA_GAMESERVER_SAVEPATH", "./save");
+	EnvCopy(MONSTERPATH, sizeof(MONSTERPATH), "SENJA_GAMESERVER_MONSTERPATH", "./mon");
+	EnvCopy(NPCPATH, sizeof(NPCPATH), "SENJA_GAMESERVER_NPCPATH", "./npc");
 
 	// Server settings
-	SHMKey = EnvInt("SENJA_SHM", 10011);
-	DebugLevel = EnvInt("SENJA_DEBUG_LEVEL", 2);
-	Beat = EnvInt("SENJA_BEAT", 50);
-	GamePort = EnvInt("SENJA_GAME_PORT", 7172);
+	SHMKey = EnvInt("SENJA_GAMESERVER_SHM", 10011);
+	DebugLevel = EnvInt("SENJA_GAMESERVER_DEBUG_LEVEL", 2);
+	Beat = EnvInt("SENJA_GAMESERVER_BEAT", 50);
+	GamePort = EnvInt("SENJA_GAMESERVER_TCP_PORT", 7172);
 
 	// World
 	EnvCopy(WorldName, sizeof(WorldName), "SENJA_WORLD_NAME", "Senja");
-	PrivateWorld = (strcmp(EnvStr("SENJA_WORLD_STATE", "public"), "private") == 0);
+	PrivateWorld = (strcmp(EnvStr("SENJA_GAMESERVER_WORLD_STATE", "public"), "private") == 0);
 
 	// Globals initialized to 0 — overwritten by LoadWorldConfig()
 	WorldType = NORMAL;
@@ -102,6 +102,6 @@ void ReadConfig(void){
 	}else{
 		TransportMode = TRANSPORT_BOTH;
 	}
-	WebSocketPort = EnvInt("SENJA_WEBSOCKET_PORT", 7979);
-	EnvCopy(WebSocketAddress, sizeof(WebSocketAddress), "SENJA_WEBSOCKET_ADDRESS", "0.0.0.0");
+	WebSocketPort = EnvInt("SENJA_GAMESERVER_WS_PORT", 7979);
+	EnvCopy(WebSocketAddress, sizeof(WebSocketAddress), "SENJA_GAMESERVER_WS_ADDRESS", "0.0.0.0");
 }
