@@ -4,15 +4,6 @@
 #include "common.h"
 #include "enums.h"
 
-struct DatabaseSettings {
-    char Product[30];
-    char Database[30];
-    char Login[30];
-    char Password[30];
-    char Host[30];
-    char Port[6];
-};
-
 struct QueryManagerSettings {
     char Host[50];
     int Port;
@@ -29,15 +20,8 @@ extern char ORIGMAPPATH[4096];
 extern char SAVEPATH[4096];
 extern char USERPATH[4096];
 extern int SHMKey;
-extern int AdminPort;
 extern int GamePort;
-extern int QueryManagerPort;
-extern char AdminAddress[16];
 extern char GameAddress[16];
-extern char QueryManagerAddress[16];
-extern char QueryManagerAdminPW[9];
-extern char QueryManagerGamePW[9];
-extern char QueryManagerWebPW[9];
 extern int DebugLevel;
 extern bool PrivateWorld;
 extern TWorldType WorldType;
@@ -48,11 +32,6 @@ extern int PremiumPlayerBuffer;
 extern int PremiumNewbieBuffer;
 extern int Beat;
 extern int RebootTime;
-extern DatabaseSettings ADMIN_DATABASE;
-extern DatabaseSettings VOLATILE_DATABASE;
-extern DatabaseSettings WEB_DATABASE;
-extern DatabaseSettings FORUM_DATABASE;
-extern DatabaseSettings MANAGER_DATABASE;
 extern int NumberOfQueryManagers;
 extern QueryManagerSettings QUERY_MANAGER[10];
 
