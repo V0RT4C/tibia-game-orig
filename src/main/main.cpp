@@ -13,6 +13,9 @@
 #include "writer.h"
 
 #include <fstream>
+#include <fcntl.h>
+#include <unistd.h>
+#include <ucontext.h>
 #include <signal.h>
 #include <sys/stat.h>
 
@@ -107,12 +110,76 @@ static void ErrorHandler(int signr){
 }
 #endif
 
+// Async-signal-safe hex printer for crash diagnostics.
+static void write_hex(int fd, uintptr_t val) {
+	char buf[18];
+	buf[0] = '0';
+	buf[1] = 'x';
+	for (int i = 15; i >= 0; i--) {
+		int nibble = val & 0xf;
+		buf[2 + i] = (nibble < 10) ? ('0' + nibble) : ('a' + nibble - 10);
+		val >>= 4;
+	}
+	write(fd, buf, 18);
+}
+
+static void CrashHandler(int signr, siginfo_t *info, void *ucontext_raw) {
+	char buf[256];
+	int len = snprintf(buf, sizeof(buf), "FATAL: Caught signal %d (%s) on tid %d\n",
+					   signr, strsignal(signr), (int)gettid());
+	if (len > 0) write(STDERR_FILENO, buf, len);
+
+	// Print the faulting address.
+	if (info) {
+		len = snprintf(buf, sizeof(buf), "Faulting address: %p\n", info->si_addr);
+		if (len > 0) write(STDERR_FILENO, buf, len);
+	}
+
+	// Print instruction pointer from ucontext.
+	if (ucontext_raw) {
+		ucontext_t *uc = (ucontext_t *)ucontext_raw;
+		uintptr_t pc = (uintptr_t)uc->uc_mcontext.gregs[REG_RIP];
+		const char *msg = "Instruction pointer: ";
+		write(STDERR_FILENO, msg, 21);
+		write_hex(STDERR_FILENO, pc);
+		write(STDERR_FILENO, "\n", 1);
+	}
+
+	// Dump /proc/self/maps for addr2line usage.
+	const char *maps_header = "--- /proc/self/maps ---\n";
+	write(STDERR_FILENO, maps_header, 24);
+	int maps_fd = open("/proc/self/maps", O_RDONLY);
+	if (maps_fd >= 0) {
+		char mbuf[4096];
+		ssize_t n;
+		while ((n = read(maps_fd, mbuf, sizeof(mbuf))) > 0) {
+			write(STDERR_FILENO, mbuf, n);
+		}
+		close(maps_fd);
+	}
+
+	// Re-raise with default handler to get core dump
+	signal(signr, SIG_DFL);
+	raise(signr);
+}
+
 static void InitSignalHandler(void) {
 	int Count = 0;
 	Count += (SigHandler(SIGHUP, SigHupHandler) != SIG_ERR);
 	Count += (SigHandler(SIGINT, DefaultHandler) != SIG_ERR);
 	Count += (SigHandler(SIGQUIT, DefaultHandler) != SIG_ERR);
 	Count += (SigHandler(SIGABRT, SigAbortHandler) != SIG_ERR);
+	// Use SA_SIGINFO for crash signals to get faulting address and registers.
+	{
+		struct sigaction sa = {};
+		sa.sa_sigaction = CrashHandler;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = SA_RESTART | SA_SIGINFO;
+		Count += (sigaction(SIGSEGV, &sa, NULL) == 0);
+		Count += (sigaction(SIGBUS, &sa, NULL) == 0);
+		Count += (sigaction(SIGFPE, &sa, NULL) == 0);
+		Count += (sigaction(SIGILL, &sa, NULL) == 0);
+	}
 	Count += (SigHandler(SIGUSR1, SIG_IGN) != SIG_ERR);
 	Count += (SigHandler(SIGUSR2, SIG_IGN) != SIG_ERR);
 	Count += (SigHandler(SIGPIPE, SIG_IGN) != SIG_ERR);

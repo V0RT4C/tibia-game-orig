@@ -102,8 +102,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(game PRIVATE -g -Og)
     target_compile_definitions(game PRIVATE ENABLE_ASSERTIONS=1)
 else()
-    target_compile_options(game PRIVATE -O2)
+    target_compile_options(game PRIVATE -O2 -g)
 endif()
+
+# Enable symbol export for backtrace_symbols
+target_link_options(game PRIVATE -rdynamic)
 
 # Suppress OpenSSL deprecated API warnings for the RSA compilation unit only
 set_source_files_properties(src/crypto/rsa/rsa.cpp PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
