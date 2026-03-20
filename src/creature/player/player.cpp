@@ -2878,9 +2878,11 @@ int get_player_index_entry_number(const char *Name, int Position) {
 			return ch - 'A';
 		} else if (ch >= 'a' && ch <= 'z') {
 			return ch - 'a';
+		} else if (ch >= '0' && ch <= '9') {
+			return 26 + (ch - '0');
 		}
 	}
-	return 0;
+	return 36;
 }
 
 void insert_player_index(PlayerIndexInternalNode *Node, int Position, const char *Name, uint32 CharacterID) {

@@ -72,7 +72,7 @@ struct PlayerIndexNode {
 };
 
 struct PlayerIndexInternalNode : PlayerIndexNode {
-	PlayerIndexNode *Child[27];
+	PlayerIndexNode *Child[37]; // 26 letters + 10 digits + 1 catch-all
 };
 
 struct PlayerIndexEntry {

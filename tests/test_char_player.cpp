@@ -21,5 +21,5 @@ TEST_CASE("PlayerIndexLeafNode entry count") {
 }
 
 TEST_CASE("PlayerIndexInternalNode child count") {
-	CHECK(sizeof(PlayerIndexInternalNode::Child) / sizeof(PlayerIndexNode *) == 27);
+	CHECK(sizeof(PlayerIndexInternalNode::Child) / sizeof(PlayerIndexNode *) == 37);
 }
