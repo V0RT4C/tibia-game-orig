@@ -52,7 +52,7 @@ int WebSocketTransport::write(const uint8 *buffer, int size) {
     // uWS::Loop::defer() is documented as thread-safe.
     if (event_loop_) {
         ((uWS::Loop *)event_loop_)->defer([this]() {
-            if (!connected_.load(std::memory_order_acquire)) return;
+            if (!connected_.load(std::memory_order_acquire) || !ws_) return;
 
             uint8 drain_buf[16384];
             int n = out_buffer_.read(drain_buf, sizeof(drain_buf));
@@ -134,6 +134,10 @@ void *WebSocketTransport::get_ws() const {
     return ws_;
 }
 
+void WebSocketTransport::clear_ws() {
+    ws_ = nullptr;
+}
+
 void WebSocketTransport::set_thread_id(pid_t tid) {
     thread_id_.store(tid, std::memory_order_release);
 }
@@ -147,6 +151,20 @@ void WebSocketTransport::deferred_delete(WebSocketTransport *transport) {
     void *loop = transport->get_event_loop();
     if (loop) {
         ((uWS::Loop *)loop)->defer([transport]() {
+            // If the WebSocket is still alive (comm thread exited before the
+            // .close callback fired), null out PerSocketData->Transport to
+            // prevent the .close callback from dereferencing freed memory,
+            // then close the orphaned WebSocket.
+            void *ws_raw = transport->get_ws();
+            if (ws_raw) {
+                auto *ws = (uWS::WebSocket<false, true, PerSocketData> *)ws_raw;
+                auto *data = ws->getUserData();
+                if (data && data->Transport == transport) {
+                    data->Transport = nullptr;
+                }
+                transport->close();
+                ws->close();
+            }
             delete transport;
         });
     } else {

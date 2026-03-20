@@ -36,6 +36,10 @@ public:
     // The raw WebSocket pointer for sending. Only valid on the event loop thread.
     void *get_ws() const;
 
+    // Clear the WebSocket pointer. Called from the .close callback to indicate
+    // the WebSocket has been closed and should no longer be accessed.
+    void clear_ws();
+
     // Set from the communication thread so the event loop can signal it.
     void set_thread_id(pid_t tid);
     pid_t get_thread_id() const;

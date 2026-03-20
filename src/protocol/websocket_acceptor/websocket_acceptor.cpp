@@ -89,6 +89,9 @@ static int websocket_thread_loop(void *Unused) {
             if (!data->Transport) return;
 
             data->Transport->close();
+            // Mark the WebSocket as gone so deferred_delete() knows not to
+            // access the (soon-to-be-freed) WebSocket object.
+            data->Transport->clear_ws();
             pid_t tid = data->Transport->get_thread_id();
             if (tid != 0) {
                 tgkill(GetGameProcessID(), tid, SIGHUP);
