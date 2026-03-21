@@ -39,6 +39,7 @@ struct QueryClient {
 	int executeQuery(int Timeout, bool AutoReconnect);
 
 	int checkAccountPassword(uint32 AccountID, const char *Password, const char *IPAddress);
+	int resolveEmail(const char *Email, uint32 *AccountID);
 	int loginAdmin(uint32 AccountID, bool PrivateWorld, int *NumberOfCharacters,
 			char (*Characters)[30], char (*Worlds)[30], uint8 (*IPAddresses)[4],
 			uint16 *Ports, uint16 *PremiumDaysLeft);

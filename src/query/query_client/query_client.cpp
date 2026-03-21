@@ -705,6 +705,19 @@ static bool IsAdministrativeRight(const char *RightName){
 		|| strcmp(RightName, "EXTRA_CHARACTER") == 0;
 }
 
+int QueryClient::resolveEmail(const char *Email, uint32 *AccountID){
+	this->prepareQuery(13); // ResolveEmail
+	this->sendString(Email);
+	int Status = this->executeQuery(30, true);
+	if(Status == QUERY_STATUS_OK){
+		*AccountID = this->getQuad();
+		return 0;
+	}else if(Status == QUERY_STATUS_ERROR){
+		return this->getByte(); // 1 = email not found
+	}
+	return -1;
+}
+
 // NOTE(fusion): `PlayerName` is an input and output parameter. It will contain
 // the correct player name with upper and lower case letters if the operation is
 // successful.
