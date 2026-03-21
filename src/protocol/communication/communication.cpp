@@ -684,7 +684,7 @@ bool check_connection(TConnection *Connection) {
 // NOTE(fusion): `PlayerName` is an input and output parameter. It will contain
 // the correct player name with upper and lower case letters if the player is
 // actually logged in.
-TPlayerData *perform_registration(TConnection *Connection, char *PlayerName, uint32 AccountID,
+TPlayerData *perform_registration(TConnection *Connection, char *PlayerName, const char *Email,
 								  const char *PlayerPassword, bool GamemasterClient) {
 	TQueryManagerPoolConnection QueryManagerConnection(&QueryManagerConnectionPool);
 	if (!QueryManagerConnection) {
@@ -709,6 +709,13 @@ TPlayerData *perform_registration(TConnection *Connection, char *PlayerName, uin
 	char BuddyNames[100][30]; // MAX_BUDDIES, MAX_NAME_LENGTH ?
 	uint8 Rights[12];         // MAX_RIGHT_BYTES ?
 	bool PremiumAccountActivated;
+	uint32 AccountID = 0;
+	int ResolveCode = QueryManagerConnection->resolveEmail(Email, &AccountID);
+	if(ResolveCode != 0){
+		send_login_message(Connection, LOGIN_MESSAGE_ERROR, "Email or password is not correct.", -1);
+		return NULL;
+	}
+
 	int LoginCode =
 		QueryManagerConnection->loginGame(AccountID, PlayerName, PlayerPassword, Connection->get_ip_address(),
 										  PrivateWorld, false, GamemasterClient, &CharacterID, &Sex, Guild, Rank, Title,
@@ -916,7 +923,7 @@ bool handle_login(TConnection *Connection) {
 	int TerminalType;
 	int TerminalVersion;
 	bool GamemasterClient;
-	uint32 AccountID;
+	char Email[51];
 	char PlayerName[30];
 	char PlayerPassword[30];
 	try {
@@ -953,7 +960,7 @@ bool handle_login(TConnection *Connection) {
 		TerminalVersion = (int)ReadBuffer.readWord();
 #endif
 		GamemasterClient = ReadBuffer.readByte() != 0;
-		AccountID = ReadBuffer.readQuad();
+		ReadBuffer.read_string(Email, sizeof(Email));
 		ReadBuffer.read_string(PlayerName, sizeof(PlayerName));
 		ReadBuffer.read_string(PlayerPassword, sizeof(PlayerPassword));
 	} catch (const char *str) {
@@ -1038,7 +1045,7 @@ bool handle_login(TConnection *Connection) {
 		break;
 	}
 
-	TPlayerData *Slot = perform_registration(Connection, PlayerName, AccountID, PlayerPassword, GamemasterClient);
+	TPlayerData *Slot = perform_registration(Connection, PlayerName, Email, PlayerPassword, GamemasterClient);
 	if (Slot == NULL) {
 		return false;
 	}
