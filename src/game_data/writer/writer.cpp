@@ -806,6 +806,36 @@ void process_decrement_is_online_order(uint32 CharacterID) {
 	}
 }
 
+void process_highscores_order(HighscoresOrderData *Data) {
+	if (Data == NULL) {
+		error("process_highscores_order: No data provided.\n");
+		return;
+	}
+
+	if (Data->NumberOfPlayers > 0) {
+		int Ret = QueryManagerConnection->createHighscores(Data->NumberOfPlayers,
+				Data->CharacterIDs, Data->ExpPoints, Data->ExpLevel,
+				Data->Fist, Data->Club, Data->Axe, Data->Sword,
+				Data->Distance, Data->Shielding, Data->Magic, Data->Fishing);
+		if (Ret != 0) {
+			error("process_highscores_order: Request failed.\n");
+		}
+	}
+
+	delete[] Data->CharacterIDs;
+	delete[] Data->ExpPoints;
+	delete[] Data->ExpLevel;
+	delete[] Data->Fist;
+	delete[] Data->Club;
+	delete[] Data->Axe;
+	delete[] Data->Sword;
+	delete[] Data->Distance;
+	delete[] Data->Shielding;
+	delete[] Data->Magic;
+	delete[] Data->Fishing;
+	delete Data;
+}
+
 int writer_thread_loop(void *Unused) {
 	WriterThreadOrder Order = {};
 	while (true) {
@@ -858,6 +888,11 @@ int writer_thread_loop(void *Unused) {
 
 		case WRITER_ORDER_SAVEPLAYERDATA: {
 			save_player_pool_slots();
+			break;
+		}
+
+		case WRITER_ORDER_HIGHSCORES: {
+			process_highscores_order((HighscoresOrderData *)Order.Data);
 			break;
 		}
 

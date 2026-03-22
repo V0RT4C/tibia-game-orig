@@ -19,6 +19,7 @@ enum WriterThreadOrderType : int {
 	WRITER_ORDER_REMOVEBUDDY = 7,
 	WRITER_ORDER_DECREMENTISONLINE = 8,
 	WRITER_ORDER_SAVEPLAYERDATA = 9,
+	WRITER_ORDER_HIGHSCORES = 10,
 };
 
 enum WriterThreadReplyType : int {
@@ -88,6 +89,21 @@ struct BuddyOrderData {
 	uint32 Buddy;
 };
 
+struct HighscoresOrderData {
+	int NumberOfPlayers;
+	uint32 *CharacterIDs;
+	int *ExpPoints;
+	int *ExpLevel;
+	int *Fist;
+	int *Club;
+	int *Axe;
+	int *Sword;
+	int *Distance;
+	int *Shielding;
+	int *Magic;
+	int *Fishing;
+};
+
 struct WriterThreadReply {
 	WriterThreadReplyType ReplyType;
 	const void *Data;
@@ -126,6 +142,7 @@ void add_buddy_order(TCreature *Creature, uint32 BuddyID);
 void remove_buddy_order(TCreature *Creature, uint32 BuddyID);
 void decrement_is_online_order(uint32 CharacterID);
 void save_player_data_order(void);
+void process_highscores_order(HighscoresOrderData *Data);
 void process_logout_order(LogoutOrderData *Data);
 void process_playerlist_order(PlayerlistOrderData *Data);
 void process_kill_statistics_order(KillStatisticsOrderData *Data);
