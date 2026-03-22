@@ -448,6 +448,7 @@ static void AdvanceGame(int Delay) {
 			}
 			if (Minute % 15 == 0) {
 				save_player_data_order();
+				create_highscores();
 			}
 			if (Minute == 0) {
 				net_load_summary();

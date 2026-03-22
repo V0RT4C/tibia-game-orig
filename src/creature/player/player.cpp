@@ -1862,6 +1862,49 @@ void create_player_list(bool Online) {
 	playerlist_order(NumberOfPlayers, PlayerNames, PlayerLevels, PlayerProfessions);
 }
 
+void create_highscores(void) {
+	if (FirstFreePlayer <= 0) {
+		return;
+	}
+
+	HighscoresOrderData *Data = new HighscoresOrderData;
+	Data->CharacterIDs = new uint32[FirstFreePlayer];
+	Data->ExpPoints = new int[FirstFreePlayer];
+	Data->ExpLevel = new int[FirstFreePlayer];
+	Data->Fist = new int[FirstFreePlayer];
+	Data->Club = new int[FirstFreePlayer];
+	Data->Axe = new int[FirstFreePlayer];
+	Data->Sword = new int[FirstFreePlayer];
+	Data->Distance = new int[FirstFreePlayer];
+	Data->Shielding = new int[FirstFreePlayer];
+	Data->Magic = new int[FirstFreePlayer];
+	Data->Fishing = new int[FirstFreePlayer];
+
+	int NumberOfPlayers = 0;
+	for (int Index = 0; Index < FirstFreePlayer; Index += 1) {
+		TPlayer *Player = *PlayerList.at(Index);
+		if (check_right(Player->ID, NO_STATISTICS)) {
+			continue;
+		}
+
+		Data->CharacterIDs[NumberOfPlayers] = Player->ID;
+		Data->ExpPoints[NumberOfPlayers] = Player->Skills[SKILL_LEVEL]->Exp;
+		Data->ExpLevel[NumberOfPlayers] = Player->Skills[SKILL_LEVEL]->Get();
+		Data->Fist[NumberOfPlayers] = Player->Skills[SKILL_FIST]->Get();
+		Data->Club[NumberOfPlayers] = Player->Skills[SKILL_CLUB]->Get();
+		Data->Axe[NumberOfPlayers] = Player->Skills[SKILL_AXE]->Get();
+		Data->Sword[NumberOfPlayers] = Player->Skills[SKILL_SWORD]->Get();
+		Data->Distance[NumberOfPlayers] = Player->Skills[SKILL_DISTANCE]->Get();
+		Data->Shielding[NumberOfPlayers] = Player->Skills[SKILL_SHIELDING]->Get();
+		Data->Magic[NumberOfPlayers] = Player->Skills[SKILL_MAGIC_LEVEL]->Get();
+		Data->Fishing[NumberOfPlayers] = Player->Skills[SKILL_FISHING]->Get();
+		NumberOfPlayers += 1;
+	}
+
+	Data->NumberOfPlayers = NumberOfPlayers;
+	insert_order(WRITER_ORDER_HIGHSCORES, Data);
+}
+
 void print_player_positions(void) {
 	for (int Index = 0; Index < FirstFreePlayer; Index += 1) {
 		TPlayer *Player = *PlayerList.at(Index);

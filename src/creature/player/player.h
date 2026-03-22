@@ -201,6 +201,7 @@ void logout_all_players(void);
 void close_processed_requests(uint32 CharacterID);
 void notify_buddies(uint32 CharacterID, const char *Name, bool Login);
 void create_player_list(bool Online);
+void create_highscores(void);
 void print_player_positions(void);
 void load_depot(TPlayerData *PlayerData, int DepotNr, Object Con);
 void save_depot(TPlayerData *PlayerData, int DepotNr, Object Con);
