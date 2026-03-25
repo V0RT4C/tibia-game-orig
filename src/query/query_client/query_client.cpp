@@ -65,10 +65,10 @@ bool ResolveHostNameAddress(const char *HostName, in_addr_t *OutAddr){
 	}
 
 	if(OutAddr){
-		*OutAddr = ((in_addr_t)HostEntResult->h_addr_list[0][0] << 24)
+		*OutAddr = htonl(((in_addr_t)HostEntResult->h_addr_list[0][0] << 24)
 				| ((in_addr_t)HostEntResult->h_addr_list[0][1] << 16)
 				| ((in_addr_t)HostEntResult->h_addr_list[0][2] <<  8)
-				| ((in_addr_t)HostEntResult->h_addr_list[0][3] <<  0);
+				| ((in_addr_t)HostEntResult->h_addr_list[0][3] <<  0));
 	}
 
 	return true;
