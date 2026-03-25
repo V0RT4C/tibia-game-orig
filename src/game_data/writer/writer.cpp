@@ -252,6 +252,21 @@ void logout_order(TPlayer *Player) {
 		strcpy(Data->Residence, "Unknown");
 	}
 
+	if (!check_right(Player->ID, NO_STATISTICS)) {
+		Data->UpdateHighscores = true;
+		Data->ExpPoints = Player->Skills[SKILL_LEVEL]->Exp;
+		Data->Fist = Player->Skills[SKILL_FIST]->Get();
+		Data->Club = Player->Skills[SKILL_CLUB]->Get();
+		Data->Axe = Player->Skills[SKILL_AXE]->Get();
+		Data->Sword = Player->Skills[SKILL_SWORD]->Get();
+		Data->Distance = Player->Skills[SKILL_DISTANCE]->Get();
+		Data->Shielding = Player->Skills[SKILL_SHIELDING]->Get();
+		Data->Magic = Player->Skills[SKILL_MAGIC_LEVEL]->Get();
+		Data->Fishing = Player->Skills[SKILL_FISHING]->Get();
+	} else {
+		Data->UpdateHighscores = false;
+	}
+
 	insert_order(WRITER_ORDER_LOGOUT, Data);
 }
 
@@ -422,6 +437,17 @@ void process_logout_order(LogoutOrderData *Data) {
 												 Data->LastLoginTime, Data->TutorActivities);
 	if (Ret != 0) {
 		error("process_logout_order: Logout for player %u failed.\n", Data->CharacterID);
+	}
+
+	if (Data->UpdateHighscores) {
+		uint32 CharacterID = Data->CharacterID;
+		int ExpLevel = Data->Level;
+		Ret = QueryManagerConnection->createHighscores(1, &CharacterID,
+				&Data->ExpPoints, &ExpLevel, &Data->Fist, &Data->Club, &Data->Axe,
+				&Data->Sword, &Data->Distance, &Data->Shielding, &Data->Magic, &Data->Fishing);
+		if (Ret != 0) {
+			error("process_logout_order: Highscores update for player %u failed.\n", Data->CharacterID);
+		}
 	}
 
 	delete Data;

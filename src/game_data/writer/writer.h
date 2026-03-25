@@ -45,6 +45,16 @@ struct LogoutOrderData {
 	time_t LastLoginTime;
 	int TutorActivities;
 	char Residence[30];
+	bool UpdateHighscores;
+	int ExpPoints;
+	int Fist;
+	int Club;
+	int Axe;
+	int Sword;
+	int Distance;
+	int Shielding;
+	int Magic;
+	int Fishing;
 };
 
 struct PlayerlistOrderData {
