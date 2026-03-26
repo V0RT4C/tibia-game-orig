@@ -77,6 +77,7 @@ struct TConnection {
 	bool ClosingIsDelayed;
 	uint32 TimeStamp;
 	uint32 TimeStampAction;
+	uint32 LastPingEcho;
 	int TerminalType;
 	int TerminalVersion;
 	int TerminalOffsetX;

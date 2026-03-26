@@ -247,6 +247,7 @@ bool TConnection::join_game(TReadBuffer *Buffer) {
 	strcpy(this->Name, Player->Name);
 	this->TimeStamp = RoundNr;
 	this->TimeStampAction = RoundNr;
+	this->LastPingEcho = 0;
 	return true;
 }
 
