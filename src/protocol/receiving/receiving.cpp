@@ -113,6 +113,8 @@ void CQuitGame(TConnection *Connection, TReadBuffer *Buffer) {
 
 void CPing(TConnection *Connection, TReadBuffer *Buffer) {
 	// NOTE(fusion): Its a no-op because it's already encoded in `Connection::TimeStamp`.
+	// Echo the ping back so the client can measure RTT.
+	send_ping(Connection);
 }
 
 void CGoPath(TConnection *Connection, TReadBuffer *Buffer) {
