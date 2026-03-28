@@ -36,6 +36,12 @@ TRANSPORTMODE TransportMode;
 int WebSocketPort;
 char WebSocketAddress[16];
 
+bool ChallengeEnabled;
+uint8 ChallengeSecret[16];
+int ChallengeInterval;
+int ChallengeTimeout;
+int ChallengeBanMinutes;
+
 static const char *EnvStr(const char *Name, const char *Default){
 	const char *Value = getenv(Name);
 	return (Value != NULL) ? Value : Default;
@@ -104,4 +110,29 @@ void ReadConfig(void){
 	}
 	WebSocketPort = EnvInt("SENJA_GAMESERVER_WS_PORT", 7979);
 	EnvCopy(WebSocketAddress, sizeof(WebSocketAddress), "SENJA_GAMESERVER_WS_ADDRESS", "0.0.0.0");
+
+	// Challenge-response anti-bot
+	ChallengeEnabled = (EnvInt("SENJA_GAMESERVER_CHALLENGE_ENABLED", 0) != 0);
+	ChallengeInterval = EnvInt("SENJA_GAMESERVER_CHALLENGE_INTERVAL", 60);
+	ChallengeTimeout = EnvInt("SENJA_GAMESERVER_CHALLENGE_TIMEOUT", 10);
+	ChallengeBanMinutes = EnvInt("SENJA_GAMESERVER_CHALLENGE_BAN_MINUTES", 0);
+	memset(ChallengeSecret, 0, sizeof(ChallengeSecret));
+	if(ChallengeEnabled){
+		const char *SecretHex = getenv("SENJA_GAMESERVER_CHALLENGE_SECRET");
+		if(SecretHex == NULL || strlen(SecretHex) != 32){
+			error("SENJA_GAMESERVER_CHALLENGE_SECRET must be 32 hex chars; disabling challenges.\n");
+			ChallengeEnabled = false;
+		}else{
+			for(int i = 0; i < 16; i++){
+				unsigned int Byte;
+				if(sscanf(SecretHex + i * 2, "%2x", &Byte) != 1){
+					error("SENJA_GAMESERVER_CHALLENGE_SECRET contains invalid hex; disabling challenges.\n");
+					ChallengeEnabled = false;
+					memset(ChallengeSecret, 0, sizeof(ChallengeSecret));
+					break;
+				}
+				ChallengeSecret[i] = (uint8)Byte;
+			}
+		}
+	}
 }

@@ -18,6 +18,8 @@
 #include <ucontext.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <openssl/rand.h>
+#include "challenge/challenge_ban.h"
 
 static bool BeADaemon = false;
 static bool Reboot = false;
@@ -413,6 +415,56 @@ static void AdvanceGame(int Delay) {
 		SetRoundNr(RoundNr);
 
 		process_connections();
+
+		if (ChallengeEnabled) {
+			TConnection *Conn = get_first_connection();
+			while (Conn != NULL) {
+				if (Conn->State == CONNECTION_GAME) {
+					// Consider a player "idle" if no action for 60+ seconds
+					uint32 IdleRounds = RoundNr - Conn->TimeStampAction;
+					bool PlayerIdle = (IdleRounds >= 60);
+
+					if (Conn->ChallengeTimeSent != 0) {
+						int Elapsed = (int)(RoundNr - Conn->ChallengeTimeSent);
+						if (Elapsed >= ChallengeTimeout) {
+							if (PlayerIdle) {
+								// Player is idle (likely backgrounded tab) — silently drop
+								// the pending challenge instead of kicking
+								Conn->ChallengeTimeSent = 0;
+							} else {
+								// Active player failed to respond — kick and ban
+								log_message("challenge", "TIMEOUT: %s (%s) did not respond within %d seconds. Disconnecting.\n",
+											Conn->get_name(), Conn->get_ip_address(), ChallengeTimeout);
+								if (ChallengeBanMinutes > 0) {
+									TPlayer *P = Conn->get_player();
+									if (P != NULL) {
+										challenge_ban_add(P->AccountID, ChallengeBanMinutes);
+										log_message("challenge", "BAN: Account %u temp-banned for %d minutes.\n",
+													P->AccountID, ChallengeBanMinutes);
+									}
+									send_message(Conn, TALK_ADMIN_MESSAGE,
+										"You have been temporarily banned for %d minutes because you have been behaving bad.",
+										ChallengeBanMinutes);
+								}
+								Conn->ChallengeTimeSent = 0;
+								Conn->logout(5, false);
+							}
+						}
+					} else if (!PlayerIdle) {
+						// Only send challenges to active players
+						int SinceLastChallenge = (int)(RoundNr - Conn->ChallengeLastRound);
+						if (SinceLastChallenge >= ChallengeInterval) {
+							RAND_bytes(Conn->ChallengeNonce, 16);
+							Conn->ChallengeTimeSent = RoundNr;
+							Conn->ChallengeLastRound = RoundNr;
+							send_challenge(Conn);
+						}
+					}
+				}
+				Conn = get_next_connection();
+			}
+		}
+
 		process_monsterhomes();
 		process_monster_raids();
 		process_communication_control();
@@ -436,6 +488,10 @@ static void AdvanceGame(int Delay) {
 
 		if (RoundNr % 10 == 0) {
 			net_load_check();
+		}
+
+		if (ChallengeEnabled && ChallengeBanMinutes > 0 && RoundNr % 60 == 0) {
+			challenge_ban_cleanup();
 		}
 
 		if (RoundNr >= NextMinute) {

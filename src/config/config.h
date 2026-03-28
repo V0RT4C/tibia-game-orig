@@ -41,6 +41,12 @@ extern TRANSPORTMODE TransportMode;
 extern int WebSocketPort;
 extern char WebSocketAddress[16];
 
+extern bool ChallengeEnabled;
+extern uint8 ChallengeSecret[16];
+extern int ChallengeInterval;
+extern int ChallengeTimeout;
+extern int ChallengeBanMinutes;
+
 void ReadConfig(void);
 
 #endif // GAMESERVER_CONFIG_H

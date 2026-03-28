@@ -44,6 +44,7 @@ set(SOURCES
     src/creature/nonplayer/nonplayer.cpp
     src/creature/player/player.cpp
     src/creature/skill/skill.cpp
+    src/challenge/challenge_ban.cpp
     src/crypto/xtea/xtea.cpp
     src/crypto/rsa/rsa.cpp
     src/game_data/houses/houses.cpp

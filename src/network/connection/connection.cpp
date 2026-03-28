@@ -1,4 +1,6 @@
 #include "network/connection/connection.h"
+#include "challenge/challenge_ban.h"
+#include "config/config.h"
 #include "connections.h"
 #include "cr.h"
 #include "info.h"
@@ -14,6 +16,10 @@
 TConnection::TConnection(void) {
 	this->State = CONNECTION_FREE;
 	this->Transport = nullptr;
+	memset(this->ChallengeNonce, 0, sizeof(this->ChallengeNonce));
+	this->ChallengeTimeSent = 0;
+	this->ChallengeLastRound = 0;
+	this->ChallengeBanMessage[0] = '\0';
 }
 
 void TConnection::process(void) {
@@ -220,6 +226,21 @@ bool TConnection::join_game(TReadBuffer *Buffer) {
 			delete Player;
 			return false;
 		}
+
+		// Check challenge temp ban (new player load)
+		if (ChallengeEnabled && ChallengeBanMinutes > 0) {
+			int Remaining = challenge_ban_check(Player->AccountID);
+			if (Remaining > 0) {
+				int RemainingMinutes = (Remaining + 59) / 60;
+				log_message("challenge", "BLOCKED: %s (%s) account %u still temp-banned for %d minutes.\n",
+							Player->Name, this->get_ip_address(), Player->AccountID, RemainingMinutes);
+				snprintf(this->ChallengeBanMessage, sizeof(this->ChallengeBanMessage),
+					"You have been temporarily banned for %d more minute%s because you have been behaving bad.",
+					RemainingMinutes, RemainingMinutes == 1 ? "" : "s");
+				delete Player;
+				return false;
+			}
+		}
 	} else {
 		if (Player->IsDead) {
 			log_message("game", "Player %s is currently dying - login failed.\n", Player->Name);
@@ -257,6 +278,10 @@ void TConnection::enter_game(void) {
 	}
 
 	this->State = CONNECTION_GAME;
+
+	// Reset challenge state so newly logged-in players get a full interval before first challenge
+	this->ChallengeTimeSent = 0;
+	this->ChallengeLastRound = RoundNr;
 }
 
 void TConnection::die(void) {

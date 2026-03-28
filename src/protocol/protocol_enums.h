@@ -64,6 +64,7 @@ enum ClientCommand : int {
 	CL_CMD_BUG_REPORT = 230,
 	CL_CMD_RULE_VIOLATION = 231,
 	CL_CMD_ERROR_FILE_ENTRY = 232,
+	CL_CMD_CHALLENGE_RESPONSE = 250,
 };
 
 enum ServerCommand : int {
@@ -128,6 +129,7 @@ enum ServerCommand : int {
 	SV_CMD_BUDDY_DATA = 210,
 	SV_CMD_BUDDY_ONLINE = 211,
 	SV_CMD_BUDDY_OFFLINE = 212,
+	SV_CMD_CHALLENGE = 250,
 };
 
 enum {

@@ -87,6 +87,12 @@ struct TConnection {
 	uint32 CharacterID;
 	char Name[31];
 	TKnownCreature KnownCreatureTable[150];
+
+	// Challenge-response anti-bot
+	uint8 ChallengeNonce[16];
+	uint32 ChallengeTimeSent;   // RoundNr when challenge was sent, 0 = no pending challenge
+	uint32 ChallengeLastRound;  // RoundNr when last challenge was sent (for interval timing)
+	char ChallengeBanMessage[128];  // Non-empty if join_game failed due to temp ban
 };
 
 #endif // TIBIA_NETWORK_CONNECTION_H_

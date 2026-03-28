@@ -72,6 +72,7 @@ void send_snapback(TConnection *Connection);
 void send_outfit(TConnection *Connection);
 void send_buddy_data(TConnection *Connection, uint32 CharacterID, const char *Name, bool Online);
 void send_buddy_status(TConnection *Connection, uint32 CharacterID, bool Online);
+void send_challenge(TConnection *Connection);
 void broadcast_message(int Mode, const char *Text, ...) ATTR_PRINTF(2, 3);
 void create_gamemaster_request(const char *Name, const char *Text);
 void delete_gamemaster_request(const char *Name);

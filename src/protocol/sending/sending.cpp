@@ -1868,3 +1868,12 @@ void init_sending(void) {
 void exit_sending(void) {
 	// no-op
 }
+
+void send_challenge(TConnection *Connection) {
+	if (!begin_send_data(Connection)) return;
+	SendByte(Connection, SV_CMD_CHALLENGE);
+	for (int i = 0; i < 16; i++) {
+		SendByte(Connection, Connection->ChallengeNonce[i]);
+	}
+	finish_send_data(Connection);
+}

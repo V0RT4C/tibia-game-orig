@@ -1,12 +1,17 @@
 #include "protocol/receiving/receiving.h"
+#include "config/config.h"
 #include "connections.h"
+#include "communication.h"
 #include "cr.h"
 #include "game_data/operate/operate.h"
 #include "houses.h"
 #include "info.h"
 #include "writer.h"
 
+#include <openssl/evp.h>
 #include <signal.h>
+#include <cstring>
+#include "challenge/challenge_ban.h"
 
 bool CommandAllowed(TConnection *Connection, int Command) {
 	if (Connection == NULL) {
@@ -1641,6 +1646,50 @@ void CErrorFileEntry(TConnection *Connection, TReadBuffer *Buffer) {
 	log_message("client-error", "---------------------------------------------------------------------------\n");
 }
 
+static void CChallengeResponse(TConnection *Connection, TReadBuffer *Buffer) {
+	if (!ChallengeEnabled) return;
+	if (Connection->ChallengeTimeSent == 0) {
+		print(3, "ChallengeResponse: Unexpected response from %s (%s).\n",
+			  Connection->get_name(), Connection->get_ip_address());
+		return;
+	}
+
+	uint8 Response[32];
+	for (int i = 0; i < 32; i++) {
+		Response[i] = Buffer->readByte();
+	}
+
+	// Compute expected: SHA-256(nonce || secret)
+	uint8 Expected[32];
+	EVP_MD_CTX *Ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(Ctx, EVP_sha256(), NULL);
+	EVP_DigestUpdate(Ctx, Connection->ChallengeNonce, 16);
+	EVP_DigestUpdate(Ctx, ChallengeSecret, 16);
+	unsigned int Len = 32;
+	EVP_DigestFinal_ex(Ctx, Expected, &Len);
+	EVP_MD_CTX_free(Ctx);
+
+	if (memcmp(Response, Expected, 32) != 0) {
+		log_message("challenge", "FAIL: %s (%s) sent wrong challenge response. Disconnecting.\n",
+					Connection->get_name(), Connection->get_ip_address());
+		if (ChallengeBanMinutes > 0) {
+			TPlayer *P = Connection->get_player();
+			if (P != NULL) {
+				challenge_ban_add(P->AccountID, ChallengeBanMinutes);
+				log_message("challenge", "BAN: Account %u temp-banned for %d minutes.\n",
+							P->AccountID, ChallengeBanMinutes);
+			}
+			send_message(Connection, TALK_ADMIN_MESSAGE,
+				"You have been temporarily banned for %d minutes because you have been behaving bad.",
+				ChallengeBanMinutes);
+		}
+		Connection->logout(5, false);
+		return;
+	}
+
+	Connection->ChallengeTimeSent = 0;
+}
+
 void receive_data(TConnection *Connection) {
 	if (Connection == NULL) {
 		error("ReceiveData: Connection is NULL.\n");
@@ -1676,8 +1725,13 @@ void receive_data(TConnection *Connection) {
 		if (Command != CL_CMD_LOGIN) {
 			error("ReceiveData: Wrong login command %d.\n", Command);
 		} else if (!Connection->join_game(&Buffer)) {
-			log_message("game", "Login failed.\n");
-			send_result(Connection, LOGINERROR);
+			if (Connection->ChallengeBanMessage[0] != '\0') {
+				send_login_message(Connection, LOGIN_MESSAGE_ERROR, Connection->ChallengeBanMessage, -1);
+				Connection->ChallengeBanMessage[0] = '\0';
+			} else {
+				log_message("game", "Login failed.\n");
+				send_result(Connection, LOGINERROR);
+			}
 			TPlayer *Player = Connection->get_player();
 			if (Player != NULL) {
 				decrement_is_online_order(Player->ID);
@@ -1872,6 +1926,9 @@ void receive_data(TConnection *Connection) {
 			break;
 		case CL_CMD_ERROR_FILE_ENTRY:
 			CErrorFileEntry(Connection, &Buffer);
+			break;
+		case CL_CMD_CHALLENGE_RESPONSE:
+			CChallengeResponse(Connection, &Buffer);
 			break;
 		default: {
 			print(3, "Unknown command %d.\n", Command);
