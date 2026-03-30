@@ -264,3 +264,13 @@ target_compile_features(test_websocket_transport PRIVATE cxx_std_17)
 target_compile_definitions(test_websocket_transport PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1 LIBUS_NO_SSL=1)
 target_link_libraries(test_websocket_transport PRIVATE uSockets pthread z)
 add_test(NAME test_websocket_transport COMMAND test_websocket_transport)
+
+add_executable(test_npc_action test_npc_action.cpp
+    ${CMAKE_SOURCE_DIR}/src/creature/npc/npc_action.cpp
+    ${CMAKE_SOURCE_DIR}/src/creature/npc/npc_action_handlers.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging/logging.cpp)
+target_include_directories(test_npc_action PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(test_npc_action PRIVATE cxx_std_17)
+target_compile_definitions(test_npc_action PRIVATE OS_LINUX=1 ENABLE_ASSERTIONS=1)
+target_link_options(test_npc_action PRIVATE -Wl,--unresolved-symbols=ignore-in-object-files)
+add_test(NAME test_npc_action COMMAND test_npc_action)
