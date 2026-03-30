@@ -41,6 +41,8 @@ set(SOURCES
     src/creature/race/race.cpp
     src/creature/monster/monster.cpp
     src/creature/npc/npc.cpp
+    src/creature/npc/npc_action.cpp
+    src/creature/npc/npc_action_handlers.cpp
     src/creature/nonplayer/nonplayer.cpp
     src/creature/player/player.cpp
     src/creature/skill/skill.cpp
