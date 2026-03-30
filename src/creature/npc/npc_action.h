@@ -47,8 +47,6 @@ struct NpcActionContext {
     SITUATION Situation;
     int *Parameters;
     BehaviourDatabase *Database;
-    int *TalkDelay;
-    bool *StartToDo;
 };
 
 typedef void (*NpcActionHandler)(NpcActionContext *Ctx, BehaviourAction *Action);

@@ -1036,8 +1036,6 @@ void BehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation) 
 					Ctx.Situation = Situation;
 					Ctx.Parameters = Parameters;
 					Ctx.Database = this;
-					Ctx.TalkDelay = &TalkDelay;
-					Ctx.StartToDo = &StartToDo;
 					Def->Execute(&Ctx, Action);
 				} else {
 					error("BehaviourDatabase::react: Unknown action type %d.\n", Action->Type);
