@@ -2,6 +2,7 @@
 #define TIBIA_CREATURE_NPC_H_ 1
 
 #include "creature/nonplayer/nonplayer.h"
+#include "creature/npc/npc_action.h"
 
 struct TNPC; // forward declaration for BehaviourDatabase
 
@@ -33,7 +34,7 @@ struct BehaviourAction {
 
 	// DATA
 	// =================
-	int Type;
+	NpcActionType Type;
 	uint32 Text;
 	int Number;
 	BehaviourNode *Expression;

@@ -126,51 +126,22 @@ void BehaviourCondition::clear(void) {
 }
 
 bool BehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void *Data4) {
-	this->Type = Type;
-	switch (Type) {
-	case BEHAVIOUR_ACTION_REPLY: {
+	this->Type = (NpcActionType)Type;
+
+	switch (this->Type) {
+	case NPC_ACTION_REPLY: {
 		this->Text = AddDynamicString((const char *)Data);
 		break;
 	}
-
-	case BEHAVIOUR_ACTION_SET_VARIABLE:
-	case BEHAVIOUR_ACTION_SET_SKILL:
-	case BEHAVIOUR_ACTION_FUNCTION1: {
-		this->Number = *(int *)Data;
-		this->Expression = (BehaviourNode *)Data2;
-		break;
-	}
-
-	case BEHAVIOUR_ACTION_FUNCTION2:
-	case BEHAVIOUR_ACTION_SET_SKILL_TIMER: {
-		this->Number = *(int *)Data;
-		this->Expression = (BehaviourNode *)Data2;
-		this->Expression2 = (BehaviourNode *)Data3;
-		break;
-	}
-
-	case BEHAVIOUR_ACTION_FUNCTION0:
-	case BEHAVIOUR_ACTION_CHANGESTATE: {
+	case NPC_ACTION_CHANGE_STATE: {
 		this->Number = *(int *)Data;
 		break;
 	}
-
-	case BEHAVIOUR_ACTION_REPEAT: {
-		// no-op
-		break;
-	}
-
-	case BEHAVIOUR_ACTION_FUNCTION3: {
-		this->Number = *(int *)Data;
+	default: {
 		this->Expression = (BehaviourNode *)Data2;
 		this->Expression2 = (BehaviourNode *)Data3;
 		this->Expression3 = (BehaviourNode *)Data4;
 		break;
-	}
-
-	default: {
-		error("TAction::set: Invalid action type %d\n", Type);
-		return false;
 	}
 	}
 
@@ -179,38 +150,26 @@ bool BehaviourAction::set(int Type, void *Data, void *Data2, void *Data3, void *
 
 void BehaviourAction::clear(void) {
 	switch (this->Type) {
-	case BEHAVIOUR_ACTION_REPLY: {
+	case NPC_ACTION_REPLY: {
 		DeleteDynamicString(this->Text);
 		break;
 	}
 
-	case BEHAVIOUR_ACTION_SET_VARIABLE:
-	case BEHAVIOUR_ACTION_SET_SKILL:
-	case BEHAVIOUR_ACTION_FUNCTION1: {
-		DeleteBehaviourNode(this->Expression);
+	case NPC_ACTION_CHANGE_STATE:
+	case NPC_ACTION_NONE:
+	case NPC_ACTION_REPEAT: {
 		break;
 	}
 
-	case BEHAVIOUR_ACTION_FUNCTION2:
-	case BEHAVIOUR_ACTION_SET_SKILL_TIMER: {
-		DeleteBehaviourNode(this->Expression);
-		DeleteBehaviourNode(this->Expression2);
-		break;
-	}
-
-	case BEHAVIOUR_ACTION_FUNCTION3: {
+	default: {
 		DeleteBehaviourNode(this->Expression);
 		DeleteBehaviourNode(this->Expression2);
 		DeleteBehaviourNode(this->Expression3);
 		break;
 	}
-
-	default: {
-		break;
-	}
 	}
 
-	this->Type = BEHAVIOUR_ACTION_NONE;
+	this->Type = NPC_ACTION_NONE;
 }
 
 TBehaviour::TBehaviour(void) : Condition(0, 5, 5), Action(0, 5, 5) {
@@ -342,161 +301,93 @@ BehaviourDatabase::BehaviourDatabase(ReadScriptFile *Script) : Behaviour(0, 50, 
 		Script->next_token();
 		while (true) {
 			if (Script->Token == STRING) {
-				Behaviour->addAction(BEHAVIOUR_ACTION_REPLY, Script->get_string(), NULL, NULL, NULL);
+				Behaviour->addAction(NPC_ACTION_REPLY, Script->get_string(), NULL, NULL, NULL);
 				Script->next_token();
 			} else if (Script->Token == IDENTIFIER) {
-				int Type = -1;
-				int Data = 0;
 				const char *Identifier = Script->get_identifier();
-				if (strcmp(Identifier, "topic") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_VARIABLE;
-					Data = 1; // BEHAVIOUR_VARIABLE_TOPIC ?
-				} else if (strcmp(Identifier, "price") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_VARIABLE;
-					Data = 2; // BEHAVIOUR_VARIABLE_PRICE ?
-				} else if (strcmp(Identifier, "amount") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_VARIABLE;
-					Data = 3; // BEHAVIOUR_VARIABLE_AMOUNT ?
-				} else if (strcmp(Identifier, "type") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_VARIABLE;
-					Data = 4; // BEHAVIOUR_VARIABLE_TYPE
-				} else if (strcmp(Identifier, "data") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_VARIABLE;
-					Data = 6; // BEHAVIOUR_VARIABLE_DATA
-				} else if (strcmp(Identifier, "hp") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_SKILL;
-					Data = SKILL_HITPOINTS;
-				} else if (strcmp(Identifier, "poison") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_SKILL_TIMER;
-					Data = SKILL_POISON;
-				} else if (strcmp(Identifier, "burning") == 0) {
-					Type = BEHAVIOUR_ACTION_SET_SKILL_TIMER;
-					Data = SKILL_BURNING;
-				} else if (strcmp(Identifier, "setquestvalue") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION2;
-					Data = 3; // BEHAVIOUR_FUNCTION2_SETQUESTVALUE ?
-				} else if (strcmp(Identifier, "effectme") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 1; // BEHAVIOUR_FUNCTION1_EFFECTME ?
-				} else if (strcmp(Identifier, "effectopp") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 2; // BEHAVIOUR_FUNCTION1_EFFECTOPP ?
-				} else if (strcmp(Identifier, "profession") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 3; // BEHAVIOUR_FUNCTION1_SETPROFESSION ?
-				} else if (strcmp(Identifier, "teachspell") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 4; // BEHAVIOUR_FUNCTION1_TEACHSPELL ?
-				} else if (strcmp(Identifier, "summon") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 5; // BEHAVIOUR_FUNCTION1_SUMMON ?
-				} else if (strcmp(Identifier, "create") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 6; // BEHAVIOUR_FUNCTION1_CREATE ?
-				} else if (strcmp(Identifier, "delete") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION1;
-					Data = 7; // BEHAVIOUR_FUNCTION1_DELETE ?
-				} else if (strcmp(Identifier, "createmoney") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION0;
-					Data = 1; // BEHAVIOUR_FUNCTION0_CREATEMONEY ?
-				} else if (strcmp(Identifier, "deletemoney") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION0;
-					Data = 2; // BEHAVIOUR_FUNCTION0_DELETEMONEY ?
-				} else if (strcmp(Identifier, "queue") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION0;
-					Data = 3; // BEHAVIOUR_FUNCTION0_ENQUEUE ?
-				} else if (strcmp(Identifier, "teleport") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION3;
-					Data = 1; // BEHAVIOUR_FUNCTION3_TELEPORT ?
-				} else if (strcmp(Identifier, "startposition") == 0) {
-					Type = BEHAVIOUR_ACTION_FUNCTION3;
-					Data = 2; // BEHAVIOUR_FUNCTION3_SETSTART ?
-				} else if (strcmp(Identifier, "idle") == 0) {
-					Type = BEHAVIOUR_ACTION_CHANGESTATE;
-					Data = IDLE;
+
+				// Special cases that don't go through the registry
+				if (strcmp(Identifier, "idle") == 0) {
+					int Data = IDLE;
+					Script->next_token();
+					Behaviour->addAction(NPC_ACTION_CHANGE_STATE, &Data, NULL, NULL, NULL);
 				} else if (strcmp(Identifier, "nop") == 0) {
-					Type = BEHAVIOUR_ACTION_NONE;
-					Data = 0;
-				}
-
-				switch (Type) {
-				case BEHAVIOUR_ACTION_NONE: {
 					Script->next_token();
-					break;
-				}
-
-				case BEHAVIOUR_ACTION_SET_VARIABLE:
-				case BEHAVIOUR_ACTION_SET_SKILL: {
-					Script->read_symbol('=');
-					Script->next_token();
-					BehaviourNode *Value = this->readTerm(Script);
-					Behaviour->addAction(Type, &Data, Value, NULL, NULL);
-					break;
-				}
-
-				case BEHAVIOUR_ACTION_FUNCTION1: {
-					Script->read_symbol('(');
-					Script->next_token();
-					BehaviourNode *Param = this->readTerm(Script);
-					if (Script->Token != SPECIAL || Script->get_special() != ')') {
-						Script->error(") expected");
+					Behaviour->addAction(NPC_ACTION_NONE, NULL, NULL, NULL, NULL);
+				} else {
+					NpcActionDef *Def = FindActionByName(Identifier);
+					if (Def == NULL) {
+						Script->error("unknown identifier");
 					}
-					Script->next_token();
-					Behaviour->addAction(Type, &Data, Param, NULL, NULL);
-					break;
-				}
 
-				case BEHAVIOUR_ACTION_FUNCTION2:
-				case BEHAVIOUR_ACTION_SET_SKILL_TIMER: {
-					Script->read_symbol('(');
-					Script->next_token();
-					BehaviourNode *Param1 = this->readTerm(Script);
-					if (Script->Token != SPECIAL || Script->get_special() != ',') {
-						Script->error(", expected");
-					}
-					Script->next_token();
-					BehaviourNode *Param2 = this->readTerm(Script);
-					if (Script->Token != SPECIAL || Script->get_special() != ')') {
-						Script->error(") expected");
-					}
-					Script->next_token();
-					Behaviour->addAction(Type, &Data, Param1, Param2, NULL);
-					break;
-				}
+					int Type = Def->Type;
 
-				case BEHAVIOUR_ACTION_FUNCTION0:
-				case BEHAVIOUR_ACTION_CHANGESTATE: {
-					Script->next_token();
-					Behaviour->addAction(Type, &Data, NULL, NULL, NULL);
-					break;
-				}
-
-				case BEHAVIOUR_ACTION_FUNCTION3: {
-					Script->read_symbol('(');
-					Script->next_token();
-					BehaviourNode *Param1 = this->readTerm(Script);
-					if (Script->Token != SPECIAL || Script->get_special() != ',') {
-						Script->error(", expected");
+					switch (Def->ParamCount) {
+					case -1: {
+						Script->read_symbol('=');
+						Script->next_token();
+						BehaviourNode *Value = this->readTerm(Script);
+						Behaviour->addAction(Type, NULL, Value, NULL, NULL);
+						break;
 					}
-					Script->next_token();
-					BehaviourNode *Param2 = this->readTerm(Script);
-					if (Script->Token != SPECIAL || Script->get_special() != ',') {
-						Script->error(", expected");
+					case 0: {
+						Script->next_token();
+						Behaviour->addAction(Type, NULL, NULL, NULL, NULL);
+						break;
 					}
-					Script->next_token();
-					BehaviourNode *Param3 = this->readTerm(Script);
-					if (Script->Token != SPECIAL || Script->get_special() != ')') {
-						Script->error(") expected");
+					case 1: {
+						Script->read_symbol('(');
+						Script->next_token();
+						BehaviourNode *Param = this->readTerm(Script);
+						if (Script->Token != SPECIAL || Script->get_special() != ')') {
+							Script->error(") expected");
+						}
+						Script->next_token();
+						Behaviour->addAction(Type, NULL, Param, NULL, NULL);
+						break;
 					}
-					Script->next_token();
-					Behaviour->addAction(Type, &Data, Param1, Param2, Param3);
-					break;
-				}
-
-				default: {
-					Script->error("unknown identifier");
-					break;
-				}
+					case 2: {
+						Script->read_symbol('(');
+						Script->next_token();
+						BehaviourNode *Param1 = this->readTerm(Script);
+						if (Script->Token != SPECIAL || Script->get_special() != ',') {
+							Script->error(", expected");
+						}
+						Script->next_token();
+						BehaviourNode *Param2 = this->readTerm(Script);
+						if (Script->Token != SPECIAL || Script->get_special() != ')') {
+							Script->error(") expected");
+						}
+						Script->next_token();
+						Behaviour->addAction(Type, NULL, Param1, Param2, NULL);
+						break;
+					}
+					case 3: {
+						Script->read_symbol('(');
+						Script->next_token();
+						BehaviourNode *Param1 = this->readTerm(Script);
+						if (Script->Token != SPECIAL || Script->get_special() != ',') {
+							Script->error(", expected");
+						}
+						Script->next_token();
+						BehaviourNode *Param2 = this->readTerm(Script);
+						if (Script->Token != SPECIAL || Script->get_special() != ',') {
+							Script->error(", expected");
+						}
+						Script->next_token();
+						BehaviourNode *Param3 = this->readTerm(Script);
+						if (Script->Token != SPECIAL || Script->get_special() != ')') {
+							Script->error(") expected");
+						}
+						Script->next_token();
+						Behaviour->addAction(Type, NULL, Param1, Param2, Param3);
+						break;
+					}
+					default: {
+						Script->error("invalid param count in action registry");
+						break;
+					}
+					}
 				}
 
 			} else if (Script->Token == SPECIAL && Script->get_special() == '*') {
@@ -504,7 +395,7 @@ BehaviourDatabase::BehaviourDatabase(ReadScriptFile *Script) : Behaviour(0, 50, 
 					Script->error("no previous pattern");
 				}
 				Script->next_token();
-				Behaviour->addAction(BEHAVIOUR_ACTION_REPEAT, NULL, NULL, NULL, NULL);
+				Behaviour->addAction(NPC_ACTION_REPEAT, NULL, NULL, NULL, NULL);
 			} else {
 				Script->error("illegal action");
 			}
@@ -1082,7 +973,7 @@ void BehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation) 
 		TBehaviour *Behaviour = this->Behaviour.at(BehaviourNr);
 		for (int ActionNr = 0; ActionNr < Behaviour->Actions; ActionNr += 1) {
 			BehaviourAction *Action = Behaviour->Action.at(ActionNr);
-			if (Action->Type == BEHAVIOUR_ACTION_REPEAT) {
+			if (Action->Type == NPC_ACTION_REPEAT) {
 				if (BehaviourNr > 0) {
 					BehaviourNr -= 1;
 					Repeat = true;
@@ -1093,7 +984,7 @@ void BehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation) 
 			}
 
 			switch (Action->Type) {
-			case BEHAVIOUR_ACTION_REPLY: {
+			case NPC_ACTION_REPLY: {
 				char Response[256] = {};
 				const char *Template = GetDynamicString(Action->Text);
 				if (FormatNpcResponse(Response, sizeof(Response), Template, Npc, Interlocutor)) {
@@ -1108,122 +999,7 @@ void BehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation) 
 				break;
 			}
 
-			case BEHAVIOUR_ACTION_SET_VARIABLE: {
-				int Variable = Action->Number;
-				int Value = this->evaluate(Npc, Action->Expression, Parameters);
-				switch (Variable) {
-				case 1:
-					Npc->Topic = Value;
-					break;
-				case 2:
-					Npc->Price = Value;
-					break;
-				case 3:
-					Npc->Amount = Value;
-					break;
-				case 4:
-					Npc->TypeID = Value;
-					break;
-				case 6:
-					Npc->Data = Value;
-					break;
-				default: {
-					error("BehaviourDatabase::react: Invalid variable.\n");
-					break;
-				}
-				}
-				break;
-			}
-
-			case BEHAVIOUR_ACTION_SET_SKILL: {
-				int SkillNr = Action->Number;
-				int Value = this->evaluate(Npc, Action->Expression, Parameters);
-				if (SkillNr == SKILL_HITPOINTS) {
-					Interlocutor->Skills[SKILL_HITPOINTS]->Set(Value);
-					if (Interlocutor->Skills[SKILL_HITPOINTS]->Get() <= 0) {
-						error("BehaviourDatabase::react: NPC %s kills player.\n", Npc->Name);
-					}
-				} else {
-					error("BehaviourDatabase::react: Invalid skill.\n");
-				}
-				break;
-			}
-
-			case BEHAVIOUR_ACTION_FUNCTION2: {
-				int FunctionNr = Action->Number;
-				int Param1 = this->evaluate(Npc, Action->Expression, Parameters);
-				int Param2 = this->evaluate(Npc, Action->Expression2, Parameters);
-				switch (FunctionNr) {
-				case 3:
-					Interlocutor->SetQuestValue(Param1, Param2);
-					break;
-				default: {
-					error("BehaviourDatabase::react (4): Invalid function number.\n");
-					break;
-				}
-				}
-				break;
-			}
-
-			case BEHAVIOUR_ACTION_FUNCTION1: {
-				int FunctionNr = Action->Number;
-				int Param = this->evaluate(Npc, Action->Expression, Parameters);
-				switch (FunctionNr) {
-				case 1:
-					graphical_effect(Npc->CrObject, Param);
-					break;
-				case 2:
-					graphical_effect(Interlocutor->CrObject, Param);
-					break;
-				case 3:
-					Interlocutor->SetProfession(Param);
-					break;
-				case 4:
-					Interlocutor->LearnSpell(Param);
-					break;
-				case 5:
-					create_monster(Param, Npc->posx, Npc->posy, Npc->posz, 0, 0, true);
-					break;
-				case 6:
-					Npc->GiveTo(Param, Npc->Amount);
-					break;
-				case 7:
-					Npc->GetFrom(Param, Npc->Amount);
-					break;
-				default: {
-					error("BehaviourDatabase::react (5): Invalid function number.\n");
-					break;
-				}
-				}
-				break;
-			}
-
-			case BEHAVIOUR_ACTION_FUNCTION0: {
-				int FunctionNr = Action->Number;
-				switch (FunctionNr) {
-				case 1:
-					Npc->GiveMoney(Npc->Price);
-					break;
-				case 2:
-					Npc->GetMoney(Npc->Price);
-					break;
-				case 3: {
-					if (Situation == BUSY) {
-						Npc->Enqueue(InterlocutorID, Text);
-					} else {
-						error("BehaviourDatabase::react (6): wrong situation for action \"Queue\".\n");
-					}
-					break;
-				}
-				default: {
-					error("BehaviourDatabase::react (6): Invalid function number.\n");
-					break;
-				}
-				}
-				break;
-			}
-
-			case BEHAVIOUR_ACTION_CHANGESTATE: {
+			case NPC_ACTION_CHANGE_STATE: {
 				int NewState = Action->Number;
 				if (!StartToDo) {
 					Npc->ChangeState((STATE)NewState, false);
@@ -1241,55 +1017,30 @@ void BehaviourDatabase::react(TNPC *Npc, const char *Text, SITUATION Situation) 
 				break;
 			}
 
-			case BEHAVIOUR_ACTION_SET_SKILL_TIMER: {
-				int SkillNr = Action->Number;
-				int Cycle = this->evaluate(Npc, Action->Expression, Parameters);
-				int MaxCount = this->evaluate(Npc, Action->Expression2, Parameters);
-				if (SkillNr == SKILL_POISON || SkillNr == SKILL_BURNING) {
-					if (Cycle == 0 || Interlocutor->Skills[SkillNr]->TimerValue() < Cycle) {
-						Interlocutor->SetTimer(SkillNr, Cycle, MaxCount, MaxCount, -1);
-						if (SkillNr == SKILL_POISON) {
-							Interlocutor->PoisonDamageOrigin = 0;
-						} else {
-							Interlocutor->FireDamageOrigin = 0;
-						}
-					}
-				} else {
-					error("BehaviourDatabase::react (8): Invalid skill.\n");
-				}
+			case NPC_ACTION_REPEAT: {
 				break;
 			}
 
-			case BEHAVIOUR_ACTION_FUNCTION3: {
-				int FunctionNr = Action->Number;
-				int Param1 = this->evaluate(Npc, Action->Expression, Parameters);
-				int Param2 = this->evaluate(Npc, Action->Expression2, Parameters);
-				int Param3 = this->evaluate(Npc, Action->Expression3, Parameters);
-				switch (FunctionNr) {
-				case 1: {
-					print(3, "NPC teleports interlocutor to [%d,%d,%d].\n", Param1, Param2, Param3);
-					try {
-						Object Dest = get_map_container(Param1, Param2, Param3);
-						move(0, Interlocutor->CrObject, Dest, -1, false, NONE);
-					} catch (RESULT r) {
-						error("BehaviourDatabase::react (10): Exception %d.\n", r);
-					}
-					break;
-				}
+			case NPC_ACTION_NONE: {
+				break;
+			}
 
-				case 2: {
-					print(3, "NPC sets start coordinate for interlocutor to [%d,%d,%d].\n", Param1, Param2, Param3);
-					Interlocutor->startx = Param1;
-					Interlocutor->starty = Param2;
-					Interlocutor->startz = Param3;
-					Interlocutor->SaveData();
-					break;
-				}
-
-				default: {
-					error("BehaviourDatabase::react (10): Invalid sub-number.\n");
-					break;
-				}
+			default: {
+				NpcActionDef *Def = FindActionByType(Action->Type);
+				if (Def != NULL && Def->Execute != NULL) {
+					NpcActionContext Ctx = {};
+					Ctx.Npc = Npc;
+					Ctx.Interlocutor = Interlocutor;
+					Ctx.InterlocutorID = InterlocutorID;
+					Ctx.Text = Text;
+					Ctx.Situation = Situation;
+					Ctx.Parameters = Parameters;
+					Ctx.Database = this;
+					Ctx.TalkDelay = &TalkDelay;
+					Ctx.StartToDo = &StartToDo;
+					Def->Execute(&Ctx, Action);
+				} else {
+					error("BehaviourDatabase::react: Unknown action type %d.\n", Action->Type);
 				}
 				break;
 			}
